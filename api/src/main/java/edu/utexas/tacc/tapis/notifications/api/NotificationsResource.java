@@ -28,6 +28,11 @@ public class NotificationsResource {
     final Scheduler scheduler = Schedulers.newElastic("messages");
     private static final ObjectMapper mapper = TapisObjectMapper.getMapper();
 
+    // files.transfers.{UUID}
+    // jobs.executions.{UUID}
+
+    private String exchangeFormat = "{serviceName}.{actionName}.{UUID}";
+
 
     @Inject
     public NotificationsResource(NotificationsService notificationsService) {
