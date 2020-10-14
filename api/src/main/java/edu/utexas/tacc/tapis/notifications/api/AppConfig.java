@@ -1,6 +1,6 @@
 package edu.utexas.tacc.tapis.notifications.api;
 
-import edu.utexas.tacc.tapis.files.lib.services.NotificationsService;
+import edu.utexas.tacc.tapis.notifications.lib.NotificationsService;
 import org.glassfish.hk2.api.ServiceLocator;
 import org.glassfish.hk2.utilities.ServiceLocatorUtilities;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;

@@ -1,4 +1,4 @@
-package edu.utexas.tacc.tapis.notifications.lib;
+package edu.utexas.tacc.tapis.notifications.lib.pojo;
 
 import java.time.Instant;
 
@@ -10,6 +10,10 @@ public class Notification implements INotification {
     private String creator;
     private String body;
     private String level;
+
+
+
+    public Notification(){}
 
     public Notification(String tenant, String username, String creator, String body, String level) {
         this.tenant = tenant;
@@ -73,5 +77,17 @@ public class Notification implements INotification {
 
     public void setTenant(String tenant) {
         this.tenant = tenant;
+    }
+
+    @Override
+    public String toString() {
+        return "Notification{" +
+            "tenant='" + tenant + '\'' +
+            ", created=" + created +
+            ", username='" + username + '\'' +
+            ", creator='" + creator + '\'' +
+            ", body='" + body + '\'' +
+            ", level='" + level + '\'' +
+            '}';
     }
 }

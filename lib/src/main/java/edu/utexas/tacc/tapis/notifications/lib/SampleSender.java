@@ -1,7 +1,6 @@
 package edu.utexas.tacc.tapis.notifications.lib;
 
-import edu.utexas.tacc.tapis.files.lib.exceptions.ServiceException;
-import edu.utexas.tacc.tapis.files.lib.services.NotificationsService;
+import edu.utexas.tacc.tapis.notifications.lib.pojo.Notification;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
@@ -9,9 +8,9 @@ import reactor.core.scheduler.Schedulers;
 
 import java.time.Duration;
 
-public class NoteSender {
+public class SampleSender {
 
-    private static final Logger log = LoggerFactory.getLogger(NoteSender.class);
+    private static final Logger log = LoggerFactory.getLogger(SampleSender.class);
 
     private static final NotificationsService notificationsService = new NotificationsService();
 
@@ -21,8 +20,13 @@ public class NoteSender {
             .take(100)
             .flatMap(tick->{
                 try {
-                    notificationsService.sendNotification("dev", "jmeiring", "hello world!");
-                    log.info("Sent a damn message");
+                    Notification note = new Notification(
+                        "dev",
+                        "jmeiring",
+                        "files",
+                        "Hello world!",
+                        "INFO");
+                    notificationsService.sendNotification("dev.files.transfers.12345", note);
                 } catch (ServiceException ex) {
                     log.error(ex.getLocalizedMessage(), ex);
                     return Flux.empty();

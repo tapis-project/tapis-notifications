@@ -1,4 +1,4 @@
-package edu.utexas.tacc.tapis.notifications.lib;
+package edu.utexas.tacc.tapis.notifications.lib.pojo;
 
 import java.time.Instant;
 

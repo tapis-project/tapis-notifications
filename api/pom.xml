@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>notificattion-api</artifactId>
+    <artifactId>api</artifactId>
 
     <properties>
         <tyrus.version>1.12</tyrus.version>
@@ -24,6 +24,12 @@
             <groupId>org.glassfish.tyrus</groupId>
             <artifactId>tyrus-container-grizzly-server</artifactId>
             <version>${tyrus.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>edu.utexas.tacc.tapis</groupId>
+            <artifactId>lib</artifactId>
+            <version>${parent.version}</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 </project>

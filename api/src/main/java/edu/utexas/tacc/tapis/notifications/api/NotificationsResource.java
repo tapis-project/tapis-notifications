@@ -2,8 +2,8 @@ package edu.utexas.tacc.tapis.notifications.api;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.utexas.tacc.tapis.files.lib.json.TapisObjectMapper;
-import edu.utexas.tacc.tapis.files.lib.services.NotificationsService;
+import edu.utexas.tacc.tapis.notifications.lib.TapisObjectMapper;
+import edu.utexas.tacc.tapis.notifications.lib.NotificationsService;
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,8 +28,8 @@ public class NotificationsResource {
     final Scheduler scheduler = Schedulers.newElastic("messages");
     private static final ObjectMapper mapper = TapisObjectMapper.getMapper();
 
-    // files.transfers.{UUID}
-    // jobs.executions.{UUID}
+    // {tenant}.files.transfers.{UUID}
+    // {tenant}.jobs.executions.{UUID}
 
     private String exchangeFormat = "{serviceName}.{actionName}.{UUID}";
 
@@ -37,10 +37,10 @@ public class NotificationsResource {
     @Inject
     public NotificationsResource(NotificationsService notificationsService) {
         this.notificationsService = notificationsService;
-        notificationsService.streamNotifications()
+        notificationsService.streamNotifications("#")
             .subscribeOn(scheduler)
+            .log()
             .subscribe(m->{
-                log.info(m.toString());
                 for (Session session: sessions) {
                     try {
                         session.getBasicRemote().sendText(mapper.writeValueAsString(m));

@@ -2,9 +2,11 @@ package edu.utexas.tacc.tapis.notifications.lib;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.Delivery;
-import edu.utexas.tacc.tapis.files.lib.json.TapisObjectMapper;
+import edu.utexas.tacc.tapis.notifications.lib.TapisObjectMapper;
+import edu.utexas.tacc.tapis.notifications.lib.pojo.Notification;
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,8 +15,8 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.rabbitmq.*;
 
-import javax.inject.Inject;
 import java.io.IOException;
+import java.util.UUID;
 
 @Service
 public class NotificationsService implements INotificationsService {
@@ -22,11 +24,10 @@ public class NotificationsService implements INotificationsService {
     private static final Logger log = LoggerFactory.getLogger(NotificationsService.class);
     private final Receiver receiver;
     private final Sender sender;
-    private static final String EXCHANGE_NAME = "notifications";
+    private static final String EXCHANGE_NAME = Constants.EXCHANGE_NAME;
 
     private static final ObjectMapper mapper = TapisObjectMapper.getMapper();
 
-    @Inject
     public NotificationsService() {
         ConnectionFactory connectionFactory = RabbitMQConnection.getInstance();
         ReceiverOptions receiverOptions = new ReceiverOptions()
@@ -37,15 +38,18 @@ public class NotificationsService implements INotificationsService {
             .resourceManagementScheduler(Schedulers.newElastic("sender"));
         receiver = RabbitFlux.createReceiver(receiverOptions);
         sender = RabbitFlux.createSender(senderOptions);
-        sender.declareExchange(ExchangeSpecification.exchange(EXCHANGE_NAME));
+        ExchangeSpecification spec = new ExchangeSpecification();
+        spec.durable(true);
+        spec.type("topic");
+        spec.name(EXCHANGE_NAME);
+        sender.declareExchange(spec).subscribe();
     }
 
     @Override
-    public void sendNotification(String tenantId, String recipientUser, String creator, String body, String level) throws ServiceException {
+    public void sendNotification(String routingKey, Notification note) throws ServiceException {
         try {
-            Notification note = new Notification(tenantId, recipientUser, creator, body, level);
             String m = mapper.writeValueAsString(note);
-            OutboundMessage outboundMessage = new OutboundMessage(EXCHANGE_NAME, );
+            OutboundMessage outboundMessage = new OutboundMessage(EXCHANGE_NAME, routingKey, m.getBytes());
             sender.send(Mono.just(outboundMessage)).subscribe();
         } catch (IOException ex) {
             log.error(ex.getMessage(), ex);
@@ -54,12 +58,24 @@ public class NotificationsService implements INotificationsService {
     }
 
     @Override
-    public Flux<Notification> streamNotifications() {
-        ConsumeOptions options = new ConsumeOptions();
-        options.qos(1000);
-        Flux<Delivery> notificationStream = receiver.consumeAutoAck(QUEUE_NAME, options);
-        return notificationStream
-            .delaySubscription(sender.declareQueue(QueueSpecification.queue(QUEUE_NAME)))
+    public Flux<Notification> streamNotifications(String bindingKey) {
+        QueueSpecification qspec = new QueueSpecification();
+        qspec.durable(true);
+        qspec.name("tapis.notifications." + UUID.randomUUID().toString());
+
+        // Binding the queue to the exchange
+        BindingSpecification bindSpec = new BindingSpecification();
+        bindSpec.exchange(EXCHANGE_NAME);
+        bindSpec.queue(qspec.getName());
+        bindSpec.routingKey(bindingKey);
+
+        //This sets up the call to declare and bind the queue to the exchange. Note, this
+        //is not executed now, but in the delaySubscription() call below.
+        Mono<AMQP.Queue.BindOk> binding = sender.declareQueue(qspec)
+            .then(sender.bindQueue(bindSpec));
+
+        return receiver.consumeAutoAck(qspec.getName())
+            .delaySubscription(binding)
             .flatMap(this::deserializeNotification);
 
     }
@@ -69,7 +85,7 @@ public class NotificationsService implements INotificationsService {
             Notification note = mapper.readValue(message.getBody(), Notification.class);
             return Mono.just(note);
         } catch (IOException ex) {
-            log.error("ERROR: Could new deserialize message");
+            log.error("ERROR: Could new deserialize message {}", message.getBody());
             return Mono.empty();
         }
     }
