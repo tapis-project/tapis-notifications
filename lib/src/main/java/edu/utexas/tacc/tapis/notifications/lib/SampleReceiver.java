@@ -11,10 +11,11 @@ public class SampleReceiver {
     private static final NotificationsService notificationsService = new NotificationsService();
 
     public static void main(String[] args) throws Exception{
-      notificationsService.streamNotifications("#")
-          .subscribeOn(Schedulers.newBoundedElastic(8, 100, "receiver"))
-          .log()
-          .subscribe();
+
+        notificationsService.streamNotifications("#")
+            .subscribeOn(Schedulers.newBoundedElastic(8, 100, "receiver"))
+            .log()
+            .subscribe();
     }
 
 

@@ -12,7 +12,7 @@
     <artifactId>api</artifactId>
 
     <properties>
-        <tyrus.version>1.12</tyrus.version>
+
     </properties>
     <dependencies>
         <dependency>
@@ -26,10 +26,27 @@
             <version>${tyrus.version}</version>
         </dependency>
         <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>${javax.servelet.version}</version>
+        </dependency>
+        <dependency>
             <groupId>edu.utexas.tacc.tapis</groupId>
             <artifactId>lib</artifactId>
-            <version>${parent.version}</version>
+            <version>${project.parent.version}</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>io.projectreactor</groupId>
+            <artifactId>reactor-test</artifactId>
+            <scope>test</scope>
+            <version>${reactor-test.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.projectreactor.rabbitmq</groupId>
+            <artifactId>reactor-rabbitmq</artifactId>
+            <version>${reactor-rabbitmq.version}</version>
+        </dependency>
+
     </dependencies>
 </project>
