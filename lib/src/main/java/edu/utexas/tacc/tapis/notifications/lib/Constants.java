@@ -5,7 +5,7 @@ import reactor.core.publisher.Flux;
 
 public class Constants {
 
-    public static final String exchangeFormat = "{tenant}.{serviceName}.{actionName}.{UUID}";
+    public static final String exchangeFormat = "{tenant}.{serviceName}.{actionName}.{UUID}.{endUser}";
     public static final String EXCHANGE_NAME = "tapis.notifications";
 
 

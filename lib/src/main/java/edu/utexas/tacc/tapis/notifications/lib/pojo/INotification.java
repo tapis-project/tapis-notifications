@@ -18,7 +18,7 @@ public interface INotification {
      * username of the END USER who should recieve the message
      * @return
      */
-    String getUsername();
+    String getRecipient();
 
     /**
      * Get the username of the user who created the notification. This will always be a

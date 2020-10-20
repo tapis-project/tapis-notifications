@@ -12,7 +12,7 @@ public class SampleReceiver {
 
     public static void main(String[] args) throws Exception{
 
-        notificationsService.streamNotifications("#")
+        notificationsService.streamNotifications("*.files.*")
             .subscribeOn(Schedulers.newBoundedElastic(8, 100, "receiver"))
             .log()
             .subscribe();

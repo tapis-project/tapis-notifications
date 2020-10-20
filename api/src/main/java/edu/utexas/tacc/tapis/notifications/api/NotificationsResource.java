@@ -4,7 +4,6 @@ package edu.utexas.tacc.tapis.notifications.api;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.utexas.tacc.tapis.notifications.lib.TapisObjectMapper;
 import edu.utexas.tacc.tapis.notifications.lib.NotificationsService;
-import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.scheduler.Scheduler;
@@ -18,8 +17,8 @@ import javax.websocket.server.ServerEndpoint;
 import java.util.HashSet;
 import java.util.Set;
 
-@Service
-@ServerEndpoint(value = "/notifications", configurator = AppConfig.class)
+
+@ServerEndpoint(value = "/notifications?serviceName&uuid", configurator = AppConfig.class)
 public class NotificationsResource {
 
     private static final Logger log = LoggerFactory.getLogger(NotificationsResource.class);
@@ -31,7 +30,7 @@ public class NotificationsResource {
     // {tenant}.files.transfers.{UUID}
     // {tenant}.jobs.executions.{UUID}
 
-    private String exchangeFormat = "{serviceName}.{actionName}.{UUID}";
+    private String exchangeFormat = "{tenant}.{serviceName}.{actionName}.{UUID}";
 
 
     @Inject

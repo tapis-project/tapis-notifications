@@ -6,18 +6,18 @@ public class Notification implements INotification {
 
     private String tenant;
     private Instant created;
-    private String username;
+    private String recipient;
     private String creator;
     private String body;
     private String level;
-
+    private String eventType; //FILE_TRANSFER_PROGRESS
 
 
     public Notification(){}
 
     public Notification(String tenant, String username, String creator, String body, String level) {
         this.tenant = tenant;
-        this.username = username;
+        this.recipient = username;
         this.creator = creator;
         this.body = body;
         this.level = level;
@@ -31,8 +31,8 @@ public class Notification implements INotification {
     }
 
     @Override
-    public String getUsername() {
-        return username;
+    public String getRecipient() {
+        return recipient;
     }
 
     @Override
@@ -59,8 +59,8 @@ public class Notification implements INotification {
         this.created = created;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public void setRecipient(String recipient) {
+        this.recipient = recipient;
     }
 
     public void setCreator(String creator) {
@@ -84,7 +84,7 @@ public class Notification implements INotification {
         return "Notification{" +
             "tenant='" + tenant + '\'' +
             ", created=" + created +
-            ", username='" + username + '\'' +
+            ", username='" + recipient + '\'' +
             ", creator='" + creator + '\'' +
             ", body='" + body + '\'' +
             ", level='" + level + '\'' +

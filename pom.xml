@@ -81,6 +81,7 @@
     <modules>
         <module>api</module>
         <module>lib</module>
+        <module>frontend</module>
     </modules>
 </project>
 
