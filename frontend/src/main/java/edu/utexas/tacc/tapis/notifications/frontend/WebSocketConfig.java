@@ -32,27 +32,4 @@ public class WebSocketConfig implements WebSocketConfigurer {
 		registry.addHandler(new SocketHandler(), "/");
 	}
 
-
-	@Override
-	public void configureClientInboundChannel(ChannelRegistration registration) {
-		registration.interceptors(new ChannelInterceptorAdapter() {
-
-			@Override
-			public Message<?> preSend(Message<?> message, MessageChannel channel) {
-				MessageHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, MessageHeaderAccessor.class);
-
-				if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-					String authToken = accessor.getFirstNativeHeader("Authentication");
-					String jwt = JwtUtils.resolveToken(authToken);
-					if (jwtTokenProvider.validateToken(jwt)) {
-						Authentication authentication = jwtTokenProvider.getAuthentication(jwt);
-						accessor.setUser(authentication);
-						String itemId = accessor.getFirstNativeHeader("item_id");
-						accessor.setDestination("/topic" + privateChatService.getChannelId(itemId, authentication.getName()));
-						logger.info(accessor.getDestination()); //ex: /topic/chat/3434/chat_with/user3797474342423
-					}
-				}
-				return message;
-			}
-		});
-	}
+}
