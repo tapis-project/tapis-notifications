@@ -1,8 +1,13 @@
-package edu.utexas.tacc.tapis.notifications.frontend;
+package edu.utexas.tacc.tapis.notifications.websockets;
 
 import io.jsonwebtoken.*;
 
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
 import java.util.Objects;
 
 public class TapisJWTValidator {
@@ -11,6 +16,19 @@ public class TapisJWTValidator {
 
     public TapisJWTValidator(String encodedJWT) {
         this.encodedJWT = encodedJWT;
+    }
+
+    private PublicKey decodePublicKeyString(String encodedPublicKey) throws Exception {
+        byte[] publicBytes = Base64.getDecoder().decode(encodedPublicKey);
+        X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicBytes);
+        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+        PublicKey publicKey = keyFactory.generatePublic(keySpec);
+        return publicKey;
+    }
+
+    public Jws<Claims> validate(String publicKey) throws Exception {
+       PublicKey key = decodePublicKeyString(publicKey);
+       return validate(key);
     }
 
     public Jws<Claims> validate(PublicKey publicKey) throws JwtException {

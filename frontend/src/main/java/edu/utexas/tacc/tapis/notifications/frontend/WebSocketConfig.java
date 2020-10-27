@@ -1,15 +1,13 @@
 package edu.utexas.tacc.tapis.notifications.frontend;
 
+import edu.utexas.tacc.tapis.sharedapi.security.ITenantManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.messaging.Message;
-import org.springframework.messaging.MessageChannel;
-import org.springframework.messaging.simp.config.ChannelRegistration;
-import org.springframework.messaging.simp.config.MessageBrokerRegistry;
-import org.springframework.messaging.support.ChannelInterceptorAdapter;
-import org.springframework.messaging.support.MessageHeaderAccessor;
-import org.springframework.web.socket.config.annotation.*;
+import org.springframework.web.socket.config.annotation.EnableWebSocket;
+import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
+import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
 @Configuration
 @EnableWebSocket
@@ -17,19 +15,13 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
 	private final static Logger logger = LoggerFactory.getLogger(WebSocketConfig.class.getName());
 
-//	@Autowired
-//	private JwtTokenProvider jwtTokenProvider;
-//
-//	@Autowired
-//	private PrivateChatService privateChatService;
-//
-//	private static final String MESSAGE_PREFIX = "/topic";
-//	private static final String END_POINT = "/chat";
-//	private static final String APPLICATION_DESTINATION_PREFIX = "/live";
+	@Autowired
+	ITenantManager tenantManager;
 
 	@Override
 	public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-		registry.addHandler(new SocketHandler(), "/");
+		registry.addHandler(new SocketHandler(), "/")
+			.setHandshakeHandler(new JWTAuthenticationHandshakeHandler(tenantManager));
 	}
 
 }

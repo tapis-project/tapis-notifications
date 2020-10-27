@@ -1,7 +1,9 @@
 package edu.utexas.tacc.tapis.notifications.frontend;
 
+import edu.utexas.tacc.tapis.notifications.lib.NotificationsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -20,6 +22,9 @@ public class SocketHandler extends TextWebSocketHandler {
     private static final Logger log = LoggerFactory.getLogger(TextWebSocketHandler.class);
 
     ConcurrentHashMap<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
+
+    @Autowired
+    NotificationsService notificationsService;
 
     @Override
     public void handleTextMessage(WebSocketSession session, TextMessage message) {
