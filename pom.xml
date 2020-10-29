@@ -7,7 +7,7 @@
     <parent>
         <groupId>edu.utexas.tacc.tapis</groupId>
         <artifactId>tapis-bom</artifactId>
-        <version>[1.11,2.0)</version>
+        <version>1.11.26-SNAPSHOT</version>
     </parent>
 
     <artifactId>notifications</artifactId>
@@ -15,67 +15,35 @@
     <version>1.0</version>
 
     <properties>
-        <tyrus.version>1.12</tyrus.version>
-        <javax.servelet.version>4.0.1</javax.servelet.version>
-        <tapis-client-java.version>[1.11,2.0)</tapis-client-java.version>
-        <tapis-shared.version>[1.11,2.0)</tapis-shared.version>
-        <javax.websockets.version>1.1</javax.websockets.version>
-        <javax.validation.version>2.0.1.Final</javax.validation.version>
-        <hk2.version>2.6.1</hk2.version>
-        <slf4j.version>1.7.30</slf4j.version>
-        <reactor-test.version>3.2.3.RELEASE</reactor-test.version>
-        <reactor-rabbitmq.version>1.4.4.RELEASE</reactor-rabbitmq.version>
-        <reactor-core.version>3.3.10.RELEASE</reactor-core.version>
-        <undertow.version>2.2.2.Final</undertow.version>
+        <tapis-shared-java.version>1.11.36-SNAPSHOT</tapis-shared-java.version>
         <skipITs>true</skipITs>
     </properties>
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-                <configuration>
-                    <mainClass>edu.utexas.tacc.tapis.notifications.frontend.Application</mainClass>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-dependencies</artifactId>
-                <version>2.3.4.RELEASE</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
     <dependencies>
-
         <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-annotations</artifactId>
+            <groupId>edu.utexas.tacc.tapis</groupId>
+            <artifactId>tapis-shared-notifications</artifactId>
+            <version>${tapis-shared-java.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.swagger.core.v3</groupId>
-            <artifactId>swagger-jaxrs2</artifactId>
+            <groupId>org.hibernate.validator</groupId>
+            <artifactId>hibernate-validator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish</groupId>
+            <artifactId>jakarta.el</artifactId>
         </dependency>
         <dependency>
             <groupId>org.glassfish.hk2</groupId>
             <artifactId>hk2-utils</artifactId>
-            <version>${hk2.version}</version>
         </dependency>
         <dependency>
             <groupId>org.glassfish.hk2</groupId>
             <artifactId>hk2-api</artifactId>
-            <version>${hk2.version}</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>${slf4j.version}</version>
+            <artifactId>slf4j-api</artifactId>
         </dependency>
         <dependency>
             <!-- There are only test dependencies on testng -->
@@ -87,24 +55,20 @@
             <groupId>io.projectreactor</groupId>
             <artifactId>reactor-test</artifactId>
             <scope>test</scope>
-            <version>${reactor-test.version}</version>
         </dependency>
         <dependency>
             <groupId>io.projectreactor.rabbitmq</groupId>
             <artifactId>reactor-rabbitmq</artifactId>
-            <version>${reactor-rabbitmq.version}</version>
         </dependency>
         <dependency>
             <groupId>io.projectreactor</groupId>
             <artifactId>reactor-core</artifactId>
-            <version>${reactor-core.version}</version>
         </dependency>
 
     </dependencies>
 
     <modules>
         <module>lib</module>
-        <module>frontend</module>
         <module>websockets</module>
     </modules>
 </project>

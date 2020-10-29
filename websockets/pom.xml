@@ -17,36 +17,28 @@
             <version>${project.parent.version}</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>edu.utexas.tacc.tapis</groupId>
+            <artifactId>tapis-shared-api</artifactId>
+            <version>${tapis-shared-java.version}</version>
+        </dependency>
+
         <!-- Undertow -->
         <dependency>
             <groupId>io.undertow</groupId>
             <artifactId>undertow-core</artifactId>
-            <version>${undertow.version}</version>
         </dependency>
         <dependency>
             <groupId>io.undertow</groupId>
             <artifactId>undertow-servlet</artifactId>
-            <version>${undertow.version}</version>
         </dependency>
         <dependency>
             <groupId>io.undertow</groupId>
             <artifactId>undertow-websockets-jsr</artifactId>
-            <version>${undertow.version}</version>
         </dependency>
         <dependency>
             <groupId>javax.websocket</groupId>
             <artifactId>javax.websocket-api</artifactId>
-            <version>1.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish.jersey.containers.glassfish</groupId>
-            <artifactId>jersey-gf-cdi</artifactId>
-            <version>2.14</version>
-        </dependency>
-        <dependency>
-            <groupId>edu.utexas.tacc.tapis</groupId>
-            <artifactId>tapis-shared-api</artifactId>
-            <version>${tapis-shared.version}</version>
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
@@ -57,9 +49,8 @@
             <artifactId>jjwt-impl</artifactId>
         </dependency>
         <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-            <version>${javax.servelet.version}</version>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
         </dependency>
     </dependencies>
 
