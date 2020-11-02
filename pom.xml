@@ -68,7 +68,6 @@
     </dependencies>
 
     <modules>
-        <module>lib</module>
         <module>websockets</module>
     </modules>
 </project>

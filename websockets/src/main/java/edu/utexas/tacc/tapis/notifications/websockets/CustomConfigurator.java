@@ -6,7 +6,6 @@ import javax.websocket.server.HandshakeRequest;
 import javax.websocket.server.ServerEndpointConfig;
 import javax.websocket.server.ServerEndpointConfig.Configurator;
 
-import edu.utexas.tacc.tapis.notifications.lib.NotificationsService;
 import edu.utexas.tacc.tapis.sharedapi.security.ITenantManager;
 import edu.utexas.tacc.tapis.sharedapi.security.TenantManager;
 import org.glassfish.hk2.api.ServiceLocator;

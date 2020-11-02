@@ -1,30 +1,33 @@
 package edu.utexas.tacc.tapis.notifications.websockets;
 
-import edu.utexas.tacc.tapis.notifications.lib.NotificationsService;
-import edu.utexas.tacc.tapis.sharedapi.security.TenantManager;
 import io.undertow.Undertow;
 import io.undertow.servlet.Servlets;
-import io.undertow.servlet.api.*;
+import io.undertow.servlet.api.DeploymentInfo;
+import io.undertow.servlet.api.DeploymentManager;
+import io.undertow.servlet.api.FilterInfo;
+import io.undertow.servlet.api.InstanceFactory;
+import io.undertow.servlet.api.InstanceHandle;
 import io.undertow.websockets.jsr.WebSocketDeploymentInfo;
 import org.glassfish.hk2.api.ServiceLocator;
-import org.glassfish.hk2.utilities.ServiceLocatorUtilities;
-import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.OptionMap;
 import org.xnio.Xnio;
 import org.xnio.XnioWorker;
+import reactor.core.scheduler.Schedulers;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.Filter;
 
 import static io.undertow.servlet.Servlets.defaultContainer;
 
-public class Application {
-    private static final Logger log = LoggerFactory.getLogger(Application.class);
+public class WebsocketApplication {
+    private static final Logger log = LoggerFactory.getLogger(WebsocketApplication.class);
 
     private static final int port = 8080;
 
+
+    // Internal class just to manage the injected dependencies in the AuthFilter
     private static class FilterInstanceFactory implements InstanceFactory<Filter> {
 
         private final Filter filter;
@@ -49,20 +52,16 @@ public class Application {
 
     public static void main(String[] args) throws Exception {
 
-        ServiceLocator serviceLocator = ServiceLocatorUtilities.createAndPopulateServiceLocator();
-        ServiceLocatorUtilities.enableImmediateScope(serviceLocator);
-        ServiceLocatorUtilities.bind(serviceLocator, new AbstractBinder() {
+        ServiceLocator serviceLocator = Locator.getInstance();
 
-            @Override
-            protected void configure() {
-                bind(TenantManager.getInstance("https://master.tapis.io/v3/tenants/")).to(TenantManager.class);
-                bindAsContract(AuthFilter.class);
-                bind(Application.class).to(Application.class);
-                bind(UserEndpoint.class).to(UserEndpoint.class);
-                bind(NotificationsService.class).to(NotificationsService.class);
-            }
-        });
 
+        //Fire up  a dispatcher
+        MessageDispatcher dispatcher = serviceLocator.getService(MessageDispatcher.class);
+        dispatcher.dispatchMessages()
+            .subscribeOn(Schedulers.boundedElastic())
+            .subscribe();
+
+        //fire up the websockets application
         final Xnio xnio = Xnio.getInstance("nio", Undertow.class.getClassLoader());
         final XnioWorker xnioWorker = xnio.createWorker(OptionMap.builder().getMap());
 
@@ -76,7 +75,7 @@ public class Application {
 
 
         DeploymentInfo deploymentInfo = Servlets.deployment()
-            .setClassLoader(Application.class.getClassLoader())
+            .setClassLoader(WebsocketApplication.class.getClassLoader())
             .setContextPath("/")
             .setDeploymentName("notifications")
             .addFilter(new FilterInfo("accessTokenFilter", authFilter.getClass(), filterFactory))
