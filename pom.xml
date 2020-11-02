@@ -7,7 +7,7 @@
     <parent>
         <groupId>edu.utexas.tacc.tapis</groupId>
         <artifactId>tapis-bom</artifactId>
-        <version>1.11.26-SNAPSHOT</version>
+        <version>1.11.26</version>
     </parent>
 
     <artifactId>notifications</artifactId>
