@@ -53,13 +53,12 @@ public class WebsocketApplication {
     public static void main(String[] args) throws Exception {
 
         ServiceLocator serviceLocator = Locator.getInstance();
-
-
-        //Fire up  a dispatcher
-        MessageDispatcher dispatcher = serviceLocator.getService(MessageDispatcher.class);
-        dispatcher.dispatchMessages()
-            .subscribeOn(Schedulers.boundedElastic())
-            .subscribe();
+//
+//        //Fire up  a dispatcher
+//        MessageDispatcher dispatcher = serviceLocator.getService(MessageDispatcher.class);
+//        dispatcher.dispatchMessages()
+//            .subscribeOn(Schedulers.boundedElastic())
+//            .subscribe();
 
         //fire up the websockets application
         final Xnio xnio = Xnio.getInstance("nio", Undertow.class.getClassLoader());

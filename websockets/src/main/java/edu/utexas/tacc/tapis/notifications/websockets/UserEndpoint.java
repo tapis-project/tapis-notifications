@@ -9,7 +9,8 @@ import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
 
 @ServerEndpoint(
-    value = "/v3/notifications"
+    value = "/v3/notifications",
+    configurator = CustomConfigurator.class
 )
 public class UserEndpoint {
 

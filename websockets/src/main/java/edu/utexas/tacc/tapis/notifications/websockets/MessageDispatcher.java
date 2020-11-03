@@ -2,6 +2,7 @@ package edu.utexas.tacc.tapis.notifications.websockets;
 
 
 import edu.utexas.tacc.tapis.shared.notifications.Notification;
+import edu.utexas.tacc.tapis.shared.notifications.NotificationMechanism;
 import edu.utexas.tacc.tapis.shared.notifications.TapisNotificationsClient;
 import org.jvnet.hk2.annotations.Service;
 import reactor.core.publisher.Flux;
@@ -19,7 +20,7 @@ import java.io.IOException;
 @Service
 public class MessageDispatcher {
 
-    private TapisNotificationsClient notificationsClient;
+    private final TapisNotificationsClient notificationsClient;
 
     @Inject
     public MessageDispatcher (TapisNotificationsClient notificationsClient) {
@@ -37,17 +38,38 @@ public class MessageDispatcher {
             .flatMap(this::sendToUser);
     }
 
-
     /**
-     *
-     * @throws IOException
+     * Puts a message in the users notifications message queue, from which they will get it via websockets
+     * @param notification
+     * @return
      */
     public Mono<Void> sendToUser(Notification notification) {
-        String routingKey = String.format("%s.%s", notification.getTenant(), notification.getRecipient());
+        if (notification.getNotificationMechanism() != null) {
+            sendNotificationViaMechanism(notification);
+        }
         return notificationsClient.sendUserNotificationAsync(notification);
     }
 
 
+    private void sendNotificationViaMechanism(Notification notification) {
+        NotificationMechanism mechanism = notification.getNotificationMechanism();
+        if (notification.getNotificationMechanism() != null && mechanism.getMechanism().equals("email")) {
+            sendEmail(mechanism.getEmailAddress());
+        }
+
+        if (mechanism.getMechanism().equals("webhook")) {
+            sendWebhook(mechanism.getWebhookURL());
+        }
+
+    }
+
+    private void sendEmail(String emailAddress) {
+
+    }
+
+    private void sendWebhook(String webhookURL) {
+
+    }
 
 
 

@@ -29,7 +29,7 @@ public class AuthFilter implements Filter {
 
     private TenantManager tenantManager;
 
-    public AuthFilter(){};
+    public AuthFilter(){}
 
     @Inject
     public AuthFilter(TenantManager tenantManager){
@@ -76,15 +76,6 @@ public class AuthFilter implements Filter {
             returnForbiddenError(response, "Invalid access token");
         }
 
-        // Token is good, create an AuthenticatedUser and add it to the request.
-
-
-//        Optional<String> optionalUsername = authenticator.getUsernameFromToken(token);
-//        if (optionalUsername.isPresent()) {
-//            filterChain.doFilter(new AuthenticatedRequest(request, optionalUsername.get()), servletResponse);
-//        } else {
-//            returnForbiddenError(response, "Invalid access token");
-//        }
     }
 
     private void returnForbiddenError(HttpServletResponse response, String message) throws IOException {
