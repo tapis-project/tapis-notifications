@@ -17,7 +17,7 @@ public class Locator {
             AbstractBinder binder = new AbstractBinder() {
                 @Override
                 protected void configure() {
-                    bind(TenantManager.getInstance("https://master.tapis.io/v3/tenants/")).to(TenantManager.class);
+                    bind(TenantManager.getInstance("https://dev.develop.tapis.io/")).to(TenantManager.class);
                     bindAsContract(AuthFilter.class);
                     bindAsContract(WebsocketApplication.class);
                     bindAsContract(UserEndpoint.class);

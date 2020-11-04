@@ -1,12 +1,13 @@
 package edu.utexas.tacc.tapis.notifications.websockets;
 
 import edu.utexas.tacc.tapis.sharedapi.security.AuthenticatedUser;
-import edu.utexas.tacc.tapis.sharedapi.security.ITenantManager;
 import edu.utexas.tacc.tapis.sharedapi.security.TenantManager;
 import edu.utexas.tacc.tapis.tenants.client.gen.model.Tenant;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import org.jvnet.hk2.annotations.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.servlet.Filter;
@@ -21,13 +22,23 @@ import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.security.Principal;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
+
+/**
+ *
+ */
 @Service
 @WebFilter("/v3/notifications/*")
 public class AuthFilter implements Filter {
 
+    private final String WS_AUTH_HEADER = "Sec-Websocket-Protocol";
     private TenantManager tenantManager;
+    private static final Logger log = LoggerFactory.getLogger(AuthFilter.class);
+
 
     public AuthFilter(){}
 
@@ -46,8 +57,25 @@ public class AuthFilter implements Filter {
         HttpServletRequest request = (HttpServletRequest) servletRequest;
         HttpServletResponse response = (HttpServletResponse) servletResponse;
 
-        String encodedJWT = request.getHeader("x-tapis-token");
+        Map<String, String> headers = Collections.list(request.getHeaderNames())
+            .stream()
+            .collect(Collectors.toMap(h -> h, request::getHeader));
 
+        log.info(headers.toString());
+
+
+        // For browsers, you cant set a custom header when instantiating a
+        // websocket connection, but the Sec-Websocket-Protocol header can be set
+        // like this: webSocket = new Websocket("wss://tapis.io/v3/notifications, {jwt})
+        // That places the JWT in the header.
+        String encodedJWT;
+        encodedJWT = request.getHeader("x-tapis-token");
+        if (encodedJWT == null || encodedJWT.trim().isEmpty()) {
+            encodedJWT = request.getHeader(WS_AUTH_HEADER);
+            response.setHeader(WS_AUTH_HEADER, encodedJWT);
+        }
+
+        // If neither are set, bounce the connection.
         if (encodedJWT == null || encodedJWT.trim().isEmpty()) {
             returnForbiddenError(response, "An access token is required to connect");
             return;
@@ -82,10 +110,10 @@ public class AuthFilter implements Filter {
         response.sendError(HttpServletResponse.SC_UNAUTHORIZED, message);
     }
 
-    @Override
-    public void destroy() {
-
-    }
+//    @Override
+//    public void destroy() {
+//
+//    }
 
     private static class AuthenticatedRequest extends HttpServletRequestWrapper {
 
