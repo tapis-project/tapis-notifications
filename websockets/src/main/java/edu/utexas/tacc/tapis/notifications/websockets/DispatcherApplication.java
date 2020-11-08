@@ -19,6 +19,7 @@ public class DispatcherApplication {
             protected void configure() {
                 bind(TenantManager.getInstance("https://master.tapis.io/v3/tenants/")).to(TenantManager.class);
                 bindAsContract(MessageDispatcher.class);
+                bindAsContract(UserNotificationService.class);
                 bind(TapisNotificationsClient.class).to(TapisNotificationsClient.class);
             }
         });
@@ -27,6 +28,7 @@ public class DispatcherApplication {
 
         dispatcher.dispatchMessages()
             .subscribeOn(Schedulers.boundedElastic())
+            .log()
             .subscribe();
     }
 }

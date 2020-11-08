@@ -10,7 +10,7 @@ import javax.websocket.server.ServerEndpointConfig.Configurator;
  */
 public class CustomConfigurator extends Configurator
 {
-    private ServiceLocator serviceLocator;
+    private final ServiceLocator serviceLocator;
 
     public CustomConfigurator() {
         serviceLocator = Locator.getInstance();

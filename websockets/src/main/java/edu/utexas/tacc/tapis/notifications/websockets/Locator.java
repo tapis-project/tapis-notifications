@@ -19,10 +19,13 @@ public class Locator {
                 protected void configure() {
                     bind(TenantManager.getInstance("https://dev.develop.tapis.io/")).to(TenantManager.class);
                     bindAsContract(AuthFilter.class);
+                    bindAsContract(CustomConfigurator.class);
                     bindAsContract(WebsocketApplication.class);
                     bindAsContract(UserEndpoint.class);
                     bindAsContract(TapisNotificationsClient.class);
+                    bindAsContract(UserNotificationService.class);
                     bindAsContract(MessageDispatcher.class);
+                    bindAsContract(SessionCache.class);
                 }
             };
 

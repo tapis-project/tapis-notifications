@@ -5,6 +5,8 @@ import edu.utexas.tacc.tapis.shared.notifications.Notification;
 import edu.utexas.tacc.tapis.shared.notifications.NotificationMechanism;
 import edu.utexas.tacc.tapis.shared.notifications.TapisNotificationsClient;
 import org.jvnet.hk2.annotations.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -20,10 +22,14 @@ import java.io.IOException;
 @Service
 public class MessageDispatcher {
 
+    private static final Logger log = LoggerFactory.getLogger(MessageDispatcher.class);
+
     private final TapisNotificationsClient notificationsClient;
+    private final UserNotificationService userNotificationService;
 
     @Inject
-    public MessageDispatcher (TapisNotificationsClient notificationsClient) {
+    public MessageDispatcher (TapisNotificationsClient notificationsClient, UserNotificationService userNotificationService) {
+        this.userNotificationService = userNotificationService;
         this.notificationsClient = notificationsClient;
     }
 
@@ -47,7 +53,7 @@ public class MessageDispatcher {
         if (notification.getNotificationMechanism() != null) {
             sendNotificationViaMechanism(notification);
         }
-        return notificationsClient.sendUserNotificationAsync(notification);
+        return userNotificationService.sendUserNotificationAsync(notification);
     }
 
 

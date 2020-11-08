@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import org.xnio.OptionMap;
 import org.xnio.Xnio;
 import org.xnio.XnioWorker;
-import reactor.core.scheduler.Schedulers;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.Filter;
@@ -50,17 +49,14 @@ public class WebsocketApplication {
     }
 
 
-    public static void main(String[] args) throws Exception {
-
+    public static void main(String[] args) throws Exception{
         ServiceLocator serviceLocator = Locator.getInstance();
-//
-//        //Fire up  a dispatcher
-//        MessageDispatcher dispatcher = serviceLocator.getService(MessageDispatcher.class);
-//        dispatcher.dispatchMessages()
-//            .subscribeOn(Schedulers.boundedElastic())
-//            .subscribe();
+        buildAndStartServer(serviceLocator);
+    }
 
-        //fire up the websockets application
+    public static void buildAndStartServer(ServiceLocator serviceLocator) throws Exception {
+
+
         final Xnio xnio = Xnio.getInstance("nio", Undertow.class.getClassLoader());
         final XnioWorker xnioWorker = xnio.createWorker(OptionMap.builder().getMap());
 
@@ -74,7 +70,7 @@ public class WebsocketApplication {
 
 
         DeploymentInfo deploymentInfo = Servlets.deployment()
-            .setClassLoader(WebsocketApplication.class.getClassLoader())
+            .setClassLoader(userEndpoint.getClass().getClassLoader())
             .setContextPath("/")
             .setDeploymentName("notifications")
             .addFilter(new FilterInfo("accessTokenFilter", authFilter.getClass(), filterFactory))
@@ -86,7 +82,7 @@ public class WebsocketApplication {
 
         log.info("Starting application deployment");
         Undertow server = Undertow.builder()
-            .addHttpListener(8080, "localhost")
+            .addHttpListener(port, "localhost")
             .setHandler(manager.start())
             .build();
         server.start();
