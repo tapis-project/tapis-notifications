@@ -2,12 +2,17 @@
 <html>
 <head>
     <title>Testing websockets</title>
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
 </head>
 <body>
+<h2>Tapis Websockets</h2>
 <div id="messages"></div>
 <script type="text/javascript">
-    var webSocket =
-      new WebSocket('ws://localhost:8080/byteslounge/websocket');
+
+    var jwt = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJqdGkiOiI1ZDA3ZTU5Yy0wYzUxLTQwN2UtOWYwYi1hYTUxZTQ0MmMyZDUiLCJpc3MiOiJodHRwczovL2Rldi5kZXZlbG9wLnRhcGlzLmlvL3YzL3Rva2VucyIsInN1YiI6InRlc3R1c2VyMkBkZXYiLCJ0YXBpcy90ZW5hbnRfaWQiOiJkZXYiLCJ0YXBpcy90b2tlbl90eXBlIjoiYWNjZXNzIiwidGFwaXMvZGVsZWdhdGlvbiI6ZmFsc2UsInRhcGlzL2RlbGVnYXRpb25fc3ViIjpudWxsLCJ0YXBpcy91c2VybmFtZSI6InRlc3R1c2VyMiIsInRhcGlzL2FjY291bnRfdHlwZSI6InVzZXIiLCJleHAiOjE2MDQ5NTIwMDUsInRhcGlzL2NsaWVudF9pZCI6bnVsbCwidGFwaXMvZ3JhbnRfdHlwZSI6InBhc3N3b3JkIn0.fUlRXSEpf6n7CHMr4ssQ7kbdeW2eRP583o2K9cddcI44PmccE9jOThlbN1S9SfAu6BajiL-zfaM2lsrzaRLnfL2vDzkxxgXBdTjuToZRthRr6cCvn0X0ZSSsTKxQdO5mqTgOyf696HUQr99WmaVtHSqws8BLykL_9gEauADtyLLtnEgpsQOyIol3ggr0PqRiCS5WVOCvuGwysEJsxzNyf_8HyInEqr0bNo8cvdBvdvseZ266fAkySA_ltAM6uJG5AUvw-dFEx3yPHv43xHd6JTNipAhRCB8AKzUSEgbjsO7dd1OjJ4LkfINyDo3urmjoTxJaFKFtba7rFyF5tCdkmQ"
+    var webSocket =  new WebSocket('ws://localhost:8080/v3/notifications', jwt);
 
     webSocket.onerror = function(event) {
       onError(event)
@@ -22,8 +27,11 @@
     };
 
     function onMessage(event) {
-      document.getElementById('messages').innerHTML
-        += '<br />Received message: ' + event.data;
+      console.log(event)
+      var message = JSON.parse(event.data)
+      var text = `<div class="alert alert-secondary" role="alert"> <pre><code>${JSON.stringify(message, null, 2)} </div>`
+
+      document.getElementById('messages').innerHTML += text
     }
 
     function onOpen(event) {

@@ -69,6 +69,7 @@ public class UserEndpoint {
 
     @OnClose
     public void onClose(Session session) {
+        sessionCache.removeSession(session);
         if (subscription != null) subscription.dispose();
     }
 }

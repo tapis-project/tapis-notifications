@@ -16,6 +16,7 @@
 
     <properties>
         <tapis-shared-java.version>1.11.36-SNAPSHOT</tapis-shared-java.version>
+        <json-schema-validator.version>2.2.14</json-schema-validator.version>
         <skipITs>true</skipITs>
     </properties>
 
@@ -64,11 +65,17 @@
             <groupId>io.projectreactor</groupId>
             <artifactId>reactor-core</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.github.java-json-tools</groupId>
+            <artifactId>json-schema-validator</artifactId>
+            <version>${json-schema-validator.version}</version>
+        </dependency>
 
     </dependencies>
 
     <modules>
         <module>websockets</module>
+        <module>api</module>
     </modules>
 </project>
 

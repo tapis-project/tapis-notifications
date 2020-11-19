@@ -1,0 +1,236 @@
+{
+  "openapi" : "3.0.1",
+  "paths" : {
+    "/v3/notifications/topics/{topicId}" : {
+      "post" : {
+        "operationId" : "sendNotification",
+        "parameters" : [ {
+          "name" : "topicId",
+          "in" : "path",
+          "description" : "ID of the topic",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          },
+          "example" : "mySuperTopic"
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateNotificationRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TapisResponseString"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/notifications/topics" : {
+      "get" : {
+        "tags" : [ "topics" ],
+        "summary" : "Get a list of all topics available to you.",
+        "operationId" : "getTopics",
+        "parameters" : [ {
+          "name" : "limit",
+          "in" : "query",
+          "description" : "pagination limit",
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 1000
+          },
+          "example" : 100
+        }, {
+          "name" : "offset",
+          "in" : "query",
+          "description" : "pagination offset",
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64",
+            "default" : 0
+          },
+          "example" : 1000
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicResponse"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Not Authenticated",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicResponse"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "Not Authorized",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicResponse"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Internal Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/application.wadl" : {
+      "get" : {
+        "operationId" : "getWadl",
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/vnd.sun.wadl+xml" : { },
+              "application/xml" : { }
+            }
+          }
+        }
+      }
+    },
+    "/application.wadl/{path}" : {
+      "get" : {
+        "operationId" : "getExternalGrammar",
+        "parameters" : [ {
+          "name" : "path",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/xml" : { }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components" : {
+    "schemas" : {
+      "TapisResponseString" : {
+        "type" : "object",
+        "properties" : {
+          "status" : {
+            "type" : "string"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "result" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "string"
+          }
+        }
+      },
+      "CreateNotificationRequest" : {
+        "type" : "object"
+      },
+      "Topic" : {
+        "type" : "object",
+        "properties" : {
+          "uuid" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "created" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "owner" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "schema" : {
+            "type" : "string",
+            "description" : "A valid JSON schema"
+          }
+        }
+      },
+      "TopicResponse" : {
+        "type" : "object",
+        "properties" : {
+          "status" : {
+            "type" : "string"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Topic"
+            }
+          },
+          "version" : {
+            "type" : "string"
+          }
+        }
+      },
+      "TapisResponseListTopic" : {
+        "type" : "object",
+        "properties" : {
+          "status" : {
+            "type" : "string"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Topic"
+            }
+          },
+          "version" : {
+            "type" : "string"
+          }
+        }
+      }
+    }
+  }
+}

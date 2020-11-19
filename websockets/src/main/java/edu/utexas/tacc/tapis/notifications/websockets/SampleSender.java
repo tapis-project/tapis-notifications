@@ -5,6 +5,7 @@ import edu.utexas.tacc.tapis.shared.notifications.TapisNotificationsClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import java.time.Duration;
 import java.util.HashMap;
@@ -20,11 +21,10 @@ public class SampleSender {
 
 
         // Sender, firing off messages every sec
-        Flux.interval(Duration.ofMillis(100))
-            .take(100)
+        Flux.interval(Duration.ofMillis(2000))
             .flatMap(tick -> {
                 Map<String, Object> body = new HashMap<>();
-                body.put("test", "value");
+                body.put("message", "Hello world!");
                 Notification note = new Notification.Builder()
                     .setTenant("dev")
                     .setRecipient("testuser2")
@@ -36,10 +36,11 @@ public class SampleSender {
 
                 return client.sendNotificationAsync("dev.files.transfers.12345", note);
             })
-            .subscribeOn(Schedulers.newBoundedElastic(8, 1, "sender"))
+            .subscribeOn(Schedulers.boundedElastic())
             .subscribe();
 
     }
+
 
 
 }

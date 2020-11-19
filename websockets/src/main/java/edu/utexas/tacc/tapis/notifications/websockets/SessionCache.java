@@ -37,4 +37,14 @@ public class SessionCache {
         return cache.get(key);
     }
 
+    public void removeSession(Session session) {
+        AuthenticatedUser user = (AuthenticatedUser) session.getUserPrincipal();
+        String key = MessageFormat.format(KEY_FORMAT, user.getTenantId(), user.getName());
+        Set<Session> userSessions = cache.get(key);
+        if (userSessions != null) {
+            userSessions.remove(session);
+            cache.put(key, userSessions);
+        }
+    }
+
 }
