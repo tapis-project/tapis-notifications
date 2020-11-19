@@ -2,6 +2,7 @@ package edu.utexas.tacc.tapis.notifications.api.resources;
 
 
 import edu.utexas.tacc.tapis.notifications.api.models.CreateNotificationRequest;
+import edu.utexas.tacc.tapis.notifications.api.models.CreateTopicRequest;
 import edu.utexas.tacc.tapis.notifications.api.models.Topic;
 import edu.utexas.tacc.tapis.sharedapi.responses.TapisResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -64,12 +65,66 @@ public class TopicsResource {
     }
 
     @POST
+    @Path("/")
+    @Operation(summary = "Create a new topic to publish message to", tags = {"topics"})
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            description = "OK"),
+        @ApiResponse(
+            responseCode = "401",
+            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            description = "Not Authenticated"),
+        @ApiResponse(
+            responseCode = "403",
+            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            description = "Not Authorized"),
+        @ApiResponse(
+            responseCode = "500",
+            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            description = "Internal Error")
+    })
+    public TapisResponse<Topic> createTopic(
+        @Context SecurityContext securityContext,
+        @Valid CreateTopicRequest topicRequest
+        ) {
+        Topic topic = new Topic();
+        TapisResponse<Topic> resp = TapisResponse.createSuccessResponse("ok", topic);
+        return resp;
+    }
+
+    @POST
     @Path("/{topicId}")
+    @Operation(summary = "Create a new Notification in the topic channel", tags = {"topics"})
     public TapisResponse<String> sendNotification(
         @Parameter(description = "ID of the topic", required = true, example = "mySuperTopic") @PathParam("topicId") String topicID,
         @Valid CreateNotificationRequest notificationRequest,
         SecurityContext securityContext
     ) {
+        return TapisResponse.createSuccessResponse("ok");
+    }
+
+    @GET
+    @Operation(summary = "Get a list of all subscriptions on this topic", tags = {"topics"})
+    @Path("/{topicId}/subscriptions")
+    public TapisResponse<String> getSubscriptions(
+        @Parameter(description = "ID of the topic", required = true, example = "mySuperTopic") @PathParam("topicId") String topicID,
+        SecurityContext securityContext
+    ) {
+        return TapisResponse.createSuccessResponse("ok");
+    }
+
+
+    @POST
+    @Operation(summary = "Create a new subscription to this topic channel", tags = {"topics"})
+    @Path("/{topicId}/subscriptions")
+    public TapisResponse<String> createSubscription(
+        @Parameter(description = "ID of the topic", required = true, example = "mySuperTopic") @PathParam("topicId") String topicID,
+        SecurityContext securityContext,
+        @Valid CreateNotificationRequest notificationRequest
+    ) {
+
         return TapisResponse.createSuccessResponse("ok");
     }
 

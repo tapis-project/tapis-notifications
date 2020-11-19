@@ -76,6 +76,7 @@
     <modules>
         <module>websockets</module>
         <module>api</module>
+        <module>lib</module>
     </modules>
 </project>
 
