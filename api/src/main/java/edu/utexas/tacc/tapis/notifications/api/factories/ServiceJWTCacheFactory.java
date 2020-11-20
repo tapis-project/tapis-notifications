@@ -1,8 +1,8 @@
 package edu.utexas.tacc.tapis.notifications.api.factories;
 
 import edu.utexas.tacc.tapis.client.shared.exceptions.TapisClientException;
-import edu.utexas.tacc.tapis.notifications.api.config.IRuntimeConfig;
-import edu.utexas.tacc.tapis.notifications.api.config.RuntimeSettings;
+import edu.utexas.tacc.tapis.notifications.lib.config.IRuntimeConfig;
+import edu.utexas.tacc.tapis.notifications.lib.config.RuntimeSettings;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.sharedapi.security.ServiceJWT;
 import edu.utexas.tacc.tapis.sharedapi.security.ServiceJWTParms;

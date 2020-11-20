@@ -1,7 +1,7 @@
 package edu.utexas.tacc.tapis.notifications.api.factories;
 
-import edu.utexas.tacc.tapis.notifications.api.config.IRuntimeConfig;
-import edu.utexas.tacc.tapis.notifications.api.config.RuntimeSettings;
+import edu.utexas.tacc.tapis.notifications.lib.config.IRuntimeConfig;
+import edu.utexas.tacc.tapis.notifications.lib.config.RuntimeSettings;
 import edu.utexas.tacc.tapis.sharedapi.security.TenantManager;
 import org.glassfish.hk2.api.Factory;
 import org.jvnet.hk2.annotations.Service;

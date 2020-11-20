@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>lib</artifactId>
+    <artifactId>notifications-lib</artifactId>
 
 
 </project>
