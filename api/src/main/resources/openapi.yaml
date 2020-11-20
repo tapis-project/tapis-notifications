@@ -30,6 +30,50 @@ paths:
           description: default response
           content:
             '*/*': {}
+  /v3/notifications/topics/{topicId}:
+    post:
+      tags:
+      - topics
+      summary: Create a new Notification in the topic channel
+      operationId: sendNotification
+      parameters:
+      - name: topicId
+        in: path
+        description: ID of the topic
+        required: true
+        schema:
+          type: string
+        example: mySuperTopic
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/CreateNotificationRequest'
+      responses:
+        200:
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/TopicResponse'
+        401:
+          description: Not Authenticated
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/TopicResponse'
+        403:
+          description: Not Authorized
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/TopicResponse'
+        500:
+          description: Internal Error
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/TopicResponse'
   /v3/notifications/topics:
     get:
       tags:
@@ -116,7 +160,7 @@ paths:
   /v3/notifications/topics/{topicId}/subscriptions:
     get:
       tags:
-      - topics
+      - subscriptions
       summary: Get a list of all subscriptions on this topic
       operationId: getSubscriptions
       parameters:
@@ -154,7 +198,7 @@ paths:
                 $ref: '#/components/schemas/TopicResponse'
     post:
       tags:
-      - topics
+      - subscriptions
       summary: Create a new subscription to this topic channel
       operationId: createSubscription
       parameters:
@@ -170,50 +214,6 @@ paths:
           '*/*':
             schema:
               $ref: '#/components/schemas/CreateSubscriptionRequest'
-      responses:
-        200:
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/TopicResponse'
-        401:
-          description: Not Authenticated
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/TopicResponse'
-        403:
-          description: Not Authorized
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/TopicResponse'
-        500:
-          description: Internal Error
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/TopicResponse'
-  /v3/notifications/topics/{topicId}:
-    post:
-      tags:
-      - topics
-      summary: Create a new Notification in the topic channel
-      operationId: sendNotification
-      parameters:
-      - name: topicId
-        in: path
-        description: ID of the topic
-        required: true
-        schema:
-          type: string
-        example: mySuperTopic
-      requestBody:
-        content:
-          '*/*':
-            schema:
-              $ref: '#/components/schemas/CreateNotificationRequest'
       responses:
         200:
           description: OK
@@ -295,6 +295,24 @@ components:
             $ref: '#/components/schemas/Topic'
         version:
           type: string
+    TapisResponseString:
+      type: object
+      properties:
+        status:
+          type: string
+        message:
+          type: string
+        result:
+          type: string
+        version:
+          type: string
+    CreateNotificationRequest:
+      required:
+      - body
+      type: object
+      properties:
+        body:
+          type: string
     TapisResponseListTopic:
       type: object
       properties:
@@ -335,17 +353,6 @@ components:
         description:
           type: string
           description: An informative description
-    TapisResponseString:
-      type: object
-      properties:
-        status:
-          type: string
-        message:
-          type: string
-        result:
-          type: string
-        version:
-          type: string
     CreateSubscriptionRequest:
       required:
       - notificationMechanisms
@@ -368,11 +375,4 @@ components:
           - QUEUE
           - ACTOR
         target:
-          type: string
-    CreateNotificationRequest:
-      required:
-      - body
-      type: object
-      properties:
-        body:
           type: string

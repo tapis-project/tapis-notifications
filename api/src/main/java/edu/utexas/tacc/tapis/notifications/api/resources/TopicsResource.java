@@ -125,7 +125,7 @@ public class TopicsResource {
     }
 
     @GET
-    @Operation(summary = "Get a list of all subscriptions on this topic", tags = {"topics"})
+    @Operation(summary = "Get a list of all subscriptions on this topic", tags = {"subscriptions"})
     @Path("/{topicId}/subscriptions")
     @ApiResponses(value = {
         @ApiResponse(
@@ -154,7 +154,7 @@ public class TopicsResource {
 
 
     @POST
-    @Operation(summary = "Create a new subscription to this topic channel", tags = {"topics"})
+    @Operation(summary = "Create a new subscription to this topic channel", tags = {"subscriptions"})
     @Path("/{topicId}/subscriptions")
     @ApiResponses(value = {
         @ApiResponse(
