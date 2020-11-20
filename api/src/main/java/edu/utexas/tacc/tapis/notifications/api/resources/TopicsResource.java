@@ -2,6 +2,7 @@ package edu.utexas.tacc.tapis.notifications.api.resources;
 
 
 import edu.utexas.tacc.tapis.notifications.api.models.CreateNotificationRequest;
+import edu.utexas.tacc.tapis.notifications.api.models.CreateSubscriptionRequest;
 import edu.utexas.tacc.tapis.notifications.api.models.CreateTopicRequest;
 import edu.utexas.tacc.tapis.notifications.api.models.Topic;
 import edu.utexas.tacc.tapis.sharedapi.responses.TapisResponse;
@@ -97,6 +98,24 @@ public class TopicsResource {
     @POST
     @Path("/{topicId}")
     @Operation(summary = "Create a new Notification in the topic channel", tags = {"topics"})
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            description = "OK"),
+        @ApiResponse(
+            responseCode = "401",
+            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            description = "Not Authenticated"),
+        @ApiResponse(
+            responseCode = "403",
+            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            description = "Not Authorized"),
+        @ApiResponse(
+            responseCode = "500",
+            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            description = "Internal Error")
+    })
     public TapisResponse<String> sendNotification(
         @Parameter(description = "ID of the topic", required = true, example = "mySuperTopic") @PathParam("topicId") String topicID,
         @Valid CreateNotificationRequest notificationRequest,
@@ -108,6 +127,24 @@ public class TopicsResource {
     @GET
     @Operation(summary = "Get a list of all subscriptions on this topic", tags = {"topics"})
     @Path("/{topicId}/subscriptions")
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            description = "OK"),
+        @ApiResponse(
+            responseCode = "401",
+            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            description = "Not Authenticated"),
+        @ApiResponse(
+            responseCode = "403",
+            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            description = "Not Authorized"),
+        @ApiResponse(
+            responseCode = "500",
+            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            description = "Internal Error")
+    })
     public TapisResponse<String> getSubscriptions(
         @Parameter(description = "ID of the topic", required = true, example = "mySuperTopic") @PathParam("topicId") String topicID,
         SecurityContext securityContext
@@ -119,10 +156,28 @@ public class TopicsResource {
     @POST
     @Operation(summary = "Create a new subscription to this topic channel", tags = {"topics"})
     @Path("/{topicId}/subscriptions")
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            description = "OK"),
+        @ApiResponse(
+            responseCode = "401",
+            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            description = "Not Authenticated"),
+        @ApiResponse(
+            responseCode = "403",
+            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            description = "Not Authorized"),
+        @ApiResponse(
+            responseCode = "500",
+            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            description = "Internal Error")
+    })
     public TapisResponse<String> createSubscription(
         @Parameter(description = "ID of the topic", required = true, example = "mySuperTopic") @PathParam("topicId") String topicID,
         SecurityContext securityContext,
-        @Valid CreateNotificationRequest notificationRequest
+        @Valid CreateSubscriptionRequest subscriptionRequest
     ) {
 
         return TapisResponse.createSuccessResponse("ok");
