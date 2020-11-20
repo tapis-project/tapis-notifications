@@ -24,6 +24,9 @@ tags:
 paths:
   /v3/notifications/health/healthcheck:
     get:
+      tags:
+      - health
+      summary: Am I alive?
       operationId: health
       responses:
         default:
@@ -313,19 +316,6 @@ components:
       properties:
         body:
           type: string
-    TapisResponseListTopic:
-      type: object
-      properties:
-        status:
-          type: string
-        message:
-          type: string
-        result:
-          type: array
-          items:
-            $ref: '#/components/schemas/Topic'
-        version:
-          type: string
     TapisResponseTopic:
       type: object
       properties:
@@ -375,4 +365,17 @@ components:
           - QUEUE
           - ACTOR
         target:
+          type: string
+    TapisResponseListTopic:
+      type: object
+      properties:
+        status:
+          type: string
+        message:
+          type: string
+        result:
+          type: array
+          items:
+            $ref: '#/components/schemas/Topic'
+        version:
           type: string

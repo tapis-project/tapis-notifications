@@ -1,6 +1,7 @@
 package edu.utexas.tacc.tapis.notifications.api.resources;
 
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 
 import javax.validation.constraints.Max;
@@ -18,6 +19,7 @@ public class Healthcheck {
 
     @GET
     @Path("/")
+    @Operation(summary = "Am I alive?", tags = {"health"})
     public Response health(
         @Context SecurityContext securityContext
     ) {
