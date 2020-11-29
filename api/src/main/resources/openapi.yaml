@@ -21,6 +21,8 @@ security:
 - Bearer: []
 tags:
 - name: topics
+- name: subscriptions
+- name: health
 paths:
   /v3/notifications/health/healthcheck:
     get:
@@ -355,16 +357,15 @@ components:
           items:
             $ref: '#/components/schemas/NotificationMechanism'
     NotificationMechanism:
+      required:
+      - mechanism
       type: object
       properties:
-        type:
+        mechanism:
           type: string
-          enum:
-          - WEBHOOK
-          - EMAIL
-          - QUEUE
-          - ACTOR
-        target:
+        webhookURL:
+          type: string
+        emailAddress:
           type: string
     TapisResponseListTopic:
       type: object

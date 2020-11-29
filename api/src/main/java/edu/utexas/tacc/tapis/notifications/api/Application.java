@@ -3,6 +3,8 @@ package edu.utexas.tacc.tapis.notifications.api;
 import edu.utexas.tacc.tapis.notifications.api.factories.ServiceJWTCacheFactory;
 import edu.utexas.tacc.tapis.notifications.api.factories.TenantCacheFactory;
 import edu.utexas.tacc.tapis.notifications.api.resources.Healthcheck;
+import edu.utexas.tacc.tapis.notifications.lib.config.IRuntimeConfig;
+import edu.utexas.tacc.tapis.notifications.lib.config.RuntimeSettings;
 import edu.utexas.tacc.tapis.sharedapi.jaxrs.filters.JWTValidateRequestFilter;
 import edu.utexas.tacc.tapis.sharedapi.security.ServiceJWT;
 import edu.utexas.tacc.tapis.sharedapi.security.TenantManager;
@@ -21,8 +23,6 @@ import javax.inject.Singleton;
 import javax.ws.rs.ApplicationPath;
 
 // The path here is appended to the context root and
-// is configured to work when invoked in a standalone
-// container (command line) and in an IDE (eclipse).
 @OpenAPIDefinition(
     info = @Info(
         title = "Tapis Notifications API",
@@ -33,6 +33,8 @@ import javax.ws.rs.ApplicationPath;
     ),
     tags = {
         @Tag(name = "topics"),
+        @Tag(name = "subscriptions"),
+        @Tag(name = "health"),
     },
     security = {
         @SecurityRequirement(name = "Bearer"),
@@ -51,9 +53,11 @@ import javax.ws.rs.ApplicationPath;
 @ApplicationPath("v3/notifications")
 public class Application extends ResourceConfig {
 
+    IRuntimeConfig runtimeConfig = RuntimeSettings.get();
+
     public Application() {
         super();
-        JWTValidateRequestFilter.setSiteId("tacc");
+        JWTValidateRequestFilter.setSiteId(runtimeConfig.getSiteId());
         JWTValidateRequestFilter.setService("notifications");
         setApplicationName("files");
         //OpenAPI jazz

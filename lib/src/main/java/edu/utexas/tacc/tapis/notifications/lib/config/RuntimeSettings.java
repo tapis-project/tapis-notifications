@@ -14,6 +14,7 @@ public class RuntimeSettings {
         protected String dbUsername = settings.getOrDefault("DB_USERNAME", "dev");
         protected String dbPassword = settings.getOrDefault("DB_PASSWORD", "dev");
         protected String dbPort = settings.getOrDefault("DB_PORT", "5432");
+        protected String rabbitMQHost = settings.getOrDefault("RABBITMQ_HOST", "localhost");
         protected String rabbitMQUsername = settings.getOrDefault("RABBITMQ_USERNAME", "dev");
         protected String rabbitMQVHost = settings.getOrDefault("RABBITMQ_VHOST", "dev");
         protected String rabbitmqPassword = settings.getOrDefault("RABBITMQ_PASSWORD", "dev");
@@ -40,6 +41,8 @@ public class RuntimeSettings {
         public String getDbPort() {
             return dbPort;
         }
+
+        public String getRabbitMQHost() { return rabbitMQHost; }
 
         public String getRabbitMQUsername() {
             return rabbitMQUsername;

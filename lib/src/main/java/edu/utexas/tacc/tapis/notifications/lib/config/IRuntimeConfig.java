@@ -6,6 +6,7 @@ public interface IRuntimeConfig {
     String getDbName();
     String getDbPassword();
     String getDbPort();
+    String getRabbitMQHost();
     String getRabbitMQUsername();
     String getRabbitMQVHost();
     String getRabbitmqPassword();

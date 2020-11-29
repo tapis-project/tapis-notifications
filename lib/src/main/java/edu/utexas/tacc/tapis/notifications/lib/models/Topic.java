@@ -1,4 +1,4 @@
-package edu.utexas.tacc.tapis.notifications.api.models;
+package edu.utexas.tacc.tapis.notifications.lib.models;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 

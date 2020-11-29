@@ -4,7 +4,7 @@ package edu.utexas.tacc.tapis.notifications.api.resources;
 import edu.utexas.tacc.tapis.notifications.api.models.CreateNotificationRequest;
 import edu.utexas.tacc.tapis.notifications.api.models.CreateSubscriptionRequest;
 import edu.utexas.tacc.tapis.notifications.api.models.CreateTopicRequest;
-import edu.utexas.tacc.tapis.notifications.api.models.Topic;
+import edu.utexas.tacc.tapis.notifications.lib.models.Topic;
 import edu.utexas.tacc.tapis.sharedapi.responses.TapisResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import javax.validation.Valid;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -23,7 +24,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import java.util.ArrayList;
 import java.util.List;
@@ -124,6 +124,36 @@ public class TopicsResource {
         return TapisResponse.createSuccessResponse("ok");
     }
 
+
+    @DELETE
+    @Path("/{topicId}")
+    @Operation(summary = "Delete a topic. Note, this will also delete any subscriptions that are attached to the topic", tags = {"topics"})
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            description = "OK"),
+        @ApiResponse(
+            responseCode = "401",
+            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            description = "Not Authenticated"),
+        @ApiResponse(
+            responseCode = "403",
+            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            description = "Not Authorized"),
+        @ApiResponse(
+            responseCode = "500",
+            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            description = "Internal Error")
+    })
+    public TapisResponse<String> deleteTopic(
+        @Parameter(description = "ID of the topic", required = true, example = "mySuperTopic") @PathParam("topicId") String topicID,
+        @Valid CreateNotificationRequest notificationRequest,
+        SecurityContext securityContext
+    ) {
+        return TapisResponse.createSuccessResponse("ok");
+    }
+
     @GET
     @Operation(summary = "Get a list of all subscriptions on this topic", tags = {"subscriptions"})
     @Path("/{topicId}/subscriptions")
@@ -182,6 +212,37 @@ public class TopicsResource {
 
         return TapisResponse.createSuccessResponse("ok");
     }
+
+    @GET
+    @Operation(summary = "Get a subscription by ID", tags = {"subscriptions"})
+    @Path("/{topicId}/subscriptions/{subscriptionId}")
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            description = "OK"),
+        @ApiResponse(
+            responseCode = "401",
+            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            description = "Not Authenticated"),
+        @ApiResponse(
+            responseCode = "403",
+            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            description = "Not Authorized"),
+        @ApiResponse(
+            responseCode = "500",
+            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            description = "Internal Error")
+    })
+    public TapisResponse<String> getSubscriptionByID(
+        @Parameter(description = "ID of the topic", required = true, example = "mySuperTopic") @PathParam("topicId") String topicID,
+        @Parameter(description = "ID of the subscription", required = true, example = "1234-123-123") @PathParam("topicId") String subscriptionID,
+        SecurityContext securityContext
+    ) {
+        return TapisResponse.createSuccessResponse("ok");
+    }
+
+
 
 
 

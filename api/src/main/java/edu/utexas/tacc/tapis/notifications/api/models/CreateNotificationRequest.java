@@ -14,4 +14,6 @@ public class CreateNotificationRequest {
     public void setBody(String body) {
         this.body = body;
     }
+
+
 }

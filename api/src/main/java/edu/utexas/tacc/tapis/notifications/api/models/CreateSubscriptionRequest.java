@@ -1,5 +1,7 @@
 package edu.utexas.tacc.tapis.notifications.api.models;
 
+import edu.utexas.tacc.tapis.notifications.lib.models.NotificationMechanism;
+
 import javax.validation.constraints.NotEmpty;
 import java.util.List;
 
