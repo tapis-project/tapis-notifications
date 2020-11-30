@@ -34,8 +34,8 @@ public class TapisNotificationsClient implements ITapisNotificationsClient {
     private static final Logger log = LoggerFactory.getLogger(TapisNotificationsClient.class);
     private final Receiver receiver;
     private final Sender sender;
-    private static final String EXCHANGE_NAME = NotificationsConstants.EXCHANGE_NAME;
-    private static final String USER_EXCHANGE_NAME = NotificationsConstants.USER_NOTIFICATIONS_EXCHANGE;
+    private static final String EXCHANGE_NAME = "tapis.notifications";
+    private static final String USER_EXCHANGE_NAME = "tapis.users.notifications";
     private static final long EXPIRATION = Duration.ofDays(7).toMillis();
 
     private static final ObjectMapper mapper = TapisObjectMapper.getMapper();

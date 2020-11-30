@@ -242,9 +242,34 @@ public class TopicsResource {
         return TapisResponse.createSuccessResponse("ok");
     }
 
-
-
-
+    @DELETE
+    @Operation(summary = "Get a subscription by ID", tags = {"subscriptions"})
+    @Path("/{topicId}/subscriptions/{subscriptionId}")
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            description = "OK"),
+        @ApiResponse(
+            responseCode = "401",
+            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            description = "Not Authenticated"),
+        @ApiResponse(
+            responseCode = "403",
+            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            description = "Not Authorized"),
+        @ApiResponse(
+            responseCode = "500",
+            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            description = "Internal Error")
+    })
+    public TapisResponse<String> deleteSubscription(
+        @Parameter(description = "ID of the topic", required = true, example = "mySuperTopic") @PathParam("topicId") String topicID,
+        @Parameter(description = "ID of the subscription", required = true, example = "1234-123-123") @PathParam("topicId") String subscriptionID,
+        SecurityContext securityContext
+    ) {
+        return TapisResponse.createSuccessResponse("ok");
+    }
 
 
 

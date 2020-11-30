@@ -24,7 +24,7 @@
     "variables" : { }
   } ],
   "security" : [ {
-    "Bearer" : [ ]
+    "x-tapis-token" : [ ]
   } ],
   "tags" : [ {
     "name" : "topics"
@@ -32,6 +32,8 @@
     "name" : "subscriptions"
   }, {
     "name" : "health"
+  }, {
+    "name" : "queues"
   } ],
   "paths" : {
     "/v3/notifications/health/healthcheck" : {
@@ -44,6 +46,200 @@
             "description" : "default response",
             "content" : {
               "*/*" : { }
+            }
+          }
+        }
+      }
+    },
+    "/v3/notifications/queues" : {
+      "get" : {
+        "tags" : [ "queues" ],
+        "summary" : "Get a listing of all queues.",
+        "operationId" : "getQueues",
+        "parameters" : [ {
+          "name" : "limit",
+          "in" : "query",
+          "description" : "pagination limit",
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 1000
+          },
+          "example" : 100
+        }, {
+          "name" : "offset",
+          "in" : "query",
+          "description" : "pagination offset",
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64",
+            "default" : 0
+          },
+          "example" : 1000
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/QueueResponse"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Not Authenticated",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/QueueResponse"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "Not Authorized",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/QueueResponse"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Internal Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/QueueResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "queues" ],
+        "summary" : "Create a new queue.",
+        "operationId" : "createQueue",
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateTopicRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/QueueResponse"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Not Authenticated",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/QueueResponse"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "Not Authorized",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/QueueResponse"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Internal Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/QueueResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/notifications/queues/{queueId}" : {
+      "delete" : {
+        "tags" : [ "queues" ],
+        "summary" : "Delete a queue.",
+        "operationId" : "deleteTopic",
+        "parameters" : [ {
+          "name" : "queueId",
+          "in" : "path",
+          "description" : "ID of the queue",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          },
+          "example" : "queuue12345"
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateNotificationRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/QueueResponse"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Not Authenticated",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/QueueResponse"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "Not Authorized",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/QueueResponse"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Internal Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/QueueResponse"
+                }
+              }
             }
           }
         }
@@ -73,6 +269,206 @@
             }
           }
         },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicResponse"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Not Authenticated",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicResponse"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "Not Authorized",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicResponse"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Internal Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "topics" ],
+        "summary" : "Delete a topic. Note, this will also delete any subscriptions that are attached to the topic",
+        "operationId" : "deleteTopic_1",
+        "parameters" : [ {
+          "name" : "topicId",
+          "in" : "path",
+          "description" : "ID of the topic",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          },
+          "example" : "mySuperTopic"
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateNotificationRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicResponse"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Not Authenticated",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicResponse"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "Not Authorized",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicResponse"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Internal Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/notifications/topics/{topicId}/subscriptions/{subscriptionId}" : {
+      "get" : {
+        "tags" : [ "subscriptions" ],
+        "summary" : "Get a subscription by ID",
+        "operationId" : "getSubscriptionByID",
+        "parameters" : [ {
+          "name" : "topicId",
+          "in" : "path",
+          "description" : "ID of the topic",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          },
+          "example" : "mySuperTopic"
+        }, {
+          "name" : "topicId",
+          "in" : "path",
+          "description" : "ID of the subscription",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          },
+          "example" : "1234-123-123"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicResponse"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Not Authenticated",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicResponse"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "Not Authorized",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicResponse"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Internal Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "subscriptions" ],
+        "summary" : "Get a subscription by ID",
+        "operationId" : "deleteSubscription",
+        "parameters" : [ {
+          "name" : "topicId",
+          "in" : "path",
+          "description" : "ID of the topic",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          },
+          "example" : "mySuperTopic"
+        }, {
+          "name" : "topicId",
+          "in" : "path",
+          "description" : "ID of the subscription",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          },
+          "example" : "1234-123-123"
+        } ],
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -406,6 +802,26 @@
   },
   "components" : {
     "schemas" : {
+      "QueueResponse" : {
+        "type" : "object",
+        "properties" : {
+          "status" : {
+            "type" : "string"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Topic"
+            }
+          },
+          "version" : {
+            "type" : "string"
+          }
+        }
+      },
       "Topic" : {
         "type" : "object",
         "properties" : {
@@ -429,52 +845,6 @@
           "schema" : {
             "type" : "string",
             "description" : "A valid JSON schema"
-          }
-        }
-      },
-      "TopicResponse" : {
-        "type" : "object",
-        "properties" : {
-          "status" : {
-            "type" : "string"
-          },
-          "message" : {
-            "type" : "string"
-          },
-          "result" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/Topic"
-            }
-          },
-          "version" : {
-            "type" : "string"
-          }
-        }
-      },
-      "TapisResponseString" : {
-        "type" : "object",
-        "properties" : {
-          "status" : {
-            "type" : "string"
-          },
-          "message" : {
-            "type" : "string"
-          },
-          "result" : {
-            "type" : "string"
-          },
-          "version" : {
-            "type" : "string"
-          }
-        }
-      },
-      "CreateNotificationRequest" : {
-        "required" : [ "body" ],
-        "type" : "object",
-        "properties" : {
-          "body" : {
-            "type" : "string"
           }
         }
       },
@@ -513,32 +883,28 @@
           }
         }
       },
-      "CreateSubscriptionRequest" : {
-        "required" : [ "notificationMechanisms" ],
+      "TapisResponseString" : {
         "type" : "object",
         "properties" : {
-          "filter" : {
+          "status" : {
             "type" : "string"
           },
-          "notificationMechanisms" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/NotificationMechanism"
-            }
+          "message" : {
+            "type" : "string"
+          },
+          "result" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "string"
           }
         }
       },
-      "NotificationMechanism" : {
-        "required" : [ "mechanism" ],
+      "CreateNotificationRequest" : {
+        "required" : [ "body" ],
         "type" : "object",
         "properties" : {
-          "mechanism" : {
-            "type" : "string"
-          },
-          "webhookURL" : {
-            "type" : "string"
-          },
-          "emailAddress" : {
+          "body" : {
             "type" : "string"
           }
         }
@@ -559,6 +925,57 @@
             }
           },
           "version" : {
+            "type" : "string"
+          }
+        }
+      },
+      "TopicResponse" : {
+        "type" : "object",
+        "properties" : {
+          "status" : {
+            "type" : "string"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Topic"
+            }
+          },
+          "version" : {
+            "type" : "string"
+          }
+        }
+      },
+      "CreateSubscriptionRequest" : {
+        "required" : [ "notificationMechanisms" ],
+        "type" : "object",
+        "properties" : {
+          "filter" : {
+            "type" : "string"
+          },
+          "notificationMechanisms" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/NotificationMechanism"
+            }
+          }
+        }
+      },
+      "NotificationMechanism" : {
+        "required" : [ "mechanism" ],
+        "type" : "object",
+        "properties" : {
+          "mechanism" : {
+            "type" : "string",
+            "enum" : [ "WEBHOOK", "EMAIL", "QUEUE", "ACTOR" ]
+          },
+          "webhookURL" : {
+            "type" : "string"
+          },
+          "emailAddress" : {
             "type" : "string"
           }
         }

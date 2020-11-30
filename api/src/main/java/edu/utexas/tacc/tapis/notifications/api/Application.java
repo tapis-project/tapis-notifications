@@ -35,9 +35,10 @@ import javax.ws.rs.ApplicationPath;
         @Tag(name = "topics"),
         @Tag(name = "subscriptions"),
         @Tag(name = "health"),
+        @Tag(name = "queues")
     },
     security = {
-        @SecurityRequirement(name = "Bearer"),
+        @SecurityRequirement(name = "x-tapis-token"),
     },
     servers = {
         @Server(
