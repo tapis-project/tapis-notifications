@@ -15,7 +15,7 @@ public class Notification {
 
 
     private String specversion;
-    private UUID id;
+    private UUID uuid;
     private String tenant;
     private Instant time;
     private String source;
@@ -33,7 +33,7 @@ public class Notification {
         this.type = builder.type;  // tapis.files.transfers.progress, tapis.files.object.delete, tapis.files.object.create
         this.subject = builder.subject; // UUID of file transfer, systemId/path/to/file.txt
         this.time = Instant.now();
-        this.id = UUID.randomUUID();
+        this.uuid = UUID.randomUUID();
         this.specversion = "1.0";
     }
 
@@ -92,8 +92,8 @@ public class Notification {
     }
 
     @NotNull
-    public UUID getId() {
-        return id;
+    public UUID getUuid() {
+        return uuid;
     }
 
     @NotEmpty
@@ -127,8 +127,8 @@ public class Notification {
     }
 
 
-    public void setId(UUID id) {
-        this.id = id;
+    public void setUuid(UUID uuid) {
+        this.uuid = uuid;
     }
 
     public void setSubject(String subject) {

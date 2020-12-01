@@ -15,7 +15,7 @@
     <version>1.0</version>
 
     <properties>
-        <tapis-shared-java.version>1.11.36-SNAPSHOT</tapis-shared-java.version>
+        <tapis-shared-java.version>1.11.46</tapis-shared-java.version>
         <json-schema-validator.version>2.2.14</json-schema-validator.version>
         <skipITs>true</skipITs>
     </properties>

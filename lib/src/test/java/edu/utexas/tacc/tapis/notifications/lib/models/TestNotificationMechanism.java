@@ -57,7 +57,7 @@ public class TestNotificationMechanism {
             .build();
 
         Assert.assertNotNull(mech);
-        Assert.assertEquals(mech.getWebhookURL(), "http://goodURL.com");
+        Assert.assertEquals(mech.getWebhookURL(), "http://goodURL.edu");
 
     }
 

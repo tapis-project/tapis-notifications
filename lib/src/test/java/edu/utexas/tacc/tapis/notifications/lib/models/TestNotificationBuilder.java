@@ -29,7 +29,6 @@ public class TestNotificationBuilder {
             .setTenant("testTenant")
             .build();
         Assert.assertNotNull(notification.getCreated());
-        Assert.assertNull(notification.getNotificationMechanism());
     }
 
 
@@ -44,7 +43,6 @@ public class TestNotificationBuilder {
             .setTenant("testTenant")
             .build();
         Assert.assertNotNull(notification.getCreated());
-        Assert.assertEquals(notification.getNotificationMechanism().getEmailAddress(), "test@test");
     }
 
 

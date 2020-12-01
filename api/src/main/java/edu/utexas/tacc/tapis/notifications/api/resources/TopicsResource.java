@@ -5,6 +5,8 @@ import edu.utexas.tacc.tapis.notifications.api.models.CreateNotificationRequest;
 import edu.utexas.tacc.tapis.notifications.api.models.CreateSubscriptionRequest;
 import edu.utexas.tacc.tapis.notifications.api.models.CreateTopicRequest;
 import edu.utexas.tacc.tapis.notifications.lib.models.Topic;
+import edu.utexas.tacc.tapis.shared.security.ServiceJWT;
+import edu.utexas.tacc.tapis.shared.security.TenantManager;
 import edu.utexas.tacc.tapis.sharedapi.responses.TapisResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -13,6 +15,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
+import javax.inject.Inject;
 import javax.validation.Valid;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
@@ -22,8 +25,10 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.SecurityContext;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,10 +38,15 @@ public class TopicsResource {
 
     private static class TopicResponse extends TapisResponse<List<Topic>> {}
 
+    @Inject
+    TenantManager tenantCache;
+
+    @Inject
+    ServiceJWT serviceJWTCache;
 
     @GET
-    @Path("/")
     @Operation(summary = "Get a list of all topics available to you.", tags = {"topics"})
+    @Produces(MediaType.APPLICATION_JSON)
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "200",
@@ -66,7 +76,7 @@ public class TopicsResource {
     }
 
     @POST
-    @Path("/")
+    @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Create a new topic to publish message to", tags = {"topics"})
     @ApiResponses(value = {
         @ApiResponse(
@@ -96,6 +106,7 @@ public class TopicsResource {
     }
 
     @POST
+    @Produces(MediaType.APPLICATION_JSON)
     @Path("/{topicId}")
     @Operation(summary = "Create a new Notification in the topic channel", tags = {"topics"})
     @ApiResponses(value = {
@@ -119,13 +130,14 @@ public class TopicsResource {
     public TapisResponse<String> sendNotification(
         @Parameter(description = "ID of the topic", required = true, example = "mySuperTopic") @PathParam("topicId") String topicID,
         @Valid CreateNotificationRequest notificationRequest,
-        SecurityContext securityContext
+        @Context SecurityContext securityContext
     ) {
         return TapisResponse.createSuccessResponse("ok");
     }
 
 
     @DELETE
+    @Produces(MediaType.APPLICATION_JSON)
     @Path("/{topicId}")
     @Operation(summary = "Delete a topic. Note, this will also delete any subscriptions that are attached to the topic", tags = {"topics"})
     @ApiResponses(value = {
@@ -149,12 +161,13 @@ public class TopicsResource {
     public TapisResponse<String> deleteTopic(
         @Parameter(description = "ID of the topic", required = true, example = "mySuperTopic") @PathParam("topicId") String topicID,
         @Valid CreateNotificationRequest notificationRequest,
-        SecurityContext securityContext
+        @Context SecurityContext securityContext
     ) {
         return TapisResponse.createSuccessResponse("ok");
     }
 
     @GET
+    @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Get a list of all subscriptions on this topic", tags = {"subscriptions"})
     @Path("/{topicId}/subscriptions")
     @ApiResponses(value = {
@@ -177,13 +190,14 @@ public class TopicsResource {
     })
     public TapisResponse<String> getSubscriptions(
         @Parameter(description = "ID of the topic", required = true, example = "mySuperTopic") @PathParam("topicId") String topicID,
-        SecurityContext securityContext
+        @Context SecurityContext securityContext
     ) {
         return TapisResponse.createSuccessResponse("ok");
     }
 
 
     @POST
+    @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Create a new subscription to this topic channel", tags = {"subscriptions"})
     @Path("/{topicId}/subscriptions")
     @ApiResponses(value = {
@@ -206,7 +220,7 @@ public class TopicsResource {
     })
     public TapisResponse<String> createSubscription(
         @Parameter(description = "ID of the topic", required = true, example = "mySuperTopic") @PathParam("topicId") String topicID,
-        SecurityContext securityContext,
+        @Context SecurityContext securityContext,
         @Valid CreateSubscriptionRequest subscriptionRequest
     ) {
 
@@ -214,6 +228,7 @@ public class TopicsResource {
     }
 
     @GET
+    @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Get a subscription by ID", tags = {"subscriptions"})
     @Path("/{topicId}/subscriptions/{subscriptionId}")
     @ApiResponses(value = {
@@ -237,12 +252,13 @@ public class TopicsResource {
     public TapisResponse<String> getSubscriptionByID(
         @Parameter(description = "ID of the topic", required = true, example = "mySuperTopic") @PathParam("topicId") String topicID,
         @Parameter(description = "ID of the subscription", required = true, example = "1234-123-123") @PathParam("topicId") String subscriptionID,
-        SecurityContext securityContext
+        @Context SecurityContext securityContext
     ) {
         return TapisResponse.createSuccessResponse("ok");
     }
 
     @DELETE
+    @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Get a subscription by ID", tags = {"subscriptions"})
     @Path("/{topicId}/subscriptions/{subscriptionId}")
     @ApiResponses(value = {
@@ -266,7 +282,7 @@ public class TopicsResource {
     public TapisResponse<String> deleteSubscription(
         @Parameter(description = "ID of the topic", required = true, example = "mySuperTopic") @PathParam("topicId") String topicID,
         @Parameter(description = "ID of the subscription", required = true, example = "1234-123-123") @PathParam("topicId") String subscriptionID,
-        SecurityContext securityContext
+        @Context SecurityContext securityContext
     ) {
         return TapisResponse.createSuccessResponse("ok");
     }
