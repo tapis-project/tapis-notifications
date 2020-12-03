@@ -10,7 +10,7 @@ CREATE TABLE topics
     name      VARCHAR(1024)             NOT NULL,
     schema    jsonb NOT NULL,
     description text not null,
-    creator VARCHAR(256) NOT NULL
+    owner VARCHAR(256) NOT NULL
 );
 CREATE UNIQUE INDEX ix_topics_tenant_name on topics(tenant_id, name);
 

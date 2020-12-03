@@ -10,7 +10,7 @@ public class RuntimeSettings {
 
         protected String siteId = settings.getOrDefault("TAPIS_SITE_ID", "tacc");
         protected String dbHost = settings.getOrDefault("DB_HOST", "localhost");
-        protected String dbName = settings.getOrDefault("DB_NAME", "dev");
+        protected String dbName = settings.getOrDefault("DB_NAME", "notifications");
         protected String dbUsername = settings.getOrDefault("DB_USERNAME", "dev");
         protected String dbPassword = settings.getOrDefault("DB_PASSWORD", "dev");
         protected String dbPort = settings.getOrDefault("DB_PORT", "5432");

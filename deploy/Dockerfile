@@ -7,11 +7,15 @@ COPY pom.xml .
 COPY api/pom.xml ./api/pom.xml
 COPY lib/pom.xml ./lib/pom.xml
 COPY migrations/pom.xml ./migrations/pom.xml
-COPY notifications/pom.xml ./notifications/pom.xml
+COPY websockets/pom.xml ./websockets/pom.xml
 # should only install the deps
 RUN mvn clean install --fail-never
 #now copy all the source and build
-COPY . .
+COPY api/src ./api/src
+COPY lib/src ./lib/src
+COPY migrations/src ./migrations/src
+COPY websockets/src ./websockets/src
+
 RUN mvn package -DskipTests
 
 FROM openjdk:15-slim
@@ -19,4 +23,8 @@ WORKDIR /app
 #RUN mvn -pl api clean install --also-make -DskipTests
 COPY --from=build /app/api ./api
 WORKDIR /app/api
-CMD ["java", "-cp", "target/tapis-files.jar:target/dependencies/*", "edu.utexas.tacc.tapis.files.api.FilesApplication"]
+CMD ["java", \
+    "-cp", \
+    "target/tapis-files.jar:target/dependencies/*", \
+    "edu.utexas.tacc.tapis.notifications.api.Application" \
+]

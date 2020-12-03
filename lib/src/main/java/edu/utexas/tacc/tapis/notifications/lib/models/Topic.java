@@ -1,19 +1,44 @@
 package edu.utexas.tacc.tapis.notifications.lib.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.json.JSONObject;
 
 import java.time.Instant;
+import java.util.Map;
 import java.util.UUID;
 
 public class Topic {
 
+
+
+    private int id;
+    private String tenantId;
     private UUID uuid;
     private String name;
     private Instant created;
     private String owner;
     private String description;
-    private String schema;
+    private Map<String, Object> schema;
 
+    @JsonIgnore
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    @JsonIgnore
+    public String getTenantId() {
+        return tenantId;
+    }
+
+    public void setTenantId(String tenantId) {
+        this.tenantId = tenantId;
+    }
 
     public UUID getUuid() {
         return uuid;
@@ -24,11 +49,11 @@ public class Topic {
     }
 
     @Schema(description = "A valid JSON schema")
-    public String getSchema() {
+    public Map<String, Object> getSchema() {
         return schema;
     }
 
-    public void setSchema(String schema) {
+    public void setSchema(Map<String, Object> schema) {
         this.schema = schema;
     }
 

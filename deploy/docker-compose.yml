@@ -1,0 +1,27 @@
+version: "3"
+
+volumes:
+  notifications-pgdata:
+
+services:
+
+  rabbitmq:
+    image: rabbitmq:3.8-alpine
+    environment:
+      - RABBITMQ_DEFAULT_USER=dev
+      - RABBITMQ_DEFAULT_PASS=dev
+      - RABBITMQ_DEFAULT_VHOST=dev
+    ports:
+      - 5672:5672
+
+  postgres:
+    container_name: postgres
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=dev
+      - POSTGRES_PASSWORD=dev
+      - POSTGRES_DATABASE=notifications
+    volumes:
+      - notifications-pgdata:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
