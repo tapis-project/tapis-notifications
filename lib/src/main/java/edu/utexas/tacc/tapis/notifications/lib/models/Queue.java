@@ -1,7 +1,10 @@
 package edu.utexas.tacc.tapis.notifications.lib.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import javax.validation.constraints.NotBlank;
 import java.time.Instant;
+import java.util.UUID;
 
 public class Queue {
 
@@ -9,6 +12,17 @@ public class Queue {
     private Instant created;
     private String tenantId;
     private String owner;
+    private UUID uuid;
+
+
+    @NotBlank
+    public UUID getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(UUID uuid) {
+        this.uuid = uuid;
+    }
 
     @NotBlank
     public String getName() {
@@ -27,6 +41,7 @@ public class Queue {
         this.created = created;
     }
 
+    @JsonIgnore
     @NotBlank
     public String getTenantId() {
         return tenantId;

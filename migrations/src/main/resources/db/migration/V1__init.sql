@@ -21,7 +21,8 @@ CREATE TABLE subscriptions
     tenant_id VARCHAR(256) not null,
     topic_id  int REFERENCES topics (id) ON DELETE CASCADE ON UPDATE CASCADE,
     uuid      uuid         NOT NULL DEFAULT uuid_generate_v4(),
-    filters jsonb
+    filters jsonb,
+    created   TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 
@@ -35,5 +36,15 @@ CREATE TABLE notification_mechanisms (
     mechanism VARCHAR(256) NOT NULL,
     target VARCHAR(4096) NOT null  -- could be an email, webhook URL, abaco actor ID, or queue name
 
-)
+);
+
+CREATE TABLE queues (
+    id SERIAL PRIMARY KEY,
+    tenant_id VARCHAR(256),
+    uuid      uuid                     NOT NULL DEFAULT uuid_generate_v4(),
+    name VARCHAR(256),
+    created   TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    owner VARCHAR(256)
+);
+
 

@@ -4,7 +4,10 @@ package edu.utexas.tacc.tapis.notifications.api.resources;
 import edu.utexas.tacc.tapis.notifications.api.models.CreateNotificationRequest;
 import edu.utexas.tacc.tapis.notifications.api.models.CreateSubscriptionRequest;
 import edu.utexas.tacc.tapis.notifications.api.models.CreateTopicRequest;
+import edu.utexas.tacc.tapis.notifications.lib.models.Notification;
+import edu.utexas.tacc.tapis.notifications.lib.models.Subscription;
 import edu.utexas.tacc.tapis.notifications.lib.models.Topic;
+import edu.utexas.tacc.tapis.notifications.lib.services.NotificationsService;
 import edu.utexas.tacc.tapis.shared.security.ServiceJWT;
 import edu.utexas.tacc.tapis.shared.security.TenantManager;
 import edu.utexas.tacc.tapis.sharedapi.responses.TapisResponse;
@@ -36,7 +39,11 @@ import java.util.List;
 @Path("/v3/notifications/topics")
 public class TopicsResource {
 
-    private static class TopicResponse extends TapisResponse<List<Topic>> {}
+    private static class TopicListResponse extends TapisResponse<List<Topic>> {}
+    private static class TopicResponse extends TapisResponse<Topic> {}
+    private static class NotificationResponse extends TapisResponse<Notification> {}
+    private static class SubscriptionListResponse extends TapisResponse<List<Subscription>> {}
+
 
     @Inject
     TenantManager tenantCache;
@@ -44,25 +51,28 @@ public class TopicsResource {
     @Inject
     ServiceJWT serviceJWTCache;
 
+    @Inject
+    NotificationsService notificationsService;
+
     @GET
     @Operation(summary = "Get a list of all topics available to you.", tags = {"topics"})
     @Produces(MediaType.APPLICATION_JSON)
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "200",
-            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            content = @Content(schema = @Schema(implementation = TopicListResponse.class)),
             description = "OK"),
         @ApiResponse(
             responseCode = "401",
-            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            content = @Content(schema = @Schema(implementation = TopicListResponse.class)),
             description = "Not Authenticated"),
         @ApiResponse(
             responseCode = "403",
-            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            content = @Content(schema = @Schema(implementation = TopicListResponse.class)),
             description = "Not Authorized"),
         @ApiResponse(
             responseCode = "500",
-            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            content = @Content(schema = @Schema(implementation = TopicListResponse.class)),
             description = "Internal Error")
     })
     public TapisResponse<List<Topic>> getTopics(
@@ -112,19 +122,19 @@ public class TopicsResource {
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "200",
-            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            content = @Content(schema = @Schema(implementation = NotificationResponse.class)),
             description = "OK"),
         @ApiResponse(
             responseCode = "401",
-            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            content = @Content(schema = @Schema(implementation = NotificationResponse.class)),
             description = "Not Authenticated"),
         @ApiResponse(
             responseCode = "403",
-            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            content = @Content(schema = @Schema(implementation = NotificationResponse.class)),
             description = "Not Authorized"),
         @ApiResponse(
             responseCode = "500",
-            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            content = @Content(schema = @Schema(implementation = NotificationResponse.class)),
             description = "Internal Error")
     })
     public TapisResponse<String> sendNotification(
@@ -143,19 +153,19 @@ public class TopicsResource {
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "200",
-            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            content = @Content(schema = @Schema(implementation = TapisResponse.class)),
             description = "OK"),
         @ApiResponse(
             responseCode = "401",
-            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            content = @Content(schema = @Schema(implementation = TapisResponse.class)),
             description = "Not Authenticated"),
         @ApiResponse(
             responseCode = "403",
-            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            content = @Content(schema = @Schema(implementation = TapisResponse.class)),
             description = "Not Authorized"),
         @ApiResponse(
             responseCode = "500",
-            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            content = @Content(schema = @Schema(implementation = TapisResponse.class)),
             description = "Internal Error")
     })
     public TapisResponse<String> deleteTopic(
@@ -173,19 +183,19 @@ public class TopicsResource {
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "200",
-            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            content = @Content(schema = @Schema(implementation = SubscriptionListResponse.class)),
             description = "OK"),
         @ApiResponse(
             responseCode = "401",
-            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            content = @Content(schema = @Schema(implementation = SubscriptionListResponse.class)),
             description = "Not Authenticated"),
         @ApiResponse(
             responseCode = "403",
-            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            content = @Content(schema = @Schema(implementation = SubscriptionListResponse.class)),
             description = "Not Authorized"),
         @ApiResponse(
             responseCode = "500",
-            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            content = @Content(schema = @Schema(implementation = SubscriptionListResponse.class)),
             description = "Internal Error")
     })
     public TapisResponse<String> getSubscriptions(
@@ -203,19 +213,19 @@ public class TopicsResource {
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "200",
-            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            content = @Content(schema = @Schema(implementation = TopicListResponse.class)),
             description = "OK"),
         @ApiResponse(
             responseCode = "401",
-            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            content = @Content(schema = @Schema(implementation = TopicListResponse.class)),
             description = "Not Authenticated"),
         @ApiResponse(
             responseCode = "403",
-            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            content = @Content(schema = @Schema(implementation = TopicListResponse.class)),
             description = "Not Authorized"),
         @ApiResponse(
             responseCode = "500",
-            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            content = @Content(schema = @Schema(implementation = TopicListResponse.class)),
             description = "Internal Error")
     })
     public TapisResponse<String> createSubscription(
@@ -234,19 +244,19 @@ public class TopicsResource {
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "200",
-            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            content = @Content(schema = @Schema(implementation = TopicListResponse.class)),
             description = "OK"),
         @ApiResponse(
             responseCode = "401",
-            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            content = @Content(schema = @Schema(implementation = TopicListResponse.class)),
             description = "Not Authenticated"),
         @ApiResponse(
             responseCode = "403",
-            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            content = @Content(schema = @Schema(implementation = TopicListResponse.class)),
             description = "Not Authorized"),
         @ApiResponse(
             responseCode = "500",
-            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            content = @Content(schema = @Schema(implementation = TopicListResponse.class)),
             description = "Internal Error")
     })
     public TapisResponse<String> getSubscriptionByID(
@@ -264,19 +274,19 @@ public class TopicsResource {
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "200",
-            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            content = @Content(schema = @Schema(implementation = TapisResponse.class)),
             description = "OK"),
         @ApiResponse(
             responseCode = "401",
-            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            content = @Content(schema = @Schema(implementation = TapisResponse.class)),
             description = "Not Authenticated"),
         @ApiResponse(
             responseCode = "403",
-            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            content = @Content(schema = @Schema(implementation = TapisResponse.class)),
             description = "Not Authorized"),
         @ApiResponse(
             responseCode = "500",
-            content = @Content(schema = @Schema(implementation = TopicResponse.class)),
+            content = @Content(schema = @Schema(implementation = TapisResponse.class)),
             description = "Internal Error")
     })
     public TapisResponse<String> deleteSubscription(

@@ -2,6 +2,7 @@ package edu.utexas.tacc.tapis.notifications.lib.services;
 
 
 import edu.utexas.tacc.tapis.notifications.lib.dao.NotificationsDAO;
+import edu.utexas.tacc.tapis.notifications.lib.models.Subscription;
 import edu.utexas.tacc.tapis.notifications.lib.models.Topic;
 import org.jvnet.hk2.annotations.Service;
 
@@ -22,6 +23,13 @@ public class NotificationsService {
         return null;
     }
 
+    public void deleteTopic(Topic topic) {
+
+    }
+
+    public Subscription subscribeToTopic(Subscription subscription) {
+        return null;
+    }
 
 
 

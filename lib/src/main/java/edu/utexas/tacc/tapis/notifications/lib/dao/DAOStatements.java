@@ -17,4 +17,13 @@ public class DAOStatements {
             "owner, " +
             "schema::text as schema";
 
+    //language=SQL
+    public static final String CREATE_SUBSCRIPTION =
+        "INSERT INTO subscriptions " +
+            "(tenant_id, topic_id, filters) " +
+            "values(?, ?, to_json(?)) " +
+            "returning " +
+            "id, topic_id, tenant_id, uuid, filters::text, topic_id ";
+
+
 }
