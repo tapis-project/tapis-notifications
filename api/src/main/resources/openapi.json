@@ -275,7 +275,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/TopicResponse"
+                  "$ref" : "#/components/schemas/NotificationResponse"
                 }
               }
             }
@@ -285,7 +285,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/TopicResponse"
+                  "$ref" : "#/components/schemas/NotificationResponse"
                 }
               }
             }
@@ -295,7 +295,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/TopicResponse"
+                  "$ref" : "#/components/schemas/NotificationResponse"
                 }
               }
             }
@@ -305,7 +305,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/TopicResponse"
+                  "$ref" : "#/components/schemas/NotificationResponse"
                 }
               }
             }
@@ -331,6 +331,132 @@
             "*/*" : {
               "schema" : {
                 "$ref" : "#/components/schemas/CreateNotificationRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TapisResponse"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Not Authenticated",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TapisResponse"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "Not Authorized",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TapisResponse"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Internal Error",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TapisResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/notifications/topics" : {
+      "get" : {
+        "tags" : [ "topics" ],
+        "summary" : "Get a list of all topics available to you.",
+        "operationId" : "getTopics",
+        "parameters" : [ {
+          "name" : "limit",
+          "in" : "query",
+          "description" : "pagination limit",
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 1000
+          },
+          "example" : 100
+        }, {
+          "name" : "offset",
+          "in" : "query",
+          "description" : "pagination offset",
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64",
+            "default" : 0
+          },
+          "example" : 1000
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicListResponse"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Not Authenticated",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicListResponse"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "Not Authorized",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicListResponse"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Internal Error",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "topics" ],
+        "summary" : "Create a new topic to publish message to",
+        "operationId" : "createTopic",
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateTopicRequest"
               }
             }
           }
@@ -400,7 +526,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/TopicResponse"
+                  "$ref" : "#/components/schemas/SubscriptionListResponse"
                 }
               }
             }
@@ -410,7 +536,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/TopicResponse"
+                  "$ref" : "#/components/schemas/SubscriptionListResponse"
                 }
               }
             }
@@ -420,7 +546,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/TopicResponse"
+                  "$ref" : "#/components/schemas/SubscriptionListResponse"
                 }
               }
             }
@@ -430,7 +556,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/TopicResponse"
+                  "$ref" : "#/components/schemas/SubscriptionListResponse"
                 }
               }
             }
@@ -466,7 +592,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/TopicResponse"
+                  "$ref" : "#/components/schemas/TopicListResponse"
                 }
               }
             }
@@ -476,7 +602,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/TopicResponse"
+                  "$ref" : "#/components/schemas/TopicListResponse"
                 }
               }
             }
@@ -486,7 +612,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/TopicResponse"
+                  "$ref" : "#/components/schemas/TopicListResponse"
                 }
               }
             }
@@ -496,7 +622,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/TopicResponse"
+                  "$ref" : "#/components/schemas/TopicListResponse"
                 }
               }
             }
@@ -534,7 +660,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/TopicResponse"
+                  "$ref" : "#/components/schemas/TopicListResponse"
                 }
               }
             }
@@ -544,7 +670,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/TopicResponse"
+                  "$ref" : "#/components/schemas/TopicListResponse"
                 }
               }
             }
@@ -554,7 +680,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/TopicResponse"
+                  "$ref" : "#/components/schemas/TopicListResponse"
                 }
               }
             }
@@ -564,7 +690,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/TopicResponse"
+                  "$ref" : "#/components/schemas/TopicListResponse"
                 }
               }
             }
@@ -600,7 +726,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/TopicResponse"
+                  "$ref" : "#/components/schemas/TapisResponse"
                 }
               }
             }
@@ -610,7 +736,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/TopicResponse"
+                  "$ref" : "#/components/schemas/TapisResponse"
                 }
               }
             }
@@ -620,7 +746,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/TopicResponse"
+                  "$ref" : "#/components/schemas/TapisResponse"
                 }
               }
             }
@@ -630,133 +756,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/TopicResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v3/notifications/topics" : {
-      "get" : {
-        "tags" : [ "topics" ],
-        "summary" : "Get a list of all topics available to you.",
-        "operationId" : "getTopics",
-        "parameters" : [ {
-          "name" : "limit",
-          "in" : "query",
-          "description" : "pagination limit",
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32",
-            "default" : 1000
-          },
-          "example" : 100
-        }, {
-          "name" : "offset",
-          "in" : "query",
-          "description" : "pagination offset",
-          "schema" : {
-            "type" : "integer",
-            "format" : "int64",
-            "default" : 0
-          },
-          "example" : 1000
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/TopicResponse"
-                }
-              }
-            }
-          },
-          "401" : {
-            "description" : "Not Authenticated",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/TopicResponse"
-                }
-              }
-            }
-          },
-          "403" : {
-            "description" : "Not Authorized",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/TopicResponse"
-                }
-              }
-            }
-          },
-          "500" : {
-            "description" : "Internal Error",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/TopicResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post" : {
-        "tags" : [ "topics" ],
-        "summary" : "Create a new topic to publish message to",
-        "operationId" : "createTopic",
-        "requestBody" : {
-          "content" : {
-            "*/*" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/CreateTopicRequest"
-              }
-            }
-          }
-        },
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/TopicResponse"
-                }
-              }
-            }
-          },
-          "401" : {
-            "description" : "Not Authenticated",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/TopicResponse"
-                }
-              }
-            }
-          },
-          "403" : {
-            "description" : "Not Authorized",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/TopicResponse"
-                }
-              }
-            }
-          },
-          "500" : {
-            "description" : "Internal Error",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/TopicResponse"
+                  "$ref" : "#/components/schemas/TapisResponse"
                 }
               }
             }
@@ -843,7 +843,11 @@
             "type" : "string"
           },
           "schema" : {
-            "type" : "string",
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "object",
+              "description" : "A valid JSON schema"
+            },
             "description" : "A valid JSON schema"
           }
         }
@@ -883,26 +887,6 @@
           }
         }
       },
-      "TapisResponseListTopic" : {
-        "type" : "object",
-        "properties" : {
-          "status" : {
-            "type" : "string"
-          },
-          "message" : {
-            "type" : "string"
-          },
-          "result" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/Topic"
-            }
-          },
-          "version" : {
-            "type" : "string"
-          }
-        }
-      },
       "TapisResponseString" : {
         "type" : "object",
         "properties" : {
@@ -929,7 +913,186 @@
           }
         }
       },
+      "TapisResponseListTopic" : {
+        "type" : "object",
+        "properties" : {
+          "status" : {
+            "type" : "string"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Topic"
+            }
+          },
+          "version" : {
+            "type" : "string"
+          }
+        }
+      },
+      "Notification" : {
+        "required" : [ "data", "source", "specversion", "subject", "tenant", "time", "type", "uuid" ],
+        "type" : "object",
+        "properties" : {
+          "specversion" : {
+            "type" : "string"
+          },
+          "uuid" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "tenant" : {
+            "type" : "string"
+          },
+          "time" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "source" : {
+            "type" : "string"
+          },
+          "data" : {
+            "type" : "object"
+          },
+          "subject" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          }
+        }
+      },
+      "NotificationResponse" : {
+        "type" : "object",
+        "properties" : {
+          "status" : {
+            "type" : "string"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "result" : {
+            "$ref" : "#/components/schemas/Notification"
+          },
+          "version" : {
+            "type" : "string"
+          }
+        }
+      },
       "TopicResponse" : {
+        "type" : "object",
+        "properties" : {
+          "status" : {
+            "type" : "string"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "result" : {
+            "$ref" : "#/components/schemas/Topic"
+          },
+          "version" : {
+            "type" : "string"
+          }
+        }
+      },
+      "NotificationMechanism" : {
+        "type" : "object",
+        "properties" : {
+          "mechanism" : {
+            "type" : "string",
+            "enum" : [ "WEBHOOK", "EMAIL", "QUEUE", "ACTOR" ]
+          },
+          "target" : {
+            "type" : "string"
+          },
+          "subscriptionId" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "created" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "uuid" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "tenantId" : {
+            "type" : "string"
+          }
+        }
+      },
+      "Subscription" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "uuid" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "filters" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "object"
+            }
+          },
+          "created" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "mechanisms" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/NotificationMechanism"
+            }
+          }
+        }
+      },
+      "SubscriptionListResponse" : {
+        "type" : "object",
+        "properties" : {
+          "status" : {
+            "type" : "string"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Subscription"
+            }
+          },
+          "version" : {
+            "type" : "string"
+          }
+        }
+      },
+      "TapisResponse" : {
+        "type" : "object",
+        "properties" : {
+          "status" : {
+            "type" : "string"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "result" : {
+            "type" : "object"
+          },
+          "version" : {
+            "type" : "string"
+          }
+        }
+      },
+      "TopicListResponse" : {
         "type" : "object",
         "properties" : {
           "status" : {
@@ -961,22 +1124,6 @@
             "items" : {
               "$ref" : "#/components/schemas/NotificationMechanism"
             }
-          }
-        }
-      },
-      "NotificationMechanism" : {
-        "required" : [ "mechanism" ],
-        "type" : "object",
-        "properties" : {
-          "mechanism" : {
-            "type" : "string",
-            "enum" : [ "WEBHOOK", "EMAIL", "QUEUE", "ACTOR" ]
-          },
-          "webhookURL" : {
-            "type" : "string"
-          },
-          "emailAddress" : {
-            "type" : "string"
           }
         }
       }

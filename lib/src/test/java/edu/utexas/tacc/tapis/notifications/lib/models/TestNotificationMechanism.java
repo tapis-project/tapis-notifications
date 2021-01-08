@@ -11,53 +11,39 @@ public class TestNotificationMechanism {
 
     @Test
     public void testBuilderBadEmail() {
-
-        NotificationMechanism.Builder builder = new NotificationMechanism.Builder()
-            .setMechanism(NotificationMechanismEnum.EMAIL)
-            .setEmailAddress("badddddd");
-
-        Assert.assertThrows(ValidationException.class, builder::build);
+        Assert.assertThrows(ValidationException.class, ()-> {
+                   NotificationMechanism mechanism = new NotificationMechanism(NotificationMechanismEnum.EMAIL, "badddddd");
+        });
     }
 
     @Test
     public void testBuilderGoodEmail() {
 
-        NotificationMechanism mech = new NotificationMechanism.Builder()
-            .setMechanism(NotificationMechanismEnum.EMAIL)
-            .setEmailAddress("test@test")
-            .build();
-
+        NotificationMechanism mech = new NotificationMechanism(
+            NotificationMechanismEnum.EMAIL,
+            "test@test.com"
+        );
         Assert.assertNotNull(mech);
-        Assert.assertEquals(mech.getEmailAddress(), "test@test");
+        Assert.assertEquals(mech.getTarget(), "test@test.com");
     }
 
     @Test
     public void testBuildNoWebhookURL() {
-        NotificationMechanism.Builder builder = new NotificationMechanism.Builder()
-            .setMechanism(NotificationMechanismEnum.WEBHOOK)
-            .setEmailAddress("badddddd");
 
-        Assert.assertThrows(ValidationException.class, builder::build);
+        Assert.assertThrows(ValidationException.class, ()->{
+            NotificationMechanism mech  = new NotificationMechanism(NotificationMechanismEnum.WEBHOOK, "baaaadurl");
+        });
     }
 
-    @Test
-    public void testBuildBadURL() {
-        NotificationMechanism.Builder builder = new NotificationMechanism.Builder()
-            .setMechanism(NotificationMechanismEnum.WEBHOOK)
-            .setWebhookURL("notAURL");
-
-        Assert.assertThrows(ValidationException.class, builder::build);
-    }
 
     @Test
     public void testBuildGoodURL() {
-        NotificationMechanism mech = new NotificationMechanism.Builder()
-            .setMechanism(NotificationMechanismEnum.WEBHOOK)
-            .setWebhookURL("http://goodURL.edu")
-            .build();
+        NotificationMechanism mech = new NotificationMechanism(
+            NotificationMechanismEnum.WEBHOOK,
+            "http://goodURL.edu");
 
         Assert.assertNotNull(mech);
-        Assert.assertEquals(mech.getWebhookURL(), "http://goodURL.edu");
+        Assert.assertEquals(mech.getTarget(), "http://goodURL.edu");
 
     }
 

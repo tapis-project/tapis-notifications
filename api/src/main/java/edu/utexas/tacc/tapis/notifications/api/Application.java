@@ -69,8 +69,8 @@ public class Application extends ResourceConfig {
     public Application() {
         super();
         JWTValidateRequestFilter.setSiteId(runtimeConfig.getSiteId());
-        JWTValidateRequestFilter.setService("notifications");
-        setApplicationName("files");
+        JWTValidateRequestFilter.setService("files");
+        setApplicationName("notifications");
         //OpenAPI jazz
         register(JWTValidateRequestFilter.class);
         register(OpenApiResource.class);

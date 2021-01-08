@@ -13,6 +13,7 @@ CREATE TABLE topics
     owner VARCHAR(256) NOT NULL
 );
 CREATE UNIQUE INDEX ix_topics_tenant_name on topics(tenant_id, name);
+CREATE INDEX ix_topics_uuid on topics(uuid);
 
 
 CREATE TABLE subscriptions
@@ -35,8 +36,8 @@ CREATE TABLE notification_mechanisms (
     uuid      uuid                     NOT NULL DEFAULT uuid_generate_v4(),
     mechanism VARCHAR(256) NOT NULL,
     target VARCHAR(4096) NOT null  -- could be an email, webhook URL, abaco actor ID, or queue name
-
 );
+
 
 CREATE TABLE queues (
     id SERIAL PRIMARY KEY,
@@ -46,5 +47,6 @@ CREATE TABLE queues (
     created   TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     owner VARCHAR(256)
 );
+CREATE index ix_queues_uuid on queues(uuid);
 
 
