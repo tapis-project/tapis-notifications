@@ -31,9 +31,9 @@
   }, {
     "name" : "subscriptions"
   }, {
-    "name" : "health"
-  }, {
     "name" : "queues"
+  }, {
+    "name" : "health"
   } ],
   "paths" : {
     "/v3/notifications/health/healthcheck" : {
@@ -852,6 +852,26 @@
           }
         }
       },
+      "TapisResponseListTopic" : {
+        "type" : "object",
+        "properties" : {
+          "status" : {
+            "type" : "string"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Topic"
+            }
+          },
+          "version" : {
+            "type" : "string"
+          }
+        }
+      },
       "TapisResponseTopic" : {
         "type" : "object",
         "properties" : {
@@ -913,26 +933,6 @@
           }
         }
       },
-      "TapisResponseListTopic" : {
-        "type" : "object",
-        "properties" : {
-          "status" : {
-            "type" : "string"
-          },
-          "message" : {
-            "type" : "string"
-          },
-          "result" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/Topic"
-            }
-          },
-          "version" : {
-            "type" : "string"
-          }
-        }
-      },
       "Notification" : {
         "required" : [ "data", "source", "specversion", "subject", "tenant", "time", "type", "uuid" ],
         "type" : "object",
@@ -976,6 +976,26 @@
           },
           "result" : {
             "$ref" : "#/components/schemas/Notification"
+          },
+          "version" : {
+            "type" : "string"
+          }
+        }
+      },
+      "TopicListResponse" : {
+        "type" : "object",
+        "properties" : {
+          "status" : {
+            "type" : "string"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Topic"
+            }
           },
           "version" : {
             "type" : "string"
@@ -1075,6 +1095,21 @@
           }
         }
       },
+      "CreateSubscriptionRequest" : {
+        "required" : [ "notificationMechanisms" ],
+        "type" : "object",
+        "properties" : {
+          "filter" : {
+            "type" : "string"
+          },
+          "notificationMechanisms" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/NotificationMechanism"
+            }
+          }
+        }
+      },
       "TapisResponse" : {
         "type" : "object",
         "properties" : {
@@ -1089,41 +1124,6 @@
           },
           "version" : {
             "type" : "string"
-          }
-        }
-      },
-      "TopicListResponse" : {
-        "type" : "object",
-        "properties" : {
-          "status" : {
-            "type" : "string"
-          },
-          "message" : {
-            "type" : "string"
-          },
-          "result" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/Topic"
-            }
-          },
-          "version" : {
-            "type" : "string"
-          }
-        }
-      },
-      "CreateSubscriptionRequest" : {
-        "required" : [ "notificationMechanisms" ],
-        "type" : "object",
-        "properties" : {
-          "filter" : {
-            "type" : "string"
-          },
-          "notificationMechanisms" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/NotificationMechanism"
-            }
           }
         }
       }

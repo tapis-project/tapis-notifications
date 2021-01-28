@@ -22,8 +22,8 @@ security:
 tags:
 - name: topics
 - name: subscriptions
-- name: health
 - name: queues
+- name: health
 paths:
   /v3/notifications/health/healthcheck:
     get:
@@ -566,6 +566,19 @@ components:
             type: object
             description: A valid JSON schema
           description: A valid JSON schema
+    TapisResponseListTopic:
+      type: object
+      properties:
+        status:
+          type: string
+        message:
+          type: string
+        result:
+          type: array
+          items:
+            $ref: '#/components/schemas/Topic'
+        version:
+          type: string
     TapisResponseTopic:
       type: object
       properties:
@@ -611,19 +624,6 @@ components:
       properties:
         body:
           type: string
-    TapisResponseListTopic:
-      type: object
-      properties:
-        status:
-          type: string
-        message:
-          type: string
-        result:
-          type: array
-          items:
-            $ref: '#/components/schemas/Topic'
-        version:
-          type: string
     Notification:
       required:
       - data
@@ -663,6 +663,19 @@ components:
           type: string
         result:
           $ref: '#/components/schemas/Notification'
+        version:
+          type: string
+    TopicListResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        message:
+          type: string
+        result:
+          type: array
+          items:
+            $ref: '#/components/schemas/Topic'
         version:
           type: string
     TopicResponse:
@@ -732,30 +745,6 @@ components:
             $ref: '#/components/schemas/Subscription'
         version:
           type: string
-    TapisResponse:
-      type: object
-      properties:
-        status:
-          type: string
-        message:
-          type: string
-        result:
-          type: object
-        version:
-          type: string
-    TopicListResponse:
-      type: object
-      properties:
-        status:
-          type: string
-        message:
-          type: string
-        result:
-          type: array
-          items:
-            $ref: '#/components/schemas/Topic'
-        version:
-          type: string
     CreateSubscriptionRequest:
       required:
       - notificationMechanisms
@@ -767,3 +756,14 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/NotificationMechanism'
+    TapisResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        message:
+          type: string
+        result:
+          type: object
+        version:
+          type: string
