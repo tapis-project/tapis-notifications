@@ -21,8 +21,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.servers.Server;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.glassfish.grizzly.http.server.HttpServer;
-import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
-import org.glassfish.grizzly.threadpool.ThreadPoolConfig;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.jackson.JacksonFeature;
@@ -44,8 +42,8 @@ import java.net.URI;
     tags = {
         @Tag(name = "topics"),
         @Tag(name = "subscriptions"),
-        @Tag(name = "health"),
-        @Tag(name = "queues")
+        @Tag(name = "queues"),
+        @Tag(name = "health")
     },
     security = {
         @SecurityRequirement(name = "x-tapis-token"),

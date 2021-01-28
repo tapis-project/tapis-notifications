@@ -7,7 +7,7 @@
     <parent>
         <groupId>edu.utexas.tacc.tapis</groupId>
         <artifactId>tapis-bom</artifactId>
-        <version>1.11.26</version>
+        <version>[1.11,2.0)</version>
     </parent>
 
     <artifactId>notifications</artifactId>
@@ -15,10 +15,25 @@
     <version>1.0</version>
 
     <properties>
-        <tapis-shared-java.version>1.11.47</tapis-shared-java.version>
+        <tapis-shared-java.version>[1.11,2.0)</tapis-shared-java.version>
         <json-schema-validator.version>2.2.14</json-schema-validator.version>
         <skipITs>true</skipITs>
     </properties>
+
+    <repositories>
+        <repository>
+            <id>tapis-local-snapshots</id>
+            <name>Local repo for snapshots</name>
+            <url>http://c002.rodeo.tacc.utexas.edu:30044/repository/maven-snapshots</url>
+            <releases>  <enabled>false</enabled> </releases>
+            <snapshots> <enabled>true</enabled>  </snapshots>
+        </repository>
+        <repository>
+            <id>tapis-local-releases</id>
+            <name>Local repo for releases</name>
+            <url>http://c002.rodeo.tacc.utexas.edu:30044/repository/maven-releases</url>
+        </repository>
+    </repositories>
 
     <dependencies>
         <dependency>
