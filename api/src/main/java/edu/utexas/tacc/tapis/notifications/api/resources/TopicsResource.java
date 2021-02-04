@@ -261,7 +261,7 @@ public class TopicsResource {
     })
     public TapisResponse<String> getSubscriptionByID(
         @Parameter(description = "ID of the topic", required = true, example = "mySuperTopic") @PathParam("topicId") String topicID,
-        @Parameter(description = "ID of the subscription", required = true, example = "1234-123-123") @PathParam("topicId") String subscriptionID,
+        @Parameter(description = "ID of the subscription", required = true, example = "1234-123-123") @PathParam("subscriptionId") String subscriptionID,
         @Context SecurityContext securityContext
     ) {
         return TapisResponse.createSuccessResponse("ok");
@@ -291,7 +291,7 @@ public class TopicsResource {
     })
     public TapisResponse<String> deleteSubscription(
         @Parameter(description = "ID of the topic", required = true, example = "mySuperTopic") @PathParam("topicId") String topicID,
-        @Parameter(description = "ID of the subscription", required = true, example = "1234-123-123") @PathParam("topicId") String subscriptionID,
+        @Parameter(description = "ID of the subscription", required = true, example = "1234-123-123") @PathParam("subscriptionId") String subscriptionID,
         @Context SecurityContext securityContext
     ) {
         return TapisResponse.createSuccessResponse("ok");

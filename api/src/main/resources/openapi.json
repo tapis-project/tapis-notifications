@@ -645,7 +645,7 @@
           },
           "example" : "mySuperTopic"
         }, {
-          "name" : "topicId",
+          "name" : "subscriptionId",
           "in" : "path",
           "description" : "ID of the subscription",
           "required" : true,
@@ -711,7 +711,7 @@
           },
           "example" : "mySuperTopic"
         }, {
-          "name" : "topicId",
+          "name" : "subscriptionId",
           "in" : "path",
           "description" : "ID of the subscription",
           "required" : true,
