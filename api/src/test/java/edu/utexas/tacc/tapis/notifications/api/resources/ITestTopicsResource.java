@@ -137,4 +137,21 @@ public class ITestTopicsResource extends BaseITest {
 
     }
 
+    @Test
+    public void testDeleteTopic() {
+
+    }
+
+    @Test
+    public void testDeleteSubscription() {
+
+    }
+
+
+    @Test
+    public void testSendAndReceiveMessages() {
+
+    }
+
+
 }

@@ -177,6 +177,9 @@ public class TopicsResource {
         AuthenticatedUser user = (AuthenticatedUser) securityContext.getUserPrincipal();
         try {
             Topic topic = notificationsService.getTopic(user.getTenantId(), topicID);
+            if (topic == null)  {
+                throw new NotFoundException();
+            }
             TapisResponse<Topic> resp = TapisResponse.createSuccessResponse("ok", topic);
             return resp;
         } catch (ServiceException ex) {

@@ -2,6 +2,7 @@ package edu.utexas.tacc.tapis.notifications.lib;
 
 import edu.utexas.tacc.tapis.notifications.lib.cache.TopicsCache;
 import edu.utexas.tacc.tapis.notifications.lib.dao.NotificationsDAO;
+import edu.utexas.tacc.tapis.notifications.lib.models.Notification;
 import edu.utexas.tacc.tapis.notifications.lib.models.Topic;
 import edu.utexas.tacc.tapis.notifications.lib.services.NotificationDispatcherService;
 import edu.utexas.tacc.tapis.notifications.lib.services.NotificationsService;
@@ -10,6 +11,7 @@ import org.glassfish.hk2.utilities.ServiceLocatorUtilities;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
 import javax.inject.Singleton;
+import java.util.UUID;
 
 public class TestSender {
 
@@ -38,6 +40,18 @@ public class TestSender {
             topic.setOwner("testuser");
             topic.setTenantId("testtenant");
             notificationsService.createTopic(topic);
+
+            for (var j=0; j<100; j++) {
+                Notification notification = new Notification.Builder()
+                    .setId(UUID.randomUUID().toString())
+                    .setTenantId(topic.getTenantId())
+                    .setSource("tapis.files.ops")
+                    .setSubject("test-system")
+                    .setType("tapis.files.object.deleted")
+                    .setTopicName(topic.getName())
+                    .build();
+                notificationsService.sendNotification(notification);
+            }
         }
 
 
