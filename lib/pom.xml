@@ -14,9 +14,13 @@
     <dependencies>
         <dependency>
             <groupId>edu.utexas.tacc.tapis</groupId>
-            <artifactId>migrations</artifactId>
+            <artifactId>notifications-migrations</artifactId>
             <version>${project.parent.version}</version>
             <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
         </dependency>
         <dependency>
             <groupId>io.swagger.core.v3</groupId>
@@ -31,8 +35,8 @@
             <artifactId>commons-dbutils</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.projectreactor.rabbitmq</groupId>
-            <artifactId>reactor-rabbitmq</artifactId>
+            <groupId>org.glassfish.hk2</groupId>
+            <artifactId>hk2</artifactId>
         </dependency>
     </dependencies>
 

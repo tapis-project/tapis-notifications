@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -16,7 +17,7 @@ public class Subscription {
     private String tenantId;
     private Map<String, Object> filters;
     private Instant created;
-    private List<NotificationMechanism> mechanisms;
+    private List<NotificationMechanism> mechanisms = new ArrayList<>();
     private int topicId;
 
 

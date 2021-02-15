@@ -7,12 +7,12 @@ import java.util.List;
 
 public class CreateSubscriptionRequest {
 
-
     private String filter;
 
     @NotEmpty
     private List<NotificationMechanism> notificationMechanisms;
 
+    @NotEmpty
     public String getFilter() {
         return filter;
     }

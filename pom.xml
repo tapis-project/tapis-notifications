@@ -15,8 +15,12 @@
     <version>1.0</version>
 
     <properties>
-        <tapis-shared-java.version>[1.11,2.0)</tapis-shared-java.version>
+<!--        <tapis-shared-java.version>[1.11.60,2.0)</tapis-shared-java.version>-->
+<!--        <tapis-shared-java.version>1.11.61</tapis-shared-java.version>-->
+        <!-- Version of tapis-shared-java to be used. Individual projects may want to override. -->
+<!--        <tapis-shared-java.version>[1.11.50,2.0)</tapis-shared-java.version>-->
         <json-schema-validator.version>2.2.14</json-schema-validator.version>
+        <hk2-inhabitant-generator.version>3.0.0</hk2-inhabitant-generator.version>
         <skipITs>true</skipITs>
     </properties>
 
@@ -26,7 +30,7 @@
             <name>Local repo for snapshots</name>
             <url>http://c002.rodeo.tacc.utexas.edu:30044/repository/maven-snapshots</url>
             <releases>  <enabled>false</enabled> </releases>
-            <snapshots> <enabled>true</enabled>  </snapshots>
+            <snapshots> <enabled>false</enabled>  </snapshots>
         </repository>
         <repository>
             <id>tapis-local-releases</id>
@@ -37,8 +41,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>edu.utexas.tacc.tapis</groupId>
-            <artifactId>tapis-shared-notifications</artifactId>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>tapis-shared-lib</artifactId>
             <version>${tapis-shared-java.version}</version>
         </dependency>
         <dependency>
@@ -54,12 +58,20 @@
             <artifactId>hk2-utils</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.glassfish.hk2</groupId>
             <artifactId>hk2-api</artifactId>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>javax.ws.rs</groupId>
+            <artifactId>javax.ws.rs-api</artifactId>
         </dependency>
         <dependency>
             <!-- There are only test dependencies on testng -->
@@ -95,10 +107,23 @@
             <artifactId>flyway-core</artifactId>
         </dependency>
 
+
     </dependencies>
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.glassfish.hk2</groupId>
+                <artifactId>hk2-inhabitant-generator</artifactId>
+                <version>${hk2-inhabitant-generator.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate-inhabitants</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>

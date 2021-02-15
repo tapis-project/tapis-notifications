@@ -3,8 +3,6 @@ package edu.utexas.tacc.tapis.notifications.lib.dao;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.utexas.tacc.tapis.notifications.lib.exceptions.DAOException;
 import edu.utexas.tacc.tapis.notifications.lib.models.NotificationMechanism;
@@ -18,8 +16,8 @@ import org.apache.commons.dbutils.ResultSetHandler;
 import org.apache.commons.dbutils.RowProcessor;
 import org.apache.commons.dbutils.handlers.BeanHandler;
 import org.apache.commons.dbutils.handlers.BeanListHandler;
-import org.json.JSONObject;
 import org.jvnet.hk2.annotations.Service;
+import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,22 +25,18 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 public class NotificationsDAO {
 
     private static final Logger log = LoggerFactory.getLogger(NotificationsDAO.class);
     private static final ObjectMapper mapper = TapisObjectMapper.getMapper();
-    private static final TypeReference<Map<String, Object>> JsonTypeRef = new TypeReference<>() {
-    };
+    private static final TypeReference<Map<String, Object>> JsonTypeRef = new TypeReference<>() {};
 
 
     private class TopicRowProcessor extends BasicRowProcessor {
@@ -56,12 +50,6 @@ public class NotificationsDAO {
             topic.setOwner(rs.getString("owner"));
             topic.setUuid((UUID) rs.getObject("uuid"));
             topic.setTenantId(rs.getString("tenant_id"));
-
-            try {
-                topic.setSchema(mapper.readValue(rs.getString("schema"), JsonTypeRef));
-            } catch (JsonProcessingException ex) {
-                throw new SQLException("Invalid JSON?", ex);
-            }
             return topic;
         }
     }
@@ -76,7 +64,7 @@ public class NotificationsDAO {
             subscription.setTenantId(rs.getString("tenant_id"));
             subscription.setTopicId(rs.getInt("topic_id"));
             try {
-                subscription.setFilters(mapper.readValue(rs.getString("schema"), JsonTypeRef));
+                subscription.setFilters(mapper.readValue(rs.getString("filters"), JsonTypeRef));
             } catch (JsonProcessingException ex) {
                 throw new SQLException("Invalid JSON?", ex);
             }
@@ -109,9 +97,37 @@ public class NotificationsDAO {
 
     }
 
+    public List<Topic> getTopicsByTenantAndOwner(String tenantId, String owner) throws DAOException {
+        RowProcessor rowProcessor = new TopicRowProcessor();
+        try (Connection connection = HikariConnectionPool.getConnection()) {
+            BeanListHandler<Topic> handler = new BeanListHandler<>(Topic.class, rowProcessor);
+            String stmt = DAOStatements.GET_TOPICS_FOR_OWNER_TENANT;
+            QueryRunner runner = new QueryRunner();
+            List<Topic> topics = runner.query(connection, stmt, handler,
+                tenantId,
+                owner
+            );
+            return topics;
+        } catch (SQLException ex) {
+            throw new DAOException(ex.getMessage(), ex);
+        }
+    }
 
-    public Topic getTopicByUUID(UUID topicUUID) {
-        return null;
+
+    public Topic getTopicByTenantAndName(String tenantId, String topicName) throws DAOException {
+        RowProcessor rowProcessor = new TopicRowProcessor();
+        try (Connection connection = HikariConnectionPool.getConnection()) {
+            BeanHandler<Topic> handler = new BeanHandler<>(Topic.class, rowProcessor);
+            String stmt = DAOStatements.GET_TOPIC_BY_NAME_AND_TENANT;
+            QueryRunner runner = new QueryRunner();
+            Topic topic = runner.query(connection, stmt, handler,
+                tenantId,
+                topicName
+            );
+            return topic;
+        } catch (SQLException ex) {
+            throw new DAOException(ex.getMessage(), ex);
+        }
     }
 
     public Topic createTopic(Topic topic) throws DAOException {
@@ -123,17 +139,13 @@ public class NotificationsDAO {
             Topic insertedTopic = runner.query(connection, stmt, handler,
                 topic.getTenantId(),
                 topic.getName(),
-                mapper.writeValueAsString(topic.getSchema()),
                 topic.getDescription(),
                 topic.getOwner()
             );
             return insertedTopic;
         } catch (SQLException ex) {
             throw new DAOException(ex.getMessage(), ex);
-        } catch (JsonProcessingException ex) {
-            throw new DAOException("Invalid schema!", ex);
         }
-
     }
 
     public Subscription getSubscriptionByUUID(UUID uuid) throws DAOException {
@@ -173,10 +185,16 @@ public class NotificationsDAO {
             PreparedStatement stmt = connection.prepareStatement(DAOStatements.CREATE_SUBSCRIPTION);
             PreparedStatement insertMechanismStmt = connection.prepareStatement(DAOStatements.CREATE_NOTIFICATION_MECHANISM)
         ) {
-            stmt.setString(1, subscription.getTenantId());
+            // TODO: THis should and could be done in a single transaction.
+            // Insert the subscription first so we can get its ID
+            stmt.setString(1, topic.getTenantId());
             stmt.setInt(2, topic.getId());
-            stmt.setString(3, mapper.writeValueAsString(subscription.getFilters()));
+            PGobject jsonObject = new PGobject();
+            jsonObject.setType("json");
+            jsonObject.setValue(mapper.writeValueAsString(subscription.getFilters()));
+            stmt.setObject(3, jsonObject);
             ResultSet rs = stmt.executeQuery();
+            rs.next();
             int subId = rs.getInt("id");
             UUID subUUID = (UUID) rs.getObject("uuid");
             // Save the subscription object
@@ -201,10 +219,17 @@ public class NotificationsDAO {
         } catch (SQLException ex) {
             throw new DAOException("Could not create subscription", ex);
         } catch (JsonProcessingException ex) {
-            throw new DAOException("Could not create subscription, invalid filter JSON", ex);
+            throw new DAOException("Invalid json in filters!", ex);
         }
     }
 
+
+    /**
+     * Returns a List<Subscription>> with the NotificationMetchanisms also attached to each subscription.
+     * @param topicUUID
+     * @return
+     * @throws DAOException
+     */
     public List<Subscription> getSubscriptionsForTopic(UUID topicUUID) throws DAOException {
         try (
             Connection connection = HikariConnectionPool.getConnection();
@@ -214,22 +239,29 @@ public class NotificationsDAO {
             stmt.setObject(1, topicUUID);
             rs = stmt.executeQuery();
             Map<UUID, Subscription> subMap = new HashMap<>();
+            if (!rs.isBeforeFirst() ) {
+                return null;
+            }
+
             while (rs.next()) {
-                UUID subUUID = (UUID) rs.getObject("uuid");
+                UUID subUUID = (UUID) rs.getObject("sub_uuid");
                 Subscription sub = subMap.get(subUUID);
                 if (sub == null) {
                     sub = new Subscription();
-                    sub.setCreated(rs.getTimestamp("created").toInstant());
-                    sub.setId(rs.getInt("id"));
-                    sub.setTenantId(rs.getString("tenant_id"));
-                    sub.setUuid((UUID) rs.getObject("uuid"));
-                    sub.setFilters((Map<String, Object>) rs.getObject("filters"));
+                    sub.setCreated(rs.getTimestamp("sub_created").toInstant());
+                    sub.setId(rs.getInt("sub_id"));
+                    sub.setTenantId(rs.getString("sub_tenant_id"));
+                    sub.setUuid((UUID) rs.getObject("sub_uuid"));
+                    sub.setFilters(mapper.readValue(rs.getString("sub_filters"), JsonTypeRef));
                     subMap.put(sub.getUuid(), sub);
                 }
                 NotificationMechanism mechanism = new NotificationMechanism(
-                    NotificationMechanismEnum.valueOf(rs.getString("mechanism")),
-                    rs.getString("target")
+                    NotificationMechanismEnum.valueOf(rs.getString("nm_mechanism")),
+                    rs.getString("nm_target")
                 );
+                mechanism.setCreated(rs.getTimestamp("nm_created").toInstant());
+                mechanism.setSubscriptionId(rs.getInt("nm_subscription_id"));
+                mechanism.setTenantId(rs.getString("nm_tenant_id"));
                 sub.addMechanism(mechanism);
 
             }
@@ -237,6 +269,8 @@ public class NotificationsDAO {
             return new ArrayList<>(subMap.values());
         } catch (SQLException ex) {
             throw new DAOException(ex.getMessage(), ex);
+        } catch (JsonProcessingException ex) {
+            throw new DAOException("Invalid JSON in subscription filters", ex);
         }
     }
 
@@ -245,5 +279,28 @@ public class NotificationsDAO {
         return null;
     }
 
+    public void deleteTopic(String tenantId, String topicName) throws DAOException {
+        try (
+            Connection connection = HikariConnectionPool.getConnection();
+            PreparedStatement stmt = connection.prepareStatement(DAOStatements.DELETE_TOPIC_BY_TENANT_TOPIC_NAME)
+        ) {
+            stmt.setString(1, tenantId);
+            stmt.setString(2, topicName);
+            stmt.executeQuery();
+        } catch (SQLException ex) {
+            throw new DAOException("Could not delete topic", ex);
+        }
+    }
+    public void deleteTopic(UUID topicUUID) throws DAOException {
+        try (
+            Connection connection = HikariConnectionPool.getConnection();
+            PreparedStatement stmt = connection.prepareStatement(DAOStatements.DELETE_TOPIC_BY_UUID)
+        ) {
+            stmt.setObject(1, topicUUID);
+            stmt.executeQuery();
+        } catch (SQLException ex) {
+            throw new DAOException("Could not delete topic", ex);
+        }
+    }
 
 }

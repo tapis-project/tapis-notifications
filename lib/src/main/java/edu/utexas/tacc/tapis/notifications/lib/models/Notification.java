@@ -6,48 +6,63 @@ import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+import javax.ws.rs.core.MediaType;
 import java.time.Instant;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 public class Notification {
 
 
     private String specversion;
-    private UUID uuid;
-    private String tenant;
+    private String id;
+    private String tenantId;
+    private String topicName;
     private Instant time;
     private String source;
     private Object data;
     private String subject;
     private String type;
+    private MediaType datacontenttype;
+    private Map<String, Object> dataschema;
+    private String topicname;
+
+
 
     public Notification(){}
 
 
     private Notification(Builder builder) {
-        this.tenant = builder.tenant;
+        this.tenantId = builder.tenantId;
         this.data = builder.data;  // Object conforming to json schema of topic/type
-        this.source = builder.source; // filesService
+        this.source = builder.source; // tapis.files.systems.{systemId}
         this.type = builder.type;  // tapis.files.transfers.progress, tapis.files.object.delete, tapis.files.object.create
         this.subject = builder.subject; // UUID of file transfer, systemId/path/to/file.txt
         this.time = Instant.now();
-        this.uuid = UUID.randomUUID();
-        this.specversion = "1.0";
+        this.id = builder.id;
+        this.topicname =  builder.topicname;
+        this.specversion = "1.0.1";
     }
 
     public static class Builder {
-        private String tenant;
+        private String topicname;
+        private String tenantId;
         private String source;
         private Object data;
         private String type;
         private String subject;
+        private String id;
 
         private static final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
 
-        public Builder setTenant(String tenant) {
-            this.tenant = tenant;
+        public Builder setTopicName(String topicname) {
+            this.topicname = topicname;
+            return this;
+        }
+
+        public Builder setTenantId(String tenant) {
+            this.tenantId = tenant;
             return this;
         }
 
@@ -71,6 +86,10 @@ public class Notification {
             return this;
         }
 
+        public Builder setId(String id) {
+            this.id = id;
+            return this;
+        }
 
         public Notification build() {
 
@@ -87,13 +106,57 @@ public class Notification {
     }
 
     @NotEmpty
+    public String getTopicname() {
+        return topicname;
+    }
+
+    public void setTopicname(String topicname) {
+        this.topicname = topicname;
+    }
+
+    public void setSpecversion(String specversion) {
+        this.specversion = specversion;
+    }
+
+    @NotEmpty
+    public String getTopicName() {
+        return topicName;
+    }
+
+    public void setTopicName(String topicName) {
+        this.topicName = topicName;
+    }
+
+
+    @NotEmpty
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public MediaType getDatacontenttype() {
+        return datacontenttype;
+    }
+
+    public void setDatacontenttype(MediaType datacontenttype) {
+        this.datacontenttype = datacontenttype;
+    }
+
+    public Map<String, Object> getDataschema() {
+        return dataschema;
+    }
+
+    public void setDataschema(Map<String, Object> dataschema) {
+        this.dataschema = dataschema;
+    }
+
+    @NotEmpty
     public String getSpecversion() {
         return specversion;
     }
 
     @NotNull
-    public UUID getUuid() {
-        return uuid;
+    public String getId() {
+        return id;
     }
 
     @NotEmpty
@@ -122,21 +185,21 @@ public class Notification {
     }
 
     @NotEmpty
-    public String getTenant() {
-        return tenant;
+    public String getTenantId() {
+        return tenantId;
     }
 
 
-    public void setUuid(UUID uuid) {
-        this.uuid = uuid;
+    public void setId(String id) {
+        this.id = id;
     }
 
     public void setSubject(String subject) {
         this.subject = subject;
     }
 
-    public void setTenant(String tenant) {
-        this.tenant = tenant;
+    public void setTenantId(String tenant) {
+        this.tenantId = tenant;
     }
 
     public void setTime(Instant time) {
@@ -154,9 +217,7 @@ public class Notification {
     @Override
     public String toString() {
         return "Notification{" +
-            "tenant='" + tenant + '\'' +
-            ", created=" + time +
-            ", creator='" + source + '\'' +
+            "tenant='" + tenantId + '\'' +
             ", subject='" + subject + '\'' +
             ", type='" + type + '\'' +
             '}';

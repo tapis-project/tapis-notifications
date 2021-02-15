@@ -5,7 +5,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.json.JSONObject;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Pattern;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -20,9 +24,9 @@ public class Topic {
     private Instant created;
     private String owner;
     private String description;
-    private Map<String, Object> schema;
 
-    @JsonIgnore
+    private List<Subscription> subscriptions;
+
     public int getId() {
         return id;
     }
@@ -31,7 +35,6 @@ public class Topic {
         this.id = id;
     }
 
-    @JsonIgnore
     public String getTenantId() {
         return tenantId;
     }
@@ -47,16 +50,6 @@ public class Topic {
     public void setUuid(UUID uuid) {
         this.uuid = uuid;
     }
-
-    @Schema(description = "A valid JSON schema")
-    public Map<String, Object> getSchema() {
-        return schema;
-    }
-
-    public void setSchema(Map<String, Object> schema) {
-        this.schema = schema;
-    }
-
 
     public String getName() {
         return name;
@@ -74,10 +67,10 @@ public class Topic {
     public void setCreated(Instant created) {
         this.created = created;
     }
-
     public void setCreated(String created) {
         this.created = Instant.parse(created);
     }
+
 
     public String getOwner() {
         return owner;
@@ -93,5 +86,14 @@ public class Topic {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    @JsonIgnore
+    public List<Subscription> getSubscriptions() {
+        return subscriptions;
+    }
+
+    public void setSubscriptions(List<Subscription> subscriptions) {
+        this.subscriptions = subscriptions;
     }
 }

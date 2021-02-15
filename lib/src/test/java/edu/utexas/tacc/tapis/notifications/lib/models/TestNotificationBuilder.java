@@ -1,7 +1,7 @@
 package edu.utexas.tacc.tapis.notifications.lib.models;
 
 
-import edu.utexas.tacc.tapis.shared.notifications.Notification;
+import edu.utexas.tacc.tapis.notifications.lib.models.Notification;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -13,7 +13,7 @@ public class TestNotificationBuilder {
     @Test
     void testValidation() {
         Notification.Builder builder = new Notification.Builder()
-            .setBody("test");
+            .setData("test");
 
         Assert.assertThrows(ValidationException.class, builder::build);
     }
@@ -21,29 +21,11 @@ public class TestNotificationBuilder {
     @Test
     void testShouldValidate() {
         Notification notification = new Notification.Builder()
-            .setBody("hello")
-            .setCreator("testService")
-            .setEventType("TEST_EVENT")
-            .setLevel("INFO")
-            .setRecipient("testuser")
-            .setTenant("testTenant")
+            .setData("hello")
+            .setSubject("TEST_EVENT")
+            .setTenantId("testTenant")
             .build();
-        Assert.assertNotNull(notification.getCreated());
+        Assert.assertNotNull(notification.getTime());
     }
-
-
-    @Test
-    void testShouldValidateWithMechanism() {
-        Notification notification = new Notification.Builder()
-            .setBody("hello")
-            .setCreator("testService")
-            .setEventType("TEST_EVENT")
-            .setLevel("INFO")
-            .setRecipient("testuser")
-            .setTenant("testTenant")
-            .build();
-        Assert.assertNotNull(notification.getCreated());
-    }
-
 
 }

@@ -2,18 +2,16 @@ package edu.utexas.tacc.tapis.notifications.lib;
 
 import edu.utexas.tacc.tapis.notifications.lib.cache.TopicsCache;
 import edu.utexas.tacc.tapis.notifications.lib.dao.NotificationsDAO;
+import edu.utexas.tacc.tapis.notifications.lib.models.Topic;
 import edu.utexas.tacc.tapis.notifications.lib.services.NotificationDispatcherService;
 import edu.utexas.tacc.tapis.notifications.lib.services.NotificationsService;
 import org.glassfish.hk2.api.ServiceLocator;
-import org.glassfish.hk2.api.ServiceLocatorFactory;
 import org.glassfish.hk2.utilities.ServiceLocatorUtilities;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
 import javax.inject.Singleton;
 
-public class Application {
-
-
+public class TestSender {
 
     public static void main(String[] args) throws Exception {
 
@@ -28,11 +26,23 @@ public class Application {
             }
         });
 
-        NotificationDispatcherService dispatcherService = locator.getService(NotificationDispatcherService.class);
+        NotificationsService notificationsService = locator.getService(NotificationsService.class);
 
-        dispatcherService
-            .processMessages()
-            .subscribe();
+        int NUM_TOPICS = 10;
+
+        for (var i=0; i<NUM_TOPICS; i++) {
+            Topic topic = new Topic();
+            String topicDescription = String.format("test-topic-%s", i);
+            topic.setDescription(topicDescription);
+            topic.setName(topicDescription);
+            topic.setOwner("testuser");
+            topic.setTenantId("testtenant");
+            notificationsService.createTopic(topic);
+        }
+
+
+
+
 
     }
 
