@@ -50,8 +50,9 @@ public class DAOStatements {
         DELETE from topics where tenant_id = ? and name = ?;
         """;
 
-    //language=SQL
-    public static final String GET_SUBSCRIPTIONS_BY_TOPIC_UUID =
+
+    //language=sql
+    public static final String GET_SUBSCRIPTIONS_BY_TOPIC_TENANT_TOPIC_NAME =
         """
         SELECT 
             sub.id as sub_id,
@@ -69,10 +70,12 @@ public class DAOStatements {
             nm.mechanism as nm_mechanism, 
             nm.target as nm_target                    
         from subscriptions as sub
-        join notification_mechanisms nm on sub.id = nm.subscription_id
+        left join notification_mechanisms nm on sub.id = nm.subscription_id
         join topics t on sub.topic_id = t.id 
-        where t.uuid = ?;
+        where t.tenant_id = ? 
+        and t.name = ?;
         """;
+
 
     //language=SQL
     public static final String GET_TOPICS_FOR_OWNER_TENANT =

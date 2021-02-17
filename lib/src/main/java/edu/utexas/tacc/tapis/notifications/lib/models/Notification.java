@@ -18,7 +18,6 @@ public class Notification {
     private String specversion;
     private String id;
     private String tenantId;
-    private String topicName;
     private Instant time;
     private String source;
     private Object data;
@@ -120,18 +119,14 @@ public class Notification {
 
     @NotEmpty
     public String getTopicName() {
-        return topicName;
+        return topicname;
     }
 
-    public void setTopicName(String topicName) {
-        this.topicName = topicName;
+    public void setTopicName(String topicname) {
+        this.topicname = topicname;
     }
 
 
-    @NotEmpty
-    public void setType(String type) {
-        this.type = type;
-    }
 
     public MediaType getDatacontenttype() {
         return datacontenttype;
@@ -189,6 +184,9 @@ public class Notification {
         return tenantId;
     }
 
+    public void setType(String type) {
+        this.type = type;
+    }
 
     public void setId(String id) {
         this.id = id;

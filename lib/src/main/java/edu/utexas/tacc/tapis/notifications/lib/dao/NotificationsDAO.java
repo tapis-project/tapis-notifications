@@ -224,24 +224,26 @@ public class NotificationsDAO {
     }
 
 
-    /**
+     /**
      * Returns a List<Subscription>> with the NotificationMetchanisms also attached to each subscription.
-     * @param topicUUID
+     * @param topicName
+     * @param tenantId
      * @return
      * @throws DAOException
      */
-    public List<Subscription> getSubscriptionsForTopic(UUID topicUUID) throws DAOException {
+    public List<Subscription> getSubscriptionsForTopic(String tenantId, String topicName) throws DAOException {
         try (
             Connection connection = HikariConnectionPool.getConnection();
-            PreparedStatement stmt = connection.prepareStatement(DAOStatements.GET_SUBSCRIPTIONS_BY_TOPIC_UUID)
+            PreparedStatement stmt = connection.prepareStatement(DAOStatements.GET_SUBSCRIPTIONS_BY_TOPIC_TENANT_TOPIC_NAME)
         ) {
             ResultSet rs;
-            stmt.setObject(1, topicUUID);
+            stmt.setString(1, tenantId);
+            stmt.setString(2, topicName);
             rs = stmt.executeQuery();
             Map<UUID, Subscription> subMap = new HashMap<>();
-            if (!rs.isBeforeFirst() ) {
-                return null;
-            }
+//            if (!rs.isBeforeFirst() ) {
+//                return null;
+//            }
 
             while (rs.next()) {
                 UUID subUUID = (UUID) rs.getObject("sub_uuid");
@@ -255,14 +257,18 @@ public class NotificationsDAO {
                     sub.setFilters(mapper.readValue(rs.getString("sub_filters"), JsonTypeRef));
                     subMap.put(sub.getUuid(), sub);
                 }
-                NotificationMechanism mechanism = new NotificationMechanism(
-                    NotificationMechanismEnum.valueOf(rs.getString("nm_mechanism")),
-                    rs.getString("nm_target")
-                );
-                mechanism.setCreated(rs.getTimestamp("nm_created").toInstant());
-                mechanism.setSubscriptionId(rs.getInt("nm_subscription_id"));
-                mechanism.setTenantId(rs.getString("nm_tenant_id"));
-                sub.addMechanism(mechanism);
+                //If there are no mechanisms for the subscription, these fields will
+                //all be null
+                if (rs.getObject("nm_id") != null) {
+                    NotificationMechanism mechanism = new NotificationMechanism(
+                        NotificationMechanismEnum.valueOf(rs.getString("nm_mechanism")),
+                        rs.getString("nm_target")
+                    );
+                    mechanism.setCreated(rs.getTimestamp("nm_created").toInstant());
+                    mechanism.setSubscriptionId(rs.getInt("nm_subscription_id"));
+                    mechanism.setTenantId(rs.getString("nm_tenant_id"));
+                    sub.addMechanism(mechanism);
+                }
 
             }
 

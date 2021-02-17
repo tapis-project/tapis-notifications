@@ -110,7 +110,7 @@ public class ITestNotificationsDAO {
             subscription.setTenantId(topic.getTenantId());
             Subscription sub = dao.createSubscription(topic, subscription);
         }
-        List<Subscription> subs = dao.getSubscriptionsForTopic(topic.getUuid());
+        List<Subscription> subs = dao.getSubscriptionsForTopic(topic.getTenantId(), topic.getName());
         Assert.assertEquals(subs.size(), 5);
 
 

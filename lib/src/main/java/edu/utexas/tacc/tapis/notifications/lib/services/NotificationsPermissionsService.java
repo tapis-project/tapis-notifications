@@ -7,7 +7,6 @@ import edu.utexas.tacc.tapis.notifications.lib.models.Topic;
 import org.jvnet.hk2.annotations.Service;
 
 import javax.inject.Inject;
-import java.text.MessageFormat;
 
 @Service
 public class NotificationsPermissionsService {

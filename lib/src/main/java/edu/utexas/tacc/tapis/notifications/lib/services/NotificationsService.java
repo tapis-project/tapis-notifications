@@ -87,11 +87,11 @@ public class NotificationsService {
         }
     }
 
-    public List<Subscription> getSubscriptionsForTopic(UUID topicUUID) throws ServiceException {
+    public List<Subscription> getSubscriptionsForTopic(String tenantId, String topicName) throws ServiceException {
         try {
-           return notificationsDAO.getSubscriptionsForTopic(topicUUID);
+            return notificationsDAO.getSubscriptionsForTopic(tenantId, topicName);
         } catch (DAOException ex) {
-            String msg = String.format("Could not get subscriptions for topic %s", topicUUID.toString());
+            String msg = String.format("Could not get subscriptions for topic %s", topicName);
             throw new ServiceException(msg, ex);
         }
     }
@@ -120,12 +120,17 @@ public class NotificationsService {
         }
     }
 
-    public Subscription subscribeToTopic(Subscription subscription) {
-        return null;
+    public Subscription subscribeToTopic(Topic topic, Subscription subscription) throws ServiceException {
+        try {
+            return notificationsDAO.createSubscription(topic, subscription);
+        } catch (DAOException ex) {
+            throw new ServiceException("Could not subscribe to topic", ex);
+        }
     }
 
     public void sendNotification(@Valid Notification notification) throws ServiceException {
         try {
+            log.info(notification.toString());
             String m = mapper.writeValueAsString(notification);
             OutboundMessage message = new OutboundMessage("", NOTIFICATIONS_SERVICE_QUEUE_NAME, m.getBytes());
             Flux<OutboundMessageResult> confirms = sender.sendWithPublishConfirms(Mono.just(message));

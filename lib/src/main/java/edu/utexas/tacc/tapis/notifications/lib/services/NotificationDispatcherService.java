@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.utexas.tacc.tapis.notifications.lib.dao.NotificationsDAO;
 import edu.utexas.tacc.tapis.notifications.lib.exceptions.ServiceException;
 import edu.utexas.tacc.tapis.notifications.lib.models.Notification;
+import edu.utexas.tacc.tapis.notifications.lib.models.NotificationMechanism;
+import edu.utexas.tacc.tapis.notifications.lib.models.NotificationMechanismEnum;
 import edu.utexas.tacc.tapis.notifications.lib.models.Queue;
 import edu.utexas.tacc.tapis.notifications.lib.models.Subscription;
 import edu.utexas.tacc.tapis.notifications.lib.models.Topic;
@@ -19,10 +21,14 @@ import reactor.core.scheduler.Schedulers;
 import reactor.rabbitmq.AcknowledgableDelivery;
 
 import javax.inject.Inject;
+import javax.inject.Named;
+
 import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 
 /**
@@ -31,13 +37,13 @@ import java.util.List;
  * notification to a subscription for that topic, then ultimately
  * dispatches the notification via the NotificationMechanisms in the subscription.
  */
- @Service
+ @Service @Named
 public class NotificationDispatcherService {
 
     private final NotificationsService notificationsService;
     private static final ObjectMapper mapper = TapisObjectMapper.getMapper();
     private static final Logger log = LoggerFactory.getLogger(NotificationsService.class);
-    private int MAX_THREADS = 10;
+    private int MAX_THREADS = 50;
 
 
     @Inject
@@ -48,6 +54,7 @@ public class NotificationDispatcherService {
     private Mono<Notification> deserializeNotification(AcknowledgableDelivery message) {
         try {
             Notification notification = mapper.readValue(message.getBody(), Notification.class);
+            message.ack();
             return Mono.just(notification);
         } catch (IOException ex) {
             message.nack(false);
@@ -64,7 +71,7 @@ public class NotificationDispatcherService {
      * @return
      * @throws ServiceException
      */
-    public Flux<Void> processMessages() throws ServiceException {
+    public Flux<Notification> processMessages() throws ServiceException {
 
         Flux<AcknowledgableDelivery> msgStream = notificationsService.streamNotificationMessages();
         return msgStream.groupBy( (m)-> {
@@ -75,36 +82,95 @@ public class NotificationDispatcherService {
                 return Mono.empty();
             }
         }).flatMap((group) -> group
-           .parallel()
-           .runOn(Schedulers.newBoundedElastic(MAX_THREADS, 10, "Notifications-TenantPool:" + group.key()))
-           .flatMap(this::deserializeNotification)
-           .flatMap(this::matchSubscriptionsByTopic)
-           .flatMap(this::dispatchNotification)
-           .flatMap(this::cleanup));
+            .parallel()
+            .runOn(Schedulers.newBoundedElastic(MAX_THREADS, 100, "Notifications-TenantPool:" + group.key()))
+            .flatMap(this::deserializeNotification)
+            .flatMap(this::matchSubscriptionsByTopic)
+            .flatMap(this::dispatchNotification)
+            .runOn(Schedulers.newBoundedElastic(10, 10, "sender-pool-"+ group.key()))
+            .flatMap(pair -> Mono.fromCallable(() -> this.handleNotification(pair)))
+            .flatMap(this::cleanup));
 
     }
 
-    public Flux<Notification> dispatchNotification(@NotNull  Pair<Notification, Subscription> pair) {
-        log.info(pair.toString());
-        Notification notification = pair.getLeft();
-        Subscription subscription = pair.getRight();
-
-        return Flux.empty();
-
-    }
-
-    public Flux<Pair<Notification, Subscription>>   matchSubscriptionsByTopic(@NotNull Notification notification) {
+    public Flux<Pair<Notification, Subscription>>   matchSubscriptionsByTopic(@NotNull final Notification notification) {
 
         // Pull out topic from cache
         // get list of subscriptions for topic in cache
         // Filter the list of subscriptions based on the filters in the subscription
-        log.debug(notification.toString());
-        return Flux.empty();
+        List<Subscription> subscriptions;
+        try {
+            subscriptions = notificationsService.getSubscriptionsForTopic(notification.getTenantId(), notification.getTopicName());
+        } catch (ServiceException ex) {
+            return Flux.empty();
+        }
+        List<Pair<Notification, Subscription>> out = new ArrayList<>();
+        subscriptions.forEach((subscription -> {
+            out.add(Pair.of(notification, subscription));
+        }));
+        log.debug(out.toString());
+        return Flux.fromStream(out.stream());
     }
 
-    public Mono<Void> cleanup(Notification notification) {
+    public Flux<Pair<Notification, NotificationMechanism>> dispatchNotification(@NotNull  Pair<Notification, Subscription> pair) {
+        log.info(pair.toString());
+        Notification notification = pair.getLeft();
+        Subscription subscription = pair.getRight();
+
+        return Flux.fromStream(subscription.getMechanisms().stream().map( mech -> Pair.of(notification, mech)));
+    }
+
+    private Notification handleNotification(Pair<Notification, NotificationMechanism> pair) {
+        Notification  notification = pair.getLeft();
+        NotificationMechanism mech = pair.getRight();
+
+        if (mech.getMechanism().equals(NotificationMechanismEnum.EMAIL)) {
+            handleEmail(mech.getTarget());
+        } else if (mech.getMechanism().equals(NotificationMechanismEnum.WEBHOOK)) {
+            handleWebHook(mech.getTarget());
+        } else {
+            log.error("Invalid notification mechanism??? {}", mech);
+            log.error(notification.toString());
+        }
+        return notification;
+    }
+
+
+    private void handleWebHook(String url) {
+        log.info("sending webhook to {}", url);
+        int duration = sleeper(10, 100);
+        try {
+            Thread.sleep(duration);
+            log.info("Slept for {}", duration);
+        } catch (InterruptedException ex) {
+            log.error(ex.getMessage(), ex);
+        }
+    }
+
+    private int sleeper(int min, int max) {
+        Random random = new Random();
+        return random.nextInt(max - min ) + min;
+    }
+
+    private void handleEmail(String emailAddress) {
+        log.info("sending email to {}", emailAddress);
+        int duration = sleeper(10, 100);
+        try {
+            Thread.sleep(duration);
+            log.info("Slept for {}", duration);
+        } catch (InterruptedException ex) {
+            log.error(ex.getMessage(), ex);
+        }
+    }
+
+    private void handleQueue(String queueName) {
+        log.info("dispatching to queue {}", queueName);
+    }
+
+
+    public Mono<Notification> cleanup(Notification notification) {
         log.debug(notification.toString());
-        return Mono.empty();
+        return Mono.just(notification);
     }
 
 

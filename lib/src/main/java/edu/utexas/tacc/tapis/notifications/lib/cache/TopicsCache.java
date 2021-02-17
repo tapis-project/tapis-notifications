@@ -47,7 +47,7 @@ public class TopicsCache {
             if (topic == null) {
                 throw new NotFoundException("Topic not found");
             }
-            List<Subscription> subscriptions = dao.getSubscriptionsForTopic(topic.getUuid());
+            List<Subscription> subscriptions = dao.getSubscriptionsForTopic(topic.getTenantId(), topic.getName());
             topic.setSubscriptions(subscriptions);
             return topic;
         }
