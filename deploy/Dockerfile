@@ -1,30 +1,8 @@
 FROM maven:3-openjdk-15 AS build
-RUN microdnf install -y git
 EXPOSE 8080
 WORKDIR /app
-# Copy all of the repo into the /app dir. The .dockerignore file will skip the target dirs
-COPY pom.xml .
-COPY api/pom.xml ./api/pom.xml
-COPY lib/pom.xml ./lib/pom.xml
-COPY migrations/pom.xml ./migrations/pom.xml
-COPY websockets/pom.xml ./websockets/pom.xml
-# should only install the deps
-RUN mvn clean install --fail-never
-#now copy all the source and build
-COPY api/src ./api/src
-COPY lib/src ./lib/src
-COPY migrations/src ./migrations/src
-COPY websockets/src ./websockets/src
-
-RUN mvn package -DskipTests
-
-FROM openjdk:15-slim
-WORKDIR /app
-#RUN mvn -pl api clean install --also-make -DskipTests
-COPY --from=build /app/api ./api
+# Just copy the jars needed
+COPY  api/target  ./api/target/
 WORKDIR /app/api
-CMD ["java", \
-    "-cp", \
-    "target/tapis-files.jar:target/dependencies/*", \
-    "edu.utexas.tacc.tapis.notifications.api.Application" \
-]
+CMD ["java", "-cp", "target/tapis-notifications.jar:target/dependencies/*", "edu.utexas.tacc.tapis.notifications.api.Application"]
+

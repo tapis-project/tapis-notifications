@@ -253,7 +253,7 @@
         "parameters" : [ {
           "name" : "topicName",
           "in" : "path",
-          "description" : "ID of the topic",
+          "description" : "Name of the topic",
           "required" : true,
           "schema" : {
             "type" : "string"
@@ -564,131 +564,6 @@
         }
       }
     },
-    "/v3/notifications/topics/{topicId}/subscriptions" : {
-      "get" : {
-        "tags" : [ "subscriptions" ],
-        "summary" : "Get a list of all subscriptions on this topic",
-        "operationId" : "getSubscriptions",
-        "parameters" : [ {
-          "name" : "topicId",
-          "in" : "path",
-          "description" : "ID of the topic",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          },
-          "example" : "mySuperTopic"
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/SubscriptionListResponse"
-                }
-              }
-            }
-          },
-          "401" : {
-            "description" : "Not Authenticated",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/SubscriptionListResponse"
-                }
-              }
-            }
-          },
-          "403" : {
-            "description" : "Not Authorized",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/SubscriptionListResponse"
-                }
-              }
-            }
-          },
-          "500" : {
-            "description" : "Internal Error",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/SubscriptionListResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post" : {
-        "tags" : [ "subscriptions" ],
-        "summary" : "Create a new subscription to this topic channel",
-        "operationId" : "createSubscription",
-        "parameters" : [ {
-          "name" : "topicId",
-          "in" : "path",
-          "description" : "ID of the topic",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          },
-          "example" : "mySuperTopic"
-        } ],
-        "requestBody" : {
-          "content" : {
-            "*/*" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/CreateSubscriptionRequest"
-              }
-            }
-          }
-        },
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/TopicListResponse"
-                }
-              }
-            }
-          },
-          "401" : {
-            "description" : "Not Authenticated",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/TopicListResponse"
-                }
-              }
-            }
-          },
-          "403" : {
-            "description" : "Not Authorized",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/TopicListResponse"
-                }
-              }
-            }
-          },
-          "500" : {
-            "description" : "Internal Error",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/TopicListResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/v3/notifications/topics/{topicId}/subscriptions/{subscriptionId}" : {
       "get" : {
         "tags" : [ "subscriptions" ],
@@ -823,6 +698,131 @@
         }
       }
     },
+    "/v3/notifications/topics/{topicId}/subscriptions" : {
+      "get" : {
+        "tags" : [ "subscriptions" ],
+        "summary" : "Get a list of all subscriptions on this topic",
+        "operationId" : "getSubscriptions",
+        "parameters" : [ {
+          "name" : "topicId",
+          "in" : "path",
+          "description" : "ID of the topic",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          },
+          "example" : "mySuperTopic"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SubscriptionListResponse"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Not Authenticated",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SubscriptionListResponse"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "Not Authorized",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SubscriptionListResponse"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Internal Error",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SubscriptionListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "subscriptions" ],
+        "summary" : "Create a new subscription to this topic channel",
+        "operationId" : "createSubscription",
+        "parameters" : [ {
+          "name" : "topicId",
+          "in" : "path",
+          "description" : "ID of the topic",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          },
+          "example" : "mySuperTopic"
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateSubscriptionRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicListResponse"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Not Authenticated",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicListResponse"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "Not Authorized",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicListResponse"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Internal Error",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/application.wadl" : {
       "get" : {
         "operationId" : "getWadl",
@@ -907,14 +907,6 @@
           },
           "description" : {
             "type" : "string"
-          },
-          "schema" : {
-            "type" : "object",
-            "additionalProperties" : {
-              "type" : "object",
-              "description" : "A valid JSON schema"
-            },
-            "description" : "A valid JSON schema"
           }
         }
       },
@@ -938,41 +930,6 @@
           }
         }
       },
-      "TapisResponseTopic" : {
-        "type" : "object",
-        "properties" : {
-          "status" : {
-            "type" : "string"
-          },
-          "message" : {
-            "type" : "string"
-          },
-          "result" : {
-            "$ref" : "#/components/schemas/Topic"
-          },
-          "version" : {
-            "type" : "string"
-          }
-        }
-      },
-      "CreateTopicRequest" : {
-        "required" : [ "description", "name", "schema" ],
-        "type" : "object",
-        "properties" : {
-          "name" : {
-            "type" : "string",
-            "description" : "Name for the topic, must be unique"
-          },
-          "schema" : {
-            "type" : "string",
-            "description" : "A valid JSON schema"
-          },
-          "description" : {
-            "type" : "string",
-            "description" : "An informative description"
-          }
-        }
-      },
       "TapisResponseString" : {
         "type" : "object",
         "properties" : {
@@ -991,27 +948,69 @@
         }
       },
       "CreateNotificationRequest" : {
-        "required" : [ "body", "id" ],
+        "required" : [ "data", "id", "source", "subject", "type" ],
         "type" : "object",
         "properties" : {
-          "body" : {
+          "type" : {
+            "type" : "string"
+          },
+          "data" : {
             "type" : "string"
           },
           "id" : {
             "type" : "string"
+          },
+          "subject" : {
+            "type" : "string"
+          },
+          "source" : {
+            "type" : "string"
+          }
+        }
+      },
+      "TapisResponseTopic" : {
+        "type" : "object",
+        "properties" : {
+          "status" : {
+            "type" : "string"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "result" : {
+            "$ref" : "#/components/schemas/Topic"
+          },
+          "version" : {
+            "type" : "string"
+          }
+        }
+      },
+      "CreateTopicRequest" : {
+        "required" : [ "description", "name" ],
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "maxLength" : 32,
+            "minLength" : 0,
+            "pattern" : "^[.A-Za-z0-9_-]+$",
+            "type" : "string",
+            "description" : "Name for the topic, must be unique"
+          },
+          "description" : {
+            "type" : "string",
+            "description" : "An informative description"
           }
         }
       },
       "Notification" : {
-        "required" : [ "data", "source", "specversion", "subject", "tenantId", "time", "type", "uuid" ],
+        "required" : [ "data", "id", "source", "specversion", "subject", "tenantId", "time", "topicName", "topicname", "type" ],
         "type" : "object",
         "properties" : {
           "specversion" : {
             "type" : "string"
           },
-          "uuid" : {
-            "type" : "string",
-            "format" : "uuid"
+          "id" : {
+            "type" : "string"
           },
           "tenantId" : {
             "type" : "string"
@@ -1030,6 +1029,41 @@
             "type" : "string"
           },
           "type" : {
+            "type" : "string"
+          },
+          "datacontenttype" : {
+            "type" : "object",
+            "properties" : {
+              "type" : {
+                "type" : "string"
+              },
+              "subtype" : {
+                "type" : "string"
+              },
+              "parameters" : {
+                "type" : "object",
+                "additionalProperties" : {
+                  "type" : "string"
+                }
+              },
+              "wildcardType" : {
+                "type" : "boolean"
+              },
+              "wildcardSubtype" : {
+                "type" : "boolean"
+              }
+            }
+          },
+          "dataschema" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "object"
+            }
+          },
+          "topicname" : {
+            "type" : "string"
+          },
+          "topicName" : {
             "type" : "string"
           }
         }
@@ -1062,26 +1096,6 @@
           },
           "result" : {
             "$ref" : "#/components/schemas/Topic"
-          },
-          "version" : {
-            "type" : "string"
-          }
-        }
-      },
-      "TopicListResponse" : {
-        "type" : "object",
-        "properties" : {
-          "status" : {
-            "type" : "string"
-          },
-          "message" : {
-            "type" : "string"
-          },
-          "result" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/Topic"
-            }
           },
           "version" : {
             "type" : "string"
@@ -1181,8 +1195,28 @@
           }
         }
       },
+      "TopicListResponse" : {
+        "type" : "object",
+        "properties" : {
+          "status" : {
+            "type" : "string"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Topic"
+            }
+          },
+          "version" : {
+            "type" : "string"
+          }
+        }
+      },
       "CreateSubscriptionRequest" : {
-        "required" : [ "notificationMechanisms" ],
+        "required" : [ "filter", "notificationMechanisms" ],
         "type" : "object",
         "properties" : {
           "filter" : {

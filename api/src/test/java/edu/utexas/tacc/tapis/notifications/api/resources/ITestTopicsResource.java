@@ -14,16 +14,22 @@ import edu.utexas.tacc.tapis.shared.security.TenantManager;
 import edu.utexas.tacc.tapis.sharedapi.jaxrs.filters.JWTValidateRequestFilter;
 import edu.utexas.tacc.tapis.sharedapi.responses.TapisResponse;
 import edu.utexas.tacc.tapis.systems.client.gen.model.TSystem;
+import edu.utexas.tacc.tapis.tenants.client.gen.model.Site;
+import edu.utexas.tacc.tapis.tenants.client.gen.model.Tenant;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.IOUtils;
+import org.flywaydb.core.Flyway;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.jersey.test.JerseyTestNg;
 import org.glassfish.jersey.test.TestProperties;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -31,19 +37,56 @@ import javax.inject.Singleton;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @Test(groups = {"integration"})
-public class ITestTopicsResource extends BaseITest {
+public class ITestTopicsResource extends JerseyTestNg.ContainerPerClassTest {
     private static final Logger log = LoggerFactory.getLogger(ITestTopicsResource.class);
     private static class TopicResponse extends TapisResponse<Topic> {}
     private static class TopicErrorResponse extends TapisResponse<String> {}
     private static class SubscriptionResponse extends TapisResponse<Subscription>{};
+    private SKClient skClient;
+    private ServiceJWT serviceJWT;
+
+    protected TenantManager tenantManager;
+    protected String user1jwt;
+    protected String user2jwt;
+    protected Map<String, Tenant> tenantMap = new HashMap<>();
+
+    protected Tenant tenant;
+    protected Site site;
+
+    public ITestTopicsResource() {
+        tenant = new Tenant();
+        tenant.setTenantId("testTenant");
+        tenant.setBaseUrl("https://test.tapis.io");
+        tenantMap.put(tenant.getTenantId(), tenant);
+        site = new Site();
+        site.setSiteId("dev");
+    }
+
+    @BeforeTest
+    public void doFlywayMigrations() {
+        Flyway flyway = Flyway.configure()
+            .dataSource("jdbc:postgresql://localhost:5432/test", "test", "test")
+            .load();
+        flyway.clean();
+        flyway.migrate();
+    }
+
+    @BeforeClass
+    public void setUpUsers() throws Exception {
+        user1jwt = IOUtils.resourceToString("/user1jwt", StandardCharsets.UTF_8);
+        user2jwt = IOUtils.resourceToString("/user2jwt", StandardCharsets.UTF_8);
+    }
 
     @Override
     protected ResourceConfig configure() {

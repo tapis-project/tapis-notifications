@@ -16,9 +16,6 @@
 
     <properties>
 <!--        <tapis-shared-java.version>[1.11.60,2.0)</tapis-shared-java.version>-->
-<!--        <tapis-shared-java.version>1.11.61</tapis-shared-java.version>-->
-        <!-- Version of tapis-shared-java to be used. Individual projects may want to override. -->
-<!--        <tapis-shared-java.version>[1.11.50,2.0)</tapis-shared-java.version>-->
         <json-schema-validator.version>2.2.14</json-schema-validator.version>
         <hk2-inhabitant-generator.version>3.0.0</hk2-inhabitant-generator.version>
         <skipITs>true</skipITs>
@@ -121,6 +118,22 @@
                         <goals>
                             <goal>generate-inhabitants</goal>
                         </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>${maven-dependency-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <includeScope>runtime</includeScope>
+                            <outputDirectory>target/dependencies</outputDirectory>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

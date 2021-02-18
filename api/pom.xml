@@ -66,7 +66,20 @@
     </dependencies>
 
     <build>
+        <finalName>tapis-notifications</finalName>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>${maven-jar-plugin.version}</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>edu.utexas.tacc.tapis.notifications.api.Application</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
             <!-- Generate the openapi documentation from the code -->
             <plugin>
                 <groupId>io.swagger.core.v3</groupId>

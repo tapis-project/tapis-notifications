@@ -23,7 +23,7 @@ public class Application {
         AtomicInteger counter = new AtomicInteger();
 
         ServiceLocator locator = ServiceLocatorUtilities.createAndPopulateServiceLocator();
-        ServiceLocatorUtilities.bind(new AbstractBinder() {
+        ServiceLocatorUtilities.bind(locator, new AbstractBinder() {
             @Override
             protected void configure() {
                 bindAsContract(TopicsCache.class).in(Singleton.class);
