@@ -379,65 +379,6 @@
         }
       }
     },
-    "/v3/notifications/topics/{topicId}" : {
-      "get" : {
-        "tags" : [ "topics" ],
-        "summary" : "Get details of a topic.",
-        "operationId" : "getTopic",
-        "parameters" : [ {
-          "name" : "topicId",
-          "in" : "path",
-          "description" : "ID of the topic",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          },
-          "example" : "mySuperTopic"
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/TopicResponse"
-                }
-              }
-            }
-          },
-          "401" : {
-            "description" : "Not Authenticated",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/TopicResponse"
-                }
-              }
-            }
-          },
-          "403" : {
-            "description" : "Not Authorized",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/TopicResponse"
-                }
-              }
-            }
-          },
-          "500" : {
-            "description" : "Internal Error",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/TopicResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/v3/notifications/topics" : {
       "get" : {
         "tags" : [ "topics" ],
@@ -557,6 +498,190 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/TopicResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/notifications/topics/{topicId}" : {
+      "get" : {
+        "tags" : [ "topics" ],
+        "summary" : "Get details of a topic.",
+        "operationId" : "getTopic",
+        "parameters" : [ {
+          "name" : "topicId",
+          "in" : "path",
+          "description" : "ID of the topic",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          },
+          "example" : "mySuperTopic"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicResponse"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Not Authenticated",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicResponse"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "Not Authorized",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicResponse"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Internal Error",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/notifications/topics/{topicId}/subscriptions" : {
+      "get" : {
+        "tags" : [ "subscriptions" ],
+        "summary" : "Get a list of all subscriptions on this topic",
+        "operationId" : "getSubscriptions",
+        "parameters" : [ {
+          "name" : "topicId",
+          "in" : "path",
+          "description" : "ID of the topic",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          },
+          "example" : "mySuperTopic"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SubscriptionListResponse"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Not Authenticated",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SubscriptionListResponse"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "Not Authorized",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SubscriptionListResponse"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Internal Error",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SubscriptionListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "subscriptions" ],
+        "summary" : "Create a new subscription to this topic channel",
+        "operationId" : "createSubscription",
+        "parameters" : [ {
+          "name" : "topicId",
+          "in" : "path",
+          "description" : "ID of the topic",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          },
+          "example" : "mySuperTopic"
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateSubscriptionRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicListResponse"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Not Authenticated",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicListResponse"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "Not Authorized",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicListResponse"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Internal Error",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicListResponse"
                 }
               }
             }
@@ -698,145 +823,6 @@
         }
       }
     },
-    "/v3/notifications/topics/{topicId}/subscriptions" : {
-      "get" : {
-        "tags" : [ "subscriptions" ],
-        "summary" : "Get a list of all subscriptions on this topic",
-        "operationId" : "getSubscriptions",
-        "parameters" : [ {
-          "name" : "topicId",
-          "in" : "path",
-          "description" : "ID of the topic",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          },
-          "example" : "mySuperTopic"
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/SubscriptionListResponse"
-                }
-              }
-            }
-          },
-          "401" : {
-            "description" : "Not Authenticated",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/SubscriptionListResponse"
-                }
-              }
-            }
-          },
-          "403" : {
-            "description" : "Not Authorized",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/SubscriptionListResponse"
-                }
-              }
-            }
-          },
-          "500" : {
-            "description" : "Internal Error",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/SubscriptionListResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post" : {
-        "tags" : [ "subscriptions" ],
-        "summary" : "Create a new subscription to this topic channel",
-        "operationId" : "createSubscription",
-        "parameters" : [ {
-          "name" : "topicId",
-          "in" : "path",
-          "description" : "ID of the topic",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          },
-          "example" : "mySuperTopic"
-        } ],
-        "requestBody" : {
-          "content" : {
-            "*/*" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/CreateSubscriptionRequest"
-              }
-            }
-          }
-        },
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/TopicListResponse"
-                }
-              }
-            }
-          },
-          "401" : {
-            "description" : "Not Authenticated",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/TopicListResponse"
-                }
-              }
-            }
-          },
-          "403" : {
-            "description" : "Not Authorized",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/TopicListResponse"
-                }
-              }
-            }
-          },
-          "500" : {
-            "description" : "Internal Error",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/TopicListResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/application.wadl" : {
-      "get" : {
-        "operationId" : "getWadl",
-        "responses" : {
-          "default" : {
-            "description" : "default response",
-            "content" : {
-              "application/vnd.sun.wadl+xml" : { },
-              "application/xml" : { }
-            }
-          }
-        }
-      }
-    },
     "/application.wadl/{path}" : {
       "get" : {
         "operationId" : "getExternalGrammar",
@@ -852,6 +838,20 @@
           "default" : {
             "description" : "default response",
             "content" : {
+              "application/xml" : { }
+            }
+          }
+        }
+      }
+    },
+    "/application.wadl" : {
+      "get" : {
+        "operationId" : "getWadl",
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/vnd.sun.wadl+xml" : { },
               "application/xml" : { }
             }
           }
@@ -930,6 +930,40 @@
           }
         }
       },
+      "TapisResponseTopic" : {
+        "type" : "object",
+        "properties" : {
+          "status" : {
+            "type" : "string"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "result" : {
+            "$ref" : "#/components/schemas/Topic"
+          },
+          "version" : {
+            "type" : "string"
+          }
+        }
+      },
+      "CreateTopicRequest" : {
+        "required" : [ "description", "name" ],
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "maxLength" : 32,
+            "minLength" : 0,
+            "pattern" : "^[.A-Za-z0-9_-]+$",
+            "type" : "string",
+            "description" : "Name for the topic, must be unique"
+          },
+          "description" : {
+            "type" : "string",
+            "description" : "An informative description"
+          }
+        }
+      },
       "TapisResponseString" : {
         "type" : "object",
         "properties" : {
@@ -965,40 +999,6 @@
           },
           "source" : {
             "type" : "string"
-          }
-        }
-      },
-      "TapisResponseTopic" : {
-        "type" : "object",
-        "properties" : {
-          "status" : {
-            "type" : "string"
-          },
-          "message" : {
-            "type" : "string"
-          },
-          "result" : {
-            "$ref" : "#/components/schemas/Topic"
-          },
-          "version" : {
-            "type" : "string"
-          }
-        }
-      },
-      "CreateTopicRequest" : {
-        "required" : [ "description", "name" ],
-        "type" : "object",
-        "properties" : {
-          "name" : {
-            "maxLength" : 32,
-            "minLength" : 0,
-            "pattern" : "^[.A-Za-z0-9_-]+$",
-            "type" : "string",
-            "description" : "Name for the topic, must be unique"
-          },
-          "description" : {
-            "type" : "string",
-            "description" : "An informative description"
           }
         }
       },
@@ -1085,6 +1085,23 @@
           }
         }
       },
+      "TapisResponse" : {
+        "type" : "object",
+        "properties" : {
+          "status" : {
+            "type" : "string"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "result" : {
+            "type" : "object"
+          },
+          "version" : {
+            "type" : "string"
+          }
+        }
+      },
       "TopicResponse" : {
         "type" : "object",
         "properties" : {
@@ -1102,7 +1119,7 @@
           }
         }
       },
-      "TapisResponse" : {
+      "TopicListResponse" : {
         "type" : "object",
         "properties" : {
           "status" : {
@@ -1112,7 +1129,10 @@
             "type" : "string"
           },
           "result" : {
-            "type" : "object"
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Topic"
+            }
           },
           "version" : {
             "type" : "string"
@@ -1188,26 +1208,6 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/Subscription"
-            }
-          },
-          "version" : {
-            "type" : "string"
-          }
-        }
-      },
-      "TopicListResponse" : {
-        "type" : "object",
-        "properties" : {
-          "status" : {
-            "type" : "string"
-          },
-          "message" : {
-            "type" : "string"
-          },
-          "result" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/Topic"
             }
           },
           "version" : {

@@ -48,7 +48,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @Test(groups = {"integration"})
-public class ITestTopicsResource extends JerseyTestNg.ContainerPerClassTest {
+public class ITestTopicsResource extends BaseITest {
     private static final Logger log = LoggerFactory.getLogger(ITestTopicsResource.class);
     private static class TopicResponse extends TapisResponse<Topic> {}
     private static class TopicErrorResponse extends TapisResponse<String> {}
@@ -56,37 +56,7 @@ public class ITestTopicsResource extends JerseyTestNg.ContainerPerClassTest {
     private SKClient skClient;
     private ServiceJWT serviceJWT;
 
-    protected TenantManager tenantManager;
-    protected String user1jwt;
-    protected String user2jwt;
-    protected Map<String, Tenant> tenantMap = new HashMap<>();
 
-    protected Tenant tenant;
-    protected Site site;
-
-    public ITestTopicsResource() {
-        tenant = new Tenant();
-        tenant.setTenantId("testTenant");
-        tenant.setBaseUrl("https://test.tapis.io");
-        tenantMap.put(tenant.getTenantId(), tenant);
-        site = new Site();
-        site.setSiteId("dev");
-    }
-
-    @BeforeTest
-    public void doFlywayMigrations() {
-        Flyway flyway = Flyway.configure()
-            .dataSource("jdbc:postgresql://localhost:5432/test", "test", "test")
-            .load();
-        flyway.clean();
-        flyway.migrate();
-    }
-
-    @BeforeClass
-    public void setUpUsers() throws Exception {
-        user1jwt = IOUtils.resourceToString("/user1jwt", StandardCharsets.UTF_8);
-        user2jwt = IOUtils.resourceToString("/user2jwt", StandardCharsets.UTF_8);
-    }
 
     @Override
     protected ResourceConfig configure() {
