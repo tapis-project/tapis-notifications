@@ -4,9 +4,11 @@ package edu.utexas.tacc.tapis.notifications.lib.dao;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.utexas.tacc.tapis.notifications.lib.exceptions.ConstraintViolationException;
 import edu.utexas.tacc.tapis.notifications.lib.exceptions.DAOException;
 import edu.utexas.tacc.tapis.notifications.lib.models.NotificationMechanism;
 import edu.utexas.tacc.tapis.notifications.lib.models.NotificationMechanismEnum;
+import edu.utexas.tacc.tapis.notifications.lib.models.Queue;
 import edu.utexas.tacc.tapis.notifications.lib.models.Subscription;
 import edu.utexas.tacc.tapis.notifications.lib.models.Topic;
 import edu.utexas.tacc.tapis.shared.utils.TapisObjectMapper;
@@ -21,10 +23,12 @@ import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.validation.ValidationException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -38,6 +42,17 @@ public class NotificationsDAO {
     private static final ObjectMapper mapper = TapisObjectMapper.getMapper();
     private static final TypeReference<Map<String, Object>> JsonTypeRef = new TypeReference<>() {};
 
+    private class QueueRowProcessor extends BasicRowProcessor {
+        @Override
+        public Queue toBean(ResultSet rs, Class type) throws SQLException {
+            Queue queue = new Queue();
+            queue.setCreated(rs.getTimestamp("created").toInstant());
+            queue.setName(rs.getString("name"));
+            queue.setUuid((UUID) rs.getObject("uuid"));
+            queue.setOwner(rs.getString("owner"));
+            return queue;
+        }
+    }
 
     private class TopicRowProcessor extends BasicRowProcessor {
         @Override
@@ -143,6 +158,8 @@ public class NotificationsDAO {
                 topic.getOwner()
             );
             return insertedTopic;
+        } catch (SQLIntegrityConstraintViolationException ex) {
+            throw new ConstraintViolationException("Topic with this name already exists", ex);
         } catch (SQLException ex) {
             throw new DAOException(ex.getMessage(), ex);
         }
@@ -179,7 +196,7 @@ public class NotificationsDAO {
     }
 
 
-    public Subscription createSubscription(Topic topic, Subscription subscription) throws DAOException {
+    public Subscription createSubscription(Topic topic, Subscription subscription) throws DAOException, ValidationException {
         try (
             Connection connection = HikariConnectionPool.getConnection();
             PreparedStatement stmt = connection.prepareStatement(DAOStatements.CREATE_SUBSCRIPTION);
@@ -285,6 +302,19 @@ public class NotificationsDAO {
         return null;
     }
 
+    public void deleteSubscription(UUID subUUID) throws DAOException {
+        try (
+            Connection connection = HikariConnectionPool.getConnection();
+            PreparedStatement stmt = connection.prepareStatement(DAOStatements.DELETE_SUBSCRIPTION_BY_UUID)
+        ) {
+            stmt.setObject(1, subUUID);
+            stmt.execute();
+        } catch (SQLException ex) {
+            throw new DAOException("Could not delete topic", ex);
+        }
+    }
+
+
     public void deleteTopic(String tenantId, String topicName) throws DAOException {
         try (
             Connection connection = HikariConnectionPool.getConnection();
@@ -292,7 +322,7 @@ public class NotificationsDAO {
         ) {
             stmt.setString(1, tenantId);
             stmt.setString(2, topicName);
-            stmt.executeQuery();
+            stmt.execute();
         } catch (SQLException ex) {
             throw new DAOException("Could not delete topic", ex);
         }
@@ -303,10 +333,30 @@ public class NotificationsDAO {
             PreparedStatement stmt = connection.prepareStatement(DAOStatements.DELETE_TOPIC_BY_UUID)
         ) {
             stmt.setObject(1, topicUUID);
-            stmt.executeQuery();
+            stmt.execute();
         } catch (SQLException ex) {
             throw new DAOException("Could not delete topic", ex);
         }
     }
+
+    public Queue createQueue(Queue queueSpec) throws DAOException {
+        RowProcessor rowProcessor = new QueueRowProcessor();
+        try (Connection connection = HikariConnectionPool.getConnection()) {
+            BeanHandler<Queue> handler = new BeanHandler<>(Queue.class, rowProcessor);
+            String stmt = DAOStatements.CREATE_QUEUE;
+            QueryRunner runner = new QueryRunner();
+            Queue queue = runner.query(connection, stmt, handler,
+                queueSpec.getTenantId(),
+                queueSpec.getName(),
+                queueSpec.getOwner()
+            );
+            return queue;
+        } catch (SQLIntegrityConstraintViolationException ex) {
+            throw new ConstraintViolationException("Topic with this name already exists", ex);
+        } catch (SQLException ex) {
+            throw new DAOException(ex.getMessage(), ex);
+        }
+    }
+
 
 }

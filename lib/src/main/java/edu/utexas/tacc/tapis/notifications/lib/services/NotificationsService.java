@@ -2,19 +2,24 @@ package edu.utexas.tacc.tapis.notifications.lib.services;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.Delivery;
 import edu.utexas.tacc.tapis.notifications.lib.RabbitMQConnection;
-import edu.utexas.tacc.tapis.notifications.lib.cache.TopicsCache;
 import edu.utexas.tacc.tapis.notifications.lib.dao.NotificationsDAO;
+import edu.utexas.tacc.tapis.notifications.lib.exceptions.ConstraintViolationException;
 import edu.utexas.tacc.tapis.notifications.lib.exceptions.DAOException;
+import edu.utexas.tacc.tapis.notifications.lib.exceptions.DuplicateEntityException;
 import edu.utexas.tacc.tapis.notifications.lib.exceptions.ServiceException;
 import edu.utexas.tacc.tapis.notifications.lib.models.Notification;
+import edu.utexas.tacc.tapis.notifications.lib.models.Queue;
 import edu.utexas.tacc.tapis.notifications.lib.models.Subscription;
 import edu.utexas.tacc.tapis.notifications.lib.models.Topic;
 import edu.utexas.tacc.tapis.shared.utils.TapisObjectMapper;
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.threeten.bp.Duration;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -34,6 +39,7 @@ import javax.validation.Valid;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
@@ -96,9 +102,13 @@ public class NotificationsService {
         }
     }
 
-    public Topic createTopic(Topic topic) throws ServiceException {
+    public Topic createTopic(Topic topic) throws DuplicateEntityException, ServiceException {
         try {
             return notificationsDAO.createTopic(topic);
+        } catch (ConstraintViolationException ex) {
+            //Topic name + tenant Id are unique, so this gets called
+            // when an attempt to create a duplicate topic happens.
+            throw new DuplicateEntityException("Topic with this name already exists", ex);
         } catch (DAOException ex) {
             throw new ServiceException("Could not create topic", ex);
         }
@@ -120,7 +130,7 @@ public class NotificationsService {
         }
     }
 
-    public Subscription subscribeToTopic(Topic topic, Subscription subscription) throws ServiceException {
+    public Subscription createSubscription(Topic topic, Subscription subscription) throws ServiceException {
         try {
             return notificationsDAO.createSubscription(topic, subscription);
         } catch (DAOException ex) {
@@ -128,11 +138,40 @@ public class NotificationsService {
         }
     }
 
+    public Subscription getSubscription(UUID subUUID) throws ServiceException {
+        try {
+            return notificationsDAO.getSubscriptionByUUID(subUUID);
+        } catch (DAOException ex) {
+            throw new ServiceException("Could not retrieve subscription.", ex);
+        }
+    }
+
+
+    public void deleteSubscription(Subscription subscription) throws ServiceException {
+        try {
+            notificationsDAO.deleteSubscription(subscription.getUuid());
+        } catch (DAOException ex) {
+            throw new ServiceException("Could not delete topic.");
+        }
+    }
+
+
+    /**
+     * Send a notification, i.e. put it on the main queue. All notifications sent with this method
+     * are set to have a TTL of 7 days.
+     * @param notification
+     * @throws ServiceException
+     */
     public void sendNotification(@Valid Notification notification) throws ServiceException {
         try {
             log.info(notification.toString());
             String m = mapper.writeValueAsString(notification);
-            OutboundMessage message = new OutboundMessage("", NOTIFICATIONS_SERVICE_QUEUE_NAME, m.getBytes());
+
+            long TTL = Duration.ofDays(7).toMillis();
+            AMQP.BasicProperties properties = new AMQP.BasicProperties.Builder()
+                .expiration(String.valueOf(TTL))
+                .build();
+            OutboundMessage message = new OutboundMessage("", NOTIFICATIONS_SERVICE_QUEUE_NAME, properties, m.getBytes());
             Flux<OutboundMessageResult> confirms = sender.sendWithPublishConfirms(Mono.just(message));
             sender.declareQueue(QueueSpecification.queue(NOTIFICATIONS_SERVICE_QUEUE_NAME))
                 .thenMany(confirms)
@@ -151,7 +190,29 @@ public class NotificationsService {
             .delaySubscription(sender.declareQueue(QueueSpecification.queue(NOTIFICATIONS_SERVICE_QUEUE_NAME)));
     }
 
+    private Mono<Notification> deserializeNotification(Delivery message) {
+        try {
+            Notification notification = mapper.readValue(message.getBody(), Notification.class);
+            return Mono.just(notification);
+        } catch (IOException ex) {
+            log.error("Could not deserialize message!", ex);
+            return Mono.empty();
+        }
+    }
 
+    public Flux<Notification> streamNotificationsOnQueue(String queueName) {
+        return receiver.consumeAutoAck(queueName)
+            .flatMap(this::deserializeNotification);
+    }
 
+    public Queue createQueue(Queue queueSpec) throws ServiceException {
+        try {
+            Queue queue = notificationsDAO.createQueue(queueSpec);
+            sender.declareQueue(QueueSpecification.queue(queue.getUuid().toString())).subscribe();
+            return queue;
+        } catch (DAOException ex) {
+            throw new ServiceException("Could not create queue.", ex);
+        }
+    }
 
 }

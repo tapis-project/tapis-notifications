@@ -2,10 +2,14 @@ package edu.utexas.tacc.tapis.notifications.api;
 
 import edu.utexas.tacc.tapis.notifications.api.factories.ServiceJWTCacheFactory;
 import edu.utexas.tacc.tapis.notifications.api.factories.TenantCacheFactory;
+import edu.utexas.tacc.tapis.notifications.api.providers.TopicsAuthz;
 import edu.utexas.tacc.tapis.notifications.api.resources.Healthcheck;
 import edu.utexas.tacc.tapis.notifications.api.resources.TopicsResource;
 import edu.utexas.tacc.tapis.notifications.lib.config.IRuntimeConfig;
 import edu.utexas.tacc.tapis.notifications.lib.config.RuntimeSettings;
+import edu.utexas.tacc.tapis.notifications.lib.dao.NotificationsDAO;
+import edu.utexas.tacc.tapis.notifications.lib.services.NotificationsPermissionsService;
+import edu.utexas.tacc.tapis.notifications.lib.services.NotificationsService;
 import edu.utexas.tacc.tapis.sharedapi.jaxrs.filters.JWTValidateRequestFilter;
 import edu.utexas.tacc.tapis.shared.security.ServiceJWT;
 import edu.utexas.tacc.tapis.shared.security.TenantManager;
@@ -83,11 +87,18 @@ public class Application extends ResourceConfig {
         register(TapisExceptionMapper.class);
         register(ValidationExceptionMapper.class);
 
+        //Authorization Annotations
+        register(TopicsAuthz.class);
+
         register(new AbstractBinder() {
             @Override
             protected void configure() {
                 bindFactory(ServiceJWTCacheFactory.class).to(ServiceJWT.class).in(Singleton.class);
                 bindFactory(TenantCacheFactory.class).to(TenantManager.class).in(Singleton.class);
+                bindAsContract(NotificationsService.class).in(Singleton.class);
+                bindAsContract(NotificationsPermissionsService.class).in(Singleton.class);
+                bindAsContract(NotificationsDAO.class);
+
             }
         });
 

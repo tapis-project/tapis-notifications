@@ -71,6 +71,10 @@ public class Subscription {
     public void setCreated(Instant created) {
         this.created = created;
     }
+    public void setCreated(String created) {
+        this.created = Instant.parse(created);
+    }
+
 
     public List<NotificationMechanism> getMechanisms() {
         return mechanisms;

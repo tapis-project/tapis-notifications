@@ -41,7 +41,6 @@ public class Queue {
         this.created = created;
     }
 
-    @JsonIgnore
     @NotBlank
     public String getTenantId() {
         return tenantId;

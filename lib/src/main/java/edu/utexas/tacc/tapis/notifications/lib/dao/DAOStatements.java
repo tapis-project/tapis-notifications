@@ -38,6 +38,16 @@ public class DAOStatements {
         id, topic_id, tenant_id, uuid, filters::text
         """;
 
+
+    //language=SQL
+    public static final String CREATE_QUEUE =
+        """
+        INSERT INTO queues
+        (tenant_id, name, owner)
+        values(?, ?, ?)
+        returning *
+        """;
+
     //language=SQL
     public static final String DELETE_TOPIC_BY_UUID =
         """
@@ -48,6 +58,12 @@ public class DAOStatements {
     public static final String DELETE_TOPIC_BY_TENANT_TOPIC_NAME =
         """
         DELETE from topics where tenant_id = ? and name = ?;
+        """;
+
+    //language=SQL
+    public static final String DELETE_SUBSCRIPTION_BY_UUID =
+        """
+        DELETE from subscriptions where uuid = ?
         """;
 
 

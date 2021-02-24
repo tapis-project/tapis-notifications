@@ -164,6 +164,44 @@ paths:
               schema:
                 $ref: '#/components/schemas/QueueResponse'
   /v3/notifications/topics/{topicName}:
+    get:
+      tags:
+      - topics
+      summary: Get details of a topic.
+      operationId: getTopic
+      parameters:
+      - name: topicName
+        in: path
+        description: Name of the topic
+        required: true
+        schema:
+          type: string
+        example: mySuperTopic
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopicResponse'
+        401:
+          description: Not Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopicResponse'
+        403:
+          description: Not Authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopicResponse'
+        500:
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopicResponse'
     post:
       tags:
       - topics
@@ -226,6 +264,198 @@ paths:
           '*/*':
             schema:
               $ref: '#/components/schemas/CreateNotificationRequest'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TapisResponse'
+        401:
+          description: Not Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TapisResponse'
+        403:
+          description: Not Authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TapisResponse'
+        500:
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TapisResponse'
+  /v3/notifications/topics/{topicName}/messages:
+    get:
+      tags:
+      - topics
+      summary: Subscribe to and start receiving messages via ServerSentEvents.
+      operationId: getMessageStream
+      parameters:
+      - name: topicName
+        in: path
+        description: Name of the topic
+        required: true
+        schema:
+          type: string
+        example: mySuperTopic
+      responses:
+        default:
+          description: default response
+          content:
+            text/event-stream: {}
+  /v3/notifications/topics/{topicName}/subscriptions:
+    get:
+      tags:
+      - subscriptions
+      summary: Get a list of all subscriptions on this topic
+      operationId: getSubscriptions
+      parameters:
+      - name: topicName
+        in: path
+        description: Name of the topic
+        required: true
+        schema:
+          type: string
+        example: mySuperTopic
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionListResponse'
+        401:
+          description: Not Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionListResponse'
+        403:
+          description: Not Authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionListResponse'
+        500:
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionListResponse'
+    post:
+      tags:
+      - subscriptions
+      summary: Create a new subscription to this topic channel
+      operationId: createSubscription
+      parameters:
+      - name: topicName
+        in: path
+        description: ID of the topic
+        required: true
+        schema:
+          type: string
+        example: mySuperTopic
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/CreateSubscriptionRequest'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionResponse'
+        401:
+          description: Not Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionResponse'
+        403:
+          description: Not Authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionResponse'
+        500:
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionResponse'
+  /v3/notifications/topics/{topicName}/subscriptions/{subscriptionId}:
+    get:
+      tags:
+      - subscriptions
+      summary: Get a subscription by ID
+      operationId: getSubscriptionByID
+      parameters:
+      - name: topicName
+        in: path
+        description: ID of the topic
+        required: true
+        schema:
+          type: string
+        example: mySuperTopic
+      - name: subscriptionId
+        in: path
+        description: ID of the subscription
+        required: true
+        schema:
+          type: string
+        example: 1234-123-123
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopicListResponse'
+        401:
+          description: Not Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopicListResponse'
+        403:
+          description: Not Authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopicListResponse'
+        500:
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopicListResponse'
+    delete:
+      tags:
+      - subscriptions
+      summary: Delete a subscription
+      operationId: deleteSubscription
+      parameters:
+      - name: topicName
+        in: path
+        description: ID of the topic
+        required: true
+        schema:
+          type: string
+        example: mySuperTopic
+      - name: subscriptionId
+        in: path
+        description: ID of the subscription
+        required: true
+        schema:
+          type: string
+        example: 1234-123-123
       responses:
         200:
           description: OK
@@ -334,218 +564,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TopicResponse'
-  /v3/notifications/topics/{topicId}:
+  /application.wadl:
     get:
-      tags:
-      - topics
-      summary: Get details of a topic.
-      operationId: getTopic
-      parameters:
-      - name: topicId
-        in: path
-        description: ID of the topic
-        required: true
-        schema:
-          type: string
-        example: mySuperTopic
+      operationId: getWadl
       responses:
-        200:
-          description: OK
+        default:
+          description: default response
           content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TopicResponse'
-        401:
-          description: Not Authenticated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TopicResponse'
-        403:
-          description: Not Authorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TopicResponse'
-        500:
-          description: Internal Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TopicResponse'
-  /v3/notifications/topics/{topicId}/subscriptions:
-    get:
-      tags:
-      - subscriptions
-      summary: Get a list of all subscriptions on this topic
-      operationId: getSubscriptions
-      parameters:
-      - name: topicId
-        in: path
-        description: ID of the topic
-        required: true
-        schema:
-          type: string
-        example: mySuperTopic
-      responses:
-        200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SubscriptionListResponse'
-        401:
-          description: Not Authenticated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SubscriptionListResponse'
-        403:
-          description: Not Authorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SubscriptionListResponse'
-        500:
-          description: Internal Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SubscriptionListResponse'
-    post:
-      tags:
-      - subscriptions
-      summary: Create a new subscription to this topic channel
-      operationId: createSubscription
-      parameters:
-      - name: topicId
-        in: path
-        description: ID of the topic
-        required: true
-        schema:
-          type: string
-        example: mySuperTopic
-      requestBody:
-        content:
-          '*/*':
-            schema:
-              $ref: '#/components/schemas/CreateSubscriptionRequest'
-      responses:
-        200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TopicListResponse'
-        401:
-          description: Not Authenticated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TopicListResponse'
-        403:
-          description: Not Authorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TopicListResponse'
-        500:
-          description: Internal Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TopicListResponse'
-  /v3/notifications/topics/{topicId}/subscriptions/{subscriptionId}:
-    get:
-      tags:
-      - subscriptions
-      summary: Get a subscription by ID
-      operationId: getSubscriptionByID
-      parameters:
-      - name: topicId
-        in: path
-        description: ID of the topic
-        required: true
-        schema:
-          type: string
-        example: mySuperTopic
-      - name: subscriptionId
-        in: path
-        description: ID of the subscription
-        required: true
-        schema:
-          type: string
-        example: 1234-123-123
-      responses:
-        200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TopicListResponse'
-        401:
-          description: Not Authenticated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TopicListResponse'
-        403:
-          description: Not Authorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TopicListResponse'
-        500:
-          description: Internal Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TopicListResponse'
-    delete:
-      tags:
-      - subscriptions
-      summary: Delete a subscription
-      operationId: deleteSubscription
-      parameters:
-      - name: topicId
-        in: path
-        description: ID of the topic
-        required: true
-        schema:
-          type: string
-        example: mySuperTopic
-      - name: subscriptionId
-        in: path
-        description: ID of the subscription
-        required: true
-        schema:
-          type: string
-        example: 1234-123-123
-      responses:
-        200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TapisResponse'
-        401:
-          description: Not Authenticated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TapisResponse'
-        403:
-          description: Not Authorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TapisResponse'
-        500:
-          description: Internal Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TapisResponse'
+            application/vnd.sun.wadl+xml: {}
+            application/xml: {}
   /application.wadl/{path}:
     get:
       operationId: getExternalGrammar
@@ -559,15 +586,6 @@ paths:
         default:
           description: default response
           content:
-            application/xml: {}
-  /application.wadl:
-    get:
-      operationId: getWadl
-      responses:
-        default:
-          description: default response
-          content:
-            application/vnd.sun.wadl+xml: {}
             application/xml: {}
 components:
   schemas:
@@ -603,19 +621,6 @@ components:
         owner:
           type: string
         description:
-          type: string
-    TapisResponseListTopic:
-      type: object
-      properties:
-        status:
-          type: string
-        message:
-          type: string
-        result:
-          type: array
-          items:
-            $ref: '#/components/schemas/Topic'
-        version:
           type: string
     TapisResponseTopic:
       type: object
@@ -672,6 +677,19 @@ components:
         subject:
           type: string
         source:
+          type: string
+    TapisResponseListTopic:
+      type: object
+      properties:
+        status:
+          type: string
+        message:
+          type: string
+        result:
+          type: array
+          items:
+            $ref: '#/components/schemas/Topic'
+        version:
           type: string
     Notification:
       required:
@@ -738,41 +756,6 @@ components:
           $ref: '#/components/schemas/Notification'
         version:
           type: string
-    TapisResponse:
-      type: object
-      properties:
-        status:
-          type: string
-        message:
-          type: string
-        result:
-          type: object
-        version:
-          type: string
-    TopicResponse:
-      type: object
-      properties:
-        status:
-          type: string
-        message:
-          type: string
-        result:
-          $ref: '#/components/schemas/Topic'
-        version:
-          type: string
-    TopicListResponse:
-      type: object
-      properties:
-        status:
-          type: string
-        message:
-          type: string
-        result:
-          type: array
-          items:
-            $ref: '#/components/schemas/Topic'
-        version:
-          type: string
     NotificationMechanism:
       type: object
       properties:
@@ -829,6 +812,52 @@ components:
             $ref: '#/components/schemas/Subscription'
         version:
           type: string
+    TopicListResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        message:
+          type: string
+        result:
+          type: array
+          items:
+            $ref: '#/components/schemas/Topic'
+        version:
+          type: string
+    TapisResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        message:
+          type: string
+        result:
+          type: object
+        version:
+          type: string
+    SubscriptionResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        message:
+          type: string
+        result:
+          $ref: '#/components/schemas/Subscription'
+        version:
+          type: string
+    TapisResponseSubscription:
+      type: object
+      properties:
+        status:
+          type: string
+        message:
+          type: string
+        result:
+          $ref: '#/components/schemas/Subscription'
+        version:
+          type: string
     CreateSubscriptionRequest:
       required:
       - filter
@@ -841,3 +870,14 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/NotificationMechanism'
+    TopicResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        message:
+          type: string
+        result:
+          $ref: '#/components/schemas/Topic'
+        version:
+          type: string

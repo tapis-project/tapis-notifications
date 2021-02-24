@@ -63,7 +63,7 @@ public class TestSender {
                 mechs.add(mech);
                 mechs.add(mech2);
                 subscription.setMechanisms(mechs);
-                subscription = notificationsService.subscribeToTopic(topic, subscription);
+                subscription = notificationsService.createSubscription(topic, subscription);
 
             }
 

@@ -164,6 +164,7 @@ public class NotificationDispatcherService {
     }
 
     private void handleQueue(String queueName) {
+        //TODO: Make sure all messages are TTL at 7 days or whatever is decided as TTL
         log.info("dispatching to queue {}", queueName);
     }
 
