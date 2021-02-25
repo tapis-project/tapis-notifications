@@ -1,6 +1,6 @@
 package edu.utexas.tacc.tapis.notifications.lib.exceptions;
 
-public class DuplicateEntityException extends ServiceException {
+public class DuplicateEntityException extends Exception {
 
     public DuplicateEntityException(String message) {
         super(message);

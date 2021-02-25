@@ -1,9 +1,11 @@
 package edu.utexas.tacc.tapis.notifications.api.resources;
 
+import edu.utexas.tacc.tapis.notifications.api.models.CreateNotificationRequest;
 import edu.utexas.tacc.tapis.notifications.api.models.CreateSubscriptionRequest;
 import edu.utexas.tacc.tapis.notifications.api.models.CreateTopicRequest;
 import edu.utexas.tacc.tapis.notifications.api.providers.TopicsAuthz;
 import edu.utexas.tacc.tapis.notifications.lib.dao.NotificationsDAO;
+import edu.utexas.tacc.tapis.notifications.lib.models.Notification;
 import edu.utexas.tacc.tapis.notifications.lib.models.NotificationMechanism;
 import edu.utexas.tacc.tapis.notifications.lib.models.NotificationMechanismEnum;
 import edu.utexas.tacc.tapis.notifications.lib.models.Subscription;
@@ -20,6 +22,10 @@ import edu.utexas.tacc.tapis.tenants.client.gen.model.Tenant;
 import org.apache.commons.io.IOUtils;
 import org.flywaydb.core.Flyway;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
+import org.glassfish.jersey.media.sse.EventListener;
+import org.glassfish.jersey.media.sse.EventSource;
+import org.glassfish.jersey.media.sse.InboundEvent;
+import org.glassfish.jersey.media.sse.SseFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTestNg;
 import org.glassfish.jersey.test.TestProperties;
@@ -33,7 +39,11 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.sse.SseEventSource;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -131,7 +141,6 @@ public class ITestTopicsResource extends JerseyTestNg.ContainerPerClassTest {
 
     @BeforeMethod
     public void initMocks() throws Exception {
-        log.info("WTFWTFWTFWTWFWTWFWFWFWTWFWTWFWR");
         when(tenantManager.getTenants()).thenReturn(tenantMap);
         when(tenantManager.getTenant(any())).thenReturn(tenant);
         when(tenantManager.getSite(any())).thenReturn(site);
@@ -246,8 +255,40 @@ public class ITestTopicsResource extends JerseyTestNg.ContainerPerClassTest {
     }
 
 
+    private void sendNotification(String userJWT, String topicName, CreateNotificationRequest request) {
+        StringResponse resp = target("/v3/notifications/topics/" + topicName )
+            .request()
+            .header("x-tapis-token", userJWT)
+            .post(Entity.json(request), StringResponse.class);
+    }
+
     @Test
-    public void testSendAndReceiveMessages() {
+    public void testSendAndReceiveMessages() throws Exception {
+        createTopic(user1jwt, "test.topic");
+        Client client = ClientBuilder.newBuilder()
+            .register(SseFeature.class).build();
+        WebTarget target = client.target("/v3/notifications/test.topic/messages");
+        EventSource eventSource = EventSource.target(target).build();
+        EventListener listener = new EventListener() {
+            @Override
+            public void onEvent(InboundEvent inboundEvent) {
+                log.info(inboundEvent.toString());
+            }
+        };
+        eventSource.register(listener, "message-to-client");
+        eventSource.open();
+
+        for (var i=0;i<10;i++){
+
+            CreateNotificationRequest request = new CreateNotificationRequest();
+            request.setId(String.valueOf(i));
+            request.setData("{}");
+            request.setSource("test.source");
+            request.setType("test.type");
+            request.setSubject("test.subject");
+            sendNotification(user1jwt, "test.topic", request);
+        }
+        eventSource.close();
 
     }
 

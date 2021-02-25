@@ -4,8 +4,8 @@ package edu.utexas.tacc.tapis.notifications.lib.dao;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.utexas.tacc.tapis.notifications.lib.exceptions.ConstraintViolationException;
 import edu.utexas.tacc.tapis.notifications.lib.exceptions.DAOException;
+import edu.utexas.tacc.tapis.notifications.lib.exceptions.DuplicateEntityException;
 import edu.utexas.tacc.tapis.notifications.lib.models.NotificationMechanism;
 import edu.utexas.tacc.tapis.notifications.lib.models.NotificationMechanismEnum;
 import edu.utexas.tacc.tapis.notifications.lib.models.Queue;
@@ -23,12 +23,10 @@ import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.validation.ValidationException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -145,7 +143,7 @@ public class NotificationsDAO {
         }
     }
 
-    public Topic createTopic(Topic topic) throws DAOException {
+    public Topic createTopic(Topic topic) throws DAOException, DuplicateEntityException {
         RowProcessor rowProcessor = new TopicRowProcessor();
         try (Connection connection = HikariConnectionPool.getConnection()) {
             BeanHandler<Topic> handler = new BeanHandler<>(Topic.class, rowProcessor);
@@ -158,10 +156,11 @@ public class NotificationsDAO {
                 topic.getOwner()
             );
             return insertedTopic;
-        } catch (SQLIntegrityConstraintViolationException ex) {
-            throw new ConstraintViolationException("Topic with this name already exists", ex);
         } catch (SQLException ex) {
-            throw new DAOException(ex.getMessage(), ex);
+            if (ex.getMessage().contains("violates unique constraint")) {
+                throw new DuplicateEntityException("A topic with this name already exists", ex);
+            }
+            throw new DAOException("Could not create subscription", ex);
         }
     }
 
@@ -196,7 +195,7 @@ public class NotificationsDAO {
     }
 
 
-    public Subscription createSubscription(Topic topic, Subscription subscription) throws DAOException, ValidationException {
+    public Subscription createSubscription(Topic topic, Subscription subscription) throws DAOException, DuplicateEntityException{
         try (
             Connection connection = HikariConnectionPool.getConnection();
             PreparedStatement stmt = connection.prepareStatement(DAOStatements.CREATE_SUBSCRIPTION);
@@ -234,6 +233,9 @@ public class NotificationsDAO {
 
 
         } catch (SQLException ex) {
+            if (ex.getMessage().contains("violates unique constraint")) {
+                throw new DuplicateEntityException("A topic with this name already exists", ex);
+            }
             throw new DAOException("Could not create subscription", ex);
         } catch (JsonProcessingException ex) {
             throw new DAOException("Invalid json in filters!", ex);
@@ -339,7 +341,7 @@ public class NotificationsDAO {
         }
     }
 
-    public Queue createQueue(Queue queueSpec) throws DAOException {
+    public Queue createQueue(Queue queueSpec) throws DAOException, DuplicateEntityException {
         RowProcessor rowProcessor = new QueueRowProcessor();
         try (Connection connection = HikariConnectionPool.getConnection()) {
             BeanHandler<Queue> handler = new BeanHandler<>(Queue.class, rowProcessor);
@@ -351,10 +353,11 @@ public class NotificationsDAO {
                 queueSpec.getOwner()
             );
             return queue;
-        } catch (SQLIntegrityConstraintViolationException ex) {
-            throw new ConstraintViolationException("Topic with this name already exists", ex);
         } catch (SQLException ex) {
-            throw new DAOException(ex.getMessage(), ex);
+            if (ex.getMessage().contains("violates unique constraint")) {
+                throw new DuplicateEntityException("A topic with this name already exists", ex);
+            }
+            throw new DAOException("Could not create subscription", ex);
         }
     }
 

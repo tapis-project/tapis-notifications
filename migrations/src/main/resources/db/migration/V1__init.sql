@@ -40,13 +40,14 @@ CREATE INDEX ix_mechanisms_tenant_sub_uuid on notification_mechanisms(subscripti
 
 CREATE TABLE queues (
     id SERIAL PRIMARY KEY,
-    tenant_id VARCHAR(256),
+    tenant_id VARCHAR(256) NOT NULL ,
     uuid      uuid                     NOT NULL DEFAULT uuid_generate_v4(),
-    name VARCHAR(256),
+    name VARCHAR(256) NOT NULL,
     created   TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    owner VARCHAR(256)
+    owner VARCHAR(256) NOT NULL
 );
 CREATE index ix_queues_uuid on queues(uuid);
+CREATE UNIQUE INDEX ix_queues_tenant_name on queues(tenant_id, name);
 
 
 CREATE TABLE metrics (

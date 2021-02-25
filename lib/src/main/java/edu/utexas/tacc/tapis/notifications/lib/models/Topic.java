@@ -27,6 +27,7 @@ public class Topic {
 
     private List<Subscription> subscriptions;
 
+    @JsonIgnore
     public int getId() {
         return id;
     }

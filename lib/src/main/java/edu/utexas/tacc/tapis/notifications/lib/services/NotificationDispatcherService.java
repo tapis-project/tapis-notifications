@@ -22,6 +22,7 @@ import reactor.rabbitmq.AcknowledgableDelivery;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Singleton;
 
 import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
@@ -37,7 +38,7 @@ import java.util.Random;
  * notification to a subscription for that topic, then ultimately
  * dispatches the notification via the NotificationMechanisms in the subscription.
  */
- @Service @Named
+ @Service @Named @Singleton
 public class NotificationDispatcherService {
 
     private final NotificationsService notificationsService;
@@ -128,6 +129,8 @@ public class NotificationDispatcherService {
             handleEmail(mech.getTarget());
         } else if (mech.getMechanism().equals(NotificationMechanismEnum.WEBHOOK)) {
             handleWebHook(mech.getTarget());
+        } else if (mech.getMechanism().equals(NotificationMechanismEnum.QUEUE)) {
+            handleQueue(notification, mech.getTarget());
         } else {
             log.error("Invalid notification mechanism??? {}", mech);
             log.error(notification.toString());
@@ -163,9 +166,15 @@ public class NotificationDispatcherService {
         }
     }
 
-    private void handleQueue(String queueName) {
+    private void handleQueue(Notification notification, String queueName) {
         //TODO: Make sure all messages are TTL at 7 days or whatever is decided as TTL
         log.info("dispatching to queue {}", queueName);
+        try {
+            notificationsService.enqueueNotification(notification, queueName);
+        } catch (ServiceException ex) {
+            log.error("Could not enqueue notification", ex);
+        }
+
     }
 
 

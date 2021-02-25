@@ -130,7 +130,7 @@ public class NotificationsService {
         }
     }
 
-    public Subscription createSubscription(Topic topic, Subscription subscription) throws ServiceException {
+    public Subscription createSubscription(Topic topic, Subscription subscription) throws ServiceException, DuplicateEntityException {
         try {
             return notificationsDAO.createSubscription(topic, subscription);
         } catch (DAOException ex) {
@@ -185,8 +185,8 @@ public class NotificationsService {
     public Flux<AcknowledgableDelivery> streamNotificationMessages() throws ServiceException {
         ConsumeOptions options = new ConsumeOptions();
         options.qos(1000);
-        Flux<AcknowledgableDelivery> childMessageStream = receiver.consumeManualAck(NOTIFICATIONS_SERVICE_QUEUE_NAME, options);
-        return childMessageStream
+        Flux<AcknowledgableDelivery> messages = receiver.consumeManualAck(NOTIFICATIONS_SERVICE_QUEUE_NAME, options);
+        return messages
             .delaySubscription(sender.declareQueue(QueueSpecification.queue(NOTIFICATIONS_SERVICE_QUEUE_NAME)));
     }
 
@@ -200,12 +200,38 @@ public class NotificationsService {
         }
     }
 
+
+    /**
+     * Re
+     * are set to have a TTL of 7 days.
+     * @param notification
+     * @throws ServiceException
+     */
+    public void enqueueNotification(@Valid Notification notification, String queueName) throws ServiceException {
+        try {
+            String internalQueueName = notification.getTenantId() + ":" + queueName;
+            String m = mapper.writeValueAsString(notification);
+            long TTL = Duration.ofDays(7).toMillis();
+            AMQP.BasicProperties properties = new AMQP.BasicProperties.Builder()
+                .expiration(String.valueOf(TTL))
+                .build();
+            OutboundMessage message = new OutboundMessage("", internalQueueName, properties, m.getBytes());
+            Flux<OutboundMessageResult> confirms = sender.sendWithPublishConfirms(Mono.just(message));
+            sender.declareQueue(QueueSpecification.queue(internalQueueName))
+                .thenMany(confirms)
+                .subscribe();
+        } catch (Exception e) {
+            log.info(e.getMessage());
+            throw new ServiceException(e.getMessage());
+        }
+    }
+
     public Flux<Notification> streamNotificationsOnQueue(String queueName) {
         return receiver.consumeAutoAck(queueName)
             .flatMap(this::deserializeNotification);
     }
 
-    public Queue createQueue(Queue queueSpec) throws ServiceException {
+    public Queue createQueue(Queue queueSpec) throws ServiceException, DuplicateEntityException {
         try {
             Queue queue = notificationsDAO.createQueue(queueSpec);
             sender.declareQueue(QueueSpecification.queue(queue.getUuid().toString())).subscribe();

@@ -1,5 +1,6 @@
 package edu.utexas.tacc.tapis.notifications.lib.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.apache.commons.validator.routines.UrlValidator;
 
@@ -44,6 +45,7 @@ public class NotificationMechanism {
         return target;
     }
 
+    @JsonIgnore
     public int getSubscriptionId() {
         return subscriptionId;
     }

@@ -17,6 +17,7 @@ import edu.utexas.tacc.tapis.notifications.lib.models.Queue;
 import edu.utexas.tacc.tapis.notifications.lib.models.Subscription;
 import edu.utexas.tacc.tapis.notifications.lib.models.Topic;
 import edu.utexas.tacc.tapis.notifications.lib.services.NotificationsService;
+import edu.utexas.tacc.tapis.shared.security.TenantManager;
 import edu.utexas.tacc.tapis.shared.utils.TapisObjectMapper;
 import edu.utexas.tacc.tapis.sharedapi.responses.TapisResponse;
 import edu.utexas.tacc.tapis.sharedapi.security.AuthenticatedUser;
@@ -35,6 +36,7 @@ import javax.validation.Valid;
 import javax.validation.ValidationException;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -74,6 +76,9 @@ public class TopicsResource {
 
     @Inject
     NotificationsService notificationsService;
+
+    @Inject
+    TenantManager tenantManager;
 
     @GET
     @Operation(summary = "Get a list of all topics available to you.", tags = {"topics"})
@@ -136,7 +141,7 @@ public class TopicsResource {
     })
     public TapisResponse<Topic> createTopic(
         @Context SecurityContext securityContext,
-        @Valid CreateTopicRequest topicRequest
+        @NotNull(message = "payload required")  @Valid CreateTopicRequest topicRequest
     ) {
         AuthenticatedUser user = (AuthenticatedUser) securityContext.getUserPrincipal();
         try {
@@ -344,7 +349,7 @@ public class TopicsResource {
             //start listening to events on queue
 
             notificationsService.streamNotificationsOnQueue(tmpQueue.getName())
-                .subscribe(notification-> {
+                .subscribe(notification -> {
                     OutboundSseEvent event = sse.newEventBuilder()
                         .name("message-to-client")
                         .mediaType(MediaType.APPLICATION_JSON_TYPE)
@@ -354,6 +359,8 @@ public class TopicsResource {
                 });
             // TODO: Figure out how to delete the subscription after the connection is closed.
             // onSocketClose -> delete subscription
+        } catch (DuplicateEntityException ex) {
+            throw new WebApplicationException("Something went really wrong here");
         } catch (ServiceException ex) {
             throw new WebApplicationException("Hmmmmmm...");
         }
@@ -424,7 +431,7 @@ public class TopicsResource {
     public TapisResponse<Subscription> createSubscription(
         @Parameter(description = "ID of the topic", required = true, example = "mySuperTopic") @PathParam("topicName") String topicName,
         @Context SecurityContext securityContext,
-        @Valid CreateSubscriptionRequest subscriptionRequest
+        @NotNull(message = "payload required") @Valid CreateSubscriptionRequest subscriptionRequest
     ) {
         AuthenticatedUser user = (AuthenticatedUser) securityContext.getUserPrincipal();
         Subscription subscription = new Subscription();
@@ -451,9 +458,11 @@ public class TopicsResource {
         subscription.setFilters(filters);
         subscription.setMechanisms(subscriptionRequest.getNotificationMechanisms());
         try {
-            subscription  = notificationsService.createSubscription(topic, subscription);
-            TapisResponse<Subscription> resp = TapisResponse.createSuccessResponse( "Topic created", subscription);
+            subscription = notificationsService.createSubscription(topic, subscription);
+            TapisResponse<Subscription> resp = TapisResponse.createSuccessResponse("Topic created", subscription);
             return resp;
+        } catch (DuplicateEntityException ex) {
+            throw new BadRequestException("A topic already exists with this name");
         } catch (ServiceException ex) {
             throw new WebApplicationException("Could not subscribe to topic" + topicName);
         }
