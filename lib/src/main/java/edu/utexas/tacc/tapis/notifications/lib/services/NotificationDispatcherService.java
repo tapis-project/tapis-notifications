@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 import reactor.rabbitmq.AcknowledgableDelivery;
 
@@ -77,20 +78,22 @@ public class NotificationDispatcherService {
         Flux<AcknowledgableDelivery> msgStream = notificationsService.streamNotificationMessages();
         return msgStream.groupBy( (m)-> {
             try {
+                m.ack();
                 return mapper.readValue(m.getBody(), Notification.class).getTenantId();
             } catch (IOException ex) {
                 log.error("invalid message", ex);
                 return Mono.empty();
             }
-        }).flatMap((group) -> group
-            .parallel()
-            .runOn(Schedulers.newBoundedElastic(MAX_THREADS, 100, "Notifications-TenantPool:" + group.key()))
-            .flatMap(this::deserializeNotification)
-            .flatMap(this::matchSubscriptionsByTopic)
-            .flatMap(this::dispatchNotification)
-            .runOn(Schedulers.newBoundedElastic(10, 10, "sender-pool-"+ group.key()))
-            .flatMap(pair -> Mono.fromCallable(() -> this.handleNotification(pair)))
-            .flatMap(this::cleanup));
+        }).flatMap((group) -> {
+            Scheduler tenantScheduler = Schedulers.newBoundedElastic(10, 50, group.key().toString());
+            return group
+                .flatMap(this::deserializeNotification)
+                .flatMap(this::matchSubscriptionsByTopic)
+                .flatMap(this::dispatchNotification)
+                .flatMap(pair -> Mono.fromCallable(() -> this.handleNotification(pair)).subscribeOn(tenantScheduler))
+                .flatMap(this::cleanup);
+        });
+
 
     }
 
