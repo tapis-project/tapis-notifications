@@ -1,7 +1,6 @@
 package edu.utexas.tacc.tapis.notifications.api;
 
 import edu.utexas.tacc.tapis.notifications.api.factories.ServiceJWTCacheFactory;
-import edu.utexas.tacc.tapis.notifications.api.factories.TenantCacheFactory;
 import edu.utexas.tacc.tapis.notifications.api.providers.TopicsAuthz;
 import edu.utexas.tacc.tapis.notifications.api.resources.Healthcheck;
 import edu.utexas.tacc.tapis.notifications.api.resources.QueuesResource;
@@ -66,11 +65,11 @@ import java.net.URI;
     }
 )
 @ApplicationPath("v3/notifications")
-public class Application extends ResourceConfig {
+public class NotificationsApplication extends ResourceConfig {
 
     IRuntimeConfig runtimeConfig = RuntimeSettings.get();
 
-    public Application() {
+    public NotificationsApplication() {
         super();
         JWTValidateRequestFilter.setSiteId(runtimeConfig.getSiteId());
         JWTValidateRequestFilter.setService("files");
@@ -111,15 +110,11 @@ public class Application extends ResourceConfig {
         });
     }
 
-
     public static void main(String[] args) throws Exception {
         final URI BASE_URI = URI.create("http://0.0.0.0:8080/");
-        Application config = new Application();
+        NotificationsApplication config = new NotificationsApplication();
 
         final HttpServer server = GrizzlyHttpServerFactory.createHttpServer(BASE_URI, config, false);
         server.start();
     }
-
-
-
 }
