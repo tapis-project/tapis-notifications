@@ -118,15 +118,17 @@ public class QueuesResource {
         queue.setName(queueRequest.getName());
         queue.setTenantId(user.getTenantId());
         queue.setOwner(user.getName());
-        try {
-            queue = notificationsService.createQueue(queue);
-            TapisResponse<Queue> resp = TapisResponse.createSuccessResponse("ok", queue);
-            return resp;
-        } catch (DuplicateEntityException ex) {
-            throw new BadRequestException("A queue with this name already exists, please choose another name");
-        } catch (ServiceException ex) {
-            throw new WebApplicationException("Something went wrong, could not create queue");
-        }
+// TODO
+      return null;
+//TODO        try {
+//            queue = notificationsService.createQueue(queue);
+//            TapisResponse<Queue> resp = TapisResponse.createSuccessResponse("ok", queue);
+//            return resp;
+//        } catch (DuplicateEntityException ex) {
+//            throw new BadRequestException("A queue with this name already exists, please choose another name");
+//        } catch (ServiceException ex) {
+//            throw new WebApplicationException("Something went wrong, could not create queue");
+//        }
     }
 
     @DELETE

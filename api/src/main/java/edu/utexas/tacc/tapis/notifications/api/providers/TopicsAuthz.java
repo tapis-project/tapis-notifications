@@ -46,22 +46,23 @@ public class TopicsAuthz implements ContainerRequestFilter {
             MultivaluedMap<String, String> params = requestContext.getUriInfo().getPathParameters();
             String topicName = params.getFirst("topicName");
 
-            try {
-                Topic topic = notificationsService.getTopic(tenantId, topicName);
-                if (topic == null) {
-                    String msg = String.format("Could not find topic %s", topicName);
-                    throw new NotFoundException(msg);
-                }
-
-                boolean isPermitted = permissionsService.isPermitted(tenantId, topicName, username, user.getAccountType());
-                if (!isPermitted) {
-                    throw new NotAuthorizedException("Authorization failed.");
-                }
-            } catch (ServiceException e) {
-                // This should only happen when there is a network issue.
-                log.error("ERROR: Files authorization failed", e);
-                throw new WebApplicationException(e.getMessage());
-            }
+            // TODO
+//TODO            try {
+//                Topic topic = notificationsService.getTopic(tenantId, topicName);
+//                if (topic == null) {
+//                    String msg = String.format("Could not find topic %s", topicName);
+//                    throw new NotFoundException(msg);
+//                }
+//
+//                boolean isPermitted = permissionsService.isPermitted(tenantId, topicName, username, user.getAccountType());
+//                if (!isPermitted) {
+//                    throw new NotAuthorizedException("Authorization failed.");
+//                }
+//            } catch (ServiceException e) {
+//                // This should only happen when there is a network issue.
+//                log.error("ERROR: Files authorization failed", e);
+//                throw new WebApplicationException(e.getMessage());
+//            }
         }
 
 }

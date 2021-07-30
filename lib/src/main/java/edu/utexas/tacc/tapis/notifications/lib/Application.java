@@ -35,13 +35,14 @@ public class Application {
 
         NotificationDispatcherService dispatcherService = locator.getService(NotificationDispatcherService.class);
 
-        dispatcherService
-            .processMessages()
-            .subscribe((message)-> {
-                int currentCount = counter.incrementAndGet();
-                log.info("Current message count={}", currentCount);
-                log.info(message.toString());
-            });
+// TODO
+// TODO       dispatcherService
+//            .processMessages()
+//            .subscribe((message)-> {
+//                int currentCount = counter.incrementAndGet();
+//                log.info("Current message count={}", currentCount);
+//                log.info(message.toString());
+//            });
 
     }
 

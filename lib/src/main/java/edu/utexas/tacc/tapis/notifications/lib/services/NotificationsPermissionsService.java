@@ -24,14 +24,16 @@ public class NotificationsPermissionsService {
     private static final String PERMSSPEC = "notifications:%s:%s:%s";
 
     public boolean isPermitted(String tenantId, String topicName, String username, String accountType) throws ServiceException {
-        if (accountType.equals("service")) return true;
-        try {
-            Topic topic = notificationsDAO.getTopicByTenantAndName(tenantId, topicName);
-            if (topic == null) return false;
-            return topic.getOwner().equals(username);
-        } catch (DAOException ex) {
-            throw new ServiceException("Could not retrieve topic", ex);
-        }
+      // TODO
+//        if (accountType.equals("service")) return true;
+//        try {
+//            Topic topic = notificationsDAO.getTopicByTenantAndName(tenantId, topicName);
+//            if (topic == null) return false;
+//            return topic.getOwner().equals(username);
+//        } catch (DAOException ex) {
+//            throw new ServiceException("Could not retrieve topic", ex);
+//        }
+      return false;
     }
 
     public boolean isPermitted(Topic topic, String tenantId, String username, String accountType) {

@@ -43,13 +43,15 @@ public class TopicsCache {
 
         @Override
         public Topic load(CacheKey cacheKey) throws NotFoundException, DAOException {
-            Topic topic = dao.getTopicByTenantAndName(cacheKey.getTenantId(), cacheKey.getTopicName());
-            if (topic == null) {
-                throw new NotFoundException("Topic not found");
-            }
-            List<Subscription> subscriptions = dao.getSubscriptionsForTopic(topic.getTenantId(), topic.getName());
-            topic.setSubscriptions(subscriptions);
-            return topic;
+          // TODO
+//            Topic topic = dao.getTopicByTenantAndName(cacheKey.getTenantId(), cacheKey.getTopicName());
+//            if (topic == null) {
+//                throw new NotFoundException("Topic not found");
+//            }
+//            List<Subscription> subscriptions = dao.getSubscriptionsForTopic(topic.getTenantId(), topic.getName());
+//            topic.setSubscriptions(subscriptions);
+//            return topic;
+          return null;
         }
     }
 
