@@ -1,17 +1,6 @@
 package edu.utexas.tacc.tapis.notifications.lib.dao;
 
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.utexas.tacc.tapis.notifications.lib.exceptions.DAOException;
-import edu.utexas.tacc.tapis.notifications.lib.exceptions.DuplicateEntityException;
-import edu.utexas.tacc.tapis.notifications.lib.models.NotificationMechanism;
-import edu.utexas.tacc.tapis.notifications.lib.models.NotificationMechanismEnum;
-import edu.utexas.tacc.tapis.notifications.lib.models.Queue;
-import edu.utexas.tacc.tapis.notifications.lib.models.Subscription;
-import edu.utexas.tacc.tapis.notifications.lib.models.Topic;
-import edu.utexas.tacc.tapis.shared.utils.TapisObjectMapper;
 //import org.apache.commons.dbutils.BasicRowProcessor;
 //import org.apache.commons.dbutils.QueryRunner;
 //import org.apache.commons.dbutils.ResultSetHandler;
@@ -19,19 +8,6 @@ import edu.utexas.tacc.tapis.shared.utils.TapisObjectMapper;
 //import org.apache.commons.dbutils.handlers.BeanHandler;
 //import org.apache.commons.dbutils.handlers.BeanListHandler;
 import org.jvnet.hk2.annotations.Service;
-import org.postgresql.util.PGobject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 @Service
 public class NotificationsDAO {

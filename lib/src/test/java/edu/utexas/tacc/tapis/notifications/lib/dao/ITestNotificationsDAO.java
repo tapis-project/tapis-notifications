@@ -1,26 +1,6 @@
 package edu.utexas.tacc.tapis.notifications.lib.dao;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.utexas.tacc.tapis.notifications.lib.models.NotificationMechanism;
-import edu.utexas.tacc.tapis.notifications.lib.models.NotificationMechanismEnum;
-import edu.utexas.tacc.tapis.notifications.lib.models.Subscription;
-import edu.utexas.tacc.tapis.notifications.lib.models.Topic;
-import edu.utexas.tacc.tapis.shared.utils.TapisObjectMapper;
-import org.apache.commons.io.IOUtils;
-import org.flywaydb.core.Flyway;
-import org.json.JSONObject;
-import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
-
-import javax.validation.ValidationException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @Test(groups = {"integration"})
 public class ITestNotificationsDAO {

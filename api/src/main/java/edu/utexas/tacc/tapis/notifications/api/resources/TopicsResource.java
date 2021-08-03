@@ -1,22 +1,16 @@
 package edu.utexas.tacc.tapis.notifications.api.resources;
 
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.utexas.tacc.tapis.notifications.api.models.CreateNotificationRequest;
-import edu.utexas.tacc.tapis.notifications.api.models.CreateSubscriptionRequest;
-import edu.utexas.tacc.tapis.notifications.api.models.CreateTopicRequest;
+import edu.utexas.tacc.tapis.notifications.api.model.CreateNotificationRequest;
+import edu.utexas.tacc.tapis.notifications.api.model.CreateSubscriptionRequest;
+import edu.utexas.tacc.tapis.notifications.api.model.CreateTopicRequest;
 import edu.utexas.tacc.tapis.notifications.api.providers.TopicsAuthorization;
-import edu.utexas.tacc.tapis.notifications.lib.exceptions.DuplicateEntityException;
-import edu.utexas.tacc.tapis.notifications.lib.exceptions.ServiceException;
-import edu.utexas.tacc.tapis.notifications.lib.models.Notification;
-import edu.utexas.tacc.tapis.notifications.lib.models.NotificationMechanism;
-import edu.utexas.tacc.tapis.notifications.lib.models.NotificationMechanismEnum;
-import edu.utexas.tacc.tapis.notifications.lib.models.Queue;
-import edu.utexas.tacc.tapis.notifications.lib.models.Subscription;
-import edu.utexas.tacc.tapis.notifications.lib.models.Topic;
-import edu.utexas.tacc.tapis.notifications.lib.services.NotificationsService;
+import edu.utexas.tacc.tapis.notifications.lib.model.Notification;
+import edu.utexas.tacc.tapis.notifications.lib.model.Subscription;
+import edu.utexas.tacc.tapis.notifications.lib.model.Topic;
+import edu.utexas.tacc.tapis.notifications.lib.service.NotificationsService;
 import edu.utexas.tacc.tapis.shared.security.TenantManager;
 import edu.utexas.tacc.tapis.shared.utils.TapisObjectMapper;
 import edu.utexas.tacc.tapis.sharedapi.responses.TapisResponse;
@@ -33,34 +27,24 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
-import javax.validation.ValidationException;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
-import javax.ws.rs.BadRequestException;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
-import javax.ws.rs.NotAuthorizedException;
-import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
-import javax.ws.rs.sse.OutboundSseEvent;
 import javax.ws.rs.sse.Sse;
 import javax.ws.rs.sse.SseEventSink;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
 
 @Path("/v3/notifications/topics")
 public class TopicsResource {

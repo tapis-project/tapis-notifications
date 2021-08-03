@@ -7,8 +7,7 @@ import com.google.common.cache.LoadingCache;
 import edu.utexas.tacc.tapis.notifications.lib.dao.NotificationsDAO;
 import edu.utexas.tacc.tapis.notifications.lib.exceptions.DAOException;
 import edu.utexas.tacc.tapis.notifications.lib.exceptions.ServiceException;
-import edu.utexas.tacc.tapis.notifications.lib.models.Subscription;
-import edu.utexas.tacc.tapis.notifications.lib.models.Topic;
+import edu.utexas.tacc.tapis.notifications.lib.model.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
@@ -17,9 +16,7 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import javax.ws.rs.NotFoundException;
 import java.time.Duration;
-import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 

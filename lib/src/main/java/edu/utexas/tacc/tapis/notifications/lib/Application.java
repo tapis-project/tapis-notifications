@@ -2,10 +2,9 @@ package edu.utexas.tacc.tapis.notifications.lib;
 
 import edu.utexas.tacc.tapis.notifications.lib.cache.TopicsCache;
 import edu.utexas.tacc.tapis.notifications.lib.dao.NotificationsDAO;
-import edu.utexas.tacc.tapis.notifications.lib.services.NotificationDispatcherService;
-import edu.utexas.tacc.tapis.notifications.lib.services.NotificationsService;
+import edu.utexas.tacc.tapis.notifications.lib.service.NotificationDispatcherService;
+import edu.utexas.tacc.tapis.notifications.lib.service.NotificationsService;
 import org.glassfish.hk2.api.ServiceLocator;
-import org.glassfish.hk2.api.ServiceLocatorFactory;
 import org.glassfish.hk2.utilities.ServiceLocatorUtilities;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.slf4j.Logger;

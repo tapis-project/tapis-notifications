@@ -2,23 +2,13 @@ package edu.utexas.tacc.tapis.notifications.lib;
 
 import edu.utexas.tacc.tapis.notifications.lib.cache.TopicsCache;
 import edu.utexas.tacc.tapis.notifications.lib.dao.NotificationsDAO;
-import edu.utexas.tacc.tapis.notifications.lib.models.Notification;
-import edu.utexas.tacc.tapis.notifications.lib.models.NotificationMechanism;
-import edu.utexas.tacc.tapis.notifications.lib.models.NotificationMechanismEnum;
-import edu.utexas.tacc.tapis.notifications.lib.models.Subscription;
-import edu.utexas.tacc.tapis.notifications.lib.models.Topic;
-import edu.utexas.tacc.tapis.notifications.lib.services.NotificationDispatcherService;
-import edu.utexas.tacc.tapis.notifications.lib.services.NotificationsService;
+import edu.utexas.tacc.tapis.notifications.lib.service.NotificationDispatcherService;
+import edu.utexas.tacc.tapis.notifications.lib.service.NotificationsService;
 import org.glassfish.hk2.api.ServiceLocator;
 import org.glassfish.hk2.utilities.ServiceLocatorUtilities;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
 import javax.inject.Singleton;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 public class TestSender {
 

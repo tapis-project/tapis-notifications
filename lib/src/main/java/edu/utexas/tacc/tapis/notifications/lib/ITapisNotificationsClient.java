@@ -1,10 +1,8 @@
 package edu.utexas.tacc.tapis.notifications.lib;
 
-import edu.utexas.tacc.tapis.notifications.lib.models.Notification;
 //import reactor.core.publisher.Flux;
 //import reactor.core.publisher.Mono;
 
-import java.io.IOException;
 
 public interface ITapisNotificationsClient {
 

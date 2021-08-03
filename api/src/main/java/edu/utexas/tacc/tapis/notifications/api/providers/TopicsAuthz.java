@@ -1,17 +1,13 @@
 package edu.utexas.tacc.tapis.notifications.api.providers;
 
 
-import edu.utexas.tacc.tapis.notifications.lib.exceptions.ServiceException;
-import edu.utexas.tacc.tapis.notifications.lib.models.Topic;
-import edu.utexas.tacc.tapis.notifications.lib.services.NotificationsPermissionsService;
-import edu.utexas.tacc.tapis.notifications.lib.services.NotificationsService;
+import edu.utexas.tacc.tapis.notifications.lib.service.NotificationsPermissionsService;
+import edu.utexas.tacc.tapis.notifications.lib.service.NotificationsService;
 import edu.utexas.tacc.tapis.sharedapi.security.AuthenticatedUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import javax.ws.rs.NotAuthorizedException;
-import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;

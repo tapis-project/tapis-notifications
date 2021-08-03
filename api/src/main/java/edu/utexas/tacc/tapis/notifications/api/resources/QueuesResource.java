@@ -1,15 +1,11 @@
 package edu.utexas.tacc.tapis.notifications.api.resources;
 
 
-import edu.utexas.tacc.tapis.notifications.api.models.CreateNotificationRequest;
-import edu.utexas.tacc.tapis.notifications.api.models.CreateQueueRequest;
-import edu.utexas.tacc.tapis.notifications.api.models.CreateTopicRequest;
-import edu.utexas.tacc.tapis.notifications.lib.exceptions.DuplicateEntityException;
-import edu.utexas.tacc.tapis.notifications.lib.exceptions.ServiceException;
-import edu.utexas.tacc.tapis.notifications.lib.models.Queue;
-import edu.utexas.tacc.tapis.notifications.lib.models.Topic;
-import edu.utexas.tacc.tapis.notifications.lib.services.NotificationsService;
-import edu.utexas.tacc.tapis.notifications.lib.services.QueueService;
+import edu.utexas.tacc.tapis.notifications.api.model.CreateQueueRequest;
+import edu.utexas.tacc.tapis.notifications.lib.model.Queue;
+import edu.utexas.tacc.tapis.notifications.lib.model.Topic;
+import edu.utexas.tacc.tapis.notifications.lib.service.NotificationsService;
+import edu.utexas.tacc.tapis.notifications.lib.service.QueueService;
 import edu.utexas.tacc.tapis.sharedapi.responses.TapisResponse;
 import edu.utexas.tacc.tapis.sharedapi.security.AuthenticatedUser;
 import io.swagger.v3.oas.annotations.Operation;
@@ -24,7 +20,6 @@ import javax.validation.Valid;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
-import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -34,11 +29,9 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.SecurityContext;
-import java.rmi.server.ServerCloneException;
 import java.util.ArrayList;
 import java.util.List;
 
