@@ -4,6 +4,7 @@ package edu.utexas.tacc.tapis.notifications.lib.service;
 //import com.rabbitmq.client.AMQP;
 //import com.rabbitmq.client.ConnectionFactory;
 //import com.rabbitmq.client.Delivery;
+import org.jvnet.hk2.annotations.Contract;
 import org.jvnet.hk2.annotations.Service;
 //import reactor.core.publisher.Flux;
 //import reactor.core.publisher.Mono;
@@ -19,14 +20,21 @@ import org.jvnet.hk2.annotations.Service;
 //import reactor.rabbitmq.Sender;
 //import reactor.rabbitmq.SenderOptions;
 
-
-/**
- * This class handles all of the interactions with the persistence of notifications/subscriptions/topics
- * and also the main entry point to push notifications onto the rabbitmq queue.
+/*
+ * Interface for Notifications Service
+ * Annotate as an hk2 Contract in case we have multiple implementations
  */
-@Service
-public class NotificationsService {
-
+@Contract
+public interface NotificationsService
+{
+}
+///**
+// * This class handles all of the interactions with the persistence of notifications/subscriptions/topics
+// * and also the main entry point to push notifications onto the rabbitmq queue.
+// */
+//@Service
+//public interface NotificationsService {
+//
 //    private final NotificationsDAO notificationsDAO;
 //    private final Sender sender;
 //    private final Receiver receiver;
@@ -217,4 +225,4 @@ public class NotificationsService {
 //        }
 //    }
 //
-}
+//}

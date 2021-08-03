@@ -1,9 +1,9 @@
 package edu.utexas.tacc.tapis.notifications.api.utils;
 
 import com.google.gson.JsonElement;
-import edu.utexas.tacc.tapis.notifications.model.ResourceRequestUser;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import edu.utexas.tacc.tapis.shared.threadlocal.TapisThreadContext;
+import edu.utexas.tacc.tapis.sharedapi.security.ResourceRequestUser;
 import edu.utexas.tacc.tapis.sharedapi.utils.TapisRestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -1,8 +1,8 @@
 package edu.utexas.tacc.tapis.notifications.lib.utils;
 
-import edu.utexas.tacc.tapis.notifications.model.ResourceRequestUser;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
+import edu.utexas.tacc.tapis.sharedapi.security.ResourceRequestUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,22 +35,6 @@ public class LibUtils
   /* **************************************************************************** */
   /*                                Public Methods                                */
   /* **************************************************************************** */
-
-  // TODO: always use oboTenant?
-//  /**
-//   * Get tenant name associated with the resources that the service manages.
-//    * For user request use authUser jwtTenant and for service request use oboTenant.
-//   *
-//   * @param authenticatedUser - principal user containing tenant and user info
-//   * @return tenant name for resources
-//   */
-//  public static String getResourceTenantId(AuthenticatedUser authenticatedUser)
-//  {
-//    if (TapisThreadContext.AccountType.service.name().equals(authenticatedUser.getAccountType()))
-//      return authenticatedUser.getOboTenantId();
-//    else
-//      return authenticatedUser.getTenantId();
-//  }
 
   /**
    * Get a localized message using the specified key and parameters. Locale is null.

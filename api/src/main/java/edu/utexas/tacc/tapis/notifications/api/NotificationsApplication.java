@@ -1,21 +1,9 @@
 package edu.utexas.tacc.tapis.notifications.api;
 
-import edu.utexas.tacc.tapis.notifications.api.factories.ServiceJWTCacheFactory;
-import edu.utexas.tacc.tapis.notifications.api.providers.TopicsAuthz;
-import edu.utexas.tacc.tapis.notifications.api.resources.Healthcheck;
-import edu.utexas.tacc.tapis.notifications.api.resources.QueuesResource;
-import edu.utexas.tacc.tapis.notifications.api.resources.TopicsResource;
-import edu.utexas.tacc.tapis.notifications.lib.config.IRuntimeConfig;
 import edu.utexas.tacc.tapis.notifications.lib.config.RuntimeParameters;
-import edu.utexas.tacc.tapis.notifications.lib.config.RuntimeSettings;
-import edu.utexas.tacc.tapis.notifications.lib.dao.NotificationsDAO;
-import edu.utexas.tacc.tapis.notifications.lib.service.NotificationsPermissionsService;
-import edu.utexas.tacc.tapis.notifications.lib.service.NotificationsService;
-import edu.utexas.tacc.tapis.notifications.lib.service.QueueService;
 import edu.utexas.tacc.tapis.notifications.lib.service.ServiceClientsFactory;
 import edu.utexas.tacc.tapis.notifications.lib.service.ServiceContextFactory;
 import edu.utexas.tacc.tapis.sharedapi.jaxrs.filters.JWTValidateRequestFilter;
-import edu.utexas.tacc.tapis.shared.security.ServiceJWT;
 import edu.utexas.tacc.tapis.shared.security.ServiceClients;
 import edu.utexas.tacc.tapis.shared.security.ServiceContext;
 import edu.utexas.tacc.tapis.shared.security.TenantManager;
@@ -49,8 +37,8 @@ import java.net.URI;
  *
  * The path here is appended to the context root and is configured to work when invoked in a standalone
  * container (command line) and in an IDE (such as eclipse).
- * ApplicationPath set to "/" since each resource class includes "/v3/apps" in the
- *     path set at the class level. See AppResource.java, PermsResource.java, etc.
+ * ApplicationPath set to "/" since each resource class includes "/v3/notifications" in the
+ *     path set at the class level. See NotificationResource.java, etc.
  *     This has been found to be a more robust scheme for keeping startup working for both
  *     running in an IDE and standalone.
  */
@@ -146,13 +134,13 @@ public class NotificationsApplication extends ResourceConfig
 // TODO          bind(AppsServiceImpl.class).to(AppsService.class); // Used in Resource classes for most service calls
 //          bind(AppsServiceImpl.class).to(AppsServiceImpl.class); // Used in AppsResource for checkDB
 //          bind(AppsDaoImpl.class).to(AppsDao.class); // Used in service impl
-          bindFactory(ServiceContextFactory.class).to(ServiceContext.class); // Used in service impl and AppsResource
+          bindFactory(ServiceContextFactory.class).to(ServiceContext.class); // Used in service impl and TODO/TBD: NotificationsResource
           bindFactory(ServiceClientsFactory.class).to(ServiceClients.class); // Used in service impl
         }
       });
     } catch (Exception e) {
       // This is a fatal error
-      System.out.println("**** FAILURE TO INITIALIZE: Tapis Applications Service ****");
+      System.out.println("**** FAILURE TO INITIALIZE: Tapis Notifications Service ****");
       e.printStackTrace();
       throw e;
     }
