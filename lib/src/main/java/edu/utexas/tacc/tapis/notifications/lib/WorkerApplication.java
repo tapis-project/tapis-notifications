@@ -13,9 +13,10 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Singleton;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class Application {
+public class WorkerApplication
+{
 
-    private static final Logger log = LoggerFactory.getLogger(Application.class);
+    private static final Logger log = LoggerFactory.getLogger(WorkerApplication.class);
 
     public static void main(String[] args) throws Exception {
 

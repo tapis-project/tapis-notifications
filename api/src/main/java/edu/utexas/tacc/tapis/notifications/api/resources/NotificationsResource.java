@@ -1,7 +1,6 @@
 package edu.utexas.tacc.tapis.notifications.api.resources;
 
 import java.util.concurrent.atomic.AtomicLong;
-
 import javax.annotation.security.PermitAll;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -190,6 +189,46 @@ public class NotificationsResource
       // We succeeded so clear the log limiter check.
       if (checkDBOK.toggleOn()) _log.info(ApiUtils.getMsg("NTFAPI_READYCHECK_DB_ERRTOGGLE_CLEARED"));
     }
+
+//  TODO Check that rabbitmq is available
+//    readyCheckException = checkRabbitMQ();
+//    if (readyCheckException != null)
+//    {
+//      RespBasic r = new RespBasic("Readiness RabbitMQ check failed. Check number: " + checkNum);
+//      String msg = MsgUtils.getMsg("TAPIS_NOT_READY", "Notifications Service");
+//      // We failed so set the log limiter check.
+//      if (checkMQOK.toggleOff())
+//      {
+//        _log.warn(msg, readyCheckException);
+//        _log.warn(ApiUtils.getMsg("NTFAPI_READYCHECK_MQ_ERRTOGGLE_SET"));
+//      }
+//      return Response.status(Status.SERVICE_UNAVAILABLE).entity(TapisRestUtils.createErrorResponse(msg, false, r)).build();
+//    }
+//    else
+//    {
+//      // We succeeded so clear the log limiter check.
+//      if (checkMQOK.toggleOn()) _log.info(ApiUtils.getMsg("NTFAPI_READYCHECK_MQ_ERRTOGGLE_CLEARED"));
+//    }
+
+//  TODO Check that we have at least one worker available
+//    readyCheckException = checkWorker();
+//    if (readyCheckException != null)
+//    {
+//      RespBasic r = new RespBasic("Readiness Worker check failed. Check number: " + checkNum);
+//      String msg = MsgUtils.getMsg("TAPIS_NOT_READY", "Notifications Service");
+//      // We failed so set the log limiter check.
+//      if (checkWorkerOK.toggleOff())
+//      {
+//        _log.warn(msg, readyCheckException);
+//        _log.warn(ApiUtils.getMsg("NTFAPI_READYCHECK_WRKR_ERRTOGGLE_SET"));
+//      }
+//      return Response.status(Status.SERVICE_UNAVAILABLE).entity(TapisRestUtils.createErrorResponse(msg, false, r)).build();
+//    }
+//    else
+//    {
+//      // We succeeded so clear the log limiter check.
+//      if (checkWorkerOK.toggleOn()) _log.info(ApiUtils.getMsg("NTFAPI_READYCHECK_WRKR_ERRTOGGLE_CLEARED"));
+//    }
 
     // ---------------------------- Success -------------------------------
     // Create the response payload.
