@@ -1,223 +1,79 @@
 package edu.utexas.tacc.tapis.notifications.lib.model;
 
-import javax.validation.ConstraintViolation;
-import javax.validation.ConstraintViolationException;
-import javax.validation.Validation;
-import javax.validation.Validator;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.core.MediaType;
-import java.time.Instant;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
-public class Notification {
+import edu.utexas.tacc.tapis.shared.utils.TapisUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.net.URI;
+import java.time.OffsetDateTime;
 
-    private String specversion;
-    private String id;
-    private String tenantId;
-    private Instant time;
-    private String source;
-    private Object data;
-    private String subject;
-    private String type;
-    private MediaType datacontenttype;
-    private Map<String, Object> dataschema;
-    private String topicname;
+/*
+ * Notification event in the Tapis ecosystem.
+ * Based on the CloudEvent specification.
+ * Represents an event associated with an occurrence. An Occurrence may produce multiple events.
+ * Based on version 1.0 of the CloudEvents specification
+ *   For more information about CloudEvents and the specification please see
+ *     https://cloudevents.io/
+ *     and
+ *     https://github.com/cloudevents/spec
+ *
+ * This class is intended to represent an immutable object.
+ * Please keep it immutable.
+ *
+ */
+public final class Notification
+{
+  /* ********************************************************************** */
+  /*                               Constants                                */
+  /* ********************************************************************** */
+  private static final Logger _log = LoggerFactory.getLogger(Notification.class);
+  public static final String SPECVERSION = "1.0";
 
+  /* ********************************************************************** */
+  /*                                 Fields                                 */
+  /* ********************************************************************** */
 
+  private static final String specversion = SPECVERSION;
+  private final String id; // Unique identifier for event. Required
+  private final URI source; // Context in which event happened. Required
+  private final String topic; // Type of event related to originating occurrence. Required
+  private final String subject; // Subject of event in context of event producer.
+  private final OffsetDateTime time; // Timestamp of when the occurrence happened. RFC 3339 (ISO 8601)
+  private final String datacontenttype; // Content type of data value. RFC 2046. E.g. application/xml, text/xml, etc.
+  private final Object data; // Data associated with the event.
+  private final String data_base64; // If data is binary it must be base64 encoded.
 
-    public Notification(){}
+  /* ********************************************************************** */
+  /*                           Constructors                                 */
+  /* ********************************************************************** */
+  public Notification(String id1, URI source1, String type1, String subject1, String datacontenttype1,
+                      OffsetDateTime time1, Object data1, String data_base64_1)
+  {
+    id = id1;
+    source = source1;
+    topic = type1;
+    subject = subject1;
+    datacontenttype = datacontenttype1;
+    time = time1;
+    data = data1;
+    data_base64 = data_base64_1;
+  }
 
+  /* ********************************************************************** */
+  /*                               Accessors                                */
+  /* ********************************************************************** */
+  public String getSpecversion() { return specversion; }
+  public String getId() { return id; }
+  public URI getSource() { return source; }
+  public String getTopic() { return topic; }
+  public String getType() { return topic; }
+  public String getSubject() { return subject; }
+  public OffsetDateTime getTime() { return time; }
+  public String getDatacontenttype() { return datacontenttype; }
+  public Object getData() { return data; }
+  public String getData_base64() { return data_base64; }
 
-    private Notification(Builder builder) {
-        this.tenantId = builder.tenantId;
-        this.data = builder.data;  // Object conforming to json schema of topic/type
-        this.source = builder.source; // tapis.files.systems.{systemId}
-        this.type = builder.type;  // tapis.files.transfers.progress, tapis.files.object.delete, tapis.files.object.create
-        this.subject = builder.subject; // UUID of file transfer, systemId/path/to/file.txt
-        this.time = Instant.now();
-        this.id = builder.id;
-        this.topicname =  builder.topicname;
-        this.specversion = "1.0.1";
-    }
-
-    public static class Builder {
-        private String topicname;
-        private String tenantId;
-        private String source;
-        private Object data;
-        private String type;
-        private String subject;
-        private String id;
-
-        private static final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
-
-        public Builder setTopicName(String topicname) {
-            this.topicname = topicname;
-            return this;
-        }
-
-        public Builder setTenantId(String tenant) {
-            this.tenantId = tenant;
-            return this;
-        }
-
-        public Builder setSource(String source) {
-            this.source = source;
-            return this;
-        }
-
-        public Builder setData(Object data) {
-            this.data = data;
-            return this;
-        }
-
-        public Builder setType(String type) {
-            this.type = type;
-            return this;
-        }
-
-        public Builder setSubject(String subject) {
-            this.subject = subject;
-            return this;
-        }
-
-        public Builder setId(String id) {
-            this.id = id;
-            return this;
-        }
-
-        public Notification build() {
-
-            Notification notification = new Notification(this);
-            Set<ConstraintViolation<Notification>> violations = validator.validate(notification);
-
-            if (!violations.isEmpty()) {
-                throw new ConstraintViolationException(
-                    new HashSet<>(violations));
-            }
-
-            return notification;
-        }
-    }
-
-    @NotEmpty
-    public String getTopicname() {
-        return topicname;
-    }
-
-    public void setTopicname(String topicname) {
-        this.topicname = topicname;
-    }
-
-    public void setSpecversion(String specversion) {
-        this.specversion = specversion;
-    }
-
-    @NotEmpty
-    public String getTopicName() {
-        return topicname;
-    }
-
-    public void setTopicName(String topicname) {
-        this.topicname = topicname;
-    }
-
-
-
-    public MediaType getDatacontenttype() {
-        return datacontenttype;
-    }
-
-    public void setDatacontenttype(MediaType datacontenttype) {
-        this.datacontenttype = datacontenttype;
-    }
-
-    public Map<String, Object> getDataschema() {
-        return dataschema;
-    }
-
-    public void setDataschema(Map<String, Object> dataschema) {
-        this.dataschema = dataschema;
-    }
-
-    @NotEmpty
-    public String getSpecversion() {
-        return specversion;
-    }
-
-    @NotNull
-    public String getId() {
-        return id;
-    }
-
-    @NotEmpty
-    public String getSubject() {
-        return subject;
-    }
-
-    @NotNull
-    public Instant getTime() {
-        return time;
-    }
-
-    @NotEmpty
-    public String getSource() {
-        return source;
-    }
-
-    @NotNull
-    public Object getData() {
-        return data;
-    }
-
-    @NotEmpty
-    public String getType() {
-        return type;
-    }
-
-    @NotEmpty
-    public String getTenantId() {
-        return tenantId;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public void setSubject(String subject) {
-        this.subject = subject;
-    }
-
-    public void setTenantId(String tenant) {
-        this.tenantId = tenant;
-    }
-
-    public void setTime(Instant time) {
-        this.time = time;
-    }
-
-    public void setSource(String source) {
-        this.source = source;
-    }
-
-    public void setData(Object data) {
-        this.data = data;
-    }
-
-    @Override
-    public String toString() {
-        return "Notification{" +
-            "tenant='" + tenantId + '\'' +
-            ", subject='" + subject + '\'' +
-            ", type='" + type + '\'' +
-            '}';
-    }
+  @Override
+  public String toString() {return TapisUtils.toString(this);}
 }
