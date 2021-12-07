@@ -7,7 +7,7 @@ import edu.utexas.tacc.tapis.notifications.api.model.CreateNotificationRequest;
 import edu.utexas.tacc.tapis.notifications.api.model.CreateSubscriptionRequest;
 import edu.utexas.tacc.tapis.notifications.api.model.CreateTopicRequest;
 import edu.utexas.tacc.tapis.notifications.api.providers.TopicsAuthorization;
-import edu.utexas.tacc.tapis.notifications.lib.model.Notification;
+import edu.utexas.tacc.tapis.notifications.lib.model.Event;
 import edu.utexas.tacc.tapis.notifications.lib.model.Subscription;
 import edu.utexas.tacc.tapis.notifications.lib.model.Topic;
 import edu.utexas.tacc.tapis.notifications.lib.service.NotificationsService;
@@ -51,7 +51,7 @@ public class TopicsResource {
 
     private static class TopicListResponse extends TapisResponse<List<Topic>> {}
     private static class TopicResponse extends TapisResponse<Topic> {}
-    private static class NotificationResponse extends TapisResponse<Notification> {}
+    private static class NotificationResponse extends TapisResponse<Event> {}
     private static class SubscriptionListResponse extends TapisResponse<List<Subscription>> {}
     private static class SubscriptionResponse extends TapisResponse<Subscription> {}
     private static final ObjectMapper mapper = TapisObjectMapper.getMapper();
@@ -337,8 +337,8 @@ public class TopicsResource {
 //            tmpSub.setTopicId(topic.getId());
 //            Map<String, Object> filters = new HashMap<>();
 //            tmpSub.setFilters(filters);
-//            NotificationMechanism mechanism = new NotificationMechanism(NotificationMechanismEnum.QUEUE, tmpQueue.getName());
-//            tmpSub.addMechanism(mechanism);
+//            NotificationDeliveryMethod deliveryMethod = new NotificationDeliveryMethod(NotificationDeliveryMethodEnum.QUEUE, tmpQueue.getName());
+//            tmpSub.addDeliveryMethod(deliveryMethod);
 //            //Save the subscription
 //            Subscription subscription = notificationsService.createSubscription(topic, tmpSub);
 //            //start listening to events on queue
@@ -456,7 +456,7 @@ public class TopicsResource {
 //            throw new BadRequestException("Invalid filters.", ex);
 //        }
 //        subscription.setFilters(filters);
-//        subscription.setMechanisms(subscriptionRequest.getNotificationMechanisms());
+//        subscription.setDeliveryMethods(subscriptionRequest.getNotificationDeliveryMethods());
 //        try {
 //            subscription = notificationsService.createSubscription(topic, subscription);
 //            TapisResponse<Subscription> resp = TapisResponse.createSuccessResponse("Topic created", subscription);

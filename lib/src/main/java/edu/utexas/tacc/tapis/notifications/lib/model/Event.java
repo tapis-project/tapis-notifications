@@ -22,12 +22,12 @@ import java.time.OffsetDateTime;
  * Please keep it immutable.
  *
  */
-public final class Notification
+public final class Event
 {
   /* ********************************************************************** */
   /*                               Constants                                */
   /* ********************************************************************** */
-  private static final Logger _log = LoggerFactory.getLogger(Notification.class);
+  private static final Logger _log = LoggerFactory.getLogger(Event.class);
   public static final String SPECVERSION = "1.0";
 
   /* ********************************************************************** */
@@ -47,8 +47,8 @@ public final class Notification
   /* ********************************************************************** */
   /*                           Constructors                                 */
   /* ********************************************************************** */
-  public Notification(String id1, URI source1, String type1, String subject1, String datacontenttype1,
-                      OffsetDateTime time1, Object data1, String data_base64_1)
+  public Event(String id1, URI source1, String type1, String subject1, String datacontenttype1,
+               OffsetDateTime time1, Object data1, String data_base64_1)
   {
     id = id1;
     source = source1;

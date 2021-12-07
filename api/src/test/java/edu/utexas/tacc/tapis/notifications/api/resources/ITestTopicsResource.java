@@ -4,15 +4,16 @@ package edu.utexas.tacc.tapis.notifications.api.resources;
 //import org.glassfish.jersey.media.sse.EventSource;
 //import org.glassfish.jersey.media.sse.InboundEvent;
 //import org.glassfish.jersey.media.sse.SseFeature;
-import org.glassfish.jersey.test.JerseyTestNg;
+//import org.glassfish.jersey.test.JerseyTestNg;
 //import org.mockito.Mockito;
-        import org.testng.annotations.Test;
+//import org.testng.annotations.Test;
 
 //import static org.mockito.ArgumentMatchers.any;
 //import static org.mockito.Mockito.when;
 
-@Test(groups = {"integration"})
-public class ITestTopicsResource extends JerseyTestNg.ContainerPerClassTest {
+//@Test(groups = {"integration"})
+public class ITestTopicsResource //extends JerseyTestNg.ContainerPerClassTest
+{
 //    private static final Logger log = LoggerFactory.getLogger(ITestTopicsResource.class);
 //    private static class TopicResponse extends TapisResponse<Topic> {}
 //    private static class StringResponse extends TapisResponse<String> {}
@@ -184,10 +185,10 @@ public class ITestTopicsResource extends JerseyTestNg.ContainerPerClassTest {
 //    public void testCreateSubscription() throws Exception {
 //        Topic topic = createTopic(user1jwt, "test.topic");
 //        CreateSubscriptionRequest subReq = new CreateSubscriptionRequest();
-//        List<NotificationMechanism> mechs = new ArrayList<>();
-//        NotificationMechanism mech = new NotificationMechanism(NotificationMechanismEnum.EMAIL, "test@good.com");;
+//        List<NotificationDeliveryMethod> mechs = new ArrayList<>();
+//        NotificationDeliveryMethod mech = new NotificationDeliveryMethod(NotificationDeliveryMethodEnum.EMAIL, "test@good.com");;
 //        mechs.add(mech);
-//        subReq.setNotificationMechanisms(mechs);
+//        subReq.setNotificationDeliveryMethods(mechs);
 //        subReq.setFilter("{}");
 //        createSubscription(user1jwt, "test.topic", subReq);
 //
@@ -203,10 +204,10 @@ public class ITestTopicsResource extends JerseyTestNg.ContainerPerClassTest {
 //    public void testDeleteSubscription() {
 //        Topic topic = createTopic(user1jwt, "test.topic");
 //        CreateSubscriptionRequest subReq = new CreateSubscriptionRequest();
-//        List<NotificationMechanism> mechs = new ArrayList<>();
-//        NotificationMechanism mech = new NotificationMechanism(NotificationMechanismEnum.EMAIL, "test@good.com");;
+//        List<NotificationDeliveryMethod> mechs = new ArrayList<>();
+//        NotificationDeliveryMethod mech = new NotificationDeliveryMethod(NotificationDeliveryMethodEnum.EMAIL, "test@good.com");;
 //        mechs.add(mech);
-//        subReq.setNotificationMechanisms(mechs);
+//        subReq.setNotificationDeliveryMethods(mechs);
 //        subReq.setFilter("{}");
 //        Subscription sub =  createSubscription(user1jwt, "test.topic", subReq);
 //        deleteSubscription(user1jwt, "test.topic", sub);

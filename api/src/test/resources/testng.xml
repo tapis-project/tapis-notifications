@@ -1,0 +1,15 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd" >
+
+<suite name="Tapis Notifications api" verbose="1" parallel="none">
+    <groups>
+        <run>
+            <exclude name="broken"/>
+            <exclude name="notReady"/>
+        </run>
+    </groups>
+	<test name="notifications">
+		<packages>
+		   <package name="edu.utexas.tacc.tapis.notifications.api.*" />
+		</packages>
+	</test>
+</suite>

@@ -6,10 +6,10 @@
   <parent>
     <groupId>edu.utexas.tacc.tapis</groupId>
     <artifactId>notifications</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.1</version>
   </parent>
   
-  <artifactId>notifications-lib</artifactId>
+  <artifactId>tapis-notifications-lib</artifactId>
   
   <name>Tapis Notifications Library</name>
   <description>Backend library for Tapis Notifications Service</description>
@@ -143,15 +143,15 @@
       </plugin>
 
       <!-- surefire plugin is for running unit tests -->
-<!--      <plugin>-->
-<!--        <groupId>org.apache.maven.plugins</groupId>-->
-<!--        <artifactId>maven-surefire-plugin</artifactId>-->
-<!--        <configuration>-->
-<!--          <suiteXmlFiles>-->
-<!--            <suiteXmlFile>src/test/resources/testng.xml</suiteXmlFile>-->
-<!--          </suiteXmlFiles>-->
-<!--        </configuration>-->
-<!--      </plugin>-->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <suiteXmlFiles>
+            <suiteXmlFile>src/test/resources/testng.xml</suiteXmlFile>
+          </suiteXmlFiles>
+        </configuration>
+      </plugin>
       <!-- failsafe plugin is for running integration tests -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

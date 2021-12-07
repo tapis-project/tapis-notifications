@@ -7,88 +7,42 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-public class Topic {
+public class Topic
+{
+  private int id;
+  private String tenantId;
+  private UUID uuid;
+  private String name;
+  private Instant created;
+  private String owner;
+  private String description;
+  private List<Subscription> subscriptions;
 
+  @JsonIgnore
+    public int getId() { return id; }
+    public void setId(int i) { id = i; }
 
+    public String getTenantId() { return tenantId; }
+    public void setTenantId(String s) { tenantId = s; }
 
-    private int id;
-    private String tenantId;
-    private UUID uuid;
-    private String name;
-    private Instant created;
-    private String owner;
-    private String description;
+    public UUID getUuid() { return uuid; }
+    public void setUuid(UUID u) { uuid = u; }
 
-    private List<Subscription> subscriptions;
-
-    @JsonIgnore
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getTenantId() {
-        return tenantId;
-    }
-
-    public void setTenantId(String tenantId) {
-        this.tenantId = tenantId;
-    }
-
-    public UUID getUuid() {
-        return uuid;
-    }
-
-    public void setUuid(UUID uuid) {
-        this.uuid = uuid;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
+    public String getName() { return name; }
+    public void setName(String s) { name = s; }
 
     @Schema(type="string", format = "date-time")
-    public Instant getCreated() {
-        return created;
-    }
+    public Instant getCreated() { return created; }
+    public void setCreated(Instant c) { created = c; }
+    public void setCreated(String s) { created = Instant.parse(s); }
 
-    public void setCreated(Instant created) {
-        this.created = created;
-    }
-    public void setCreated(String created) {
-        this.created = Instant.parse(created);
-    }
+    public String getOwner() { return owner; }
+    public void setOwner(String s) { owner = s; }
 
-
-    public String getOwner() {
-        return owner;
-    }
-
-    public void setOwner(String owner) {
-        this.owner = owner;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
+    public String getDescription() { return description; }
+    public void setDescription(String s) { description = s; }
 
     @JsonIgnore
-    public List<Subscription> getSubscriptions() {
-        return subscriptions;
-    }
-
-    public void setSubscriptions(List<Subscription> subscriptions) {
-        this.subscriptions = subscriptions;
-    }
+    public List<Subscription> getSubscriptions() { return subscriptions; }
+    public void setSubscriptions(List<Subscription> subs) { subscriptions = subs; }
 }

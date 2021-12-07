@@ -1,14 +1,18 @@
 package edu.utexas.tacc.tapis.notifications.api;
 
 import edu.utexas.tacc.tapis.notifications.lib.config.RuntimeParameters;
+//import edu.utexas.tacc.tapis.apps.dao.NotificationsDao;
+//import edu.utexas.tacc.tapis.apps.dao.NotificationsDaoImpl;
+//import edu.utexas.tacc.tapis.apps.service.NotificationsService;
+//import edu.utexas.tacc.tapis.apps.service.NotificationsServiceImpl;
 import edu.utexas.tacc.tapis.notifications.lib.service.ServiceClientsFactory;
 import edu.utexas.tacc.tapis.notifications.lib.service.ServiceContextFactory;
-import edu.utexas.tacc.tapis.sharedapi.jaxrs.filters.JWTValidateRequestFilter;
 import edu.utexas.tacc.tapis.shared.security.ServiceClients;
 import edu.utexas.tacc.tapis.shared.security.ServiceContext;
 import edu.utexas.tacc.tapis.shared.security.TenantManager;
 import edu.utexas.tacc.tapis.shared.TapisConstants;
 import edu.utexas.tacc.tapis.shared.utils.TapisUtils;
+import edu.utexas.tacc.tapis.sharedapi.jaxrs.filters.JWTValidateRequestFilter;
 import edu.utexas.tacc.tapis.sharedapi.providers.ObjectMapperContextResolver;
 import edu.utexas.tacc.tapis.sharedapi.providers.TapisExceptionMapper;
 import edu.utexas.tacc.tapis.sharedapi.providers.ValidationExceptionMapper;
@@ -22,13 +26,13 @@ import org.glassfish.jersey.internal.inject.InjectionManager;
 import org.glassfish.jersey.server.ApplicationHandler;
 import org.glassfish.jersey.server.ResourceConfig;
 
-import javax.ws.rs.ApplicationPath;
 import java.net.URI;
+import javax.ws.rs.ApplicationPath;
 
 /*
  * Main startup class for the web application. Uses Jersey and Grizzly frameworks.
  *   Performs setup for HK2 dependency injection.
- *   Registers packages and features for Jersey.
+ *   Register packages and features for Jersey.
  *   Gets runtime parameters from the environment.
  *   Initializes the service:
  *     Init service context.
@@ -41,6 +45,8 @@ import java.net.URI;
  *     path set at the class level. See NotificationResource.java, etc.
  *     This has been found to be a more robust scheme for keeping startup working for both
  *     running in an IDE and standalone.
+ *
+ * For all logging use println or similar so we do not have a dependency on a logging subsystem.
  */
 @ApplicationPath("/")
 public class NotificationsApplication extends ResourceConfig
@@ -51,7 +57,6 @@ public class NotificationsApplication extends ResourceConfig
   private static String siteAdminTenantId;
   public static String getSiteAdminTenantId() {return siteAdminTenantId;}
 
-  // For all logging use println or similar so we do not have a dependency on a logging subsystem.
   public NotificationsApplication()
   {
     // Log our existence.
@@ -66,7 +71,7 @@ public class NotificationsApplication extends ResourceConfig
     register(TapisExceptionMapper.class);
     register(ValidationExceptionMapper.class);
     // Register service class for calling init method during application startup
-//TODO    register(NotificationsServiceImpl.class);
+//    register(NotificationsServiceImpl.class);
 
     // We specify what packages JAX-RS should recursively scan to find annotations. By setting the value to the
     // top-level directory in all projects, we can use JAX-RS annotations in any tapis class. In particular, the filter
@@ -131,9 +136,9 @@ public class NotificationsApplication extends ResourceConfig
       register(new AbstractBinder() {
         @Override
         protected void configure() {
-// TODO          bind(AppsServiceImpl.class).to(AppsService.class); // Used in Resource classes for most service calls
-//          bind(AppsServiceImpl.class).to(AppsServiceImpl.class); // Used in AppsResource for checkDB
-//          bind(AppsDaoImpl.class).to(AppsDao.class); // Used in service impl
+//          bind(NotificationsServiceImpl.class).to(NotificationsService.class); // Used in Resource classes for most service calls
+//          bind(NotificationsServiceImpl.class).to(NotificationsServiceImpl.class); // Used in NotificationsResource for checkDB
+//          bind(NotificationsDaoImpl.class).to(NotificationsDao.class); // Used in service impl
           bindFactory(ServiceContextFactory.class).to(ServiceContext.class); // Used in service impl and TODO/TBD: NotificationsResource
           bindFactory(ServiceClientsFactory.class).to(ServiceClients.class); // Used in service impl
         }
@@ -171,10 +176,10 @@ public class NotificationsApplication extends ResourceConfig
     ApplicationHandler handler = new ApplicationHandler(config);
     InjectionManager im = handler.getInjectionManager();
     ServiceLocator locator = im.getInstance(ServiceLocator.class);
-//TODO    NotificationsServiceImpl svcImpl = locator.getService(NotificationsServiceImpl.class);
-
-    // Call the main service init method
-//TODO    svcImpl.initService(siteId, siteAdminTenantId, RuntimeParameters.getInstance().getServicePassword());
+//    NotificationsServiceImpl svcImpl = locator.getService(NotificationsServiceImpl.class);
+//
+//    // Call the main service init method
+//    svcImpl.initService(siteId, siteAdminTenantId, RuntimeParameters.getInstance().getServicePassword());
     // Create and start the server
     final HttpServer server = GrizzlyHttpServerFactory.createHttpServer(baseUri, config, false);
     server.start();

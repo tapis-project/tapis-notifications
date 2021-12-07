@@ -1,31 +1,29 @@
 package edu.utexas.tacc.tapis.notifications.api.model;
 
-import edu.utexas.tacc.tapis.notifications.lib.model.NotificationMechanism;
+import edu.utexas.tacc.tapis.notifications.lib.model.DeliveryMethod;
 
 import javax.validation.constraints.NotEmpty;
 import java.util.List;
 
-public class CreateSubscriptionRequest {
+public class CreateSubscriptionRequest
+{
+  private String filter;
 
-    private String filter;
+  @NotEmpty
+  private List<DeliveryMethod> deliveryMethods;
 
-    @NotEmpty
-    private List<NotificationMechanism> notificationMechanisms;
+  @NotEmpty
+  public String getFilter() {
+    return filter;
+  }
 
-    @NotEmpty
-    public String getFilter() {
-        return filter;
-    }
+  public void setFilter(String s) {
+    filter = s;
+  }
 
-    public void setFilter(String filter) {
-        this.filter = filter;
-    }
+  public List<DeliveryMethod> getDeliveryMethods() {
+    return deliveryMethods;
+  }
 
-    public List<NotificationMechanism> getNotificationMechanisms() {
-        return notificationMechanisms;
-    }
-
-    public void setNotificationMechanisms(List<NotificationMechanism> notificationMechanisms) {
-        this.notificationMechanisms = notificationMechanisms;
-    }
+  public void setDeliveryMethods(List<DeliveryMethod> deliveryMethods1) { deliveryMethods = deliveryMethods1; }
 }

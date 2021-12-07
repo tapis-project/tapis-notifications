@@ -15,15 +15,15 @@
     </parent>
 
     <artifactId>notifications</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.1</version>
     <packaging>pom</packaging>
 
     <name>TACC Tapis Notifications Parent POM</name>
     <description>Parent POM file for TAPIS Notifications service</description>
 
     <scm>
-        <connection>scm:git:https://github.com/tapis-project/notifications.git</connection>
-        <url>https://github.com/tapis-project/notifications</url>
+        <connection>scm:git:https://github.com/tapis-project/tapis-notifications.git</connection>
+        <url>https://github.com/tapis-project/tapis-notifications</url>
     </scm>
 
     <properties>
@@ -36,29 +36,10 @@
     </properties>
 
 <!--
-    <dependencies>
-        <dependency>
-            <groupId>io.projectreactor</groupId>
-            <artifactId>reactor-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.projectreactor.rabbitmq</groupId>
-            <artifactId>reactor-rabbitmq</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.projectreactor</groupId>
-            <artifactId>reactor-core</artifactId>
-        </dependency>
         <dependency>
             <groupId>com.github.java-json-tools</groupId>
             <artifactId>json-schema-validator</artifactId>
             <version>${json-schema-validator.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <scope>test</scope>
         </dependency>
 -->
 
@@ -123,16 +104,17 @@
       <groupId>org.testng</groupId>
       <artifactId>testng</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.hibernate.validator</groupId>
-      <artifactId>hibernate-validator</artifactId>
-    </dependency>  </dependencies>
+  </dependencies>
 
   <profiles>
     <!-- Profile for building using TACC repositories -->
     <profile>
       <id>tacc</id>
-      <activation> <activeByDefault>true</activeByDefault> </activation>
+      <activation>
+        <property>
+          <name>!skipTaccProfile</name>
+        </property>
+      </activation>
       <repositories>
         <repository>
           <id>tapis-local-snapshots</id>

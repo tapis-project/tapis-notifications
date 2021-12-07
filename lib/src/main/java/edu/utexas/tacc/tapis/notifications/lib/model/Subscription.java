@@ -16,7 +16,7 @@ public class Subscription {
     private String tenantId;
     private Map<String, Object> filters;
     private Instant created;
-    private List<NotificationMechanism> mechanisms = new ArrayList<>();
+    private List<DeliveryMethod> deliveryMethods = new ArrayList<>();
     private int topicId;
 
 
@@ -75,17 +75,15 @@ public class Subscription {
     }
 
 
-    public List<NotificationMechanism> getMechanisms() {
-        return mechanisms;
+    public List<DeliveryMethod> getDeliveryMethods() {
+        return deliveryMethods;
     }
 
-    public void setMechanisms(List<NotificationMechanism> mechanisms) {
-        this.mechanisms = mechanisms;
+    public void setDeliveryMethods(List<DeliveryMethod> deliveryMethods) {
+        this.deliveryMethods = deliveryMethods;
     }
 
-    public void addMechanism(NotificationMechanism mechanism) {
-        this.mechanisms.add(mechanism);
+    public void addDeliverMethod(DeliveryMethod dm) {
+        this.deliveryMethods.add(dm);
     }
-
-
 }
