@@ -5,12 +5,18 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
-import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisDBConnectionException;
-import edu.utexas.tacc.tapis.shareddb.datasource.TapisDataSource;
 import org.flywaydb.core.Flyway;
+import org.jooq.DSLContext;
+import org.jooq.impl.DSL;
+import org.jooq.Record;
+import org.jooq.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
+import edu.utexas.tacc.tapis.notifications.utils.LibUtils;
+import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisDBConnectionException;
+import edu.utexas.tacc.tapis.shareddb.datasource.TapisDataSource;
 
 //import edu.utexas.tacc.tapis.apps.model.App;
 //import edu.utexas.tacc.tapis.apps.model.App.AppOperation;
@@ -23,8 +29,8 @@ import org.slf4j.LoggerFactory;
 //import edu.utexas.tacc.tapis.apps.model.PatchApp;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 
-//import static edu.utexas.tacc.tapis.apps.gen.jooq.Tables.*;
-//import static edu.utexas.tacc.tapis.apps.gen.jooq.Tables.APPS;
+import static edu.utexas.tacc.tapis.notifications.gen.jooq.Tables.*;
+import static edu.utexas.tacc.tapis.notifications.gen.jooq.Tables.SUBSCRIPTIONS;
 
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 
@@ -693,38 +699,34 @@ public class NotificationsDaoImpl implements NotificationsDao
   @Override
   public Exception checkDB()
   {
-    // TODO
-    return new UnsupportedOperationException("TODO");
-// TODO
-//    Exception result = null;
-//    Connection conn = null;
-//    try
-//    {
-//      conn = getConnection();
-//      DSLContext db = DSL.using(conn);
-//      // execute SELECT to_regclass('tapis_sys.apps');
-//      // Build and execute a simple postgresql statement to check for the table
-//      String sql = "SELECT to_regclass('" + APPS.getName() + "')";
-//      Result<Record> ret = db.resultQuery(sql).fetch();
-//      if (ret == null || ret.isEmpty() || ret.getValue(0,0) == null)
-//      {
-//        result = new TapisException(LibUtils.getMsg("APPLIB_CHECKDB_NO_TABLE", APPS.getName()));
-//      }
-//      LibUtils.closeAndCommitDB(conn, null, null);
-//    }
-//    catch (Exception e)
-//    {
-//      result = e;
-//      // Rollback always logs msg and throws exception.
-//      // In this case of a simple check we ignore the exception, we just want the log msg
-//      try { LibUtils.rollbackDB(conn, e,"DB_DELETE_FAILURE", "apps"); }
-//      catch (Exception e1) { }
-//    }
-//    finally
-//    {
-//      LibUtils.finalCloseDB(conn);
-//    }
-//    return result;
+    Exception result = null;
+    Connection conn = null;
+    try
+    {
+      conn = getConnection();
+      DSLContext db = DSL.using(conn);
+      // Build and execute a simple postgresql statement to check for the table
+      String sql = "SELECT to_regclass('" + SUBSCRIPTIONS.getName() + "')";
+      Result<Record> ret = db.resultQuery(sql).fetch();
+      if (ret == null || ret.isEmpty() || ret.getValue(0,0) == null)
+      {
+        result = new TapisException(LibUtils.getMsg("APPLIB_CHECKDB_NO_TABLE", SUBSCRIPTIONS.getName()));
+      }
+      LibUtils.closeAndCommitDB(conn, null, null);
+    }
+    catch (Exception e)
+    {
+      result = e;
+      // Rollback always logs msg and throws exception.
+      // In this case of a simple check we ignore the exception, we just want the log msg
+      try { LibUtils.rollbackDB(conn, e,"DB_DELETE_FAILURE", "notifications"); }
+      catch (Exception e1) { }
+    }
+    finally
+    {
+      LibUtils.finalCloseDB(conn);
+    }
+    return result;
   }
 
   /**

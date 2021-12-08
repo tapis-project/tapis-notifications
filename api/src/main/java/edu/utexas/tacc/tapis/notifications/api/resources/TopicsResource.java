@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.utexas.tacc.tapis.notifications.api.model.CreateNotificationRequest;
 import edu.utexas.tacc.tapis.notifications.api.model.CreateSubscriptionRequest;
 import edu.utexas.tacc.tapis.notifications.api.model.CreateTopicRequest;
-import edu.utexas.tacc.tapis.notifications.api.providers.TopicsAuthorization;
 import edu.utexas.tacc.tapis.notifications.model.Event;
 import edu.utexas.tacc.tapis.notifications.model.Subscription;
 import edu.utexas.tacc.tapis.notifications.model.Topic;
@@ -149,7 +148,6 @@ public class TopicsResource {
     }
 
     @GET
-    @TopicsAuthorization
     @Path("/{topicName}")
     @Operation(summary = "Get details of a topic.", tags = {"topics"})
     @Produces(MediaType.APPLICATION_JSON)
@@ -201,7 +199,6 @@ public class TopicsResource {
      * @return
      */
     @POST
-    @TopicsAuthorization
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{topicName}")
     @Operation(summary = "Create a new Notification in the topic channel", tags = {"topics"})
@@ -266,7 +263,6 @@ public class TopicsResource {
 
 
     @DELETE
-    @TopicsAuthorization
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{topicName}")
     @Operation(summary = "Delete a topic. Note, this will also delete any subscriptions that are attached to the topic", tags = {"topics"})
@@ -309,7 +305,6 @@ public class TopicsResource {
     }
 
     @GET
-    @TopicsAuthorization
     @Produces(MediaType.SERVER_SENT_EVENTS)
     @Path("/{topicName}/messages")
     @Operation(summary = "Subscribe to and start receiving messages via ServerSentEvents.", tags = {"topics"})
@@ -364,7 +359,6 @@ public class TopicsResource {
 
 
     @GET
-    @TopicsAuthorization
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Get a list of all subscriptions on this topic", tags = {"subscriptions"})
     @Path("/{topicName}/subscriptions")
@@ -404,7 +398,6 @@ public class TopicsResource {
 
 
     @POST
-    @TopicsAuthorization
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Create a new subscription to this topic channel", tags = {"subscriptions"})
     @Path("/{topicName}/subscriptions")
@@ -469,7 +462,6 @@ public class TopicsResource {
     }
 
     @GET
-    @TopicsAuthorization
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Get a subscription by ID", tags = {"subscriptions"})
     @Path("/{topicName}/subscriptions/{subscriptionId}")
@@ -501,7 +493,6 @@ public class TopicsResource {
     }
 
     @DELETE
-    @TopicsAuthorization
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Delete a subscription", tags = {"subscriptions"})
     @Path("/{topicName}/subscriptions/{subscriptionId}")
