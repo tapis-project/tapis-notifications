@@ -33,6 +33,7 @@ testreports
 test-output
 
 # Intellij metadata files
+.run/
 *.idea
 *.ids
 *.iml

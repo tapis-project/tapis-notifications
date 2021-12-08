@@ -2,10 +2,10 @@ package edu.utexas.tacc.tapis.notifications.api.resources;
 
 
 import edu.utexas.tacc.tapis.notifications.api.model.CreateQueueRequest;
-import edu.utexas.tacc.tapis.notifications.lib.model.Queue;
-import edu.utexas.tacc.tapis.notifications.lib.model.Topic;
-import edu.utexas.tacc.tapis.notifications.lib.service.NotificationsService;
-import edu.utexas.tacc.tapis.notifications.lib.service.QueueService;
+import edu.utexas.tacc.tapis.notifications.model.Queue;
+import edu.utexas.tacc.tapis.notifications.model.Topic;
+import edu.utexas.tacc.tapis.notifications.service.NotificationsService;
+import edu.utexas.tacc.tapis.notifications.service.QueueService;
 import edu.utexas.tacc.tapis.sharedapi.responses.TapisResponse;
 import edu.utexas.tacc.tapis.sharedapi.security.AuthenticatedUser;
 import io.swagger.v3.oas.annotations.Operation;

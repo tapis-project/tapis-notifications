@@ -1,8 +1,8 @@
 package edu.utexas.tacc.tapis.notifications.api.providers;
 
 
-import edu.utexas.tacc.tapis.notifications.lib.service.NotificationsPermissionsService;
-import edu.utexas.tacc.tapis.notifications.lib.service.NotificationsService;
+import edu.utexas.tacc.tapis.notifications.service.NotificationsPermissionsService;
+import edu.utexas.tacc.tapis.notifications.service.NotificationsService;
 import edu.utexas.tacc.tapis.sharedapi.security.AuthenticatedUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

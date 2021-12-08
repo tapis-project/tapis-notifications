@@ -1,12 +1,13 @@
 package edu.utexas.tacc.tapis.notifications.lib.model;
 
 
+import edu.utexas.tacc.tapis.notifications.model.DeliveryMethod;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.validation.ValidationException;
 
-import edu.utexas.tacc.tapis.notifications.lib.model.DeliveryMethod.DeliveryMethodEnum;
+import edu.utexas.tacc.tapis.notifications.model.DeliveryMethod.DeliveryMethodEnum;
 
 @Test
 public class TestDeliveryMethod

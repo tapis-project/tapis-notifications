@@ -1,6 +1,6 @@
 package edu.utexas.tacc.tapis.notifications.api.model;
 
-import edu.utexas.tacc.tapis.notifications.lib.model.DeliveryMethod;
+import edu.utexas.tacc.tapis.notifications.model.DeliveryMethod;
 
 import javax.validation.constraints.NotEmpty;
 import java.util.List;

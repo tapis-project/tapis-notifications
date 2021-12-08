@@ -1,12 +1,12 @@
 package edu.utexas.tacc.tapis.notifications.api;
 
-import edu.utexas.tacc.tapis.notifications.lib.config.RuntimeParameters;
-//import edu.utexas.tacc.tapis.apps.dao.NotificationsDao;
-//import edu.utexas.tacc.tapis.apps.dao.NotificationsDaoImpl;
-//import edu.utexas.tacc.tapis.apps.service.NotificationsService;
-//import edu.utexas.tacc.tapis.apps.service.NotificationsServiceImpl;
-import edu.utexas.tacc.tapis.notifications.lib.service.ServiceClientsFactory;
-import edu.utexas.tacc.tapis.notifications.lib.service.ServiceContextFactory;
+import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
+import edu.utexas.tacc.tapis.notifications.dao.NotificationsDao;
+import edu.utexas.tacc.tapis.notifications.dao.NotificationsDaoImpl;
+import edu.utexas.tacc.tapis.notifications.service.NotificationsService;
+import edu.utexas.tacc.tapis.notifications.service.NotificationsServiceImpl;
+import edu.utexas.tacc.tapis.notifications.service.ServiceClientsFactory;
+import edu.utexas.tacc.tapis.notifications.service.ServiceContextFactory;
 import edu.utexas.tacc.tapis.shared.security.ServiceClients;
 import edu.utexas.tacc.tapis.shared.security.ServiceContext;
 import edu.utexas.tacc.tapis.shared.security.TenantManager;
@@ -136,9 +136,9 @@ public class NotificationsApplication extends ResourceConfig
       register(new AbstractBinder() {
         @Override
         protected void configure() {
-//          bind(NotificationsServiceImpl.class).to(NotificationsService.class); // Used in Resource classes for most service calls
-//          bind(NotificationsServiceImpl.class).to(NotificationsServiceImpl.class); // Used in NotificationsResource for checkDB
-//          bind(NotificationsDaoImpl.class).to(NotificationsDao.class); // Used in service impl
+          bind(NotificationsServiceImpl.class).to(NotificationsService.class); // Used in Resource classes for most service calls
+          bind(NotificationsServiceImpl.class).to(NotificationsServiceImpl.class); // Used in NotificationsResource for checkDB
+          bind(NotificationsDaoImpl.class).to(NotificationsDao.class); // Used in service impl
           bindFactory(ServiceContextFactory.class).to(ServiceContext.class); // Used in service impl and TODO/TBD: NotificationsResource
           bindFactory(ServiceClientsFactory.class).to(ServiceClients.class); // Used in service impl
         }
@@ -176,10 +176,10 @@ public class NotificationsApplication extends ResourceConfig
     ApplicationHandler handler = new ApplicationHandler(config);
     InjectionManager im = handler.getInjectionManager();
     ServiceLocator locator = im.getInstance(ServiceLocator.class);
-//    NotificationsServiceImpl svcImpl = locator.getService(NotificationsServiceImpl.class);
-//
-//    // Call the main service init method
-//    svcImpl.initService(siteId, siteAdminTenantId, RuntimeParameters.getInstance().getServicePassword());
+    NotificationsServiceImpl svcImpl = locator.getService(NotificationsServiceImpl.class);
+
+    // Call the main service init method
+    svcImpl.initService(siteId, siteAdminTenantId, RuntimeParameters.getInstance().getServicePassword());
     // Create and start the server
     final HttpServer server = GrizzlyHttpServerFactory.createHttpServer(baseUri, config, false);
     server.start();

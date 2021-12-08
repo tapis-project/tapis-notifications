@@ -27,8 +27,8 @@ import edu.utexas.tacc.tapis.sharedapi.utils.TapisRestUtils.RESPONSE_STATUS;
 
 import edu.utexas.tacc.tapis.notifications.api.NotificationsApplication;
 import edu.utexas.tacc.tapis.notifications.api.utils.ApiUtils;
-import edu.utexas.tacc.tapis.notifications.lib.service.NotificationsServiceImpl;
-import edu.utexas.tacc.tapis.notifications.lib.utils.LibUtils;
+import edu.utexas.tacc.tapis.notifications.service.NotificationsServiceImpl;
+import edu.utexas.tacc.tapis.notifications.utils.LibUtils;
 
 
 /* Tapis Notifications general resource endpoints including healthcheck and readycheck

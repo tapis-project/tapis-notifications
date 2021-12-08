@@ -1,6 +1,6 @@
 package edu.utexas.tacc.tapis.notifications.api.providers;
 
-import edu.utexas.tacc.tapis.notifications.lib.model.TopicPermissionsEnum;
+import edu.utexas.tacc.tapis.notifications.model.TopicPermissionsEnum;
 
 import javax.annotation.Priority;
 import javax.ws.rs.NameBinding;
