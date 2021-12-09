@@ -70,8 +70,6 @@ public class NotificationsApplication extends ResourceConfig
     // Register classes needed for returning a standard Tapis response for non-Tapis exceptions.
     register(TapisExceptionMapper.class);
     register(ValidationExceptionMapper.class);
-    // Register service class for calling init method during application startup
-//    register(NotificationsServiceImpl.class);
 
     // We specify what packages JAX-RS should recursively scan to find annotations. By setting the value to the
     // top-level directory in all projects, we can use JAX-RS annotations in any tapis class. In particular, the filter
