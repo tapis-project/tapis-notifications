@@ -1,185 +1,144 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <!-- Main BOM file defines organization, licenses, developers, repositories,
+         shared properties, dependency management, plugin management  -->
     <parent>
-        <groupId>edu.utexas.tacc.tapis</groupId>
-        <artifactId>tapis-bom</artifactId>
-        <version>[1.11,3.0)</version>
+      <groupId>edu.utexas.tacc.tapis</groupId>
+      <artifactId>tapis-bom</artifactId>
+      <version>[2.0,3.0)</version>
+      <!-- Set empty relative path to avoid maven warning and-->
+      <!--   ensure parent is found in local repository if that-->
+      <!--   is the only place it exists.-->
+      <relativePath/>
     </parent>
 
     <artifactId>notifications</artifactId>
+    <version>0.0.1</version>
     <packaging>pom</packaging>
-    <version>1.0</version>
+
+    <name>TACC Tapis Notifications Parent POM</name>
+    <description>Parent POM file for TAPIS Notifications service</description>
+
+    <scm>
+        <connection>scm:git:https://github.com/tapis-project/tapis-notifications.git</connection>
+        <url>https://github.com/tapis-project/tapis-notifications</url>
+    </scm>
 
     <properties>
-<!--        <tapis-shared-java.version>[1.11.60,2.0)</tapis-shared-java.version>-->
-        <json-schema-validator.version>2.2.14</json-schema-validator.version>
-        <hk2-inhabitant-generator.version>3.0.0</hk2-inhabitant-generator.version>
-        <skipITs>true</skipITs>
+      <!-- Most properties set in parent tapis-bom   -->
+      <!-- Properties can be overridden here         -->
+      <!-- Individual projects may want to override. -->
+      <!-- Skip integration tests by default -->
+      <!-- Use mvn verify -DskipIntegrationTests=false to run integration tests -->
+      <skipIntegrationTests>true</skipIntegrationTests>
     </properties>
 
-    <profiles>
-      <!-- Profile for building using TACC repositories -->
-      <profile>
-        <id>tacc</id>
-        <activation>
-          <property>
-            <name>!skipTaccProfile</name>
-          </property>
-        </activation>
-        <repositories>
-          <repository>
-            <id>tapis-local-snapshots</id>
-            <name>Local repo for snapshots</name>
-            <url>http://c002.rodeo.tacc.utexas.edu:30044/repository/maven-snapshots</url>
-            <releases>  <enabled>false</enabled> </releases>
-            <snapshots> <enabled>true</enabled>  </snapshots>
-          </repository>
-          <repository>
-            <id>tapis-local-releases</id>
-            <name>Local repo for releases</name>
-            <url>http://c002.rodeo.tacc.utexas.edu:30044/repository/maven-releases</url>
-          </repository>
-        </repositories>
-      </profile>
-      <!-- Profile for building without using TACC repositories -->
-      <profile>
-        <id>tacc-external</id>
-      </profile>
-    </profiles>
-
-    <dependencies>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>tapis-shared-lib</artifactId>
-            <version>${tapis-shared-java.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.hibernate.validator</groupId>
-            <artifactId>hibernate-validator</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish</groupId>
-            <artifactId>jakarta.el</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish.hk2</groupId>
-            <artifactId>hk2-utils</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish.hk2</groupId>
-            <artifactId>hk2-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>javax.ws.rs</groupId>
-            <artifactId>javax.ws.rs-api</artifactId>
-        </dependency>
-        <dependency>
-            <!-- There are only test dependencies on testng -->
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.projectreactor</groupId>
-            <artifactId>reactor-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.projectreactor.rabbitmq</groupId>
-            <artifactId>reactor-rabbitmq</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.projectreactor</groupId>
-            <artifactId>reactor-core</artifactId>
-        </dependency>
+<!--
         <dependency>
             <groupId>com.github.java-json-tools</groupId>
             <artifactId>json-schema-validator</artifactId>
             <version>${json-schema-validator.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-core</artifactId>
-        </dependency>
+-->
 
+  <build>
+    <plugins>
+      <!--  gitflow-maven-plugin supports various git workflow steps, such as gitflow:release-start-->
+      <!--    gitflow:release-finish, gitflow:feature-start, gitflow:feature-finish-->
+      <!-- For configuration see parent pom tapis-bom.xml -->
+      <plugin>
+        <groupId>com.amashchenko.maven.plugin</groupId>
+        <artifactId>gitflow-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
 
-    </dependencies>
+    <resources>
+      <!-- Write the project version number to the specified file. -->
+      <!-- Setting the targetPath puts the file into the jar at the -->
+      <!-- specified root-relative directory. The the modified -->
+      <!-- tapis.version file is always copied to the target/classes -->
+      <!-- directory. Do the same for other data that we want to -->
+      <!-- capture. A jar and war file will contain these files -->
+      <!-- as long as the templated files are in the configured -->
+      <!-- directory in the child project. -->
+      <resource>
+        <directory>src/main/resources</directory>
+        <targetPath>.</targetPath>
+        <filtering>true</filtering>
+        <includes>
+          <include>**/tapis.version</include>
+          <include>**/tapis.fullversion</include>
+          <include>**/git.info</include>
+          <include>**/build.time</include>
+        </includes>
+      </resource>
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.glassfish.hk2</groupId>
-                <artifactId>hk2-inhabitant-generator</artifactId>
-                <version>${hk2-inhabitant-generator.version}</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>generate-inhabitants</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <version>${maven-dependency-plugin.version}</version>
-                <executions>
-                    <execution>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>copy-dependencies</goal>
-                        </goals>
-                        <configuration>
-                            <includeScope>runtime</includeScope>
-                            <outputDirectory>target/dependencies</outputDirectory>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <configuration>
-                    <skip>${skipITs}</skip>
-                    <groups>integration</groups>
-                    <systemPropertyVariables>
-                        <tapis.envonly.skip.jwt.verify>true</tapis.envonly.skip.jwt.verify>
-                    </systemPropertyVariables>
-                    <!-- These 2 ENV vars set the right flags to disable JWT validation and use the correct settings -->
-                    <environmentVariables>
-                        <APP_ENV>test</APP_ENV>
-                        <TAPIS_ENVONLY_SKIP_JWT_VERIFY>true</TAPIS_ENVONLY_SKIP_JWT_VERIFY>
-                    </environmentVariables>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
+      <!-- For some reason, we have to tell maven, surefire or testng -->
+      <!-- that all main/resources need to be copied to some target -->
+      <!-- directory. We also have to tell them to NOT undo filtering -->
+      <!-- for the files that we explicitly filter above. Good stuff. -->
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>false</filtering>
+        <includes>
+          <include>**/*</include>
+        </includes>
+        <excludes>
+          <exclude>**/tapis.version</exclude>
+          <exclude>**/tapis.fullversion</exclude>
+          <exclude>**/git.info</exclude>
+          <exclude>**/build.time</exclude>
+        </excludes>
+      </resource>
+    </resources>
+  </build>
+  
+  <!-- Global Dependencies -->
+  <!--                     -->
+  <!-- Only add dependencies here that are used by EVERY submodule. -->
+  <dependencies>
+    <dependency>
+    <!-- There are only test dependencies on testng -->
+      <groupId>org.testng</groupId>
+      <artifactId>testng</artifactId>
+    </dependency>
+  </dependencies>
 
-    <modules>
-<!--        <module>websockets</module>-->
-        <module>api</module>
-        <module>lib</module>
-        <module>migrations</module>
-    </modules>
+  <profiles>
+    <!-- Profile for building using TACC repositories -->
+    <profile>
+      <id>tacc</id>
+      <activation>
+        <property>
+          <name>!skipTaccProfile</name>
+        </property>
+      </activation>
+      <repositories>
+        <repository>
+          <id>tapis-local-snapshots</id>
+          <name>Local repo for snapshots</name>
+          <url>http://c002.rodeo.tacc.utexas.edu:30044/repository/maven-snapshots</url>
+          <releases>  <enabled>false</enabled> </releases>
+          <snapshots> <enabled>true</enabled>  </snapshots>
+        </repository>
+        <repository>
+          <id>tapis-local-releases</id>
+          <name>Local repo for releases</name>
+          <url>http://c002.rodeo.tacc.utexas.edu:30044/repository/maven-releases</url>
+        </repository>
+      </repositories>
+    </profile>
+    <!-- Profile for building without using TACC repositories -->
+    <profile>
+      <id>tacc-external</id>
+    </profile>
+  </profiles>
+
+  <modules>
+    <module>api</module>
+    <module>lib</module>
+  </modules>
+
 </project>
-

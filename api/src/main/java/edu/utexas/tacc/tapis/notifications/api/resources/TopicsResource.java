@@ -1,22 +1,15 @@
 package edu.utexas.tacc.tapis.notifications.api.resources;
 
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.utexas.tacc.tapis.notifications.api.models.CreateNotificationRequest;
-import edu.utexas.tacc.tapis.notifications.api.models.CreateSubscriptionRequest;
-import edu.utexas.tacc.tapis.notifications.api.models.CreateTopicRequest;
-import edu.utexas.tacc.tapis.notifications.api.providers.TopicsAuthorization;
-import edu.utexas.tacc.tapis.notifications.lib.exceptions.DuplicateEntityException;
-import edu.utexas.tacc.tapis.notifications.lib.exceptions.ServiceException;
-import edu.utexas.tacc.tapis.notifications.lib.models.Notification;
-import edu.utexas.tacc.tapis.notifications.lib.models.NotificationMechanism;
-import edu.utexas.tacc.tapis.notifications.lib.models.NotificationMechanismEnum;
-import edu.utexas.tacc.tapis.notifications.lib.models.Queue;
-import edu.utexas.tacc.tapis.notifications.lib.models.Subscription;
-import edu.utexas.tacc.tapis.notifications.lib.models.Topic;
-import edu.utexas.tacc.tapis.notifications.lib.services.NotificationsService;
+import edu.utexas.tacc.tapis.notifications.api.model.CreateNotificationRequest;
+import edu.utexas.tacc.tapis.notifications.api.model.CreateSubscriptionRequest;
+import edu.utexas.tacc.tapis.notifications.api.model.CreateTopicRequest;
+import edu.utexas.tacc.tapis.notifications.model.Event;
+import edu.utexas.tacc.tapis.notifications.model.Subscription;
+import edu.utexas.tacc.tapis.notifications.model.Topic;
+import edu.utexas.tacc.tapis.notifications.service.NotificationsService;
 import edu.utexas.tacc.tapis.shared.security.TenantManager;
 import edu.utexas.tacc.tapis.shared.utils.TapisObjectMapper;
 import edu.utexas.tacc.tapis.sharedapi.responses.TapisResponse;
@@ -29,45 +22,35 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import reactor.core.publisher.Flux;
+//import reactor.core.publisher.Flux;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
-import javax.validation.ValidationException;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
-import javax.ws.rs.BadRequestException;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
-import javax.ws.rs.NotAuthorizedException;
-import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
-import javax.ws.rs.sse.OutboundSseEvent;
 import javax.ws.rs.sse.Sse;
 import javax.ws.rs.sse.SseEventSink;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
 
 @Path("/v3/notifications/topics")
 public class TopicsResource {
 
     private static class TopicListResponse extends TapisResponse<List<Topic>> {}
     private static class TopicResponse extends TapisResponse<Topic> {}
-    private static class NotificationResponse extends TapisResponse<Notification> {}
+    private static class NotificationResponse extends TapisResponse<Event> {}
     private static class SubscriptionListResponse extends TapisResponse<List<Subscription>> {}
     private static class SubscriptionResponse extends TapisResponse<Subscription> {}
     private static final ObjectMapper mapper = TapisObjectMapper.getMapper();
@@ -107,14 +90,16 @@ public class TopicsResource {
         @Context SecurityContext securityContext
     ) {
         //TODO: What topics should a service account see?
-        try {
-            AuthenticatedUser user = (AuthenticatedUser) securityContext.getUserPrincipal();
-            List<Topic> topicListing = notificationsService.getTopicsByTenantAndOwner(user.getTenantId(), user.getName());
-            TapisResponse<List<Topic>> resp = TapisResponse.createSuccessResponse("ok", topicListing);
-            return resp;
-        } catch (ServiceException ex) {
-            throw new WebApplicationException("Could not retrieve topics", ex);
-        }
+// TODO
+      return null;
+// TODO        try {
+//            AuthenticatedUser user = (AuthenticatedUser) securityContext.getUserPrincipal();
+//            List<Topic> topicListing = notificationsService.getTopicsByTenantAndOwner(user.getTenantId(), user.getName());
+//            TapisResponse<List<Topic>> resp = TapisResponse.createSuccessResponse("ok", topicListing);
+//            return resp;
+//        } catch (ServiceException ex) {
+//            throw new WebApplicationException("Could not retrieve topics", ex);
+//        }
     }
 
 
@@ -144,24 +129,25 @@ public class TopicsResource {
         @NotNull(message = "payload required")  @Valid CreateTopicRequest topicRequest
     ) {
         AuthenticatedUser user = (AuthenticatedUser) securityContext.getUserPrincipal();
-        try {
-            Topic topic = new Topic();
-            topic.setTenantId(user.getTenantId());
-            topic.setOwner(user.getName());
-            topic.setName(topicRequest.getName());
-            topic.setDescription(topicRequest.getDescription());
-            topic = notificationsService.createTopic(topic);
-            TapisResponse<Topic> resp = TapisResponse.createSuccessResponse("ok", topic);
-            return resp;
-        } catch (DuplicateEntityException ex) {
-            throw new BadRequestException("Topic with this name already exists");
-        } catch (ServiceException ex) {
-            throw new WebApplicationException("Well that is strange, if the problem persists, please contact support.", ex);
-        }
+        // TODO
+      return null;
+//TODO        try {
+//            Topic topic = new Topic();
+//            topic.setTenantId(user.getTenantId());
+//            topic.setOwner(user.getName());
+//            topic.setName(topicRequest.getName());
+//            topic.setDescription(topicRequest.getDescription());
+//            topic = notificationsService.createTopic(topic);
+//            TapisResponse<Topic> resp = TapisResponse.createSuccessResponse("ok", topic);
+//            return resp;
+//        } catch (DuplicateEntityException ex) {
+//            throw new BadRequestException("Topic with this name already exists");
+//        } catch (ServiceException ex) {
+//            throw new WebApplicationException("Well that is strange, if the problem persists, please contact support.", ex);
+//        }
     }
 
     @GET
-    @TopicsAuthorization
     @Path("/{topicName}")
     @Operation(summary = "Get details of a topic.", tags = {"topics"})
     @Produces(MediaType.APPLICATION_JSON)
@@ -188,17 +174,19 @@ public class TopicsResource {
         @Context SecurityContext securityContext
     ) {
         AuthenticatedUser user = (AuthenticatedUser) securityContext.getUserPrincipal();
-        try {
-            Topic topic = notificationsService.getTopic(user.getTenantId(), topicName);
-            if (topic == null)  {
-                throw new NotFoundException();
-            }
-            TapisResponse<Topic> resp = TapisResponse.createSuccessResponse("ok", topic);
-            return resp;
-        } catch (ServiceException ex) {
-            String msg = String.format("Could not retrieve topic %s in tenant %s", topicName, user.getTenantId());
-            throw new WebApplicationException(msg);
-        }
+        // TODO
+      return null;
+//TODO        try {
+//            Topic topic = notificationsService.getTopic(user.getTenantId(), topicName);
+//            if (topic == null)  {
+//                throw new NotFoundException();
+//            }
+//            TapisResponse<Topic> resp = TapisResponse.createSuccessResponse("ok", topic);
+//            return resp;
+//        } catch (ServiceException ex) {
+//            String msg = String.format("Could not retrieve topic %s in tenant %s", topicName, user.getTenantId());
+//            throw new WebApplicationException(msg);
+//        }
     }
 
 
@@ -211,7 +199,6 @@ public class TopicsResource {
      * @return
      */
     @POST
-    @TopicsAuthorization
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{topicName}")
     @Operation(summary = "Create a new Notification in the topic channel", tags = {"topics"})
@@ -239,42 +226,43 @@ public class TopicsResource {
         @Context SecurityContext securityContext
     ) {
         AuthenticatedUser user = (AuthenticatedUser) securityContext.getUserPrincipal();
-        try {
-            Topic topic = notificationsService.getTopic(user.getTenantId(), topicName);
-
-            if (topic == null) {
-                String msg = String.format("Could not find topic: %s", topicName);
-                throw new NotFoundException(msg);
-            }
-
-            if (!user.getName().equals(topic.getOwner())) {
-                throw new NotAuthorizedException("Only the owner of the topic may publish notifications");
-            }
-
-            // if there is an ID, keep it, if not give it a UUID
-            String id = Optional.ofNullable(notificationRequest.getId()).orElse(UUID.randomUUID().toString());
-            Notification notification = new Notification.Builder()
-                .setId(id)
-                .setTenantId(user.getTenantId())
-                .setTopicName(topicName)
-                .setSource(notificationRequest.getSource())
-                .setType(notificationRequest.getType())
-                .setSubject(notificationRequest.getSubject())
-                .setData(notificationRequest.getData())
-                .build();
-            notificationsService.sendNotification(notification);
-            return TapisResponse.createSuccessResponse("ok");
-
-        } catch (ServiceException ex) {
-            throw new WebApplicationException("Could not send notification");
-        } catch (ValidationException ex) {
-            throw new BadRequestException("Invalid notification.");
-        }
+        // TODO
+      return null;
+//        try {
+//            Topic topic = notificationsService.getTopic(user.getTenantId(), topicName);
+//
+//            if (topic == null) {
+//                String msg = String.format("Could not find topic: %s", topicName);
+//                throw new NotFoundException(msg);
+//            }
+//
+//            if (!user.getName().equals(topic.getOwner())) {
+//                throw new NotAuthorizedException("Only the owner of the topic may publish notifications");
+//            }
+//
+//            // if there is an ID, keep it, if not give it a UUID
+//            String id = Optional.ofNullable(notificationRequest.getId()).orElse(UUID.randomUUID().toString());
+//            Notification notification = new Notification.Builder()
+//                .setId(id)
+//                .setTenantId(user.getTenantId())
+//                .setTopicName(topicName)
+//                .setSource(notificationRequest.getSource())
+//                .setType(notificationRequest.getType())
+//                .setSubject(notificationRequest.getSubject())
+//                .setData(notificationRequest.getData())
+//                .build();
+//            notificationsService.sendNotification(notification);
+//            return TapisResponse.createSuccessResponse("ok");
+//
+//        } catch (ServiceException ex) {
+//            throw new WebApplicationException("Could not send notification");
+//        } catch (ValidationException ex) {
+//            throw new BadRequestException("Invalid notification.");
+//        }
     }
 
 
     @DELETE
-    @TopicsAuthorization
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{topicName}")
     @Operation(summary = "Delete a topic. Note, this will also delete any subscriptions that are attached to the topic", tags = {"topics"})
@@ -301,21 +289,22 @@ public class TopicsResource {
         @Valid CreateNotificationRequest notificationRequest,
         @Context SecurityContext securityContext
     ) {
-        try {
-            AuthenticatedUser user = (AuthenticatedUser) securityContext.getUserPrincipal();
-            Topic topic = notificationsService.getTopic(user.getTenantId(), topicName);
-            if (topic == null) {
-                throw new NotFoundException("Topic not found");
-            }
-            notificationsService.deleteTopic(user.getTenantId(), topicName);
-            return TapisResponse.createSuccessResponse("ok");
-        } catch (ServiceException ex) {
-            throw new WebApplicationException(ex.getMessage(), ex);
-        }
+      // TODO
+      return null;
+//TODO        try {
+//            AuthenticatedUser user = (AuthenticatedUser) securityContext.getUserPrincipal();
+//            Topic topic = notificationsService.getTopic(user.getTenantId(), topicName);
+//            if (topic == null) {
+//                throw new NotFoundException("Topic not found");
+//            }
+//            notificationsService.deleteTopic(user.getTenantId(), topicName);
+//            return TapisResponse.createSuccessResponse("ok");
+//        } catch (ServiceException ex) {
+//            throw new WebApplicationException(ex.getMessage(), ex);
+//        }
     }
 
     @GET
-    @TopicsAuthorization
     @Produces(MediaType.SERVER_SENT_EVENTS)
     @Path("/{topicName}/messages")
     @Operation(summary = "Subscribe to and start receiving messages via ServerSentEvents.", tags = {"topics"})
@@ -326,50 +315,50 @@ public class TopicsResource {
         @Context Sse sse
     ) {
         AuthenticatedUser user = (AuthenticatedUser) securityContext.getUserPrincipal();
-
-        try {
-            Topic topic = notificationsService.getTopic(user.getTenantId(), topicName);
-
-            //Create a queue
-            Queue tmpQueue = new Queue();
-            tmpQueue.setTenantId(user.getTenantId());
-            tmpQueue.setOwner(user.getName());
-            tmpQueue.setName("tmp-api-" + UUID.randomUUID().toString());
-            notificationsService.createQueue(tmpQueue);
-            //create new subscription to queue
-            Subscription tmpSub = new Subscription();
-            tmpSub.setTenantId(user.getTenantId());
-            tmpSub.setTopicId(topic.getId());
-            Map<String, Object> filters = new HashMap<>();
-            tmpSub.setFilters(filters);
-            NotificationMechanism mechanism = new NotificationMechanism(NotificationMechanismEnum.QUEUE, tmpQueue.getName());
-            tmpSub.addMechanism(mechanism);
-            //Save the subscription
-            Subscription subscription = notificationsService.createSubscription(topic, tmpSub);
-            //start listening to events on queue
-
-            notificationsService.streamNotificationsOnQueue(tmpQueue.getName())
-                .subscribe(notification -> {
-                    OutboundSseEvent event = sse.newEventBuilder()
-                        .name("message-to-client")
-                        .mediaType(MediaType.APPLICATION_JSON_TYPE)
-                        .data(Notification.class, notification)
-                        .build();
-                    sseEventSink.send(event);
-                });
-            // TODO: Figure out how to delete the subscription after the connection is closed.
-            // onSocketClose -> delete subscription
-        } catch (DuplicateEntityException ex) {
-            throw new WebApplicationException("Something went really wrong here");
-        } catch (ServiceException ex) {
-            throw new WebApplicationException("Hmmmmmm...");
-        }
+      // TODO
+      return;
+//TODO      try {
+//            Topic topic = notificationsService.getTopic(user.getTenantId(), topicName);
+//
+//            //Create a queue
+//            Queue tmpQueue = new Queue();
+//            tmpQueue.setTenantId(user.getTenantId());
+//            tmpQueue.setOwner(user.getName());
+//            tmpQueue.setName("tmp-api-" + UUID.randomUUID().toString());
+//            notificationsService.createQueue(tmpQueue);
+//            //create new subscription to queue
+//            Subscription tmpSub = new Subscription();
+//            tmpSub.setTenantId(user.getTenantId());
+//            tmpSub.setTopicId(topic.getId());
+//            Map<String, Object> filters = new HashMap<>();
+//            tmpSub.setFilters(filters);
+//            NotificationDeliveryMethod deliveryMethod = new NotificationDeliveryMethod(NotificationDeliveryMethodEnum.QUEUE, tmpQueue.getName());
+//            tmpSub.addDeliveryMethod(deliveryMethod);
+//            //Save the subscription
+//            Subscription subscription = notificationsService.createSubscription(topic, tmpSub);
+//            //start listening to events on queue
+//
+//            notificationsService.streamNotificationsOnQueue(tmpQueue.getName())
+//                .subscribe(notification -> {
+//                    OutboundSseEvent event = sse.newEventBuilder()
+//                        .name("message-to-client")
+//                        .mediaType(MediaType.APPLICATION_JSON_TYPE)
+//                        .data(Notification.class, notification)
+//                        .build();
+//                    sseEventSink.send(event);
+//                });
+//            // TODO: Figure out how to delete the subscription after the connection is closed.
+//            // onSocketClose -> delete subscription
+//        } catch (DuplicateEntityException ex) {
+//            throw new WebApplicationException("Something went really wrong here");
+//        } catch (ServiceException ex) {
+//            throw new WebApplicationException("Hmmmmmm...");
+//        }
     }
 
 
 
     @GET
-    @TopicsAuthorization
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Get a list of all subscriptions on this topic", tags = {"subscriptions"})
     @Path("/{topicName}/subscriptions")
@@ -395,18 +384,20 @@ public class TopicsResource {
         @Parameter(description = "Name of the topic", required = true, example = "mySuperTopic") @PathParam("topicName") String topicName,
         @Context SecurityContext securityContext
     ) {
-        AuthenticatedUser user = (AuthenticatedUser) securityContext.getUserPrincipal();
-        try {
-            List<Subscription> subscriptions = notificationsService.getSubscriptionsForTopic(user.getTenantId(), topicName);
-            return (SubscriptionListResponse) TapisResponse.createSuccessResponse(subscriptions);
-        } catch (ServiceException ex) {
-            throw new WebApplicationException("Could not retrieve subscriptions for this topic.");
-        }
+      // TODO
+      return null;
+//TODO
+//        AuthenticatedUser user = (AuthenticatedUser) securityContext.getUserPrincipal();
+//        try {
+//            List<Subscription> subscriptions = notificationsService.getSubscriptionsForTopic(user.getTenantId(), topicName);
+//            return (SubscriptionListResponse) TapisResponse.createSuccessResponse(subscriptions);
+//        } catch (ServiceException ex) {
+//            throw new WebApplicationException("Could not retrieve subscriptions for this topic.");
+//        }
     }
 
 
     @POST
-    @TopicsAuthorization
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Create a new subscription to this topic channel", tags = {"subscriptions"})
     @Path("/{topicName}/subscriptions")
@@ -436,40 +427,41 @@ public class TopicsResource {
         AuthenticatedUser user = (AuthenticatedUser) securityContext.getUserPrincipal();
         Subscription subscription = new Subscription();
         subscription.setTenantId(user.getTenantId());
-
-        Topic topic;
-        try {
-            topic = notificationsService.getTopic(user.getTenantId(), topicName);
-        } catch (ServiceException ex) {
-            throw new WebApplicationException("This shouldn't happen.", ex);
-        }
-
-        if (topic == null) {
-            throw new NotFoundException("Not Found.");
-        }
-
-        Map<String, Object> filters;
-        //Is it even valid json?
-        try {
-            filters = mapper.readValue(subscriptionRequest.getFilter(), JsonTypeRef);
-        } catch (JsonProcessingException ex) {
-            throw new BadRequestException("Invalid filters.", ex);
-        }
-        subscription.setFilters(filters);
-        subscription.setMechanisms(subscriptionRequest.getNotificationMechanisms());
-        try {
-            subscription = notificationsService.createSubscription(topic, subscription);
-            TapisResponse<Subscription> resp = TapisResponse.createSuccessResponse("Topic created", subscription);
-            return resp;
-        } catch (DuplicateEntityException ex) {
-            throw new BadRequestException("A topic already exists with this name");
-        } catch (ServiceException ex) {
-            throw new WebApplicationException("Could not subscribe to topic" + topicName);
-        }
+      // TODO
+      return null;
+//TODO
+//        Topic topic;
+//        try {
+//            topic = notificationsService.getTopic(user.getTenantId(), topicName);
+//        } catch (ServiceException ex) {
+//            throw new WebApplicationException("This shouldn't happen.", ex);
+//        }
+//
+//        if (topic == null) {
+//            throw new NotFoundException("Not Found.");
+//        }
+//
+//        Map<String, Object> filters;
+//        //Is it even valid json?
+//        try {
+//            filters = mapper.readValue(subscriptionRequest.getFilter(), JsonTypeRef);
+//        } catch (JsonProcessingException ex) {
+//            throw new BadRequestException("Invalid filters.", ex);
+//        }
+//        subscription.setFilters(filters);
+//        subscription.setDeliveryMethods(subscriptionRequest.getNotificationDeliveryMethods());
+//        try {
+//            subscription = notificationsService.createSubscription(topic, subscription);
+//            TapisResponse<Subscription> resp = TapisResponse.createSuccessResponse("Topic created", subscription);
+//            return resp;
+//        } catch (DuplicateEntityException ex) {
+//            throw new BadRequestException("A topic already exists with this name");
+//        } catch (ServiceException ex) {
+//            throw new WebApplicationException("Could not subscribe to topic" + topicName);
+//        }
     }
 
     @GET
-    @TopicsAuthorization
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Get a subscription by ID", tags = {"subscriptions"})
     @Path("/{topicName}/subscriptions/{subscriptionId}")
@@ -501,7 +493,6 @@ public class TopicsResource {
     }
 
     @DELETE
-    @TopicsAuthorization
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Delete a subscription", tags = {"subscriptions"})
     @Path("/{topicName}/subscriptions/{subscriptionId}")
@@ -528,18 +519,20 @@ public class TopicsResource {
         @Parameter(description = "ID of the subscription", required = true, example = "1234-123-123") @PathParam("subscriptionId") String subscriptionID,
         @Context SecurityContext securityContext
     ) {
-        AuthenticatedUser user = (AuthenticatedUser) securityContext.getUserPrincipal();
-        Subscription sub;
-        try {
-            sub = notificationsService.getSubscription(UUID.fromString(subscriptionID));
-            if (sub == null) {
-                throw new NotFoundException("Subscription not found");
-            }
-            notificationsService.deleteSubscription(sub);
-            return TapisResponse.createSuccessResponse("ok");
-        } catch (ServiceException ex) {
-            throw new WebApplicationException("Hmm, could not delete subscription?", ex);
-        }
+      // TODO
+      return null;
+//TODO        AuthenticatedUser user = (AuthenticatedUser) securityContext.getUserPrincipal();
+//        Subscription sub;
+//        try {
+//            sub = notificationsService.getSubscription(UUID.fromString(subscriptionID));
+//            if (sub == null) {
+//                throw new NotFoundException("Subscription not found");
+//            }
+//            notificationsService.deleteSubscription(sub);
+//            return TapisResponse.createSuccessResponse("ok");
+//        } catch (ServiceException ex) {
+//            throw new WebApplicationException("Hmm, could not delete subscription?", ex);
+//        }
     }
 
 

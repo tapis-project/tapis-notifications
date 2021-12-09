@@ -1,0 +1,12 @@
+notifications/release directory
+==========================================================================
+Files in active use:
+==========================================================================
+Dockerfile - used for building main API service docker image
+Dockerfile.worker - used for building worker service docker image
+docker_build.sh - Build, tag and optionally push docker images for the service
+release_update.sh - Build, tag and push docker images for the release cycle.
+rc.ver - File containing release candidate version as a single integer.
+
+TODO:
+docker-compose.yml
