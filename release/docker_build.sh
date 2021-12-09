@@ -89,36 +89,37 @@ echo "  GIT_COMMIT_LBL= ${GIT_COMMIT_LBL}"
 docker build -f Dockerfile \
    --label VER="${VER}" --label GIT_COMMIT="${GIT_COMMIT_LBL}" --label GIT_BRANCH="${GIT_BRANCH_LBL}" \
     -t "${TAG_UNIQ1}" .
-docker build -f Dockerfile.worker \
-   --label VER="${VER}" --label GIT_COMMIT="${GIT_COMMIT_LBL}" --label GIT_BRANCH="${GIT_BRANCH_LBL}" \
-    -t "${TAG_UNIQ2}" .
+# TODO
+#docker build -f Dockerfile.worker \
+#   --label VER="${VER}" --label GIT_COMMIT="${GIT_COMMIT_LBL}" --label GIT_BRANCH="${GIT_BRANCH_LBL}" \
+#    -t "${TAG_UNIQ2}" .
 
 # Create other tags for remote repo
 echo "Creating images for local testing using tags: $TAG_LOCAL1 and $TAG_LOCAL2"
 docker tag "$TAG_UNIQ1" "$TAG_LOCAL1"
-docker tag "$TAG_UNIQ2" "$TAG_LOCAL2"
+#docker tag "$TAG_UNIQ2" "$TAG_LOCAL2"
 
 # Push to remote repo
 if [ "x$2" = "x-push" ]; then
   if [ "$ENV" = "prod" ]; then
     echo "Creating third image tags for prod env: $TAG_LATEST1 and $TAG_LATEST2"
     docker tag "$TAG_UNIQ1" "$TAG_LATEST1"
-    docker tag "$TAG_UNIQ2" "$TAG_LATEST2"
+#    docker tag "$TAG_UNIQ2" "$TAG_LATEST2"
   fi
   echo "Pushing images to docker hub."
   # NOTE: Use current login. Jenkins job does login
   docker push "$TAG_UNIQ1"
-  docker push "$TAG_UNIQ2"
+#  docker push "$TAG_UNIQ2"
   if [ "x$TAPIS_DEPLOY_MANUAL" = "xtrue" ]; then
     echo "Creating ENV image tags: $TAG_ENV1 and $TAG_ENV2"
     docker tag "$TAG_UNIQ1" "$TAG_ENV1"
-    docker tag "$TAG_UNIQ2" "$TAG_ENV2"
+#    docker tag "$TAG_UNIQ2" "$TAG_ENV2"
     docker push "$TAG_ENV1"
-    docker push "$TAG_ENV2"
+#    docker push "$TAG_ENV2"
   fi
   if [ "$ENV" = "prod" ]; then
     docker push "$TAG_LATEST1"
-    docker push "$TAG_LATEST2"
+#    docker push "$TAG_LATEST2"
   fi
 fi
 cd "$RUN_DIR"
