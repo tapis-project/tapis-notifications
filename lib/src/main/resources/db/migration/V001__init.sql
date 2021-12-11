@@ -48,6 +48,9 @@ CREATE TABLE subscriptions
     enabled  BOOLEAN NOT NULL DEFAULT true,
     topic_filter TEXT NOT NULL,
     subject_filter TEXT NOT NULL,
+    delivery_methods JSONB NOT NULL,
+    notes      JSONB NOT NULL,
+    uuid uuid NOT NULL,
     created    TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),
     updated    TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),
     UNIQUE (tenant,id)
@@ -61,6 +64,24 @@ COMMENT ON COLUMN subscriptions.owner IS 'User name of owner';
 COMMENT ON COLUMN subscriptions.enabled IS 'Indicates if subscription is currently active and available for use';
 COMMENT ON COLUMN subscriptions.created IS 'UTC time for when record was created';
 COMMENT ON COLUMN subscriptions.updated IS 'UTC time for when record was last updated';
+
+-- Subscription updates table
+-- Track update requests for subscriptions
+CREATE TABLE subscription_updates
+(
+    seq_id SERIAL PRIMARY KEY,
+    subscription_seq_id INTEGER REFERENCES subscriptions(seq_id) ON DELETE CASCADE,
+    subscription_tenant TEXT NOT NULL,
+    subscription_id TEXT NOT NULL,
+    user_tenant TEXT NOT NULL,
+    user_name TEXT NOT NULL,
+    operation TEXT NOT NULL,
+    upd_json JSONB NOT NULL,
+    upd_text TEXT,
+    uuid uuid NOT NULL,
+    created TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc')
+);
+ALTER TABLE subscription_updates OWNER TO tapis_notif;
 
 -- CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- CREATE TABLE topics

@@ -257,16 +257,16 @@
                   <!-- ****************************************** -->
                   <!-- Bind Postgresql JSONB type to Gson JsonElement -->
                 <forcedTypes>
-<!--                  <forcedType>-->
-<!--                    <userType>com.google.gson.JsonElement</userType>-->
-<!--                    <binding>edu.utexas.tacc.tapis.ntifications.dao.JSONBToJsonElementBinding</binding>-->
-<!--                    &lt;!&ndash; Match only certain columns, no need to filter on type &ndash;&gt;-->
-<!--                    <includeExpression>(apps_versions\.notes|app_updates\.upd_json)</includeExpression>-->
-<!--                    <includeTypes>.*</includeTypes>-->
-<!--                  </forcedType>-->
-<!--                  &lt;!&ndash; ****************************************** &ndash;&gt;-->
-<!--                  &lt;!&ndash; Bind our enum types for convenience &ndash;&gt;-->
-<!--                  &lt;!&ndash; ****************************************** &ndash;&gt;-->
+                  <forcedType>
+                    <userType>com.google.gson.JsonElement</userType>
+                    <binding>edu.utexas.tacc.tapis.ntifications.dao.JSONBToJsonElementBinding</binding>
+                    <!-- Match only certain columns, no need to filter on type -->
+                    <includeExpression>(subscriptions\.delivery_methods|subscriptions\.notes|subscription_updates\.upd_json)</includeExpression>
+                    <includeTypes>.*</includeTypes>
+                  </forcedType>
+                  <!-- ****************************************** -->
+                  <!-- Bind our enum types for convenience -->
+                  <!-- ****************************************** -->
 <!--                  <forcedType>-->
 <!--                    <userType>edu.utexas.tacc.tapis.apps.model.App.AppOperation</userType>-->
 <!--                    <enumConverter>true</enumConverter>-->
