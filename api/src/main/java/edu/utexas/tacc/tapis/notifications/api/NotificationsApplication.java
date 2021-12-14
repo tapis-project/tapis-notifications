@@ -79,37 +79,6 @@ public class NotificationsApplication extends ResourceConfig
     // Set the application name. Note that this has no impact on base URL
     setApplicationName(TapisConstants.SERVICE_NAME_NOTIFICATIONS);
 
-/*
-        //our APIS
-        register(TopicsResource.class);
-        register(QueuesResource.class);
-        register(Healthcheck.class);
-        // Serialization
-        register(JacksonFeature.class);
-        // Custom Timestamp/Instant serialization
-        register(ObjectMapperContextResolver.class);
-        // ExceptionMappers, need both because ValidationMapper is a custom Jersey thing and
-        // can't be implemented in a generic mapper
-        register(TapisExceptionMapper.class);
-        register(ValidationExceptionMapper.class);
-
-        //Authorization Annotations
-        register(TopicsAuthz.class);
-        TenantManager tenantManager = TenantManager.getInstance(runtimeConfig.getTenantsServiceURL());
-        tenantManager.getTenants();
-
-        register(new AbstractBinder() {
-            @Override
-            protected void configure() {
-                bind(tenantManager).to(TenantManager.class);
-                bindFactory(ServiceJWTCacheFactory.class).to(ServiceJWT.class).in(Singleton.class);
-                bindAsContract(NotificationsService.class).in(Singleton.class);
-                bindAsContract(NotificationsPermissionsService.class).in(Singleton.class);
-                bindAsContract(QueueService.class).in(Singleton.class);
-                bindAsContract(NotificationsDAO.class);
-            }
-        });
-*/
     // Perform remaining init steps in try block so we can print a fatal error message if something goes wrong.
     try {
       // Get runtime parameters
@@ -137,7 +106,7 @@ public class NotificationsApplication extends ResourceConfig
           bind(NotificationsServiceImpl.class).to(NotificationsService.class); // Used in Resource classes for most service calls
           bind(NotificationsServiceImpl.class).to(NotificationsServiceImpl.class); // Used in NotificationsResource for checkDB
           bind(NotificationsDaoImpl.class).to(NotificationsDao.class); // Used in service impl
-          bindFactory(ServiceContextFactory.class).to(ServiceContext.class); // Used in service impl and TODO/TBD: NotificationsResource
+          bindFactory(ServiceContextFactory.class).to(ServiceContext.class); // Used in service impl and NotificationsResource
           bindFactory(ServiceClientsFactory.class).to(ServiceClients.class); // Used in service impl
         }
       });

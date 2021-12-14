@@ -1,0 +1,15 @@
+{
+  "$id": "https://tapis.tacc.utexas.edu/SubscriptionPatchRequest",
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "description": "Schema for a request to update a subscription",
+
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "description": { "type": "string", "maxLength": 2048 },
+    "topicFilter": { "type": "string" },
+    "subjectFilter": { "type": "string" },
+    "deliveryMethods": { "$ref": "resource:///edu/utexas/tacc/tapis/notifications/api/jsonschema/Definitions.json#/DeliveryMethodList" },
+    "notes": { "type": "object" }
+  }
+}

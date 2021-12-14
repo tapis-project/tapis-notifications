@@ -14,7 +14,7 @@ import org.jooq.impl.Internal;
 
 
 /**
- * A class modelling indexes of tables in tapis_notif.
+ * A class modelling indexes of tables in tapis_ntf.
  */
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Indexes {

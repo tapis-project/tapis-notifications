@@ -1,5 +1,6 @@
 package edu.utexas.tacc.tapis.notifications.api.model;
 
+// TODO
 //import org.hibernate.validator.constraints.URL;
 
 import java.net.URI;
