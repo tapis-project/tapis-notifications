@@ -118,7 +118,6 @@ public class SubscriptionResource
   // Top level summary attributes to be included by default in some cases.
   public static final List<String> SUMMARY_ATTRS = new ArrayList<>(List.of(ID_FIELD, OWNER_FIELD, TOPIC_FILTER_FIELD));
 
-
   // ************************************************************************
   // *********************** Fields *****************************************
   // ************************************************************************
@@ -333,10 +332,6 @@ public class SubscriptionResource
     try
     {
       patchSubscription = TapisGsonUtils.getGson().fromJson(rawJson, PatchSubscription.class);
-//      // If json does not contain jobType then set jobType to a special value to indicate it was not present.
-//      // Turn the request string into a json object and check
-//      JsonObject topObj = TapisGsonUtils.getGson().fromJson(rawJson, JsonObject.class);
-//      if (!topObj.has(Subscription.JOB_TYPE_FIELD)) patchSubscription.setJobType(JobType.UNSET);
     }
     catch (JsonSyntaxException e)
     {
@@ -906,7 +901,7 @@ public class SubscriptionResource
   /* **************************************************************************** */
 
   /**
-   * changeOwner, enable, disable, delete and undelete follow same pattern
+   * changeOwner, enable, disable, delete follow same pattern
    * Note that userName only used for changeOwner
    * @param opName Name of operation.
    * @param subscriptionId Id of subscription to update
@@ -1009,14 +1004,12 @@ public class SubscriptionResource
    */
   private static Subscription createSubscriptionFromPostRequest(String tenantId, ReqPostSubscription req, String rawJson)
   {
-//    var jobAttrs = req.jobAttributes;
-//    if (jobAttrs == null) jobAttrs = new JobAttributes();
     // Extract Notes from the raw json.
     Object notes = extractNotes(rawJson);
     // Create Subscription
     var subscription = new Subscription(-1, tenantId, req.id, req.description, req.owner, req.enabled,
-          jobAttrs.memoryMB, jobAttrs.maxMinutes, jobAttrs.subscriptions,
-          notes, null, false, null, null);
+                                        req.topicFilter, req.subjectFilter, req.deliveryMethods,
+                                        notes, null, null, null);
     return subscription;
   }
 
@@ -1025,8 +1018,6 @@ public class SubscriptionResource
    */
   private static Subscription createSubscriptionFromPutRequest(String tenantId, String id, ReqPutSubscription req, String rawJson)
   {
-//    var jobAttrs = req.jobAttributes;
-//    if (jobAttrs == null) jobAttrs = new JobAttributes();
     // Extract Notes from the raw json.
     Object notes = extractNotes(rawJson);
 
@@ -1034,8 +1025,8 @@ public class SubscriptionResource
     String owner = null;
     boolean enabled = true;
     var subscription = new Subscription(-1, tenantId, id, req.description, owner, enabled,
-          jobAttrs.memoryMB, jobAttrs.maxMinutes, jobAttrs.subscriptions,
-          notes, null, false, null, null);
+                                        req.topicFilter, req.subjectFilter, req.deliveryMethods,
+                                        notes, null, null, null);
     return subscription;
   }
 
@@ -1053,7 +1044,7 @@ public class SubscriptionResource
     List<String> errMessages = subscription1.checkAttributeRestrictions();
 
     // Now validate attributes that have special handling at API level.
-    // Currently no additional checks.
+    // Currently, no additional checks.
 
     // If validation failed log error message and return response
     if (!errMessages.isEmpty())
