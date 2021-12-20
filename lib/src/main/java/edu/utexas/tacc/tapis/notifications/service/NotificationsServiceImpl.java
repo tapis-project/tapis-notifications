@@ -171,7 +171,7 @@ public class NotificationsServiceImpl implements NotificationsService
 
       // ------------------- Add permissions -----------------------------
       // Give owner full access to the subscription
-      skClient.grantUserPermission(resourceTenantId, sub.getOwner(), subsPermSpecALL);
+//      skClient.grantUserPermission(resourceTenantId, sub.getOwner(), subsPermSpecALL);
     }
     catch (Exception e0)
     {
@@ -185,8 +185,8 @@ public class NotificationsServiceImpl implements NotificationsService
       if (subCreated) try {dao.deleteSubscription(resourceTenantId, resourceId); }
       catch (Exception e) {_log.warn(LibUtils.getMsgAuth(ERROR_ROLLBACK, rUser, resourceId, "hardDelete", e.getMessage()));}
       // Remove perms
-      try { skClient.revokeUserPermission(resourceTenantId, sub.getOwner(), subsPermSpecALL); }
-      catch (Exception e) {_log.warn(LibUtils.getMsgAuth(ERROR_ROLLBACK, rUser, resourceId, "revokePermOwner", e.getMessage()));}
+//      try { skClient.revokeUserPermission(resourceTenantId, sub.getOwner(), subsPermSpecALL); }
+//      catch (Exception e) {_log.warn(LibUtils.getMsgAuth(ERROR_ROLLBACK, rUser, resourceId, "revokePermOwner", e.getMessage()));}
       throw e0;
     }
   }
@@ -416,19 +416,19 @@ public class NotificationsServiceImpl implements NotificationsService
     try {
       // ------------------- Make Dao call to update the subscription owner -----------------------------------
       dao.updateSubscriptionOwner(rUser, resourceTenantId, subId, newOwnerName);
-      // Add permissions for new owner
-      skClient.grantUserPermission(resourceTenantId, newOwnerName, subsPermSpec);
-      // Remove permissions from old owner
-      skClient.revokeUserPermission(resourceTenantId, oldOwnerName, subsPermSpec);
+//      // Add permissions for new owner
+//      skClient.grantUserPermission(resourceTenantId, newOwnerName, subsPermSpec);
+//      // Remove permissions from old owner
+//      skClient.revokeUserPermission(resourceTenantId, oldOwnerName, subsPermSpec);
     }
     catch (Exception e0)
     {
       // Something went wrong. Attempt to undo all changes and then re-throw the exception
       try { dao.updateSubscriptionOwner(rUser, resourceTenantId, subId, oldOwnerName); } catch (Exception e) {_log.warn(LibUtils.getMsgAuth(ERROR_ROLLBACK, rUser, subId, "updateOwner", e.getMessage()));}
-      try { skClient.revokeUserPermission(resourceTenantId, newOwnerName, subsPermSpec); }
-      catch (Exception e) {_log.warn(LibUtils.getMsgAuth(ERROR_ROLLBACK, rUser, subId, "revokePermNewOwner", e.getMessage()));}
-      try { skClient.grantUserPermission(resourceTenantId, oldOwnerName, subsPermSpec); }
-      catch (Exception e) {_log.warn(LibUtils.getMsgAuth(ERROR_ROLLBACK, rUser, subId, "grantPermOldOwner", e.getMessage()));}
+//      try { skClient.revokeUserPermission(resourceTenantId, newOwnerName, subsPermSpec); }
+//      catch (Exception e) {_log.warn(LibUtils.getMsgAuth(ERROR_ROLLBACK, rUser, subId, "revokePermNewOwner", e.getMessage()));}
+//      try { skClient.grantUserPermission(resourceTenantId, oldOwnerName, subsPermSpec); }
+//      catch (Exception e) {_log.warn(LibUtils.getMsgAuth(ERROR_ROLLBACK, rUser, subId, "grantPermOldOwner", e.getMessage()));}
       throw e0;
     }
     return 1;
@@ -459,7 +459,7 @@ public class NotificationsServiceImpl implements NotificationsService
     checkAuth(rUser, op, subId, null, null, null);
 
     // Remove SK artifacts
-    removeSKArtifacts(resourceTenantId, subId);
+// TODO/TBD    removeSKArtifacts(resourceTenantId, subId);
 
     // Delete the subscription
     return dao.deleteSubscription(resourceTenantId, subId);
@@ -634,14 +634,14 @@ public class NotificationsServiceImpl implements NotificationsService
       }
     }
 
-    // Get list of IDs of systems for which requester has view permission.
-    // This is either all systems (null) or a list of IDs.
-    Set<String> allowedIDs = getAllowedSubscriptionIDs(rUser);
+    // Get list of IDs of resources for which requester has view permission.
+    // This is either all resources (null) or a list of IDs.
+    Set<String> allowedIDs = prvtGetAllowedSubscriptionIDs(rUser);
 
     // If none are allowed we know count is 0
     if (allowedIDs != null && allowedIDs.isEmpty()) return 0;
 
-    // Count all allowed systems matching the search conditions
+    // Count all allowed resources matching the search conditions
     return dao.getSubscriptionsCount(rUser.getOboTenantId(), verifiedSearchList, null, allowedIDs, orderByList, startAfter);
   }
 
@@ -739,31 +739,33 @@ public class NotificationsServiceImpl implements NotificationsService
     return dao.getSubscriptions(rUser.getOboTenantId(), null, searchAST, allowedIDs, limit, orderByList, skip, startAfter);
   }
 
-  /**
-   * Get list of all subscription IDs that an rUser is authorized to view
-   * @param rUser - ResourceRequestUser containing tenant, user and request info
-   * @return - set of subscription IDs
-   * @throws TapisException - for Tapis related exceptions
-   */
-  @Override
-  public Set<String> getAllowedSubscriptionIDs(ResourceRequestUser rUser) throws TapisException
-  {
-    SubscriptionOperation op = SubscriptionOperation.read;
-    if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
-    // Get all subscription names
-    Set<String> subIds = dao.getSubscriptionIDs(rUser.getOboTenantId());
-    var allowedNames = new HashSet<String>();
-    // Filter based on user authorization
-    for (String name: subIds)
-    {
-      try {
-        checkAuth(rUser, op, name, null, null, null);
-        allowedNames.add(name);
-      }
-      catch (NotAuthorizedException | TapisClientException e) { }
-    }
-    return allowedNames;
-  }
+//  /**
+//   * Get list of all subscription IDs that an rUser is authorized to view
+//   * TODO/TBD: Use Perms model as with Apps/Systems ore return all resources owned by the user.
+//   * @param rUser - ResourceRequestUser containing tenant, user and request info
+//   * @return - set of subscription IDs
+//   * @throws TapisException - for Tapis related exceptions
+//   */
+//  @Override
+//  public Set<String> getAllowedSubscriptionIDs(ResourceRequestUser rUser) throws TapisException, TapisClientException
+//  {
+//    return prvtGetAllowedSubscriptionIDs(rUser);
+//// TODO/TBD    SubscriptionOperation op = SubscriptionOperation.read;
+////    if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
+////    // Get all subscription names
+////    Set<String> subIds = dao.getSubscriptionIDs(rUser.getOboTenantId());
+////    var allowedNames = new HashSet<String>();
+////    // Filter based on user authorization
+////    for (String name: subIds)
+////    {
+////      try {
+////        checkAuth(rUser, op, name, null, null, null);
+////        allowedNames.add(name);
+////      }
+////      catch (NotAuthorizedException | TapisClientException e) { }
+////    }
+////    return allowedNames;
+//  }
 
   /**
    * Get subscription owner
@@ -857,9 +859,6 @@ public class NotificationsServiceImpl implements NotificationsService
 
   /**
    * Check constraints on Subscription attributes.
-   * Check that system referenced by execSystemId exists with canExec = true.
-   * Check that system referenced by archiveSystemId exists.
-   * Check LogicalQueue max/min constraints.
    * Collect and report as many errors as possible so they can all be fixed before next attempt
    * @param sub - the Subscription to check
    * @throws IllegalStateException - if any constraints are violated
@@ -1042,8 +1041,8 @@ public class NotificationsServiceImpl implements NotificationsService
    * @param op - operation name
    * @param tenantIdToCheck - optional name of the tenant to use. Default is to use authenticatedUser.
    * @param userIdToCheck - optional name of the user to check. Default is to use authenticatedUser.
-   * @param subId - name of the system
-   * @param owner - system owner
+   * @param subId - id of the subscription
+   * @param owner - owner of the subscription
    * @param perms - List of permissions for the revokePerm case
    * @throws NotAuthorizedException - apiUserId not authorized to perform operation
    */
@@ -1069,27 +1068,28 @@ public class NotificationsServiceImpl implements NotificationsService
       case disable:
       case delete:
       case changeOwner:
-      case grantPerms:
-        if (owner.equals(userName) || hasAdminRole(rUser, tenantName, userName))
-          return;
-        break;
+//      case grantPerms:
+//        if (owner.equals(userName) || hasAdminRole(rUser, tenantName, userName))
+//          return;
+//        break;
       case read:
-      case getPerms:
-        if (owner.equals(userName) || hasAdminRole(rUser, tenantName, userName) ||
-              isPermittedAny(rUser, tenantName, userName, subId, READMODIFY_PERMS))
-          return;
-        break;
+//      case getPerms:
+//        if (owner.equals(userName) || hasAdminRole(rUser, tenantName, userName) ||
+//              isPermittedAny(rUser, tenantName, userName, subId, READMODIFY_PERMS))
+//          return;
+//        break;
       case modify:
-        if (owner.equals(userName) || hasAdminRole(rUser, tenantName, userName) ||
-                isPermitted(rUser, tenantName, userName, subId, Permission.MODIFY))
+        if (owner.equals(userName) || hasAdminRole(rUser, tenantName, userName))
+//        if (owner.equals(userName) || hasAdminRole(rUser, tenantName, userName) ||
+//                isPermitted(rUser, tenantName, userName, subId, Permission.MODIFY))
           return;
         break;
-      case revokePerms:
-        if (owner.equals(userName) || hasAdminRole(rUser, tenantName, userName) ||
-                (userName.equals(targetUser) &&
-                        allowUserRevokePerm(rUser, tenantName, userName, subId, perms)))
-          return;
-        break;
+//      case revokePerms:
+//        if (owner.equals(userName) || hasAdminRole(rUser, tenantName, userName) ||
+//                (userName.equals(targetUser) &&
+//                        allowUserRevokePerm(rUser, tenantName, userName, subId, perms)))
+//          return;
+//        break;
     }
     // Not authorized, throw an exception
     throw new NotAuthorizedException(LibUtils.getMsgAuth("NTFLIB_UNAUTH", rUser, subId, op.name()), NO_CHALLENGE);
@@ -1099,35 +1099,37 @@ public class NotificationsServiceImpl implements NotificationsService
    * Determine all subscriptions that a user is allowed to see.
    * If all subscriptions return null else return list of subscription IDs
    * An empty list indicates no subscriptions allowed.
+   * TODO/TBD: User Perm model as in Apps/Systems or return all resources owned by the user.
    */
   private Set<String> prvtGetAllowedSubscriptionIDs(ResourceRequestUser rUser)
           throws TapisException, TapisClientException
   {
-    // If requester is a service calling as itself or an admin then all systems allowed
+    // If requester is a service calling as itself or an admin then all resources allowed
     if (rUser.isServiceRequest() && rUser.getJwtUserId().equals(rUser.getOboUserId()) ||
             hasAdminRole(rUser, null, null))
     {
       return null;
     }
-    var subscriptionIDs = new HashSet<String>();
-    var userPerms = getSKClient().getUserPerms(rUser.getOboTenantId(), rUser.getOboUserId());
-    // Check each perm to see if it allows user READ access.
-    for (String userPerm : userPerms)
-    {
-      if (StringUtils.isBlank(userPerm)) continue;
-      // Split based on :, permSpec has the format subscr:<tenant>:<perms>:<system_name>
-      // NOTE: This assumes value in last field is always an id and never a wildcard.
-      String[] permFields = COLON_SPLIT.split(userPerm);
-      if (permFields.length < 4) continue;
-      if (permFields[0].equals(PERM_SPEC_PREFIX) &&
-           (permFields[2].contains(Permission.READ.name()) ||
-            permFields[2].contains(Permission.MODIFY.name()) ||
-            permFields[2].contains(Subscription.PERMISSION_WILDCARD)))
-      {
-        subscriptionIDs.add(permFields[3]);
-      }
-    }
-    return subscriptionIDs;
+    return dao.getSubscriptionIDsByOwner(rUser.getOboTenantId(), rUser.getOboUserId());
+//    var subscriptionIDs = new HashSet<String>();
+//    var userPerms = getSKClient().getUserPerms(rUser.getOboTenantId(), rUser.getOboUserId());
+//    // Check each perm to see if it allows user READ access.
+//    for (String userPerm : userPerms)
+//    {
+//      if (StringUtils.isBlank(userPerm)) continue;
+//      // Split based on :, permSpec has the format subscr:<tenant>:<perms>:<system_name>
+//      // NOTE: This assumes value in last field is always an id and never a wildcard.
+//      String[] permFields = COLON_SPLIT.split(userPerm);
+//      if (permFields.length < 4) continue;
+//      if (permFields[0].equals(PERM_SPEC_PREFIX) &&
+//           (permFields[2].contains(Permission.READ.name()) ||
+//            permFields[2].contains(Permission.MODIFY.name()) ||
+//            permFields[2].contains(Subscription.PERMISSION_WILDCARD)))
+//      {
+//        subscriptionIDs.add(permFields[3]);
+//      }
+//    }
+//    return subscriptionIDs;
   }
 
   /**
@@ -1143,100 +1145,100 @@ public class NotificationsServiceImpl implements NotificationsService
     return getSKClient().isAdmin(tenantName, userName);
   }
 
-  /**
-   * Check to see if a user has the specified permission
-   * By default use JWT tenant and user from rUser, allow for optional tenant or user.
-   */
-  private boolean isPermitted(ResourceRequestUser rUser, String tenantToCheck, String userToCheck,
-                              String subId, Permission perm)
-          throws TapisException, TapisClientException
-  {
-    // Use JWT tenant and user from authenticatedUsr or optional provided values
-    String tenantName = (StringUtils.isBlank(tenantToCheck) ? rUser.getOboTenantId() : tenantToCheck);
-    String userName = (StringUtils.isBlank(userToCheck) ? rUser.getJwtUserId() : userToCheck);
-    var skClient = getSKClient();
-    String permSpecStr = getPermSpecStr(tenantName, subId, perm);
-    return skClient.isPermitted(tenantName, userName, permSpecStr);
-  }
-
-  /**
-   * Check to see if a user has any of the set of permissions
-   * By default use JWT tenant and user from rUser, allow for optional tenant or user.
-   */
-  private boolean isPermittedAny(ResourceRequestUser rUser, String tenantToCheck, String userToCheck,
-                                 String subId, Set<Permission> perms)
-          throws TapisException, TapisClientException
-  {
-    // Use JWT tenant and user from authenticatedUsr or optional provided values
-    String tenantName = (StringUtils.isBlank(tenantToCheck) ? rUser.getOboTenantId() : tenantToCheck);
-    String userName = (StringUtils.isBlank(userToCheck) ? rUser.getJwtUserId() : userToCheck);
-    var skClient = getSKClient();
-    var permSpecs = new ArrayList<String>();
-    for (Permission perm : perms) {
-      permSpecs.add(getPermSpecStr(tenantName, subId, perm));
-    }
-    return skClient.isPermittedAny(tenantName, userName, permSpecs.toArray(Subscription.EMPTY_STR_ARRAY));
-  }
-
-  /**
-   * Check to see if a user who is not owner or admin is authorized to revoke permissions
-   * By default use JWT tenant and user from rUser, allow for optional tenant or user.
-   */
-  private boolean allowUserRevokePerm(ResourceRequestUser rUser, String tenantToCheck, String userToCheck,
-                                      String subId, Set<Permission> perms)
-          throws TapisException, TapisClientException
-  {
-    // Perms should never be null. Fall back to deny as best security practice.
-    if (perms == null) return false;
-    // Use JWT tenant and user from authenticatedUsr or optional provided values
-    String tenantName = (StringUtils.isBlank(tenantToCheck) ? rUser.getOboTenantId() : tenantToCheck);
-    String userName = (StringUtils.isBlank(userToCheck) ? rUser.getJwtUserId() : userToCheck);
-    if (perms.contains(Permission.MODIFY)) return isPermitted(rUser, tenantName, userName, subId, Permission.MODIFY);
-    if (perms.contains(Permission.READ)) return isPermittedAny(rUser, tenantName, userName, subId, READMODIFY_PERMS);
-    return false;
-  }
-
-  /**
-   * Remove all SK artifacts associated with an Subscription: user permissions, Subscription role
-   * No checks are done for incoming arguments and the subscription must exist
-   */
-  private void removeSKArtifacts(String resourceTenantId, String subId)
-          throws TapisException, TapisClientException
-  {
-    var skClient = getSKClient();
-
-    // Use Security Kernel client to find all users with perms associated with the subscription.
-    String permSpec = String.format(PERM_SPEC_TEMPLATE, resourceTenantId, "%", subId);
-    var userNames = skClient.getUsersWithPermission(resourceTenantId, permSpec);
-    // Revoke all perms for all users
-    for (String userName : userNames)
-    {
-      revokePermissions(skClient, resourceTenantId, subId, userName, ALL_PERMS);
-      // Remove wildcard perm
-      skClient.revokeUserPermission(resourceTenantId, userName, getPermSpecAllStr(resourceTenantId, subId));
-    }
-  }
-
-  /**
-   * Revoke permissions
-   * No checks are done for incoming arguments and the subscription must exist
-   */
-  private static int revokePermissions(SKClient skClient, String resourceTenantId, String subId, String userName, Set<Permission> permissions)
-          throws TapisClientException
-  {
-    // Create a set of individual permSpec entries based on the list passed in
-    Set<String> permSpecSet = getPermSpecSet(resourceTenantId, subId, permissions);
-    // Remove perms from default user role
-    for (String permSpec : permSpecSet)
-    {
-      skClient.revokeUserPermission(resourceTenantId, userName, permSpec);
-    }
-    return permSpecSet.size();
-  }
+//  /**
+//   * Check to see if a user has the specified permission
+//   * By default use JWT tenant and user from rUser, allow for optional tenant or user.
+//   */
+//  private boolean isPermitted(ResourceRequestUser rUser, String tenantToCheck, String userToCheck,
+//                              String subId, Permission perm)
+//          throws TapisException, TapisClientException
+//  {
+//    // Use JWT tenant and user from authenticatedUsr or optional provided values
+//    String tenantName = (StringUtils.isBlank(tenantToCheck) ? rUser.getOboTenantId() : tenantToCheck);
+//    String userName = (StringUtils.isBlank(userToCheck) ? rUser.getJwtUserId() : userToCheck);
+//    var skClient = getSKClient();
+//    String permSpecStr = getPermSpecStr(tenantName, subId, perm);
+//    return skClient.isPermitted(tenantName, userName, permSpecStr);
+//  }
+//
+//  /**
+//   * Check to see if a user has any of the set of permissions
+//   * By default use JWT tenant and user from rUser, allow for optional tenant or user.
+//   */
+//  private boolean isPermittedAny(ResourceRequestUser rUser, String tenantToCheck, String userToCheck,
+//                                 String subId, Set<Permission> perms)
+//          throws TapisException, TapisClientException
+//  {
+//    // Use JWT tenant and user from authenticatedUsr or optional provided values
+//    String tenantName = (StringUtils.isBlank(tenantToCheck) ? rUser.getOboTenantId() : tenantToCheck);
+//    String userName = (StringUtils.isBlank(userToCheck) ? rUser.getJwtUserId() : userToCheck);
+//    var skClient = getSKClient();
+//    var permSpecs = new ArrayList<String>();
+//    for (Permission perm : perms) {
+//      permSpecs.add(getPermSpecStr(tenantName, subId, perm));
+//    }
+//    return skClient.isPermittedAny(tenantName, userName, permSpecs.toArray(Subscription.EMPTY_STR_ARRAY));
+//  }
+//
+//  /**
+//   * Check to see if a user who is not owner or admin is authorized to revoke permissions
+//   * By default use JWT tenant and user from rUser, allow for optional tenant or user.
+//   */
+//  private boolean allowUserRevokePerm(ResourceRequestUser rUser, String tenantToCheck, String userToCheck,
+//                                      String subId, Set<Permission> perms)
+//          throws TapisException, TapisClientException
+//  {
+//    // Perms should never be null. Fall back to deny as best security practice.
+//    if (perms == null) return false;
+//    // Use JWT tenant and user from authenticatedUsr or optional provided values
+//    String tenantName = (StringUtils.isBlank(tenantToCheck) ? rUser.getOboTenantId() : tenantToCheck);
+//    String userName = (StringUtils.isBlank(userToCheck) ? rUser.getJwtUserId() : userToCheck);
+//    if (perms.contains(Permission.MODIFY)) return isPermitted(rUser, tenantName, userName, subId, Permission.MODIFY);
+//    if (perms.contains(Permission.READ)) return isPermittedAny(rUser, tenantName, userName, subId, READMODIFY_PERMS);
+//    return false;
+//  }
+//
+//  /**
+//   * Remove all SK artifacts associated with an Subscription: user permissions, Subscription role
+//   * No checks are done for incoming arguments and the subscription must exist
+//   */
+//  private void removeSKArtifacts(String resourceTenantId, String subId)
+//          throws TapisException, TapisClientException
+//  {
+//    var skClient = getSKClient();
+//
+//    // Use Security Kernel client to find all users with perms associated with the subscription.
+//    String permSpec = String.format(PERM_SPEC_TEMPLATE, resourceTenantId, "%", subId);
+//    var userNames = skClient.getUsersWithPermission(resourceTenantId, permSpec);
+//    // Revoke all perms for all users
+//    for (String userName : userNames)
+//    {
+//      revokePermissions(skClient, resourceTenantId, subId, userName, ALL_PERMS);
+//      // Remove wildcard perm
+//      skClient.revokeUserPermission(resourceTenantId, userName, getPermSpecAllStr(resourceTenantId, subId));
+//    }
+//  }
+//
+//  /**
+//   * Revoke permissions
+//   * No checks are done for incoming arguments and the subscription must exist
+//   */
+//  private static int revokePermissions(SKClient skClient, String resourceTenantId, String subId, String userName, Set<Permission> permissions)
+//          throws TapisClientException
+//  {
+//    // Create a set of individual permSpec entries based on the list passed in
+//    Set<String> permSpecSet = getPermSpecSet(resourceTenantId, subId, permissions);
+//    // Remove perms from default user role
+//    for (String permSpec : permSpecSet)
+//    {
+//      skClient.revokeUserPermission(resourceTenantId, userName, permSpec);
+//    }
+//    return permSpecSet.size();
+//  }
 
   /**
    * Create an updated Subscription based on the subscription created from a PUT request.
-   * Attributes that cannot be updated and must be filled in from the original system:
+   * Attributes that cannot be updated and must be filled in from the original resource:
    *   tenant, id, owner, enabled
    */
   private Subscription createUpdatedSubscription(Subscription origSubscription, Subscription putSubscription)

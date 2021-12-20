@@ -47,6 +47,8 @@ public interface SubscriptionsDao
   List<Subscription> getSubscriptions(String tenant, List<String> searchList, ASTNode searchAST, Set<String> subIDs, int limit,
                     List<OrderBy> orderByList, int skip, String startAfter) throws TapisException;
 
+  Set<String> getSubscriptionIDsByOwner(String tenant, String owner) throws TapisException;
+
   Set<String> getSubscriptionIDs(String tenant) throws TapisException;
 
   String getSubscriptionOwner(String tenant, String id) throws TapisException;

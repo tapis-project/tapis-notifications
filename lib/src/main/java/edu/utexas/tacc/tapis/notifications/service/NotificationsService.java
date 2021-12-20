@@ -80,9 +80,9 @@ public interface NotificationsService
                                      List<OrderBy> orderByList, int skip, String startAfter)
           throws TapisException, TapisClientException;
 
-  Set<String> getAllowedSubscriptionIDs(ResourceRequestUser rUser)
-          throws TapisException;
-
+//  Set<String> getAllowedSubscriptionIDs(ResourceRequestUser rUser)
+//          throws TapisException, TapisClientException;
+//
   String getSubscriptionOwner(ResourceRequestUser rUser, String subscriptionId)
           throws TapisException, TapisClientException, NotAuthorizedException;
 }

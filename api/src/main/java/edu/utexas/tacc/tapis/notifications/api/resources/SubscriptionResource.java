@@ -1007,10 +1007,9 @@ public class SubscriptionResource
     // Extract Notes from the raw json.
     Object notes = extractNotes(rawJson);
     // Create Subscription
-    var subscription = new Subscription(-1, tenantId, req.id, req.description, req.owner, req.enabled,
-                                        req.topicFilter, req.subjectFilter, req.deliveryMethods,
-                                        notes, null, null, null);
-    return subscription;
+    return new Subscription(-1, tenantId, req.id, req.description, req.owner, req.enabled,
+                            req.topicFilter, req.subjectFilter, req.deliveryMethods,
+                            notes, null, null, null);
   }
 
   /**
@@ -1024,10 +1023,9 @@ public class SubscriptionResource
     // NOTE: Following attributes are not updatable and must be filled in on service side.
     String owner = null;
     boolean enabled = true;
-    var subscription = new Subscription(-1, tenantId, id, req.description, owner, enabled,
-                                        req.topicFilter, req.subjectFilter, req.deliveryMethods,
-                                        notes, null, null, null);
-    return subscription;
+    return new Subscription(-1, tenantId, id, req.description, owner, enabled,
+                            req.topicFilter, req.subjectFilter, req.deliveryMethods,
+                            notes, null, null, null);
   }
 
   /**

@@ -787,6 +787,48 @@ public class SubscriptionsDaoImpl implements SubscriptionsDao
   }
 
   /**
+   * getSubscriptionIDsByOwner
+   * Fetch all resource IDs in a tenant owned by a specific user.
+   * @param tenant - tenant name
+   * @param owner - user
+   * @return - List of resource IDs
+   * @throws TapisException - on error
+   */
+  @Override
+  public Set<String> getSubscriptionIDsByOwner(String tenant, String owner) throws TapisException
+  {
+    // The result list is always non-null.
+    var idList = new HashSet<String>();
+    if (StringUtils.isBlank(tenant) || StringUtils.isBlank(owner)) return idList;
+
+    Condition whereCondition = SUBSCRIPTIONS.TENANT.eq(tenant).and(SUBSCRIPTIONS.OWNER.eq(owner));
+
+    Connection conn = null;
+    try
+    {
+      // Get a database connection.
+      conn = getConnection();
+      // ------------------------- Call SQL ----------------------------
+      // Use jOOQ to build query string
+      DSLContext db = DSL.using(conn);
+      Result<?> result = db.select(SUBSCRIPTIONS.ID).from(SUBSCRIPTIONS).where(whereCondition).fetch();
+      // Iterate over result
+      for (Record r : result) { idList.add(r.get(SUBSCRIPTIONS.ID)); }
+    }
+    catch (Exception e)
+    {
+      // Rollback transaction and throw an exception
+      LibUtils.rollbackDB(conn, e,"DB_QUERY_ERROR", "subscriptions", e.getMessage());
+    }
+    finally
+    {
+      // Always return the connection back to the connection pool.
+      LibUtils.finalCloseDB(conn);
+    }
+    return idList;
+  }
+
+  /**
    * getSubscriptions
    * Retrieve all Subscriptions matching various search and sort criteria.
    *     Search conditions given as a list of strings or an abstract syntax tree (AST).
