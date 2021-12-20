@@ -31,7 +31,6 @@ import edu.utexas.tacc.tapis.sharedapi.security.ResourceRequestUser;
 
 
 import edu.utexas.tacc.tapis.notifications.dao.SubscriptionsDao;
-import edu.utexas.tacc.tapis.notifications.dao.SubscriptionsDaoImpl;
 import edu.utexas.tacc.tapis.notifications.model.PatchSubscription;
 import edu.utexas.tacc.tapis.notifications.model.Subscription;
 import edu.utexas.tacc.tapis.notifications.model.Subscription.Permission;
@@ -183,7 +182,7 @@ public class NotificationsServiceImpl implements NotificationsService
       // Rollback
       // Remove subscription from DB
       if (subCreated) try {dao.deleteSubscription(resourceTenantId, resourceId); }
-      catch (Exception e) {_log.warn(LibUtils.getMsgAuth(ERROR_ROLLBACK, rUser, resourceId, "hardDelete", e.getMessage()));}
+      catch (Exception e) {_log.warn(LibUtils.getMsgAuth(ERROR_ROLLBACK, rUser, resourceId, "delete", e.getMessage()));}
       // Remove perms
 //      try { skClient.revokeUserPermission(resourceTenantId, sub.getOwner(), subsPermSpecALL); }
 //      catch (Exception e) {_log.warn(LibUtils.getMsgAuth(ERROR_ROLLBACK, rUser, resourceId, "revokePermOwner", e.getMessage()));}
@@ -346,14 +345,12 @@ public class NotificationsServiceImpl implements NotificationsService
   }
 
   /**
-    TODO
-   * Update deleted to true for a subscription
+   * Delete a subscription
    * @param rUser - ResourceRequestUser containing tenant, user and request info
    * @param subId - name of subscription
    * @return Number of items updated
    *
    * @throws TapisException - for Tapis related exceptions
-   * @throws IllegalStateException - Resulting Subscription would be in an invalid state
    * @throws IllegalArgumentException - invalid parameter passed in
    * @throws NotAuthorizedException - unauthorized
    * @throws NotFoundException - Resource not found
@@ -362,8 +359,21 @@ public class NotificationsServiceImpl implements NotificationsService
   public int deleteSubscription(ResourceRequestUser rUser, String subId)
           throws TapisException, IllegalStateException, IllegalArgumentException, NotAuthorizedException, NotFoundException, TapisClientException
   {
-//    return updateDeleted(rUser, subId, SubscriptionOperation.delete);
-    return 0;
+    SubscriptionOperation op = SubscriptionOperation.delete;
+    if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
+    if (StringUtils.isBlank(subId)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_NULL_INPUT_SUBSCR", rUser));
+
+    // If subscription does not exist then 0 changes
+    if (!dao.checkForSubscription(rUser.getOboTenantId(), subId)) return 0;
+
+    // ------------------------- Check service level authorization -------------------------
+    checkAuth(rUser, op, subId, null, null, null);
+
+    // Remove SK artifacts
+// TODO/TBD    removeSKArtifacts(resourceTenantId, subId);
+
+    // Delete the subscription
+    return dao.deleteSubscription(rUser.getOboTenantId(), subId);
   }
 
   /**
@@ -394,7 +404,7 @@ public class NotificationsServiceImpl implements NotificationsService
     if (StringUtils.isBlank(resourceTenantId))
          throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_CREATE_ERROR_ARG", rUser, subId));
 
-    // Subscription must already exist and not be deleted
+    // Subscription must already exist
     if (!dao.checkForSubscription(resourceTenantId, subId))
          throw new NotFoundException(LibUtils.getMsgAuth(NOT_FOUND, rUser, subId));
 
@@ -445,26 +455,26 @@ public class NotificationsServiceImpl implements NotificationsService
    * @throws TapisException - for Tapis related exceptions
    * @throws NotAuthorizedException - unauthorized
    */
-  int hardDeleteSubscription(ResourceRequestUser rUser, String resourceTenantId, String subId)
-          throws TapisException, TapisClientException, NotAuthorizedException
-  {
-    SubscriptionOperation op = SubscriptionOperation.delete;
-    if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
-    if (StringUtils.isBlank(subId)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_NULL_INPUT_SUBSCR", rUser));
-
-    // If subscription does not exist then 0 changes
-    if (!dao.checkForSubscription(resourceTenantId, subId)) return 0;
-
-    // ------------------------- Check service level authorization -------------------------
-    checkAuth(rUser, op, subId, null, null, null);
-
-    // Remove SK artifacts
-// TODO/TBD    removeSKArtifacts(resourceTenantId, subId);
-
-    // Delete the subscription
-    return dao.deleteSubscription(resourceTenantId, subId);
-  }
-
+//  int hardDeleteSubscription(ResourceRequestUser rUser, String resourceTenantId, String subId)
+//          throws TapisException, TapisClientException, NotAuthorizedException
+//  {
+//    SubscriptionOperation op = SubscriptionOperation.delete;
+//    if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
+//    if (StringUtils.isBlank(subId)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_NULL_INPUT_SUBSCR", rUser));
+//
+//    // If subscription does not exist then 0 changes
+//    if (!dao.checkForSubscription(resourceTenantId, subId)) return 0;
+//
+//    // ------------------------- Check service level authorization -------------------------
+//    checkAuth(rUser, op, subId, null, null, null);
+//
+//    // Remove SK artifacts
+//// TODO/TBD    removeSKArtifacts(resourceTenantId, subId);
+//
+//    // Delete the subscription
+//    return dao.deleteSubscription(resourceTenantId, subId);
+//  }
+//
   /**
    * Hard delete all resources in the "test" tenant.
    * Also remove artifacts from the Security Kernel.
@@ -485,7 +495,8 @@ public class NotificationsServiceImpl implements NotificationsService
     var resourceIdSet = dao.getSubscriptionIDs(resourceTenantId);
     for (String id : resourceIdSet)
     {
-      hardDeleteSubscription(rUser, resourceTenantId, id);
+//      hardDeleteSubscription(rUser, resourceTenantId, id);
+      deleteSubscription(rUser, id);
     }
     return resourceIdSet.size();
   }
@@ -818,7 +829,7 @@ public class NotificationsServiceImpl implements NotificationsService
 
     String resourceTenantId = rUser.getOboTenantId();
 
-    // Subscription must already exist and not be deleted
+    // Subscription must already exist
     if (!dao.checkForSubscription(resourceTenantId, subId))
       throw new NotFoundException(LibUtils.getMsgAuth(NOT_FOUND, rUser, subId));
 
@@ -1069,21 +1080,23 @@ public class NotificationsServiceImpl implements NotificationsService
       case delete:
       case changeOwner:
 //      case grantPerms:
-//        if (owner.equals(userName) || hasAdminRole(rUser, tenantName, userName))
-//          return;
-//        break;
+        if (owner.equals(userName) || hasAdminRole(rUser, tenantName, userName)) return;
+        break;
       case read:
 //      case getPerms:
+        if (owner.equals(userName) || hasAdminRole(rUser, tenantName, userName)) return;
+        break;
 //        if (owner.equals(userName) || hasAdminRole(rUser, tenantName, userName) ||
 //              isPermittedAny(rUser, tenantName, userName, subId, READMODIFY_PERMS))
 //          return;
 //        break;
       case modify:
-        if (owner.equals(userName) || hasAdminRole(rUser, tenantName, userName))
+        if (owner.equals(userName) || hasAdminRole(rUser, tenantName, userName)) return;
+        break;
 //        if (owner.equals(userName) || hasAdminRole(rUser, tenantName, userName) ||
 //                isPermitted(rUser, tenantName, userName, subId, Permission.MODIFY))
-          return;
-        break;
+//          return;
+//        break;
 //      case revokePerms:
 //        if (owner.equals(userName) || hasAdminRole(rUser, tenantName, userName) ||
 //                (userName.equals(targetUser) &&

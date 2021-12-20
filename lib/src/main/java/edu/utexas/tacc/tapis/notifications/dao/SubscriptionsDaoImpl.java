@@ -484,11 +484,6 @@ public class SubscriptionsDaoImpl implements SubscriptionsDao
     catch (Exception e)
     {
       result = e;
-      // Rollback always logs msg and throws exception.
-      // In this case of a simple check we ignore the exception, we just want the log msg
-      try { LibUtils.rollbackDB(conn, e,"DB_QUERY_ERROR", "subscriptions"); }
-      // TODO check for msg, was in Apps but not Systems?
-      catch (Exception e1) { _log.error(LibUtils.getMsg("NTFLIB_DB_ROLLBACK_ERROR", "checkDB"), e1); }
     }
     finally
     {
@@ -539,8 +534,7 @@ public class SubscriptionsDaoImpl implements SubscriptionsDao
     catch (Exception e)
     {
       // Rollback transaction and throw an exception
-      // TODO check for msg, was in Apps but not Systems?
-      LibUtils.rollbackDB(conn, e,"NTFLIB_DB_SELECT_ERROR", "Subscription", tenantId, id, e.getMessage());
+      LibUtils.rollbackDB(conn, e,"DB_SELECT_NAME_ERROR", "Subscription", tenantId, id, e.getMessage());
     }
     finally
     {
@@ -552,12 +546,12 @@ public class SubscriptionsDaoImpl implements SubscriptionsDao
 
   /**
    * isEnabled - check if resource with specified Id is enabled
-   * @param sysId - app name
+   * @param subId - resource Id
    * @return true if enabled else false
    * @throws TapisException - on error
    */
   @Override
-  public boolean isEnabled(String tenantId, String sysId) throws TapisException {
+  public boolean isEnabled(String tenantId, String subId) throws TapisException {
     // Initialize result.
     boolean result = false;
     // ------------------------- Call SQL ----------------------------
@@ -569,7 +563,7 @@ public class SubscriptionsDaoImpl implements SubscriptionsDao
       DSLContext db = DSL.using(conn);
       // Run the sql
       Boolean b = db.selectFrom(SUBSCRIPTIONS)
-              .where(SUBSCRIPTIONS.TENANT.eq(tenantId),SUBSCRIPTIONS.ID.eq(sysId))
+              .where(SUBSCRIPTIONS.TENANT.eq(tenantId),SUBSCRIPTIONS.ID.eq(subId))
               .fetchOne(SUBSCRIPTIONS.ENABLED);
       if (b != null) result = b;
       // Close out and commit
@@ -578,7 +572,7 @@ public class SubscriptionsDaoImpl implements SubscriptionsDao
     catch (Exception e)
     {
       // Rollback transaction and throw an exception
-      LibUtils.rollbackDB(conn, e,"NTFLIB_DB_SELECT_ERROR", "Subscription", tenantId, sysId, e.getMessage());
+      LibUtils.rollbackDB(conn, e,"NTFLIB_DB_SELECT_ERROR", "Subscription", tenantId, subId, e.getMessage());
     }
     finally
     {
@@ -750,7 +744,7 @@ public class SubscriptionsDaoImpl implements SubscriptionsDao
    * getSubscriptionIDs
    * Fetch all resource IDs in a tenant
    * @param tenant - tenant name
-   * @return - List of app names
+   * @return - List of resource IDs
    * @throws TapisException - on error
    */
   @Override
@@ -776,7 +770,7 @@ public class SubscriptionsDaoImpl implements SubscriptionsDao
     catch (Exception e)
     {
       // Rollback transaction and throw an exception
-      LibUtils.rollbackDB(conn, e,"DB_QUERY_ERROR", "apps", e.getMessage());
+      LibUtils.rollbackDB(conn, e,"DB_QUERY_ERROR", "subscriptions", e.getMessage());
     }
     finally
     {
@@ -1040,79 +1034,6 @@ public class SubscriptionsDaoImpl implements SubscriptionsDao
     return owner;
   }
 
-//  /**
-//   * getSystemEffectiveUserId
-//   * @param tenantId - name of tenant
-//   * @param id - name of subscription
-//   * @return EffectiveUserId or null if no resource found
-//   * @throws TapisException - on error
-//   */
-//  @Override
-//  public String getSystemEffectiveUserId(String tenantId, String id) throws TapisException
-//  {
-//    String effectiveUserId = null;
-//
-//    // ------------------------- Call SQL ----------------------------
-//    Connection conn = null;
-//    try
-//    {
-//      // Get a database connection.
-//      conn = getConnection();
-//      DSLContext db = DSL.using(conn);
-//      effectiveUserId = db.selectFrom(SUBSCRIPTIONS).where(SUBSCRIPTIONS.TENANT.eq(tenantId),SUBSCRIPTIONS.ID.eq(id)).fetchOne(SUBSCRIPTIONS.EFFECTIVE_USER_ID);
-//
-//      // Close out and commit
-//      LibUtils.closeAndCommitDB(conn, null, null);
-//    }
-//    catch (Exception e)
-//    {
-//      // Rollback transaction and throw an exception
-//      LibUtils.rollbackDB(conn, e,"DB_QUERY_ERROR", "subscriptions", e.getMessage());
-//    }
-//    finally
-//    {
-//      // Always return the connection back to the connection pool.
-//      LibUtils.finalCloseDB(conn);
-//    }
-//    return effectiveUserId;
-//  }
-//
-//  /**
-//   * getSystemDefaultAuthnMethod
-//   * @param tenantId - name of tenant
-//   * @param id - name of subscription
-//   * @return Default AuthnMethod or null if no resource found
-//   * @throws TapisException - on error
-//   */
-//  @Override
-//  public AuthnMethod getSystemDefaultAuthnMethod(String tenantId, String id) throws TapisException
-//  {
-//    AuthnMethod authnMethod = null;
-//    // ------------------------- Call SQL ----------------------------
-//    Connection conn = null;
-//    try
-//    {
-//      // Get a database connection.
-//      conn = getConnection();
-//      DSLContext db = DSL.using(conn);
-//      authnMethod = db.selectFrom(SUBSCRIPTIONS).where(SUBSCRIPTIONS.TENANT.eq(tenantId),SUBSCRIPTIONS.ID.eq(id)).fetchOne(SUBSCRIPTIONS.DEFAULT_AUTHN_METHOD);
-//
-//      // Close out and commit
-//      LibUtils.closeAndCommitDB(conn, null, null);
-//    }
-//    catch (Exception e)
-//    {
-//      // Rollback transaction and throw an exception
-//      LibUtils.rollbackDB(conn, e,"DB_QUERY_ERROR", "subscriptions", e.getMessage());
-//    }
-//    finally
-//    {
-//      // Always return the connection back to the connection pool.
-//      LibUtils.finalCloseDB(conn);
-//    }
-//    return authnMethod;
-//  }
-
   /**
    * Add an update record given the subscription Id and operation type
    *
@@ -1143,295 +1064,6 @@ public class SubscriptionsDaoImpl implements SubscriptionsDao
       LibUtils.finalCloseDB(conn);
     }
   }
-
-//  /* ********************************************************************** */
-//  /*                         Scheduler Profile Methods                      */
-//  /* ********************************************************************** */
-//
-//  /**
-//   * Create a new scheduler profile
-//   *
-//   * @return true if created
-//   * @throws TapisException - on error
-//   * @throws IllegalStateException - if profile already exists
-//   */
-//  @Override
-//  public void createSchedulerProfile(ResourceRequestUser rUser, SchedulerProfile schedulerProfile,
-//                                        String createJsonStr, String scrubbedText)
-//          throws TapisException, IllegalStateException {
-//    String opName = "createSchedulerProfile";
-//    String tenantId = schedulerProfile.getTenant();
-//    String name = schedulerProfile.getName();
-//    // ------------------------- Check Input -------------------------
-//    if (schedulerProfile == null) LibUtils.logAndThrowNullParmException(opName, "schedulerProfile");
-//    if (rUser == null) LibUtils.logAndThrowNullParmException(opName, "resourceRequestUser");
-//    if (StringUtils.isBlank(createJsonStr)) LibUtils.logAndThrowNullParmException(opName, "createJson");
-//    if (StringUtils.isBlank(schedulerProfile.getTenant())) LibUtils.logAndThrowNullParmException(opName, "tenant");
-//    if (StringUtils.isBlank(schedulerProfile.getName())) LibUtils.logAndThrowNullParmException(opName, "schedulerProfileName");
-//
-//    // Make sure owner, effectiveUserId, notes and tags are all set
-//    String owner = Subscription.DEFAULT_OWNER;
-//    String[] modulesToLoadStrArray = null;
-//    String[] hiddenOptionsStrArray = null;
-//
-//    if (StringUtils.isNotBlank(schedulerProfile.getOwner())) owner = schedulerProfile.getOwner();
-//    if (schedulerProfile.getModulesToLoad() != null) modulesToLoadStrArray = schedulerProfile.getModulesToLoad();
-//    // Convert hiddenOptions array from enum to string
-//    if (schedulerProfile.getHiddenOptions() != null)
-//    {
-//      hiddenOptionsStrArray = schedulerProfile.getHiddenOptions().stream().map(SchedulerProfile.HiddenOption::name).toArray(String[]::new);
-//    }
-//
-//    // ------------------------- Call SQL ----------------------------
-//    Connection conn = null;
-//    try
-//    {
-//      // Get a database connection.
-//      conn = getConnection();
-//      DSLContext db = DSL.using(conn);
-//
-//      // Check to see if it exists. If yes then throw IllegalStateException
-//      if (db.fetchExists(SCHEDULER_PROFILES,SCHEDULER_PROFILES.TENANT.eq(tenantId),SCHEDULER_PROFILES.NAME.eq(name)))
-//        throw new IllegalStateException(LibUtils.getMsgAuth("NTFLIB_PRF_EXISTS", rUser, schedulerProfile.getName()));
-//
-//      // Generate uuid for the new resource
-//      schedulerProfile.setUuid(UUID.randomUUID());
-//
-//      db.insertInto(SCHEDULER_PROFILES)
-//              .set(SCHEDULER_PROFILES.TENANT, schedulerProfile.getTenant())
-//              .set(SCHEDULER_PROFILES.NAME, schedulerProfile.getName())
-//              .set(SCHEDULER_PROFILES.DESCRIPTION, schedulerProfile.getDescription())
-//              .set(SCHEDULER_PROFILES.OWNER, owner)
-//              .set(SCHEDULER_PROFILES.MODULE_LOAD_COMMAND, schedulerProfile.getModuleLoadCommand())
-//              .set(SCHEDULER_PROFILES.MODULES_TO_LOAD, modulesToLoadStrArray)
-//              .set(SCHEDULER_PROFILES.HIDDEN_OPTIONS, hiddenOptionsStrArray)
-//              .set(SCHEDULER_PROFILES.UUID, schedulerProfile.getUuid()).execute();
-//
-//      // Close out and commit
-//      LibUtils.closeAndCommitDB(conn, null, null);
-//    }
-//    catch (Exception e)
-//    {
-//      // Rollback transaction and throw an exception
-//      LibUtils.rollbackDB(conn, e,"DB_INSERT_FAILURE", "scheduler_profiles");
-//    }
-//    finally
-//    {
-//      // Always return the connection back to the connection pool.
-//      LibUtils.finalCloseDB(conn);
-//    }
-//  }
-//
-//  /**
-//   * getSchedulerProfile
-//   * @param name - system name
-//   * @return Profile object if found, null if not found
-//   * @throws TapisException - on error
-//   */
-//  @Override
-//  public SchedulerProfile getSchedulerProfile(String tenantId, String name) throws TapisException
-//  {
-//    // Initialize result.
-//    SchedulerProfile sp = null;
-//
-//    // ------------------------- Call SQL ----------------------------
-//    Connection conn = null;
-//    try
-//    {
-//      // Get a database connection.
-//      conn = getConnection();
-//      DSLContext db = DSL.using(conn);
-//      SchedulerProfilesRecord r;
-//      r = db.selectFrom(SCHEDULER_PROFILES).where(SCHEDULER_PROFILES.TENANT.eq(tenantId),SCHEDULER_PROFILES.NAME.eq(name)).fetchOne();
-//      if (r == null) return null;
-////      else result = r.into(SchedulerProfile.class);
-//      // Convert type for list of hidden options.
-//      // NOTE: Currently the custom conversion config for jOOQ does not seem to work for an array of enums.
-//      //       See tapis-systemslib/pom.xml
-//      // So for now manually create a SchedulerProfile from the query result.
-//      List<SchedulerProfile.HiddenOption> hoList2 = null;
-//      String[] hoList1 = r.getHiddenOptions();
-//      if (hoList1 != null)
-//      {
-//        hoList2 = new ArrayList<>();
-//        for (String ho : hoList1) { hoList2.add(SchedulerProfile.HiddenOption.valueOf(ho)); }
-//      }
-//
-//      sp = new SchedulerProfile(r.getTenant(), r.getName(), r.getDescription(), r.getOwner(),
-//                                    r.getModuleLoadCommand(),r.getModulesToLoad(), hoList2, r.getUuid(),
-//                                    r.getCreated().toInstant(ZoneOffset.UTC), r.getUpdated().toInstant(ZoneOffset.UTC));
-//      // Close out and commit
-//      LibUtils.closeAndCommitDB(conn, null, null);
-//    }
-//    catch (Exception e)
-//    {
-//      // Rollback transaction and throw an exception
-//      LibUtils.rollbackDB(conn, e,"NTFLIB_DB_SELECT_ERROR", "SchedulerProfile", tenantId, name, e.getMessage());
-//    }
-//    finally
-//    {
-//      // Always return the connection back to the connection pool.
-//      LibUtils.finalCloseDB(conn);
-//    }
-//    return sp;
-//  }
-//
-//  /**
-//   * getSchedulerProfiles
-//   * @return list of scheduler profiles
-//   * @throws TapisException - on error
-//   */
-//  @Override
-//  public List<SchedulerProfile> getSchedulerProfiles(String tenantId) throws TapisException
-//  {
-//    List<SchedulerProfile> retList1;
-//    var retList2 = new ArrayList<SchedulerProfile>();
-//    // ------------------------- Build and execute SQL ----------------------------
-//    Connection conn = null;
-//    try
-//    {
-//      // Get a database connection.
-//      conn = getConnection();
-//      DSLContext db = DSL.using(conn);
-//
-//      retList1 = db.selectFrom(SCHEDULER_PROFILES).where(SCHEDULER_PROFILES.TENANT.eq(tenantId))
-//                  .fetchInto(SchedulerProfile.class);
-//      if (retList1 == null || retList1.isEmpty()) return Collections.emptyList();
-//
-//      retList2 = new ArrayList<SchedulerProfile>();
-//      for (SchedulerProfile sp1 : retList1)
-//      {
-//        // Convert type for list of hidden options.
-//        // NOTE: Currently the custom conversion config for jOOQ does not seem to work for an array of enums.
-//        //       See tapis-systemslib/pom.xml
-//        // So for now manually create a SchedulerProfile from the query result.
-//        List<SchedulerProfile.HiddenOption> hoList2 = null;
-//        List<SchedulerProfile.HiddenOption> hoList1 = sp1.getHiddenOptions();
-//        if (hoList1 != null)
-//        {
-//          hoList2 = new ArrayList<>();
-//          for (Object ho : hoList1)
-//          {
-//            hoList2.add(SchedulerProfile.HiddenOption.valueOf(ho.toString()));
-//          }
-//        }
-//        SchedulerProfile sp2 = new SchedulerProfile(sp1.getTenant(), sp1.getName(), sp1.getDescription(), sp1.getOwner(),
-//                sp1.getModuleLoadCommand(), sp1.getModulesToLoad(), hoList2, sp1.getUuid(),
-//                sp1.getCreated(), sp1.getUpdated());
-//        retList2.add(sp2);
-//      }
-//      // Close out and commit
-//      LibUtils.closeAndCommitDB(conn, null, null);
-//    }
-//    catch (Exception e)
-//    {
-//      // Rollback transaction and throw an exception
-//      LibUtils.rollbackDB(conn, e,"DB_QUERY_ERROR", "scheduler_profiles", e.getMessage());
-//    }
-//    finally
-//    {
-//      // Always return the connection back to the connection pool.
-//      LibUtils.finalCloseDB(conn);
-//    }
-//    return retList2;
-//  }
-//
-//  /**
-//   * Delete a scheduler profile.
-//   */
-//  @Override
-//  public int deleteSchedulerProfile(String tenantId, String name) throws TapisException
-//  {
-//    String opName = "deleteSchedulerProfile";
-//    // ------------------------- Check Input -------------------------
-//    if (StringUtils.isBlank(tenantId)) LibUtils.logAndThrowNullParmException(opName, "tenant");
-//    if (StringUtils.isBlank(name)) LibUtils.logAndThrowNullParmException(opName, "name");
-//
-//    // ------------------------- Call SQL ----------------------------
-//    Connection conn = null;
-//    try
-//    {
-//      conn = getConnection();
-//      DSLContext db = DSL.using(conn);
-//      db.deleteFrom(SCHEDULER_PROFILES).where(SCHEDULER_PROFILES.TENANT.eq(tenantId),SCHEDULER_PROFILES.NAME.eq(name)).execute();
-//      LibUtils.closeAndCommitDB(conn, null, null);
-//    }
-//    catch (Exception e)
-//    {
-//      LibUtils.rollbackDB(conn, e,"DB_DELETE_FAILURE", "scheduler_profiles");
-//    }
-//    finally
-//    {
-//      LibUtils.finalCloseDB(conn);
-//    }
-//    return 1;
-//  }
-//
-//  /**
-//   * checkForSchedulerProfile
-//   * @param name - name of profile
-//   * @return true if found else false
-//   * @throws TapisException - on error
-//   */
-//  @Override
-//  public boolean checkForSchedulerProfile(String tenantId, String name) throws TapisException
-//  {
-//    Connection conn = null;
-//    try
-//    {
-//      conn = getConnection();
-//      DSLContext db = DSL.using(conn);
-//      return db.fetchExists(SCHEDULER_PROFILES,SCHEDULER_PROFILES.TENANT.eq(tenantId),SCHEDULER_PROFILES.NAME.eq(name));
-//    }
-//    catch (Exception e)
-//    {
-//      String msg = LibUtils.getMsg("NTFLIB_DB_SELECT_ERROR", "SchedulerProfile", tenantId, name, e.getMessage());
-//      throw new TapisException(msg,e);
-//    }
-//    finally
-//    {
-//      // Always return the connection back to the connection pool.
-//      LibUtils.finalCloseDB(conn);
-//    }
-//  }
-//
-//  /**
-//   * getSchedulerProfileOwner
-//   * @param tenant - name of tenant
-//   * @param name - name of profile
-//   * @return Owner or null if no resource found
-//   * @throws TapisException - on error
-//   */
-//  @Override
-//  public String getSchedulerProfileOwner(String tenant, String name) throws TapisException
-//  {
-//    String owner = null;
-//    // ------------------------- Call SQL ----------------------------
-//    Connection conn = null;
-//    try
-//    {
-//      // Get a database connection.
-//      conn = getConnection();
-//      DSLContext db = DSL.using(conn);
-//      owner = db.selectFrom(SCHEDULER_PROFILES)
-//                .where(SCHEDULER_PROFILES.TENANT.eq(tenant),SCHEDULER_PROFILES.NAME.eq(name))
-//                .fetchOne(SCHEDULER_PROFILES.OWNER);
-//
-//      // Close out and commit
-//      LibUtils.closeAndCommitDB(conn, null, null);
-//    }
-//    catch (Exception e)
-//    {
-//      // Rollback transaction and throw an exception
-//      LibUtils.rollbackDB(conn, e,"DB_QUERY_ERROR", "scheduler_profiles", e.getMessage());
-//    }
-//    finally
-//    {
-//      // Always return the connection back to the connection pool.
-//      LibUtils.finalCloseDB(conn);
-//    }
-//    return owner;
-//  }
 
   /* ********************************************************************** */
   /*                             Private Methods                            */
@@ -1822,138 +1454,6 @@ public class SubscriptionsDaoImpl implements SubscriptionsDao
     return c;
   }
 
-//  /**
-//   * Get all capabilities contained in an abstract syntax tree by recursively walking the tree
-//   * @param astNode Abstract syntax tree node containing constraint matching conditions
-//   * @throws TapisException on error
-//   */
-//  private static void getCapabilitiesFromAST(ASTNode astNode, List<Capability> capList) throws TapisException
-//  {
-//    if (astNode == null || astNode instanceof ASTLeaf)
-//    {
-//      // A leaf node is "category$name" or value. Nothing to process since we only process a complete condition
-//      //   having the form category$name op value. We should never make it to here
-//      String msg = LibUtils.getMsg("NTFLIB_DB_INVALID_MATCH_AST1", (astNode == null ? "null" : astNode.toString()));
-//      throw new TapisException(msg);
-//    }
-//    else if (astNode instanceof ASTUnaryExpression)
-//    {
-//      // A unary node should have no operator and contain a binary node with two leaf nodes.
-//      // NOTE: Currently unary operators not supported. If support is provided for unary operators (such as NOT) then
-//      //   changes will be needed here.
-//      ASTUnaryExpression unaryNode = (ASTUnaryExpression) astNode;
-//      if (!StringUtils.isBlank(unaryNode.getOp()))
-//      {
-//        String msg = LibUtils.getMsg("NTFLIB_DB_INVALID_SEARCH_UNARY_OP", unaryNode.getOp(), unaryNode.toString());
-//        throw new TapisException(msg);
-//      }
-//      // Recursive call
-//      getCapabilitiesFromAST(unaryNode.getNode(), capList);
-//    }
-//    else if (astNode instanceof ASTBinaryExpression)
-//    {
-//      // It is a binary node
-//      ASTBinaryExpression binaryNode = (ASTBinaryExpression) astNode;
-//      // Recursive call
-//      getCapabilitiesFromBinaryExpression(binaryNode, capList);
-//    }
-//  }
-//
-//  /**
-//   * Add capabilities from an abstract syntax tree binary node
-//   * @param binaryNode Abstract syntax tree binary node to add
-//   * @throws TapisException on error
-//   */
-//  private static void getCapabilitiesFromBinaryExpression(ASTBinaryExpression binaryNode, List<Capability> capList)
-//          throws TapisException
-//  {
-//    // If we are given a null then something went very wrong.
-//    if (binaryNode == null)
-//    {
-//      throw new TapisException(LibUtils.getMsg("NTFLIB_DB_INVALID_MATCH_AST2"));
-//    }
-//    // If operator is AND or OR then make recursive call for each side
-//    // Since we are just collecting capabilities we do not distinguish between AND, OR
-//    // For other operators extract the capability and return
-//    String op = binaryNode.getOp();
-//    ASTNode leftNode = binaryNode.getLeft();
-//    ASTNode rightNode = binaryNode.getRight();
-//    if (StringUtils.isBlank(op))
-//    {
-//      throw new TapisException(LibUtils.getMsg("NTFLIB_DB_INVALID_MATCH_AST3", binaryNode.toString()));
-//    }
-//    else if (op.equalsIgnoreCase("AND") || op.equalsIgnoreCase("OR"))
-//    {
-//      // Recursive calls
-//      getCapabilitiesFromAST(leftNode, capList);
-//      getCapabilitiesFromAST(rightNode, capList);
-//    }
-//    else
-//    {
-//      // End of recursion. Extract the capability and return
-//      // Since operator is not an AND or an OR we should have 2 unary nodes or a unary and leaf node
-//      // lValue should be in the form category-name or category$name
-//      // rValue should be the Capability value.
-//      String lValue;
-//      String rValue;
-//      if (leftNode instanceof ASTLeaf) lValue = ((ASTLeaf) leftNode).getValue();
-//      else if (leftNode instanceof ASTUnaryExpression) lValue =  ((ASTLeaf) ((ASTUnaryExpression) leftNode).getNode()).getValue();
-//      else
-//      {
-//        throw new TapisException(LibUtils.getMsg("NTFLIB_DB_INVALID_MATCH_AST5", binaryNode.toString()));
-//      }
-//      if (rightNode instanceof ASTLeaf) rValue = ((ASTLeaf) rightNode).getValue();
-//      else if (rightNode instanceof ASTUnaryExpression) rValue =  ((ASTLeaf) ((ASTUnaryExpression) rightNode).getNode()).getValue();
-//      else
-//      {
-//        throw new TapisException(LibUtils.getMsg("NTFLIB_DB_INVALID_MATCH_AST6", binaryNode.toString()));
-//      }
-//      // Validate and create a capability using lValue, rValue from node
-//      Capability cap = getCapabilityFromNode(lValue, rValue, binaryNode);
-//      capList.add(cap);
-//    }
-//  }
-//
-//  /**
-//   * Construct a Capability based on lValue, rValue from a binary ASTNode containing a constraint matching condition
-//   * Validate and extract capability attributes: category, name and value.
-//   *   lValue must be in the form category$name or category$name
-//   * @param lValue - left string value from the condition in the form category-name or category-name
-//   * @param rValue - right string value from the condition
-//   * @return - capability
-//   * @throws TapisException on error
-//   */
-//  private static Capability getCapabilityFromNode(String lValue, String rValue, ASTBinaryExpression binaryNode)
-//          throws TapisException
-//  {
-//    // If lValue is empty it is an error
-//    if (StringUtils.isBlank(lValue))
-//    {
-//      throw new TapisException(LibUtils.getMsg("NTFLIB_DB_INVALID_MATCH_AST7", binaryNode));
-//    }
-//    // Validate and extract components from lValue
-//    // Parse lValue into category, and name
-//    // Format must be column_name.op.value
-//    String[] parsedStrArray = DOLLAR_SPLIT.split(lValue, 2);
-//    // Must have at least two items
-//    if (parsedStrArray.length < 2)
-//    {
-//      throw new TapisException(LibUtils.getMsg("NTFLIB_DB_INVALID_MATCH_AST7", binaryNode));
-//    }
-//    String categoryStr = parsedStrArray[0];
-//    Capability.Category category = null;
-//    try { category = Capability.Category.valueOf(categoryStr.toUpperCase()); }
-//    catch (IllegalArgumentException e)
-//    {
-//      throw new TapisException(LibUtils.getMsg("NTFLIB_DB_INVALID_MATCH_AST7", binaryNode));
-//    }
-//    String name = parsedStrArray[1];
-//    Capability.Datatype datatype = null;
-//    int precedence = -1;
-//    Capability cap = new Capability(category, name, datatype, precedence, rValue);
-//    return cap;
-//  }
-//
   /**
    * Given an sql connection retrieve the subscription uuid.
    * @param db - jooq context
@@ -1993,30 +1493,16 @@ public class SubscriptionsDaoImpl implements SubscriptionsDao
   private static Subscription getSubscriptionFromRecord(Record r)
   {
     Subscription subscription;
-    int sysSeqId = r.get(SUBSCRIPTIONS.SEQ_ID);
+    int subSeqId = r.get(SUBSCRIPTIONS.SEQ_ID);
 
     // Convert LocalDateTime to Instant. Note that although "Local" is in the type, timestamps from the DB are in UTC.
     Instant created = r.get(SUBSCRIPTIONS.CREATED).toInstant(ZoneOffset.UTC);
     Instant updated = r.get(SUBSCRIPTIONS.UPDATED).toInstant(ZoneOffset.UTC);
 
-    // Convert JSONB columns to native types
-//    JsonElement jobRuntimesJson = r.get(SUBSCRIPTIONS.JOB_RUNTIMES);
-//    List<JobRuntime> jobRuntimes = null;
-//    if (jobRuntimesJson != null && !jobRuntimesJson.isJsonNull())
-//    {
-//      jobRuntimes = Arrays.asList(TapisGsonUtils.getGson().fromJson(jobRuntimesJson, JobRuntime[].class));
-//    }
-//    JsonElement jobEnvVariablesJson = r.get(SUBSCRIPTIONS.JOB_ENV_VARIABLES);
-//    List<KeyValuePair> jobEnvVariables = Arrays.asList(TapisGsonUtils.getGson().fromJson(jobEnvVariablesJson, KeyValuePair[].class));
-//    JsonElement logicalQueuesJson = r.get(SUBSCRIPTIONS.BATCH_LOGICAL_QUEUES);
-//    List<LogicalQueue> logicalQueues = Arrays.asList(TapisGsonUtils.getGson().fromJson(logicalQueuesJson, LogicalQueue[].class));
-//    JsonElement capabilitiesJson = r.get(SUBSCRIPTIONS.JOB_CAPABILITIES);
-//    List<Capability> capabilities = Arrays.asList(TapisGsonUtils.getGson().fromJson(capabilitiesJson, Capability[].class));
-//
     JsonElement deliveryMethodsJson = r.get(SUBSCRIPTIONS.DELIVERY_METHODS);
     List<DeliveryMethod> deliveryMethods =
             Arrays.asList(TapisGsonUtils.getGson().fromJson(deliveryMethodsJson, DeliveryMethod[].class));
-    subscription = new Subscription(sysSeqId, r.get(SUBSCRIPTIONS.TENANT), r.get(SUBSCRIPTIONS.ID),
+    subscription = new Subscription(subSeqId, r.get(SUBSCRIPTIONS.TENANT), r.get(SUBSCRIPTIONS.ID),
             r.get(SUBSCRIPTIONS.DESCRIPTION), r.get(SUBSCRIPTIONS.OWNER), r.get(SUBSCRIPTIONS.ENABLED),
             r.get(SUBSCRIPTIONS.TOPIC_FILTER), r.get(SUBSCRIPTIONS.SUBJECT_FILTER), deliveryMethods,
             r.get(SUBSCRIPTIONS.NOTES), r.get(SUBSCRIPTIONS.UUID), created, updated);
