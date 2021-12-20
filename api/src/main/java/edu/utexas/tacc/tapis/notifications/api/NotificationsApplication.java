@@ -3,6 +3,8 @@ package edu.utexas.tacc.tapis.notifications.api;
 import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
 import edu.utexas.tacc.tapis.notifications.dao.NotificationsDao;
 import edu.utexas.tacc.tapis.notifications.dao.NotificationsDaoImpl;
+import edu.utexas.tacc.tapis.notifications.dao.SubscriptionsDao;
+import edu.utexas.tacc.tapis.notifications.dao.SubscriptionsDaoImpl;
 import edu.utexas.tacc.tapis.notifications.service.NotificationsService;
 import edu.utexas.tacc.tapis.notifications.service.NotificationsServiceImpl;
 import edu.utexas.tacc.tapis.notifications.service.ServiceClientsFactory;
@@ -42,13 +44,13 @@ import javax.ws.rs.ApplicationPath;
  * The path here is appended to the context root and is configured to work when invoked in a standalone
  * container (command line) and in an IDE (such as eclipse).
  * ApplicationPath set to "/" since each resource class includes "/v3/notifications" in the
- *     path set at the class level. See NotificationResource.java, etc.
+ *     path set at the class level. See SubscriptionResource.java, etc.
  *     This has been found to be a more robust scheme for keeping startup working for both
  *     running in an IDE and standalone.
  *
  * For all logging use println or similar so we do not have a dependency on a logging subsystem.
  */
-@ApplicationPath("/")
+@ApplicationPath("/notifications")
 public class NotificationsApplication extends ResourceConfig
 {
   // We must be running on a specific site and this will never change
@@ -105,7 +107,7 @@ public class NotificationsApplication extends ResourceConfig
         protected void configure() {
           bind(NotificationsServiceImpl.class).to(NotificationsService.class); // Used in Resource classes for most service calls
           bind(NotificationsServiceImpl.class).to(NotificationsServiceImpl.class); // Used in NotificationsResource for checkDB
-          bind(NotificationsDaoImpl.class).to(NotificationsDao.class); // Used in service impl
+          bind(SubscriptionsDaoImpl.class).to(SubscriptionsDao.class); // Used in service impl
           bindFactory(ServiceContextFactory.class).to(ServiceContext.class); // Used in service impl and NotificationsResource
           bindFactory(ServiceClientsFactory.class).to(ServiceClients.class); // Used in service impl
         }

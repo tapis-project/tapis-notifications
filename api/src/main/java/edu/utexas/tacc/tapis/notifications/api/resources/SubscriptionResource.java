@@ -74,7 +74,7 @@ import static edu.utexas.tacc.tapis.notifications.model.Subscription.TOPIC_FILTE
  * jax-rs annotations map HTTP verb + endpoint to method invocation and map query parameters.
  *  NOTE: For OpenAPI spec please see repo openapi-notifications, file NotificationsAPI.yaml
  */
-@Path("/v3/notifications")
+@Path("/v3/notifications/subscriptions")
 public class SubscriptionResource
 {
   // ************************************************************************
@@ -84,6 +84,7 @@ public class SubscriptionResource
   private static final Logger _log = LoggerFactory.getLogger(SubscriptionResource.class);
 
   private static final String NOTIFICATIONS_SVC = StringUtils.capitalize(TapisConstants.SERVICE_NAME_NOTIFICATIONS);
+  private static final String RESOURCE_TYPE = "Subscription";
 
   // Json schema resource files.
   private static final String FILE_SUBSCR_POST_REQUEST = "/edu/utexas/tacc/tapis/notifications/api/jsonschema/SubscriptionPostRequest.json";
@@ -94,14 +95,14 @@ public class SubscriptionResource
   // Message keys
   private static final String INVALID_JSON_INPUT = "NET_INVALID_JSON_INPUT";
   private static final String JSON_VALIDATION_ERR = "TAPIS_JSON_VALIDATION_ERROR";
-  private static final String UPDATE_ERR = "NTFAPI_UPDATE_ERROR";
-  private static final String CREATE_ERR = "NTFAPI_CREATE_ERROR";
+  private static final String UPDATE_ERR = "NTFAPI_SUBSCR_UPDATE_ERROR";
+  private static final String CREATE_ERR = "NTFAPI_SUBSCR_CREATE_ERROR";
   private static final String SELECT_ERR = "NTFAPI_SELECT_ERROR";
   private static final String LIB_UNAUTH = "NTFLIB_UNAUTH";
   private static final String API_UNAUTH = "NTFAPI_SUBCSR_UNAUTH";
   private static final String TAPIS_FOUND = "TAPIS_FOUND";
   private static final String NOT_FOUND = "NTFAPI_NOT_FOUND";
-  private static final String UPDATED = "NTFAPI_UPDATED";
+  private static final String UPDATED = "NTFAPI_SUBSCR_UPDATED";
 
   // Format strings
   private static final String NTF_CNT_STR = "%d subscriptions";
@@ -273,7 +274,7 @@ public class SubscriptionResource
     ResultResourceUrl respUrl = new ResultResourceUrl();
     respUrl.url = _request.getRequestURL().toString() + "/" + subscriptionId;
     RespResourceUrl resp1 = new RespResourceUrl(respUrl);
-    return createSuccessResponse(Status.CREATED, ApiUtils.getMsgAuth("NTFAPI_CREATED", rUser, subscriptionId), resp1);
+    return createSuccessResponse(Status.CREATED, ApiUtils.getMsgAuth("NTFAPI_SUBSCR_CREATED", rUser, subscriptionId), resp1);
   }
 
   /**
@@ -464,7 +465,7 @@ public class SubscriptionResource
     // If req is null that is an unrecoverable error
     if (req == null)
     {
-      msg = ApiUtils.getMsgAuth("NTFAPI_UPDATE_ERROR", rUser, subscriptionId, opName, "ReqPutSubscription == null");
+      msg = ApiUtils.getMsgAuth("NTFAPI_SUBSCR_UPDATE_ERROR", rUser, subscriptionId, opName, "ReqPutSubscription == null");
       _log.error(msg);
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
@@ -1048,7 +1049,7 @@ public class SubscriptionResource
     if (!errMessages.isEmpty())
     {
       // Construct message reporting all errors
-      String allErrors = getListOfErrors(errMessages, rUser, subscription1.getId());
+      String allErrors = getListOfErrors(errMessages, rUser, RESOURCE_TYPE, subscription1.getId());
       _log.error(allErrors);
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(allErrors, PRETTY)).build();
     }
