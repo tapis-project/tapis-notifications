@@ -15,7 +15,7 @@ public final class PatchSubscription
   // *********************** Fields *****************************************
   // ************************************************************************
   private final String description;
-  private final String topicFilter;
+  private final String typeFilter;
   private final String subjectFilter;
   private final List<DeliveryMethod> deliveryMethods;
   private Object notes; // Not final since may require special handling and need to be updated. See AppResource.java
@@ -27,11 +27,11 @@ public final class PatchSubscription
   /**
    * Constructor setting all attributes.
    */
-  public PatchSubscription(String description1, String topicFilter1, String subjectFilter1,
+  public PatchSubscription(String description1, String typeFilter1, String subjectFilter1,
                            List<DeliveryMethod> dMList1, Object notes1)
   {
     description = description1;
-    topicFilter = topicFilter1;
+    typeFilter = typeFilter1;
     subjectFilter = subjectFilter1;
     deliveryMethods = (dMList1 == null) ? null : new ArrayList<>(dMList1);
     notes = notes1;
@@ -41,7 +41,7 @@ public final class PatchSubscription
   // *********************** Accessors **************************************
   // ************************************************************************
   public String getDescription() { return description; }
-  public String getTopicFilter() { return topicFilter; }
+  public String getTypeFilter() { return typeFilter; }
   public String getSubjectFilter() { return subjectFilter; }
   public List<DeliveryMethod> getDeliveryMethods()
   {

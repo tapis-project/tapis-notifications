@@ -51,7 +51,7 @@ public final class Subscription
   public static final String DESCRIPTION_FIELD = "description";
   public static final String OWNER_FIELD = "owner";
   public static final String ENABLED_FIELD = "enabled";
-  public static final String TOPIC_FILTER_FIELD = "topicFilter";
+  public static final String TYPE_FILTER_FIELD = "typeFilter";
   public static final String SUBJECT_FILTER_FIELD = "subjectFilter";
   public static final String DELIVERY_METHODS_FIELD = "deliveryMethods";
   public static final String NOTES_FIELD = "notes";
@@ -90,7 +90,7 @@ public final class Subscription
   private String owner;
   private boolean enabled;
   private String description;
-  private String topicFilter;
+  private String typeFilter;
   private String subjectFilter;
   private List<DeliveryMethod> deliveryMethods;
   private Object notes;   // Simple metadata as json.
@@ -105,9 +105,9 @@ public final class Subscription
   /**
    * Constructor using only required attributes.
    */
-  public Subscription(String topicFilter1, List<DeliveryMethod> dMList1)
+  public Subscription(String typeFilter1, List<DeliveryMethod> dMList1)
   {
-    topicFilter = topicFilter1;
+    typeFilter = typeFilter1;
     deliveryMethods = dMList1;
   }
 
@@ -136,7 +136,7 @@ public final class Subscription
    * Also useful for testing
    */
   public Subscription(int seqId1, String tenant1, String id1, String description1, String owner1, boolean enabled1,
-                      String topicFilter1, String subjectFilter1, List<DeliveryMethod> dMList1, Object notes1,
+                      String typeFilter1, String subjectFilter1, List<DeliveryMethod> dMList1, Object notes1,
                       UUID uuid1, Instant created1, Instant updated1)
   {
     seqId = seqId1;
@@ -145,7 +145,7 @@ public final class Subscription
     description = description1;
     owner = owner1;
     enabled = enabled1;
-    topicFilter = topicFilter1;
+    typeFilter = typeFilter1;
     subjectFilter = subjectFilter1;
     deliveryMethods = (dMList1 == null) ? null : new ArrayList<>(dMList1);
     notes = notes1;
@@ -167,7 +167,7 @@ public final class Subscription
     description = s.getDescription();
     owner = s.getOwner();
     enabled = s.isEnabled();
-    topicFilter = s.getTopicFilter();
+    typeFilter = s.getTypeFilter();
     subjectFilter = s.getSubjectFilter();
     deliveryMethods = s.getDeliveryMethods();
     notes = s.getNotes();
@@ -334,8 +334,8 @@ public final class Subscription
   public boolean isEnabled() { return enabled; }
   public void setEnabled(boolean b) { enabled = b;   }
 
-  public String getTopicFilter() { return topicFilter; }
-  public void setTopicFilter(String s) { topicFilter = s;  }
+  public String getTypeFilter() { return typeFilter; }
+  public void setTypeFilter(String s) { typeFilter = s;  }
 
   public String getSubjectFilter() { return subjectFilter; }
   public void setSubjectFilter(String s) { subjectFilter = s;  }

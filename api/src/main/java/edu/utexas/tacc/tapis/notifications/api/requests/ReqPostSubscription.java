@@ -16,7 +16,7 @@ public final class ReqPostSubscription
   public String description;
   public String owner = DEFAULT_OWNER;
   public boolean enabled = DEFAULT_ENABLED;
-  public String topicFilter;
+  public String typeFilter;
   public String subjectFilter;
   public List<DeliveryMethod> deliveryMethods;
   public Object notes = DEFAULT_NOTES;

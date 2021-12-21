@@ -1266,7 +1266,7 @@ public class NotificationsServiceImpl implements NotificationsService
   /**
    * Merge a patch into an existing Subscription
    * Attributes that can be updated:
-   *   description, topicFilter, subjectFilter, deliveryMethods, notes.
+   *   description, typeFilter, subjectFilter, deliveryMethods, notes.
    */
   private Subscription createPatchedSubscription(Subscription o, PatchSubscription p)
   {
@@ -1274,7 +1274,7 @@ public class NotificationsServiceImpl implements NotificationsService
     Subscription sub1 = new Subscription(o);
     // Now update fields that are being patched
     if (p.getDescription() != null) sub1.setDescription(p.getDescription());
-    if (p.getTopicFilter() != null) sub1.setTopicFilter(p.getTopicFilter());
+    if (p.getTypeFilter() != null) sub1.setTypeFilter(p.getTypeFilter());
     if (p.getSubjectFilter() != null) sub1.setSubjectFilter(p.getSubjectFilter());
     if (p.getDeliveryMethods() != null) sub1.setDeliveryMethods(p.getDeliveryMethods());
     if (p.getNotes() != null) sub1.setNotes(p.getNotes());

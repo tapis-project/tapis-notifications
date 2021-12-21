@@ -67,7 +67,7 @@ import java.util.List;
 
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.ID_FIELD;
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.OWNER_FIELD;
-import static edu.utexas.tacc.tapis.notifications.model.Subscription.TOPIC_FILTER_FIELD;
+import static edu.utexas.tacc.tapis.notifications.model.Subscription.TYPE_FILTER_FIELD;
 
 /*
  * JAX-RS REST resource for a Tapis Subscription (edu.utexas.tacc.tapis.notifications.model.Subscription)
@@ -117,7 +117,7 @@ public class SubscriptionResource
   private static final boolean PRETTY = true;
 
   // Top level summary attributes to be included by default in some cases.
-  public static final List<String> SUMMARY_ATTRS = new ArrayList<>(List.of(ID_FIELD, OWNER_FIELD, TOPIC_FILTER_FIELD));
+  public static final List<String> SUMMARY_ATTRS = new ArrayList<>(List.of(ID_FIELD, OWNER_FIELD, TYPE_FILTER_FIELD));
 
   // ************************************************************************
   // *********************** Fields *****************************************
@@ -1009,7 +1009,7 @@ public class SubscriptionResource
     Object notes = extractNotes(rawJson);
     // Create Subscription
     return new Subscription(-1, tenantId, req.id, req.description, req.owner, req.enabled,
-                            req.topicFilter, req.subjectFilter, req.deliveryMethods,
+                            req.typeFilter, req.subjectFilter, req.deliveryMethods,
                             notes, null, null, null);
   }
 
@@ -1025,7 +1025,7 @@ public class SubscriptionResource
     String owner = null;
     boolean enabled = true;
     return new Subscription(-1, tenantId, id, req.description, owner, enabled,
-                            req.topicFilter, req.subjectFilter, req.deliveryMethods,
+                            req.typeFilter, req.subjectFilter, req.deliveryMethods,
                             notes, null, null, null);
   }
 

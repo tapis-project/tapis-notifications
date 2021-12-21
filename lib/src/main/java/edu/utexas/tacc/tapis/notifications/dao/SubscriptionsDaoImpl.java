@@ -135,7 +135,7 @@ public class SubscriptionsDaoImpl implements SubscriptionsDao
               .set(SUBSCRIPTIONS.DESCRIPTION, subscr.getDescription())
               .set(SUBSCRIPTIONS.OWNER, owner)
               .set(SUBSCRIPTIONS.ENABLED, subscr.isEnabled())
-              .set(SUBSCRIPTIONS.TOPIC_FILTER, subscr.getTopicFilter())
+              .set(SUBSCRIPTIONS.TYPE_FILTER, subscr.getTypeFilter())
               .set(SUBSCRIPTIONS.SUBJECT_FILTER, subscr.getSubjectFilter())
               .set(SUBSCRIPTIONS.DELIVERY_METHODS, deliveryMethodsJson)
               .set(SUBSCRIPTIONS.NOTES, notesObj)
@@ -177,7 +177,7 @@ public class SubscriptionsDaoImpl implements SubscriptionsDao
   /**
    * Update all updatable attributes of an existing subscription.
    * Following columns will be updated:
-   *   description, topicFilter, subjectFilter, deliveryMethods, notes.
+   *   description, typeFilter, subjectFilter, deliveryMethods, notes.
    * @throws TapisException - on error
    * @throws IllegalStateException - if resource already exists
    */
@@ -223,7 +223,7 @@ public class SubscriptionsDaoImpl implements SubscriptionsDao
 
       var result = db.update(SUBSCRIPTIONS)
               .set(SUBSCRIPTIONS.DESCRIPTION, putSubscr.getDescription())
-              .set(SUBSCRIPTIONS.TOPIC_FILTER, putSubscr.getTopicFilter())
+              .set(SUBSCRIPTIONS.TYPE_FILTER, putSubscr.getTypeFilter())
               .set(SUBSCRIPTIONS.SUBJECT_FILTER, putSubscr.getSubjectFilter())
               .set(SUBSCRIPTIONS.DELIVERY_METHODS, deliveryMethodsJson)
               .set(SUBSCRIPTIONS.NOTES, notesObj)
@@ -262,7 +262,7 @@ public class SubscriptionsDaoImpl implements SubscriptionsDao
   /**
    * Patch selected attributes of an existing subscription.
    * Following columns will be updated:
-   *   description, topicFilter, subjectFilter, deliveryMethods, notes.
+   *   description, typeFilter, subjectFilter, deliveryMethods, notes.
    * @throws TapisException - on error
    * @throws IllegalStateException - if resource already exists
    */
@@ -302,7 +302,7 @@ public class SubscriptionsDaoImpl implements SubscriptionsDao
 
       var result = db.update(SUBSCRIPTIONS)
               .set(SUBSCRIPTIONS.DESCRIPTION, patchedSubscription.getDescription())
-              .set(SUBSCRIPTIONS.TOPIC_FILTER, patchedSubscription.getTopicFilter())
+              .set(SUBSCRIPTIONS.TYPE_FILTER, patchedSubscription.getTypeFilter())
               .set(SUBSCRIPTIONS.SUBJECT_FILTER, patchedSubscription.getSubjectFilter())
               .set(SUBSCRIPTIONS.DELIVERY_METHODS, deliveryMethodsJson)
               .set(SUBSCRIPTIONS.NOTES, notesObj)
@@ -1504,7 +1504,7 @@ public class SubscriptionsDaoImpl implements SubscriptionsDao
             Arrays.asList(TapisGsonUtils.getGson().fromJson(deliveryMethodsJson, DeliveryMethod[].class));
     subscription = new Subscription(subSeqId, r.get(SUBSCRIPTIONS.TENANT), r.get(SUBSCRIPTIONS.ID),
             r.get(SUBSCRIPTIONS.DESCRIPTION), r.get(SUBSCRIPTIONS.OWNER), r.get(SUBSCRIPTIONS.ENABLED),
-            r.get(SUBSCRIPTIONS.TOPIC_FILTER), r.get(SUBSCRIPTIONS.SUBJECT_FILTER), deliveryMethods,
+            r.get(SUBSCRIPTIONS.TYPE_FILTER), r.get(SUBSCRIPTIONS.SUBJECT_FILTER), deliveryMethods,
             r.get(SUBSCRIPTIONS.NOTES), r.get(SUBSCRIPTIONS.UUID), created, updated);
     return subscription;
   }

@@ -85,14 +85,14 @@ public class Subscriptions extends TableImpl<SubscriptionsRecord> {
     public final TableField<SubscriptionsRecord, Boolean> ENABLED = createField(DSL.name("enabled"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.field("true", SQLDataType.BOOLEAN)), this, "Indicates if subscription is currently active and available for use");
 
     /**
-     * The column <code>tapis_ntf.subscriptions.topic_filter</code>.
+     * The column <code>tapis_ntf.subscriptions.type_filter</code>.
      */
-    public final TableField<SubscriptionsRecord, String> TOPIC_FILTER = createField(DSL.name("topic_filter"), SQLDataType.CLOB.nullable(false), this, "");
+    public final TableField<SubscriptionsRecord, String> TYPE_FILTER = createField(DSL.name("type_filter"), SQLDataType.CLOB.nullable(false), this, "");
 
     /**
      * The column <code>tapis_ntf.subscriptions.subject_filter</code>.
      */
-    public final TableField<SubscriptionsRecord, String> SUBJECT_FILTER = createField(DSL.name("subject_filter"), SQLDataType.CLOB.nullable(false), this, "");
+    public final TableField<SubscriptionsRecord, String> SUBJECT_FILTER = createField(DSL.name("subject_filter"), SQLDataType.CLOB, this, "");
 
     /**
      * The column <code>tapis_ntf.subscriptions.delivery_methods</code>.

@@ -111,16 +111,16 @@ public class SubscriptionsRecord extends UpdatableRecordImpl<SubscriptionsRecord
     }
 
     /**
-     * Setter for <code>tapis_ntf.subscriptions.topic_filter</code>.
+     * Setter for <code>tapis_ntf.subscriptions.type_filter</code>.
      */
-    public void setTopicFilter(String value) {
+    public void setTypeFilter(String value) {
         set(6, value);
     }
 
     /**
-     * Getter for <code>tapis_ntf.subscriptions.topic_filter</code>.
+     * Getter for <code>tapis_ntf.subscriptions.type_filter</code>.
      */
-    public String getTopicFilter() {
+    public String getTypeFilter() {
         return (String) get(6);
     }
 
@@ -263,7 +263,7 @@ public class SubscriptionsRecord extends UpdatableRecordImpl<SubscriptionsRecord
 
     @Override
     public Field<String> field7() {
-        return Subscriptions.SUBSCRIPTIONS.TOPIC_FILTER;
+        return Subscriptions.SUBSCRIPTIONS.TYPE_FILTER;
     }
 
     @Override
@@ -328,7 +328,7 @@ public class SubscriptionsRecord extends UpdatableRecordImpl<SubscriptionsRecord
 
     @Override
     public String component7() {
-        return getTopicFilter();
+        return getTypeFilter();
     }
 
     @Override
@@ -393,7 +393,7 @@ public class SubscriptionsRecord extends UpdatableRecordImpl<SubscriptionsRecord
 
     @Override
     public String value7() {
-        return getTopicFilter();
+        return getTypeFilter();
     }
 
     @Override
@@ -464,7 +464,7 @@ public class SubscriptionsRecord extends UpdatableRecordImpl<SubscriptionsRecord
 
     @Override
     public SubscriptionsRecord value7(String value) {
-        setTopicFilter(value);
+        setTypeFilter(value);
         return this;
     }
 
@@ -536,7 +536,7 @@ public class SubscriptionsRecord extends UpdatableRecordImpl<SubscriptionsRecord
     /**
      * Create a detached, initialised SubscriptionsRecord
      */
-    public SubscriptionsRecord(Integer seqId, String tenant, String id, String description, String owner, Boolean enabled, String topicFilter, String subjectFilter, JsonElement deliveryMethods, JsonElement notes, UUID uuid, LocalDateTime created, LocalDateTime updated) {
+    public SubscriptionsRecord(Integer seqId, String tenant, String id, String description, String owner, Boolean enabled, String typeFilter, String subjectFilter, JsonElement deliveryMethods, JsonElement notes, UUID uuid, LocalDateTime created, LocalDateTime updated) {
         super(Subscriptions.SUBSCRIPTIONS);
 
         setSeqId(seqId);
@@ -545,7 +545,7 @@ public class SubscriptionsRecord extends UpdatableRecordImpl<SubscriptionsRecord
         setDescription(description);
         setOwner(owner);
         setEnabled(enabled);
-        setTopicFilter(topicFilter);
+        setTypeFilter(typeFilter);
         setSubjectFilter(subjectFilter);
         setDeliveryMethods(deliveryMethods);
         setNotes(notes);

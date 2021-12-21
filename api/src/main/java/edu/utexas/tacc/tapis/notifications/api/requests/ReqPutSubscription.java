@@ -11,7 +11,7 @@ import static edu.utexas.tacc.tapis.notifications.model.Subscription.DEFAULT_NOT
 public final class ReqPutSubscription
 {
   public String description;
-  public String topicFilter;
+  public String typeFilter;
   public String subjectFilter;
   public List<DeliveryMethod> deliveryMethods;
   public Object notes = DEFAULT_NOTES;

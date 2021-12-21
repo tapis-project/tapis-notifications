@@ -47,7 +47,7 @@ CREATE TABLE subscriptions
     description TEXT,
     owner    TEXT NOT NULL,
     enabled  BOOLEAN NOT NULL DEFAULT true,
-    topic_filter TEXT NOT NULL,
+    type_filter TEXT NOT NULL,
     subject_filter TEXT,
     delivery_methods JSONB NOT NULL,
     notes      JSONB NOT NULL,

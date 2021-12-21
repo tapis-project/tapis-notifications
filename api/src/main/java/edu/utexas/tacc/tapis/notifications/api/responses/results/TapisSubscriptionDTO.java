@@ -21,7 +21,7 @@ import static edu.utexas.tacc.tapis.notifications.model.Subscription.OWNER_FIELD
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.TENANT_FIELD;
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.UPDATED_FIELD;
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.UUID_FIELD;
-import static edu.utexas.tacc.tapis.notifications.model.Subscription.TOPIC_FILTER_FIELD;
+import static edu.utexas.tacc.tapis.notifications.model.Subscription.TYPE_FILTER_FIELD;
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.SUBJECT_FILTER_FIELD;
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.DELIVERY_METHODS_FIELD;
 
@@ -37,7 +37,7 @@ public final class TapisSubscriptionDTO
   public String description;
   public String owner;
   public boolean enabled;
-  public String topicFilter;
+  public String typeFilter;
   public String subjectFilter;
   public List<DeliveryMethod> deliveryMethods;
   public Object notes;
@@ -52,7 +52,7 @@ public final class TapisSubscriptionDTO
     description = s.getDescription();
     owner = s.getOwner();
     enabled = s.isEnabled();
-    topicFilter = s.getTopicFilter();
+    typeFilter = s.getTypeFilter();
     subjectFilter = s.getSubjectFilter();
     deliveryMethods = s.getDeliveryMethods();
     notes = s.getNotes();
@@ -124,7 +124,7 @@ public final class TapisSubscriptionDTO
       case DESCRIPTION_FIELD ->jsonObject.addProperty(DESCRIPTION_FIELD, description);
       case OWNER_FIELD -> jsonObject.addProperty(OWNER_FIELD, owner);
       case ENABLED_FIELD -> jsonObject.addProperty(ENABLED_FIELD, Boolean.toString(enabled));
-      case TOPIC_FILTER_FIELD -> jsonObject.addProperty(TOPIC_FILTER_FIELD, topicFilter);
+      case TYPE_FILTER_FIELD -> jsonObject.addProperty(TYPE_FILTER_FIELD, typeFilter);
       case SUBJECT_FILTER_FIELD -> jsonObject.addProperty(SUBJECT_FILTER_FIELD, subjectFilter);
       case DELIVERY_METHODS_FIELD -> {
         jsonStr = gson.toJson(deliveryMethods);
