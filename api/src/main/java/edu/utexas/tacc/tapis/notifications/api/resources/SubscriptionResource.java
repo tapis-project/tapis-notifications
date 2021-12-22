@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import javax.servlet.ServletContext;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
@@ -567,8 +568,8 @@ public class SubscriptionResource
    * @param securityContext - user identity
    * @return - response with change count as the result
    */
-  @POST
-  @Path("{subscriptionId}/delete")
+  @DELETE
+  @Path("{subscriptionId}")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   public Response deleteSubscription(@PathParam("subscriptionId") String subscriptionId,
@@ -950,8 +951,14 @@ public class SubscriptionResource
         changeCount = notificationsService.disableSubscription(rUser, subscriptionId);
       else if (OP_DELETE.equals(opName))
         changeCount = notificationsService.deleteSubscription(rUser, subscriptionId);
-      else
+      else if (OP_CHANGEOWNER.equals(opName))
         changeCount = notificationsService.changeSubscriptionOwner(rUser, subscriptionId, userName);
+      else
+      {
+        msg = ApiUtils.getMsgAuth("NTFAPI_OP_UNKNOWN", rUser, subscriptionId, opName);
+        _log.warn(msg);
+        return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      }
     }
     catch (NotFoundException e)
     {
@@ -996,7 +1003,10 @@ public class SubscriptionResource
     ResultChangeCount count = new ResultChangeCount();
     count.changes = changeCount;
     RespChangeCount resp1 = new RespChangeCount(count);
-    return createSuccessResponse(Status.OK, ApiUtils.getMsgAuth(UPDATED, rUser, subscriptionId, opName), resp1);
+    if (OP_DELETE.equals(opName))
+      return createSuccessResponse(Status.OK, ApiUtils.getMsgAuth("NTFAPI_SUBSCR_DELETED", rUser, subscriptionId), resp1);
+    else
+      return createSuccessResponse(Status.OK, ApiUtils.getMsgAuth(UPDATED, rUser, subscriptionId, opName), resp1);
   }
 
   /**

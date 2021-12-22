@@ -216,7 +216,7 @@ public class SubscriptionsDaoImpl implements SubscriptionsDao
 
       // Make sure subscription exists.
       boolean doesExist = checkForSubscription(db, tenantId, subscrId);
-      if (!doesExist) throw new IllegalStateException(LibUtils.getMsgAuth("NTFLIB_NOT_FOUND", rUser, subscrId));
+      if (!doesExist) throw new IllegalStateException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_NOT_FOUND", rUser, subscrId));
 
       // Make sure UUID filled in, needed for update record. Pre-populated putSubscription may not have it.
       UUID uuid = putSubscr.getUuid();
@@ -299,7 +299,7 @@ public class SubscriptionsDaoImpl implements SubscriptionsDao
 
       // Make sure subscription exists.
       boolean doesExist = checkForSubscription(db, tenant, subscriptionId);
-      if (!doesExist) throw new IllegalStateException(LibUtils.getMsgAuth("NTFLIB_NOT_FOUND", rUser, subscriptionId));
+      if (!doesExist) throw new IllegalStateException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_NOT_FOUND", rUser, subscriptionId));
 
       var result = db.update(SUBSCRIPTIONS)
               .set(SUBSCRIPTIONS.DESCRIPTION, patchedSubscription.getDescription())

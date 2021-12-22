@@ -201,7 +201,8 @@ public class SubscriptionsDaoTest
     try { dao.patchSubscription(rUser, fakeSubscriptionName, patchedSubscription, scrubbedJson, null); }
     catch (IllegalStateException e)
     {
-      Assert.assertTrue(e.getMessage().startsWith("NTFLIB_NOT_FOUND"));
+      System.out.println("Exception msg: " + e.getMessage());
+      Assert.assertTrue(e.getMessage().startsWith("NTFLIB_SUBSCR_NOT_FOUND"));
       pass = true;
     }
     Assert.assertTrue(pass);

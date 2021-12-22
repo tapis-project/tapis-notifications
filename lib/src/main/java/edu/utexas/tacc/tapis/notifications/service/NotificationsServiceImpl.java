@@ -63,7 +63,7 @@ public class NotificationsServiceImpl implements NotificationsService
   private static final String SERVICE_NAME = TapisConstants.SERVICE_NAME_NOTIFICATIONS;
   // Message keys
   private static final String ERROR_ROLLBACK = "NTFLIB_ERROR_ROLLBACK";
-  private static final String NOT_FOUND = "NTFLIB_NOT_FOUND";
+  private static final String NOT_FOUND = "NTFLIB_SUBSCR_NOT_FOUND";
 
   // NotAuthorizedException requires a Challenge, although it serves no purpose here.
   private static final String NO_CHALLENGE = "NoChallenge";
@@ -122,7 +122,7 @@ public class NotificationsServiceImpl implements NotificationsService
   {
     SubscriptionOperation op = SubscriptionOperation.create;
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
-    if (sub == null) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_NULL_INPUT_SUBSCR", rUser));
+    if (sub == null) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_NULL_INPUT", rUser));
     _log.trace(LibUtils.getMsgAuth("NTFLIB_CREATE_TRACE", rUser, scrubbedText));
     String resourceTenantId = sub.getTenant();
     String resourceId = sub.getId();
@@ -211,7 +211,7 @@ public class NotificationsServiceImpl implements NotificationsService
   {
     SubscriptionOperation op = SubscriptionOperation.modify;
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
-    if (patchSubscription == null) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_NULL_INPUT_SUBSCR", rUser));
+    if (patchSubscription == null) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_NULL_INPUT", rUser));
     // Extract various names for convenience
     String resourceTenantId = rUser.getOboTenantId();
     String resourceId = subId;
@@ -254,7 +254,7 @@ public class NotificationsServiceImpl implements NotificationsService
    * Attributes that cannot be updated and so will be looked up and filled in:
    *   tenant, id, owner, enabled
    * @param rUser - ResourceRequestUser containing tenant, user and request info
-   * @param putSubscription - Pre-populated Subscription object (including tenantId, subscriptionId)
+   * @param putSub - Pre-populated Subscription object (including tenantId, subscriptionId)
    * @param scrubbedText - Text used to create the Subscription object - secrets should be scrubbed. Saved in update record.
    *
    * @throws TapisException - for Tapis related exceptions
@@ -264,16 +264,16 @@ public class NotificationsServiceImpl implements NotificationsService
    * @throws NotFoundException - Resource not found
    */
   @Override
-  public void putSubscription(ResourceRequestUser rUser, Subscription putSubscription, String scrubbedText)
+  public void putSubscription(ResourceRequestUser rUser, Subscription putSub, String scrubbedText)
           throws TapisException, TapisClientException, IllegalStateException, IllegalArgumentException,
           NotAuthorizedException, NotFoundException
   {
     SubscriptionOperation op = SubscriptionOperation.modify;
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
-    if (putSubscription == null) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_NULL_INPUT_SUBSCR", rUser));
+    if (putSub == null) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_NULL_INPUT", rUser));
     // Extract various names for convenience
-    String resourceTenantId = putSubscription.getTenant();
-    String resourceId = putSubscription.getId();
+    String resourceTenantId = putSub.getTenant();
+    String resourceId = putSub.getId();
 
     // ---------------------------- Check inputs ------------------------------------
     if (StringUtils.isBlank(resourceTenantId) || StringUtils.isBlank(resourceId) || StringUtils.isBlank(scrubbedText))
@@ -284,26 +284,26 @@ public class NotificationsServiceImpl implements NotificationsService
     // Subscription must already exist
     if (!dao.checkForSubscription(resourceTenantId, resourceId))
     {
-      throw new NotFoundException(LibUtils.getMsgAuth("NTFLIB_VER_NOT_FOUND", rUser, resourceId));
+      throw new NotFoundException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_NOT_FOUND", rUser, resourceId));
     }
 
     // Retrieve the subscription being updated and create fully populated Subscription with changes merged in
-    Subscription origSubscription = dao.getSubscription(resourceTenantId, resourceId);
-    Subscription updatedSubscription = createUpdatedSubscription(origSubscription, putSubscription);
+    Subscription origSub = dao.getSubscription(resourceTenantId, resourceId);
+    Subscription updatedSub = createUpdatedSubscription(origSub, putSub);
 
     // ------------------------- Check service level authorization -------------------------
-    checkAuth(rUser, op, resourceId, origSubscription.getOwner(), null, null);
+    checkAuth(rUser, op, resourceId, origSub.getOwner(), null, null);
 
     // ---------------- Check constraints on Subscription attributes ------------------------
-    validateSubscription(rUser, updatedSubscription);
+    validateSubscription(rUser, updatedSub);
 
     // Construct Json string representing the Subscription about to be used to update
-    String updateJsonStr = TapisGsonUtils.getGson().toJson(putSubscription);
+    String updateJsonStr = TapisGsonUtils.getGson().toJson(putSub);
 
     // ----------------- Create all artifacts --------------------
     // No distributed transactions so no distributed rollback needed
     // ------------------- Make Dao call to persist the subscription -----------------------------------
-    dao.putSubscription(rUser, updatedSubscription, updateJsonStr, scrubbedText);
+    dao.putSubscription(rUser, updatedSub, updateJsonStr, scrubbedText);
   }
 
   /**
@@ -360,7 +360,7 @@ public class NotificationsServiceImpl implements NotificationsService
   {
     SubscriptionOperation op = SubscriptionOperation.delete;
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
-    if (StringUtils.isBlank(subId)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_NULL_INPUT_SUBSCR", rUser));
+    if (StringUtils.isBlank(subId)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_NULL_INPUT", rUser));
 
     // If subscription does not exist then 0 changes
     if (!dao.checkForSubscription(rUser.getOboTenantId(), subId)) return 0;
@@ -395,7 +395,7 @@ public class NotificationsServiceImpl implements NotificationsService
     SubscriptionOperation op = SubscriptionOperation.changeOwner;
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
     if (StringUtils.isBlank(subId) || StringUtils.isBlank(newOwnerName))
-         throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_NULL_INPUT_SUBSCR", rUser));
+         throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_NULL_INPUT", rUser));
  
     String resourceTenantId = rUser.getOboTenantId();
 
@@ -459,7 +459,7 @@ public class NotificationsServiceImpl implements NotificationsService
 //  {
 //    SubscriptionOperation op = SubscriptionOperation.delete;
 //    if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
-//    if (StringUtils.isBlank(subId)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_NULL_INPUT_SUBSCR", rUser));
+//    if (StringUtils.isBlank(subId)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_NULL_INPUT", rUser));
 //
 //    // If subscription does not exist then 0 changes
 //    if (!dao.checkForSubscription(resourceTenantId, subId)) return 0;
@@ -538,7 +538,7 @@ public class NotificationsServiceImpl implements NotificationsService
   {
     SubscriptionOperation op = SubscriptionOperation.read;
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
-    if (StringUtils.isBlank(subId)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_NULL_INPUT_SUBSCR", rUser));
+    if (StringUtils.isBlank(subId)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_NULL_INPUT", rUser));
     String resourceTenantId = rUser.getOboTenantId();
  
     // We need owner to check auth and if subscription not there cannot find owner, so cannot do auth check if no subscription
@@ -565,7 +565,7 @@ public class NotificationsServiceImpl implements NotificationsService
   {
     SubscriptionOperation op = SubscriptionOperation.read;
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
-    if (StringUtils.isBlank(subId)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_NULL_INPUT_SUBSCR", rUser));
+    if (StringUtils.isBlank(subId)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_NULL_INPUT", rUser));
     String resourceTenantId = rUser.getOboTenantId();
 
     // Resource must exist
@@ -592,7 +592,7 @@ public class NotificationsServiceImpl implements NotificationsService
   {
     SubscriptionOperation op = SubscriptionOperation.read;
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
-    if (StringUtils.isBlank(subId)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_NULL_INPUT_SUBSCR", rUser));
+    if (StringUtils.isBlank(subId)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_NULL_INPUT", rUser));
     // Extract various names for convenience
     String resourceTenantId = rUser.getOboTenantId();
 
@@ -790,7 +790,7 @@ public class NotificationsServiceImpl implements NotificationsService
   {
     SubscriptionOperation op = SubscriptionOperation.read;
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
-    if (StringUtils.isBlank(subId)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_NULL_INPUT_SUBSCR", rUser));
+    if (StringUtils.isBlank(subId)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_NULL_INPUT", rUser));
 
     // We need owner to check auth and if subscription not there cannot find owner, so
     // if subscription does not exist then return null
@@ -824,7 +824,7 @@ public class NotificationsServiceImpl implements NotificationsService
   {
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
     if (StringUtils.isBlank(subId))
-      throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_NULL_INPUT_SUBSCR", rUser));
+      throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_NULL_INPUT", rUser));
 
     String resourceTenantId = rUser.getOboTenantId();
 
@@ -1252,9 +1252,6 @@ public class NotificationsServiceImpl implements NotificationsService
     Subscription updatedSub = new Subscription(putSub, origSub.getTenant(), origSub.getId());
     updatedSub.setOwner(origSub.getOwner());
     updatedSub.setEnabled(origSub.isEnabled());
-    updatedSub.setTypeFilter(origSub.getTypeFilter());
-    updatedSub.setSubjectFilter(origSub.getSubjectFilter());
-    updatedSub.setDeliveryMethods(origSub.getDeliveryMethods());
     return updatedSub;
   }
 

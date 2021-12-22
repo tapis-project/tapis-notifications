@@ -185,8 +185,11 @@ public class SubscriptionsServiceTest
     System.out.println("Updated timestamp before: " + updatedStr1 + " after: " + updatedStr2);
     Assert.assertNotEquals(updatedStr1, updatedStr2, "Update timestamp was not updated. Both are: " + updatedStr1);
 
-    // Update original definition with patched values so we can use the checkCommon method.
+    // Update original definition with PUT values so we can use the checkCommon method.
     sub0.setDescription(description2);
+    sub0.setTypeFilter(typeFilter2);
+    sub0.setSubjectFilter(subjectFilter2);
+    sub0.setDeliveryMethods(dmList2);
     sub0.setNotes(notes2);
     //Check common attributes:
     checkCommonSubscriptionAttrs(sub0, tmpSub);
@@ -221,7 +224,7 @@ public class SubscriptionsServiceTest
     // Make sure update timestamp has been modified
     System.out.println("Updated timestamp before: " + updatedStr1 + " after: " + updatedStr2);
     Assert.assertNotEquals(updatedStr1, updatedStr2, "Update timestamp was not updated. Both are: " + updatedStr1);
-    // Update original definition with patched values so we can use the checkCommon method.
+    // Update original definition with PATCH values so we can use the checkCommon method.
     sub0.setDescription(description2);
     sub0.setTypeFilter(typeFilter2);
     sub0.setSubjectFilter(subjectFilter2);

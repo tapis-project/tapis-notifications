@@ -5,18 +5,18 @@
   "additionalProperties": false,
 
   "UserName": { "type": "string", "minLength": 1, "maxLength": 60 },
-  "DeliveryMethodEnum": { "type": "string", "enum": [ "WEBHOOK", "EMAIL" ] },
+  "DeliveryTypeEnum": { "type": "string", "enum": [ "WEBHOOK", "EMAIL" ] },
   "DeliveryMethodList": {
     "type": "array",
     "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/DeliveryMethod" }
   },
   "DeliveryMethod": {
     "type": "object",
-    "required": [ "deliveryMethod" ],
+    "required": [ "deliveryType" ],
     "additionalProperties": false,
     "properties": {
-      "deliveryMethod": { "$ref": "#/DeliveryMethodEnum" },
-      "webhookURL": { "type": ["string", "null"]  },
+      "deliveryType": { "$ref": "#/DeliveryTypeEnum" },
+      "webhookUrl": { "type": ["string", "null"]  },
       "emailAddress": { "type": ["string", "null"] }
       }
   }

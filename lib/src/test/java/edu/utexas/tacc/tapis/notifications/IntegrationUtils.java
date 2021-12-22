@@ -129,10 +129,10 @@ public final class IntegrationUtils
    * Create a Subscription in memory for use in testing the PUT operation.
    * All updatable attributes are modified.
    */
-  public static Subscription makePutSubscriptionFull(Subscription subscription)
+  public static Subscription makePutSubscriptionFull(Subscription sub)
   {
-    Subscription putSubscr = new Subscription(subscription.getSeqId(), tenantName, subscription.getId(), description2,
-                       subscription.getOwner(), subscription.isEnabled(), typeFilter2, subjectFilter2,
+    Subscription putSubscr = new Subscription(sub.getSeqId(), tenantName, sub.getId(), description2,
+                       sub.getOwner(), sub.isEnabled(), typeFilter2, subjectFilter2,
                        dmList2, notes2, null, null, null);
     return putSubscr;
   }

@@ -105,10 +105,10 @@ public final class Subscription
   /**
    * Constructor using only required attributes.
    */
-  public Subscription(String typeFilter1, List<DeliveryMethod> dMList1)
+  public Subscription(String typeFilter1, List<DeliveryMethod> dmList1)
   {
     typeFilter = typeFilter1;
-    deliveryMethods = dMList1;
+    deliveryMethods = dmList1;
   }
 
   /**
@@ -121,12 +121,15 @@ public final class Subscription
       throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT"));
     tenant = tenant1;
     id = id1;
+    owner = s.getOwner();
+    enabled = s.isEnabled();
     seqId = s.getSeqId();
     created = s.getCreated();
     updated = s.getUpdated();
     description = s.getDescription();
-    owner = s.getOwner();
-    enabled = s.isEnabled();
+    typeFilter = s.getTypeFilter();
+    subjectFilter = s.getSubjectFilter();
+    deliveryMethods = s.getDeliveryMethods();
     notes = s.getNotes();
     uuid = s.getUuid();
   }
