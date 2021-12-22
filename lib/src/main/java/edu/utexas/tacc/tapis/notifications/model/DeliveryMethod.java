@@ -4,13 +4,15 @@ import edu.utexas.tacc.tapis.notifications.model.Subscription.DeliveryType;
 
 public final class DeliveryMethod
 {
-  private DeliveryType deliveryType;
-  private String webhookUrl;
+  private final DeliveryType deliveryType;
+  private final String webhookUrl;
+  private final String emailAddress;
 
-  public DeliveryMethod(DeliveryType deliveryType1, String webhookUrl1)
+  public DeliveryMethod(DeliveryType deliveryType1, String webhookUrl1, String emailAddress1)
   {
     deliveryType = deliveryType1;
     webhookUrl = webhookUrl1;
+    emailAddress = emailAddress1;
   }
 
 //  private void validate() throws ValidationException
@@ -34,16 +36,5 @@ public final class DeliveryMethod
 
   public String getWebhookUrl() { return webhookUrl; }
 
-//  @JsonIgnore
-//  public int getSubscriptionId() { return subscriptionId; }
-//  public void setSubscriptionId(int i) { subscriptionId = i; }
-//
-//  public Instant getCreated() { return created; }
-//  public void setCreated(Instant c) { created = c; }
-//
-//  public UUID getUuid() { return uuid; }
-//  public void setUuid(UUID u) { uuid = u; }
-//
-//  public String getTenantId() { return tenantId; }
-//  public void setTenantId(String s) { tenantId = s; }
+  public String getEmailAddress() { return emailAddress; }
 }

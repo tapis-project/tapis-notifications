@@ -79,7 +79,7 @@ public final class Subscription
   public enum SubscriptionOperation {create, read, modify, delete, changeOwner, enable, disable,
                                      getPerms, grantPerms, revokePerms}
   public enum Permission {READ, MODIFY}
-  public enum DeliveryType {WEBHOOK}
+  public enum DeliveryType {WEBHOOK, EMAIL}
 
   // ************************************************************************
   // *********************** Fields *****************************************
@@ -136,7 +136,7 @@ public final class Subscription
    * Also useful for testing
    */
   public Subscription(int seqId1, String tenant1, String id1, String description1, String owner1, boolean enabled1,
-                      String typeFilter1, String subjectFilter1, List<DeliveryMethod> dMList1, Object notes1,
+                      String typeFilter1, String subjectFilter1, List<DeliveryMethod> dmList1, Object notes1,
                       UUID uuid1, Instant created1, Instant updated1)
   {
     seqId = seqId1;
@@ -147,7 +147,7 @@ public final class Subscription
     enabled = enabled1;
     typeFilter = typeFilter1;
     subjectFilter = subjectFilter1;
-    deliveryMethods = (dMList1 == null) ? null : new ArrayList<>(dMList1);
+    deliveryMethods = (dmList1 == null) ? null : new ArrayList<>(dmList1);
     notes = notes1;
     uuid = uuid1;
     created = created1;
