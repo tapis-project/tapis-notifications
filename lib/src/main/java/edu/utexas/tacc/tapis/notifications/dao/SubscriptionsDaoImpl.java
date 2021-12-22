@@ -196,6 +196,7 @@ public class SubscriptionsDaoImpl implements SubscriptionsDao
     if (StringUtils.isBlank(updateJsonStr)) LibUtils.logAndThrowNullParmException(opName, "updateJson");
     if (StringUtils.isBlank(tenantId)) LibUtils.logAndThrowNullParmException(opName, "tenantId");
     if (StringUtils.isBlank(subscrId)) LibUtils.logAndThrowNullParmException(opName, "subscriptionId");
+    if (StringUtils.isBlank(putSubscr.getTypeFilter())) LibUtils.logAndThrowNullParmException(opName, "typeFilter");
 
     // Make sure owner, notes and deliveryMethods are set
     String owner = Subscription.DEFAULT_OWNER;

@@ -55,7 +55,7 @@ public interface NotificationsService
           throws TapisException, TapisClientException, NotAuthorizedException, IllegalStateException, IllegalArgumentException, NotFoundException;
 
   int deleteSubscription(ResourceRequestUser rUser, String subscriptionId)
-          throws TapisException, TapisClientException, NotAuthorizedException, IllegalStateException, IllegalArgumentException, NotFoundException;
+          throws TapisException, TapisClientException, NotAuthorizedException, IllegalArgumentException;
 
   int changeSubscriptionOwner(ResourceRequestUser rUser, String subscriptionId, String newOwnerName)
           throws TapisException, TapisClientException, NotAuthorizedException, IllegalArgumentException, NotFoundException;

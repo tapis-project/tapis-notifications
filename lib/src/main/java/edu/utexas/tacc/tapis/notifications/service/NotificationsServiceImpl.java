@@ -353,11 +353,10 @@ public class NotificationsServiceImpl implements NotificationsService
    * @throws TapisException - for Tapis related exceptions
    * @throws IllegalArgumentException - invalid parameter passed in
    * @throws NotAuthorizedException - unauthorized
-   * @throws NotFoundException - Resource not found
    */
   @Override
   public int deleteSubscription(ResourceRequestUser rUser, String subId)
-          throws TapisException, IllegalStateException, IllegalArgumentException, NotAuthorizedException, NotFoundException, TapisClientException
+          throws TapisException, IllegalArgumentException, NotAuthorizedException, TapisClientException
   {
     SubscriptionOperation op = SubscriptionOperation.delete;
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
@@ -870,33 +869,26 @@ public class NotificationsServiceImpl implements NotificationsService
 
   /**
    * Check constraints on Subscription attributes.
-   * Collect and report as many errors as possible so they can all be fixed before next attempt
+   * Collect and report as many errors as possible, so they can all be fixed before next attempt
    * @param sub - the Subscription to check
    * @throws IllegalStateException - if any constraints are violated
    */
-  private void validateSubscription(ResourceRequestUser rUser, Subscription sub)
-          throws TapisException, IllegalStateException
+  private void validateSubscription(ResourceRequestUser rUser, Subscription sub) throws IllegalStateException
   {
-//    // Make api level checks, i.e. checks that do not involve a dao or service call.
-//    List<String> errMessages = subscription.checkAttributeRestrictions();
-//    var systemsClient = getSystemsClient(rUser);
-//
-//    // Now make checks that do require a dao or service call.
-//
-//    // If execSystemId is set verify it
-//    if (!StringUtils.isBlank(subscription.getExecSystemId())) checkExecSystem(systemsClient, subscription, errMessages);
-//
-//    // If archiveSystemId is set verify it
-//    if (!StringUtils.isBlank(subscription.getArchiveSystemId())) checkArchiveSystem(systemsClient, subscription, errMessages);
-//
-//    // If validation failed throw an exception
-//    if (!errMessages.isEmpty())
-//    {
-//      // Construct message reporting all errors
-//      String allErrors = getListOfErrors(rUser, subscription.getId(), errMessages);
-//      _log.error(allErrors);
-//      throw new IllegalStateException(allErrors);
-//    }
+    // Make api level checks, i.e. checks that do not involve a dao or service call.
+    List<String> errMessages = sub.checkAttributeRestrictions();
+
+    // Now make checks that do require a dao or service call.
+    // NOTE: Currently no such checks
+
+    // If validation failed throw an exception
+    if (!errMessages.isEmpty())
+    {
+      // Construct message reporting all errors
+      String allErrors = getListOfErrors(rUser, sub.getId(), errMessages);
+      _log.error(allErrors);
+      throw new IllegalStateException(allErrors);
+    }
   }
 
   /**
@@ -1011,7 +1003,7 @@ public class NotificationsServiceImpl implements NotificationsService
    */
   private void checkAuth(ResourceRequestUser rUser, SubscriptionOperation op, String subId,
                          String owner, String userIdToCheck, Set<Permission> perms)
-      throws TapisException, TapisClientException, NotAuthorizedException, IllegalStateException
+      throws TapisException, TapisClientException, NotAuthorizedException
   {
     // Check service and user requests separately to avoid confusing a service name with a user name
     if (rUser.isServiceRequest())
@@ -1060,7 +1052,7 @@ public class NotificationsServiceImpl implements NotificationsService
   private void checkAuthUser(ResourceRequestUser rUser, SubscriptionOperation op,
                              String tenantIdToCheck, String userIdToCheck,
                              String subId, String owner, String targetUser, Set<Permission> perms)
-          throws TapisException, TapisClientException, NotAuthorizedException, IllegalStateException
+          throws TapisException, TapisClientException, NotAuthorizedException
   {
     // Use JWT tenant and user from authenticatedUsr or optional provided values
     String tenantName = (StringUtils.isBlank(tenantIdToCheck) ? rUser.getOboTenantId() : tenantIdToCheck);
@@ -1254,13 +1246,16 @@ public class NotificationsServiceImpl implements NotificationsService
    * Attributes that cannot be updated and must be filled in from the original resource:
    *   tenant, id, owner, enabled
    */
-  private Subscription createUpdatedSubscription(Subscription origSubscription, Subscription putSubscription)
+  private Subscription createUpdatedSubscription(Subscription origSub, Subscription putSub)
   {
     // Rather than exposing otherwise unnecessary setters we use a special constructor.
-    Subscription updatedSubscription = new Subscription(putSubscription, origSubscription.getTenant(), origSubscription.getId());
-    updatedSubscription.setOwner(origSubscription.getOwner());
-    updatedSubscription.setEnabled(origSubscription.isEnabled());
-    return updatedSubscription;
+    Subscription updatedSub = new Subscription(putSub, origSub.getTenant(), origSub.getId());
+    updatedSub.setOwner(origSub.getOwner());
+    updatedSub.setEnabled(origSub.isEnabled());
+    updatedSub.setTypeFilter(origSub.getTypeFilter());
+    updatedSub.setSubjectFilter(origSub.getSubjectFilter());
+    updatedSub.setDeliveryMethods(origSub.getDeliveryMethods());
+    return updatedSub;
   }
 
   /**

@@ -64,25 +64,25 @@ public class SubscriptionsDaoTest
   @Test
   public void testCreate() throws Exception
   {
-    Subscription subscr0 = subscriptions[0];
-    boolean itemCreated = dao.createSubscription(rUser, subscr0, gson.toJson(subscr0), scrubbedJson);
-    Assert.assertTrue(itemCreated, "Item not created, id: " + subscr0.getId());
+    Subscription sub0 = subscriptions[0];
+    boolean itemCreated = dao.createSubscription(rUser, sub0, gson.toJson(sub0), scrubbedJson);
+    Assert.assertTrue(itemCreated, "Item not created, id: " + sub0.getId());
   }
 
   // Test retrieving a single item
   @Test
   public void testGet() throws Exception {
-    Subscription subscr0 = subscriptions[1];
-    boolean itemCreated = dao.createSubscription(rUser, subscr0, gson.toJson(subscr0), scrubbedJson);
-    Assert.assertTrue(itemCreated, "Item not created, id: " + subscr0.getId());
-    Subscription tmpSub = dao.getSubscription(subscr0.getTenant(), subscr0.getId());
-    Assert.assertNotNull(tmpSub, "Failed to create item: " + subscr0.getId());
-    System.out.println("Found item: " + subscr0.getId());
-    Assert.assertEquals(tmpSub.getId(), subscr0.getId());
-    Assert.assertEquals(tmpSub.getDescription(), subscr0.getDescription());
-    Assert.assertEquals(tmpSub.getOwner(), subscr0.getOwner());
-    Assert.assertEquals(tmpSub.getTypeFilter(), subscr0.getTypeFilter());
-    Assert.assertEquals(tmpSub.getSubjectFilter(), subscr0.getSubjectFilter());
+    Subscription sub0 = subscriptions[1];
+    boolean itemCreated = dao.createSubscription(rUser, sub0, gson.toJson(sub0), scrubbedJson);
+    Assert.assertTrue(itemCreated, "Item not created, id: " + sub0.getId());
+    Subscription tmpSub = dao.getSubscription(sub0.getTenant(), sub0.getId());
+    Assert.assertNotNull(tmpSub, "Failed to create item: " + sub0.getId());
+    System.out.println("Found item: " + sub0.getId());
+    Assert.assertEquals(tmpSub.getId(), sub0.getId());
+    Assert.assertEquals(tmpSub.getDescription(), sub0.getDescription());
+    Assert.assertEquals(tmpSub.getOwner(), sub0.getOwner());
+    Assert.assertEquals(tmpSub.getTypeFilter(), sub0.getTypeFilter());
+    Assert.assertEquals(tmpSub.getSubjectFilter(), sub0.getSubjectFilter());
 
     // Verify notes
     JsonObject obj = (JsonObject) tmpSub.getNotes();
@@ -93,7 +93,7 @@ public class SubscriptionsDaoTest
     Assert.assertEquals(obj.get("testdata").getAsString(), notesObj1.get("testdata").getAsString());
 
     // Verify delivery methods
-    List<DeliveryMethod> origDMs = subscr0.getDeliveryMethods();
+    List<DeliveryMethod> origDMs = sub0.getDeliveryMethods();
     List<DeliveryMethod> deliveryMethods = tmpSub.getDeliveryMethods();
     Assert.assertNotNull(origDMs, "Orig deliveryMethods was null");
     Assert.assertNotNull(deliveryMethods, "Fetched deliveryMethods was null");
@@ -112,12 +112,13 @@ public class SubscriptionsDaoTest
   // Test retrieving all subscriptions
   @Test
   public void testGetSubscriptions() throws Exception {
-    Subscription subscr0 = subscriptions[2];
-    boolean itemCreated = dao.createSubscription(rUser, subscr0, gson.toJson(subscr0), scrubbedJson);
-    Assert.assertTrue(itemCreated, "Item not created, id: " + subscr0.getId());
+    Subscription sub0 = subscriptions[2];
+    boolean itemCreated = dao.createSubscription(rUser, sub0, gson.toJson(sub0), scrubbedJson);
+    Assert.assertTrue(itemCreated, "Item not created, id: " + sub0.getId());
     List<Subscription> subscriptions = dao.getSubscriptions(tenantName, null, null, null, DEFAULT_LIMIT, orderByListNull,
-                                                      DEFAULT_SKIP, startAfterNull);
-    for (Subscription subscription : subscriptions) {
+                                                            DEFAULT_SKIP, startAfterNull);
+    for (Subscription subscription : subscriptions)
+    {
       System.out.println("Found item with id: " + subscription.getId());
     }
   }
@@ -127,14 +128,14 @@ public class SubscriptionsDaoTest
   public void testGetSubscriptionsInIDList() throws Exception {
     var subIdList = new HashSet<String>();
     // Create 2 subscriptions
-    Subscription subscr0 = subscriptions[3];
-    boolean itemCreated = dao.createSubscription(rUser, subscr0, gson.toJson(subscr0), scrubbedJson);
-    Assert.assertTrue(itemCreated, "Item not created, id: " + subscr0.getId());
-    subIdList.add(subscr0.getId());
-    subscr0 = subscriptions[4];
-    itemCreated = dao.createSubscription(rUser, subscr0, gson.toJson(subscr0), scrubbedJson);
-    Assert.assertTrue(itemCreated, "Item not created, id: " + subscr0.getId());
-    subIdList.add(subscr0.getId());
+    Subscription sub0 = subscriptions[3];
+    boolean itemCreated = dao.createSubscription(rUser, sub0, gson.toJson(sub0), scrubbedJson);
+    Assert.assertTrue(itemCreated, "Item not created, id: " + sub0.getId());
+    subIdList.add(sub0.getId());
+    sub0 = subscriptions[4];
+    itemCreated = dao.createSubscription(rUser, sub0, gson.toJson(sub0), scrubbedJson);
+    Assert.assertTrue(itemCreated, "Item not created, id: " + sub0.getId());
+    subIdList.add(sub0.getId());
     // Get all subscriptions in list of seqIDs
     List<Subscription> subscriptions = dao.getSubscriptions(tenantName, null, null, subIdList, DEFAULT_LIMIT,
                                                             orderByListNull, DEFAULT_SKIP, startAfterNull);
@@ -149,36 +150,36 @@ public class SubscriptionsDaoTest
   @Test
   public void testEnableDisableDelete() throws Exception
   {
-    Subscription subscr0 = subscriptions[5];
-    boolean itemCreated = dao.createSubscription(rUser, subscr0, gson.toJson(subscr0), scrubbedJson);
-    Assert.assertTrue(itemCreated, "Item not created, id: " + subscr0.getId());
-    System.out.println("Created item, id: " + subscr0.getId() + " enabled: " + subscr0.isEnabled());
+    Subscription sub0 = subscriptions[5];
+    boolean itemCreated = dao.createSubscription(rUser, sub0, gson.toJson(sub0), scrubbedJson);
+    Assert.assertTrue(itemCreated, "Item not created, id: " + sub0.getId());
+    System.out.println("Created item, id: " + sub0.getId() + " enabled: " + sub0.isEnabled());
     // Enabled should start off true, then become false and finally true again.
-    Subscription tmpSub = dao.getSubscription(subscr0.getTenant(), subscr0.getId());
+    Subscription tmpSub = dao.getSubscription(sub0.getTenant(), sub0.getId());
     Assert.assertTrue(tmpSub.isEnabled());
-    dao.updateEnabled(rUser, tenantName, subscr0.getId(), false);
-    tmpSub = dao.getSubscription(subscr0.getTenant(), subscr0.getId());
+    dao.updateEnabled(rUser, tenantName, sub0.getId(), false);
+    tmpSub = dao.getSubscription(sub0.getTenant(), sub0.getId());
     Assert.assertFalse(tmpSub.isEnabled());
-    dao.updateEnabled(rUser, tenantName, subscr0.getId(), true);
-    tmpSub = dao.getSubscription(subscr0.getTenant(), subscr0.getId());
+    dao.updateEnabled(rUser, tenantName, sub0.getId(), true);
+    tmpSub = dao.getSubscription(sub0.getTenant(), sub0.getId());
     Assert.assertTrue(tmpSub.isEnabled());
 
     // Deleted should remove the item
-    dao.deleteSubscription(tenantName, subscr0.getId());
-    Assert.assertFalse(dao.checkForSubscription(subscr0.getTenant(), subscr0.getId()),"Subscription not deleted. Subscription id: " + subscr0.getId());
-    tmpSub = dao.getSubscription(subscr0.getTenant(), subscr0.getId());
+    dao.deleteSubscription(tenantName, sub0.getId());
+    Assert.assertFalse(dao.checkForSubscription(sub0.getTenant(), sub0.getId()),"Subscription not deleted. Subscription id: " + sub0.getId());
+    tmpSub = dao.getSubscription(sub0.getTenant(), sub0.getId());
     Assert.assertNull(tmpSub);
   }
 
   // Test change subscription owner
   @Test
   public void testChangeSubscriptionOwner() throws Exception {
-    Subscription subscr0 = subscriptions[6];
-    boolean itemCreated = dao.createSubscription(rUser, subscr0, gson.toJson(subscr0), scrubbedJson);
-    System.out.println("Created item with subscriptionId: " + subscr0.getId());
-    Assert.assertTrue(itemCreated, "Item not created, id: " + subscr0.getId());
-    dao.updateSubscriptionOwner(rUser, tenantName, subscr0.getId(), "newOwner");
-    Subscription tmpSubscription = dao.getSubscription(subscr0.getTenant(), subscr0.getId());
+    Subscription sub0 = subscriptions[6];
+    boolean itemCreated = dao.createSubscription(rUser, sub0, gson.toJson(sub0), scrubbedJson);
+    System.out.println("Created item with subscriptionId: " + sub0.getId());
+    Assert.assertTrue(itemCreated, "Item not created, id: " + sub0.getId());
+    dao.updateSubscriptionOwner(rUser, tenantName, sub0.getId(), "newOwner");
+    Subscription tmpSubscription = dao.getSubscription(sub0.getTenant(), sub0.getId());
     Assert.assertEquals(tmpSubscription.getOwner(), "newOwner");
   }
 

@@ -199,7 +199,7 @@ public final class Subscription
   }
 
   /**
-   * TODO Check constraints on attributes.
+   *  Check constraints on attributes.
    *  Make checks that do not require a dao or service call.
    *  Check only internal consistency and restrictions.
    *
@@ -208,7 +208,6 @@ public final class Subscription
   public List<String> checkAttributeRestrictions()
   {
     var errMessages = new ArrayList<String>();
-    // TODO
     checkAttrRequired(errMessages);
     checkAttrValidity(errMessages);
     checkAttrStringLengths(errMessages);
@@ -222,11 +221,14 @@ public final class Subscription
 
   /**
    * Check for missing required attributes
-   *   Id
+   *   Id, typeFilter and deliveryMethods are required
    */
   private void checkAttrRequired(List<String> errMessages)
   {
     if (StringUtils.isBlank(id)) errMessages.add(LibUtils.getMsg(CREATE_MISSING_ATTR, ID_FIELD));
+    if (StringUtils.isBlank(typeFilter)) errMessages.add(LibUtils.getMsg(CREATE_MISSING_ATTR, TYPE_FILTER_FIELD));
+    if (deliveryMethods == null) errMessages.add(LibUtils.getMsg(CREATE_MISSING_ATTR, DELIVERY_METHODS_FIELD));
+    if (deliveryMethods != null && deliveryMethods.isEmpty()) errMessages.add(LibUtils.getMsg("NTFLIB_NO_DM"));
   }
 
   /**

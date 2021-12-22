@@ -9,14 +9,11 @@ import edu.utexas.tacc.tapis.notifications.model.Subscription.DeliveryType;
 import edu.utexas.tacc.tapis.search.parser.ASTNode;
 import edu.utexas.tacc.tapis.shared.threadlocal.OrderBy;
 import edu.utexas.tacc.tapis.shared.utils.TapisGsonUtils;
-import org.jooq.tools.StringUtils;
-import org.testng.Assert;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -36,8 +33,8 @@ public final class IntegrationUtils
   public static final String svcName = "notificationss";
   public static final String adminUser = "testadmin";
 
-  public static final String owner1 = "owner1";
-  public static final String owner2 = "owner2";
+  public static final String owner1 = "testuser1";
+  public static final String owner2 = "testuser2";
   public static final String ownerNull = null;
   public static final String testUser0 = "testuser0";
   public static final String testUser1 = "testuser1";
@@ -45,7 +42,7 @@ public final class IntegrationUtils
   public static final String testUser3 = "testuser3";
   public static final String testUser4 = "testuser4";
   public static final String apiUser = "testApiUser";
-  public static final String subscrNamePrefix = "TestSub";
+  public static final String subIdPrefix = "TestSub";
   public static final String description1 = "Subscription description 1";
   public static final String description2 = "Subscription description 2";
   public static final String typeFilter1 = "tapis.jobs.job.complete";
@@ -152,6 +149,6 @@ public final class IntegrationUtils
   public static String getSubscrName(String key, int idx)
   {
     String suffix = key + "_" + String.format("%03d", idx);
-    return subscrNamePrefix + "_" + suffix;
+    return subIdPrefix + "_" + suffix;
   }
 }

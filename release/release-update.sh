@@ -14,7 +14,7 @@ USAGE="Usage: $PrgName { <rc_version> }"
 SVC_NAME="notifications"
 REPO="tapis"
 ENV="dev"
-BUILD_DIR="../tapis-${SVC_NAME}api/target"
+BUILD_DIR="../api/target"
 RC_VER=$1
 
 # Check number of arguments
