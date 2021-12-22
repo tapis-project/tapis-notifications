@@ -68,6 +68,6 @@ set -xv
 docker run -e TAPIS_SERVICE_PASSWORD="${TAPIS_SERVICE_PASSWORD}" \
            -e TAPIS_TENANT_SVC_BASEURL="$BASE_URL" \
            -e TAPIS_SITE_ID="$TAPIS_SITE_ID" \
-           --network="host" "${TAG}"
+           --rm --network="host" "${TAG}"
 #           -d --rm --network="host" "${TAG}"
 cd "$RUN_DIR"

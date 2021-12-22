@@ -5,22 +5,28 @@ package edu.utexas.tacc.tapis.notifications.gen.jooq;
 
 
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.FlywaySchemaHistory;
+import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.SubscriptionUpdates;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.Subscriptions;
 
 
 /**
- * Convenience access to all tables in tapis_notif.
+ * Convenience access to all tables in tapis_ntf.
  */
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Tables {
 
     /**
-     * The table <code>tapis_notif.flyway_schema_history</code>.
+     * The table <code>tapis_ntf.flyway_schema_history</code>.
      */
     public static final FlywaySchemaHistory FLYWAY_SCHEMA_HISTORY = FlywaySchemaHistory.FLYWAY_SCHEMA_HISTORY;
 
     /**
-     * The table <code>tapis_notif.subscriptions</code>.
+     * The table <code>tapis_ntf.subscription_updates</code>.
+     */
+    public static final SubscriptionUpdates SUBSCRIPTION_UPDATES = SubscriptionUpdates.SUBSCRIPTION_UPDATES;
+
+    /**
+     * The table <code>tapis_ntf.subscriptions</code>.
      */
     public static final Subscriptions SUBSCRIPTIONS = Subscriptions.SUBSCRIPTIONS;
 }

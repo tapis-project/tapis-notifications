@@ -2,8 +2,6 @@ package edu.utexas.tacc.tapis.notifications.model;
 
 
 import edu.utexas.tacc.tapis.shared.utils.TapisUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.time.OffsetDateTime;
@@ -27,7 +25,6 @@ public final class Event
   /* ********************************************************************** */
   /*                               Constants                                */
   /* ********************************************************************** */
-  private static final Logger _log = LoggerFactory.getLogger(Event.class);
   public static final String SPECVERSION = "1.0";
 
   /* ********************************************************************** */

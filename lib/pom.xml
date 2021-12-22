@@ -16,10 +16,10 @@
 
   <!-- DB connect properties for jOOQ and Flyway -->
   <properties>
-    <db.url>jdbc:postgresql://localhost:5432/tapisnotifdb</db.url>
-    <db.username>tapis_notif</db.username>
+    <db.url>jdbc:postgresql://localhost:5432/tapisntfdb</db.url>
+    <db.username>tapis_ntf</db.username>
     <db.password>password</db.password>
-    <db.schema>tapis_notif</db.schema>
+    <db.schema>tapis_ntf</db.schema>
     <!-- If necessary set a specific version of the shared code. Parent pom file from tapis-bom has a range. -->
     <!-- <tapis-shared-java.version>1.11.2-SNAPSHOT</tapis-shared-java.version> -->
   </properties>
@@ -236,7 +236,7 @@
               </target>
               <database>
                 <name>org.jooq.meta.postgres.PostgresDatabase</name>
-                <inputSchema>tapis_notif</inputSchema>
+                <inputSchema>tapis_ntf</inputSchema>
                 <!-- Include everything from the schema -->
                 <includes>.*</includes>
                 <!-- All elements that are excluded from your schema
@@ -257,16 +257,16 @@
                   <!-- ****************************************** -->
                   <!-- Bind Postgresql JSONB type to Gson JsonElement -->
                 <forcedTypes>
-<!--                  <forcedType>-->
-<!--                    <userType>com.google.gson.JsonElement</userType>-->
-<!--                    <binding>edu.utexas.tacc.tapis.ntifications.dao.JSONBToJsonElementBinding</binding>-->
-<!--                    &lt;!&ndash; Match only certain columns, no need to filter on type &ndash;&gt;-->
-<!--                    <includeExpression>(apps_versions\.notes|app_updates\.upd_json)</includeExpression>-->
-<!--                    <includeTypes>.*</includeTypes>-->
-<!--                  </forcedType>-->
-<!--                  &lt;!&ndash; ****************************************** &ndash;&gt;-->
-<!--                  &lt;!&ndash; Bind our enum types for convenience &ndash;&gt;-->
-<!--                  &lt;!&ndash; ****************************************** &ndash;&gt;-->
+                  <forcedType>
+                    <userType>com.google.gson.JsonElement</userType>
+                    <binding>edu.utexas.tacc.tapis.notifications.dao.JSONBToJsonElementBinding</binding>
+                    <!-- Match only certain columns, no need to filter on type -->
+                    <includeExpression>(subscriptions\.delivery_methods|subscriptions\.notes|subscription_updates\.upd_json)</includeExpression>
+                    <includeTypes>.*</includeTypes>
+                  </forcedType>
+                  <!-- ****************************************** -->
+                  <!-- Bind our enum types for convenience -->
+                  <!-- ****************************************** -->
 <!--                  <forcedType>-->
 <!--                    <userType>edu.utexas.tacc.tapis.apps.model.App.AppOperation</userType>-->
 <!--                    <enumConverter>true</enumConverter>-->
@@ -291,6 +291,12 @@
 <!--                    <includeExpression>notification_mechanisms\.mechanism</includeExpression>-->
 <!--                    <includeTypes>.*</includeTypes>-->
 <!--                  </forcedType>-->
+                    <forcedType>
+                        <userType>edu.utexas.tacc.tapis.notifications.model.Subscription.SubscriptionOperation</userType>
+                        <enumConverter>true</enumConverter>
+                        <includeExpression>subscription_updates\.operation</includeExpression>
+                        <includeTypes>.*</includeTypes>
+                    </forcedType>
                 </forcedTypes>
               </database>
             </generator>

@@ -25,9 +25,9 @@ public class DefaultCatalog extends CatalogImpl {
     public static final DefaultCatalog DEFAULT_CATALOG = new DefaultCatalog();
 
     /**
-     * The schema <code>tapis_notif</code>.
+     * The schema <code>tapis_ntf</code>.
      */
-    public final TapisNotif TAPIS_NOTIF = TapisNotif.TAPIS_NOTIF;
+    public final TapisNtf TAPIS_NTF = TapisNtf.TAPIS_NTF;
 
     /**
      * No further instances allowed
@@ -39,6 +39,6 @@ public class DefaultCatalog extends CatalogImpl {
     @Override
     public final List<Schema> getSchemas() {
         return Arrays.<Schema>asList(
-            TapisNotif.TAPIS_NOTIF);
+            TapisNtf.TAPIS_NTF);
     }
 }

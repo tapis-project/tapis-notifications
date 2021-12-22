@@ -10,13 +10,18 @@ import org.jooq.impl.SQLDataType;
 
 
 /**
- * Convenience access to all sequences in tapis_notif.
+ * Convenience access to all sequences in tapis_ntf.
  */
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Sequences {
 
     /**
-     * The sequence <code>tapis_notif.subscriptions_seq_id_seq</code>
+     * The sequence <code>tapis_ntf.subscription_updates_seq_id_seq</code>
      */
-    public static final Sequence<Integer> SUBSCRIPTIONS_SEQ_ID_SEQ = Internal.createSequence("subscriptions_seq_id_seq", TapisNotif.TAPIS_NOTIF, SQLDataType.INTEGER.nullable(false), null, null, null, null, false, null);
+    public static final Sequence<Integer> SUBSCRIPTION_UPDATES_SEQ_ID_SEQ = Internal.createSequence("subscription_updates_seq_id_seq", TapisNtf.TAPIS_NTF, SQLDataType.INTEGER.nullable(false), null, null, null, null, false, null);
+
+    /**
+     * The sequence <code>tapis_ntf.subscriptions_seq_id_seq</code>
+     */
+    public static final Sequence<Integer> SUBSCRIPTIONS_SEQ_ID_SEQ = Internal.createSequence("subscriptions_seq_id_seq", TapisNtf.TAPIS_NTF, SQLDataType.INTEGER.nullable(false), null, null, null, null, false, null);
 }

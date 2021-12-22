@@ -3,6 +3,8 @@ package edu.utexas.tacc.tapis.notifications.api;
 import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
 import edu.utexas.tacc.tapis.notifications.dao.NotificationsDao;
 import edu.utexas.tacc.tapis.notifications.dao.NotificationsDaoImpl;
+import edu.utexas.tacc.tapis.notifications.dao.SubscriptionsDao;
+import edu.utexas.tacc.tapis.notifications.dao.SubscriptionsDaoImpl;
 import edu.utexas.tacc.tapis.notifications.service.NotificationsService;
 import edu.utexas.tacc.tapis.notifications.service.NotificationsServiceImpl;
 import edu.utexas.tacc.tapis.notifications.service.ServiceClientsFactory;
@@ -42,13 +44,13 @@ import javax.ws.rs.ApplicationPath;
  * The path here is appended to the context root and is configured to work when invoked in a standalone
  * container (command line) and in an IDE (such as eclipse).
  * ApplicationPath set to "/" since each resource class includes "/v3/notifications" in the
- *     path set at the class level. See NotificationResource.java, etc.
+ *     path set at the class level. See SubscriptionResource.java, etc.
  *     This has been found to be a more robust scheme for keeping startup working for both
  *     running in an IDE and standalone.
  *
  * For all logging use println or similar so we do not have a dependency on a logging subsystem.
  */
-@ApplicationPath("/")
+@ApplicationPath("/notifications")
 public class NotificationsApplication extends ResourceConfig
 {
   // We must be running on a specific site and this will never change
@@ -79,37 +81,6 @@ public class NotificationsApplication extends ResourceConfig
     // Set the application name. Note that this has no impact on base URL
     setApplicationName(TapisConstants.SERVICE_NAME_NOTIFICATIONS);
 
-/*
-        //our APIS
-        register(TopicsResource.class);
-        register(QueuesResource.class);
-        register(Healthcheck.class);
-        // Serialization
-        register(JacksonFeature.class);
-        // Custom Timestamp/Instant serialization
-        register(ObjectMapperContextResolver.class);
-        // ExceptionMappers, need both because ValidationMapper is a custom Jersey thing and
-        // can't be implemented in a generic mapper
-        register(TapisExceptionMapper.class);
-        register(ValidationExceptionMapper.class);
-
-        //Authorization Annotations
-        register(TopicsAuthz.class);
-        TenantManager tenantManager = TenantManager.getInstance(runtimeConfig.getTenantsServiceURL());
-        tenantManager.getTenants();
-
-        register(new AbstractBinder() {
-            @Override
-            protected void configure() {
-                bind(tenantManager).to(TenantManager.class);
-                bindFactory(ServiceJWTCacheFactory.class).to(ServiceJWT.class).in(Singleton.class);
-                bindAsContract(NotificationsService.class).in(Singleton.class);
-                bindAsContract(NotificationsPermissionsService.class).in(Singleton.class);
-                bindAsContract(QueueService.class).in(Singleton.class);
-                bindAsContract(NotificationsDAO.class);
-            }
-        });
-*/
     // Perform remaining init steps in try block so we can print a fatal error message if something goes wrong.
     try {
       // Get runtime parameters
@@ -136,8 +107,8 @@ public class NotificationsApplication extends ResourceConfig
         protected void configure() {
           bind(NotificationsServiceImpl.class).to(NotificationsService.class); // Used in Resource classes for most service calls
           bind(NotificationsServiceImpl.class).to(NotificationsServiceImpl.class); // Used in NotificationsResource for checkDB
-          bind(NotificationsDaoImpl.class).to(NotificationsDao.class); // Used in service impl
-          bindFactory(ServiceContextFactory.class).to(ServiceContext.class); // Used in service impl and TODO/TBD: NotificationsResource
+          bind(SubscriptionsDaoImpl.class).to(SubscriptionsDao.class); // Used in service impl
+          bindFactory(ServiceContextFactory.class).to(ServiceContext.class); // Used in service impl and NotificationsResource
           bindFactory(ServiceClientsFactory.class).to(ServiceClients.class); // Used in service impl
         }
       });

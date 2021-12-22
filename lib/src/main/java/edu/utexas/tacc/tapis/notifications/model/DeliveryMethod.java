@@ -1,64 +1,40 @@
 package edu.utexas.tacc.tapis.notifications.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.apache.commons.validator.routines.EmailValidator;
-import org.apache.commons.validator.routines.UrlValidator;
+import edu.utexas.tacc.tapis.notifications.model.Subscription.DeliveryType;
 
-import javax.validation.ValidationException;
-import java.time.Instant;
-import java.util.UUID;
-
-public class DeliveryMethod
+public final class DeliveryMethod
 {
-  private DeliveryMethodEnum deliveryMethod;
-  private String target;
-  private int subscriptionId;
-  private Instant created;
-  private UUID uuid;
-  private String tenantId;
+  private final DeliveryType deliveryType;
+  private final String webhookUrl;
+  private final String emailAddress;
 
-  public enum DeliveryMethodEnum { WEBHOOK, EMAIL, QUEUE, ACTOR }
-
-  public DeliveryMethod(){}
-
-  public DeliveryMethod(DeliveryMethodEnum deliveryMethod1, String target1) throws ValidationException
+  public DeliveryMethod(DeliveryType deliveryType1, String webhookUrl1, String emailAddress1)
   {
-    deliveryMethod = deliveryMethod1;
-    target = target1;
-    validate();
+    deliveryType = deliveryType1;
+    webhookUrl = webhookUrl1;
+    emailAddress = emailAddress1;
   }
 
-  private void validate() throws ValidationException
-  {
-    EmailValidator emailValidator = EmailValidator.getInstance();
-    UrlValidator urlValidator = UrlValidator.getInstance();
-    if ((deliveryMethod == DeliveryMethodEnum.EMAIL) && (!(emailValidator.isValid(target))))
-    {
-      throw new ValidationException("Invalid email");
-    }
-
-    if ((deliveryMethod == DeliveryMethodEnum.WEBHOOK) && (!(urlValidator.isValid(target))))
-    {
-      throw new ValidationException("Invalid URL");
-    }
+//  private void validate() throws ValidationException
+//  {
+//    EmailValidator emailValidator = EmailValidator.getInstance();
+//    UrlValidator urlValidator = UrlValidator.getInstance();
+//    if ((deliveryType == DeliveryMethodEnum.EMAIL) && (!(emailValidator.isValid(webhookUrl))))
+//    {
+//      throw new ValidationException("Invalid email");
+//    }
+//
+//    if ((deliveryType == DeliveryMethodEnum.WEBHOOK) && (!(urlValidator.isValid(webhookUrl))))
+//    {
+//      throw new ValidationException("Invalid URL");
+//    }
+//  }
+//
+  public DeliveryType getDeliveryType() {
+    return deliveryType;
   }
 
-  public DeliveryMethodEnum getDeliveryMethod() {
-    return deliveryMethod;
-  }
+  public String getWebhookUrl() { return webhookUrl; }
 
-  public String getTarget() { return target; }
-
-  @JsonIgnore
-  public int getSubscriptionId() { return subscriptionId; }
-  public void setSubscriptionId(int i) { subscriptionId = i; }
-
-  public Instant getCreated() { return created; }
-  public void setCreated(Instant c) { created = c; }
-
-  public UUID getUuid() { return uuid; }
-  public void setUuid(UUID u) { uuid = u; }
-
-  public String getTenantId() { return tenantId; }
-  public void setTenantId(String s) { tenantId = s; }
+  public String getEmailAddress() { return emailAddress; }
 }

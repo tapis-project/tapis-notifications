@@ -4,9 +4,12 @@
 package edu.utexas.tacc.tapis.notifications.gen.jooq.tables;
 
 
+import com.google.gson.JsonElement;
+
+import edu.utexas.tacc.tapis.notifications.dao.JSONBToJsonElementBinding;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.Indexes;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.Keys;
-import edu.utexas.tacc.tapis.notifications.gen.jooq.TapisNotif;
+import edu.utexas.tacc.tapis.notifications.gen.jooq.TapisNtf;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.SubscriptionsRecord;
 
 import java.time.LocalDateTime;
@@ -19,7 +22,7 @@ import org.jooq.Identity;
 import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row9;
+import org.jooq.Row13;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -39,7 +42,7 @@ public class Subscriptions extends TableImpl<SubscriptionsRecord> {
     private static final long serialVersionUID = 1L;
 
     /**
-     * The reference instance of <code>tapis_notif.subscriptions</code>
+     * The reference instance of <code>tapis_ntf.subscriptions</code>
      */
     public static final Subscriptions SUBSCRIPTIONS = new Subscriptions();
 
@@ -52,47 +55,67 @@ public class Subscriptions extends TableImpl<SubscriptionsRecord> {
     }
 
     /**
-     * The column <code>tapis_notif.subscriptions.seq_id</code>. Subscription sequence id
+     * The column <code>tapis_ntf.subscriptions.seq_id</code>. Subscription sequence id
      */
     public final TableField<SubscriptionsRecord, Integer> SEQ_ID = createField(DSL.name("seq_id"), SQLDataType.INTEGER.nullable(false).identity(true), this, "Subscription sequence id");
 
     /**
-     * The column <code>tapis_notif.subscriptions.tenant</code>. Tenant name associated with the subscription
+     * The column <code>tapis_ntf.subscriptions.tenant</code>. Tenant name associated with the subscription
      */
     public final TableField<SubscriptionsRecord, String> TENANT = createField(DSL.name("tenant"), SQLDataType.CLOB.nullable(false), this, "Tenant name associated with the subscription");
 
     /**
-     * The column <code>tapis_notif.subscriptions.id</code>. Unique name for the subscription
+     * The column <code>tapis_ntf.subscriptions.id</code>. Unique name for the subscription
      */
     public final TableField<SubscriptionsRecord, String> ID = createField(DSL.name("id"), SQLDataType.CLOB.nullable(false), this, "Unique name for the subscription");
 
     /**
-     * The column <code>tapis_notif.subscriptions.owner</code>. User name of owner
+     * The column <code>tapis_ntf.subscriptions.description</code>.
+     */
+    public final TableField<SubscriptionsRecord, String> DESCRIPTION = createField(DSL.name("description"), SQLDataType.CLOB, this, "");
+
+    /**
+     * The column <code>tapis_ntf.subscriptions.owner</code>. User name of owner
      */
     public final TableField<SubscriptionsRecord, String> OWNER = createField(DSL.name("owner"), SQLDataType.CLOB.nullable(false), this, "User name of owner");
 
     /**
-     * The column <code>tapis_notif.subscriptions.enabled</code>. Indicates if subscription is currently active and available for use
+     * The column <code>tapis_ntf.subscriptions.enabled</code>. Indicates if subscription is currently active and available for use
      */
     public final TableField<SubscriptionsRecord, Boolean> ENABLED = createField(DSL.name("enabled"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.field("true", SQLDataType.BOOLEAN)), this, "Indicates if subscription is currently active and available for use");
 
     /**
-     * The column <code>tapis_notif.subscriptions.topic_filter</code>.
+     * The column <code>tapis_ntf.subscriptions.type_filter</code>.
      */
-    public final TableField<SubscriptionsRecord, String> TOPIC_FILTER = createField(DSL.name("topic_filter"), SQLDataType.CLOB.nullable(false), this, "");
+    public final TableField<SubscriptionsRecord, String> TYPE_FILTER = createField(DSL.name("type_filter"), SQLDataType.CLOB.nullable(false), this, "");
 
     /**
-     * The column <code>tapis_notif.subscriptions.subject_filter</code>.
+     * The column <code>tapis_ntf.subscriptions.subject_filter</code>.
      */
-    public final TableField<SubscriptionsRecord, String> SUBJECT_FILTER = createField(DSL.name("subject_filter"), SQLDataType.CLOB.nullable(false), this, "");
+    public final TableField<SubscriptionsRecord, String> SUBJECT_FILTER = createField(DSL.name("subject_filter"), SQLDataType.CLOB, this, "");
 
     /**
-     * The column <code>tapis_notif.subscriptions.created</code>. UTC time for when record was created
+     * The column <code>tapis_ntf.subscriptions.delivery_methods</code>.
+     */
+    public final TableField<SubscriptionsRecord, JsonElement> DELIVERY_METHODS = createField(DSL.name("delivery_methods"), SQLDataType.JSONB.nullable(false), this, "", new JSONBToJsonElementBinding());
+
+    /**
+     * The column <code>tapis_ntf.subscriptions.notes</code>.
+     */
+    public final TableField<SubscriptionsRecord, JsonElement> NOTES = createField(DSL.name("notes"), SQLDataType.JSONB.nullable(false), this, "", new JSONBToJsonElementBinding());
+
+    /**
+     * The column <code>tapis_ntf.subscriptions.uuid</code>.
+     */
+    public final TableField<SubscriptionsRecord, java.util.UUID> UUID = createField(DSL.name("uuid"), SQLDataType.UUID.nullable(false), this, "");
+
+    /**
+     * The column <code>tapis_ntf.subscriptions.created</code>. UTC time for when record was created
      */
     public final TableField<SubscriptionsRecord, LocalDateTime> CREATED = createField(DSL.name("created"), SQLDataType.LOCALDATETIME(6).nullable(false).defaultValue(DSL.field("timezone('utc'::text, now())", SQLDataType.LOCALDATETIME)), this, "UTC time for when record was created");
 
     /**
-     * The column <code>tapis_notif.subscriptions.updated</code>. UTC time for when record was last updated
+     * The column <code>tapis_ntf.subscriptions.updated</code>. UTC time for when record was last updated
      */
     public final TableField<SubscriptionsRecord, LocalDateTime> UPDATED = createField(DSL.name("updated"), SQLDataType.LOCALDATETIME(6).nullable(false).defaultValue(DSL.field("timezone('utc'::text, now())", SQLDataType.LOCALDATETIME)), this, "UTC time for when record was last updated");
 
@@ -105,21 +128,21 @@ public class Subscriptions extends TableImpl<SubscriptionsRecord> {
     }
 
     /**
-     * Create an aliased <code>tapis_notif.subscriptions</code> table reference
+     * Create an aliased <code>tapis_ntf.subscriptions</code> table reference
      */
     public Subscriptions(String alias) {
         this(DSL.name(alias), SUBSCRIPTIONS);
     }
 
     /**
-     * Create an aliased <code>tapis_notif.subscriptions</code> table reference
+     * Create an aliased <code>tapis_ntf.subscriptions</code> table reference
      */
     public Subscriptions(Name alias) {
         this(alias, SUBSCRIPTIONS);
     }
 
     /**
-     * Create a <code>tapis_notif.subscriptions</code> table reference
+     * Create a <code>tapis_ntf.subscriptions</code> table reference
      */
     public Subscriptions() {
         this(DSL.name("subscriptions"), null);
@@ -131,7 +154,7 @@ public class Subscriptions extends TableImpl<SubscriptionsRecord> {
 
     @Override
     public Schema getSchema() {
-        return TapisNotif.TAPIS_NOTIF;
+        return TapisNtf.TAPIS_NTF;
     }
 
     @Override
@@ -181,11 +204,11 @@ public class Subscriptions extends TableImpl<SubscriptionsRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row9 type methods
+    // Row13 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row9<Integer, String, String, String, Boolean, String, String, LocalDateTime, LocalDateTime> fieldsRow() {
-        return (Row9) super.fieldsRow();
+    public Row13<Integer, String, String, String, String, Boolean, String, String, JsonElement, JsonElement, java.util.UUID, LocalDateTime, LocalDateTime> fieldsRow() {
+        return (Row13) super.fieldsRow();
     }
 }
