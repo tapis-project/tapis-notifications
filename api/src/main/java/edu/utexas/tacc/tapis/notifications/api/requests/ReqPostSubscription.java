@@ -8,7 +8,7 @@ import static edu.utexas.tacc.tapis.notifications.model.Subscription.DEFAULT_ENA
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.DEFAULT_NOTES;
 
 /*
- * Class representing all attributes that can be set in an incoming POST request json body
+ * Class representing all attributes that can be set in an incoming POST subscription request json body
  */
 public final class ReqPostSubscription
 {

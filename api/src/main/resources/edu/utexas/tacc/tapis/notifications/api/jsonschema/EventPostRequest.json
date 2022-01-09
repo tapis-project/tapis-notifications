@@ -1,0 +1,15 @@
+{
+  "$id": "https://tapis.tacc.utexas.edu/EventPostRequest",
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "description": "Schema for a request to post an event to the notifications queue",
+
+  "type": "object",
+  "required": [ "source", "type", "time" ],
+  "additionalProperties": false,
+  "properties": {
+    "source": { "type": "string", "format": "uri", "minLength": 1 },
+    "type": { "type": "string" },
+    "subject": { "type": ["string", "null"] },
+    "time": { "type":  "string", "format": "date-time" }
+  }
+}

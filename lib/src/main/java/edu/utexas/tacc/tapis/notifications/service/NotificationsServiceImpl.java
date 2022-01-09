@@ -10,6 +10,7 @@ import javax.inject.Inject;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 
+import edu.utexas.tacc.tapis.notifications.model.Event;
 import org.apache.commons.lang3.StringUtils;
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
@@ -101,8 +102,23 @@ public class NotificationsServiceImpl implements NotificationsService
   // *********************** Public Methods *********************************
   // ************************************************************************
 
+  /**
+   * Initialize the service:
+   *   init service context
+   *   migrate DB
+   */
+  public void initService(String siteId1, String siteAdminTenantId1, String svcPassword) throws TapisException, TapisClientException
+  {
+    // Initialize service context and site info
+    siteId = siteId1;
+    siteAdminTenantId = siteAdminTenantId1;
+    serviceContext.initServiceJWT(siteId, NOTIFICATIONS_SERVICE, svcPassword);
+    // Make sure DB is present and updated to latest version using flyway
+    dao.migrateDB();
+  }
+
   // -----------------------------------------------------------------------
-  // ------------------------- Notifications -------------------------------------
+  // ------------------------- Notifications -------------------------------
   // -----------------------------------------------------------------------
 
   /**
@@ -501,21 +517,6 @@ public class NotificationsServiceImpl implements NotificationsService
   }
 
   /**
-   * Initialize the service:
-   *   init service context
-   *   migrate DB
-   */
-  public void initService(String siteId1, String siteAdminTenantId1, String svcPassword) throws TapisException, TapisClientException
-  {
-    // Initialize service context and site info
-    siteId = siteId1;
-    siteAdminTenantId = siteAdminTenantId1;
-    serviceContext.initServiceJWT(siteId, NOTIFICATIONS_SERVICE, svcPassword);
-    // Make sure DB is present and updated to latest version using flyway
-    dao.migrateDB();
-  }
-
-  /**
    * Check that we can connect with DB and that the main table of the service exists.
    * @return null if all OK else return an Exception
    */
@@ -801,6 +802,26 @@ public class NotificationsServiceImpl implements NotificationsService
 
     return dao.getSubscriptionOwner(rUser.getOboTenantId(), subId);
   }
+
+  // -----------------------------------------------------------------------
+  // ------------------------- Events --------------------------------------
+  // -----------------------------------------------------------------------
+  /**
+   * Post an Event to the queue.
+   * @param rUser - ResourceRequestUser containing tenant, user and request info
+   * @param event - Pre-populated Event object
+   * @throws TapisException - for Tapis related exceptions
+   * @throws IllegalStateException - subscription exists OR subscription in invalid state
+   * @throws IllegalArgumentException - invalid parameter passed in
+   * @throws NotAuthorizedException - unauthorized
+   */
+  @Override
+  public void postEvent(ResourceRequestUser rUser, Event event)
+  {
+  }
+
+
+
 
   // ************************************************************************
   // **************************  Private Methods  ***************************

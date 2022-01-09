@@ -32,11 +32,10 @@ public final class Event
   /* ********************************************************************** */
 
   private static final String specversion = SPECVERSION;
-  private final String id; // Unique identifier for event. Required
   private final URI source; // Context in which event happened. Required
-  private final String topic; // Type of event related to originating occurrence. Required
+  private final String type; // Type of event related to originating occurrence. Required
   private final String subject; // Subject of event in context of event producer.
-  private final OffsetDateTime time; // Timestamp of when the occurrence happened. RFC 3339 (ISO 8601)
+  private final String time; // Timestamp of when the occurrence happened. RFC 3339 (ISO 8601)
   private final String datacontenttype; // Content type of data value. RFC 2046. E.g. application/xml, text/xml, etc.
   private final Object data; // Data associated with the event.
   private final String data_base64; // If data is binary it must be base64 encoded.
@@ -44,29 +43,25 @@ public final class Event
   /* ********************************************************************** */
   /*                           Constructors                                 */
   /* ********************************************************************** */
-  public Event(String id1, URI source1, String type1, String subject1, String datacontenttype1,
-               OffsetDateTime time1, Object data1, String data_base64_1)
+  public Event(URI source1, String type1, String subject1, String time1)
   {
-    id = id1;
     source = source1;
-    topic = type1;
+    type = type1;
     subject = subject1;
-    datacontenttype = datacontenttype1;
     time = time1;
-    data = data1;
-    data_base64 = data_base64_1;
+    datacontenttype = null;
+    data = null;
+    data_base64 = null;
   }
 
   /* ********************************************************************** */
   /*                               Accessors                                */
   /* ********************************************************************** */
   public String getSpecversion() { return specversion; }
-  public String getId() { return id; }
   public URI getSource() { return source; }
-  public String getTopic() { return topic; }
-  public String getType() { return topic; }
+  public String getType() { return type; }
   public String getSubject() { return subject; }
-  public OffsetDateTime getTime() { return time; }
+  public String getTime() { return time; }
   public String getDatacontenttype() { return datacontenttype; }
   public Object getData() { return data; }
   public String getData_base64() { return data_base64; }
