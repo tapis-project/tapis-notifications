@@ -91,5 +91,5 @@ public interface NotificationsService
 
   // ------------------------- Events --------------------------------------
   // -----------------------------------------------------------------------
-  void postEvent(ResourceRequestUser rUser, Event event);
+  void postEvent(ResourceRequestUser rUser, Event event) throws TapisException;
 }

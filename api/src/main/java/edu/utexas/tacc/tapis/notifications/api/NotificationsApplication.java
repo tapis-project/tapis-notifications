@@ -39,6 +39,7 @@ import javax.ws.rs.ApplicationPath;
  *   Initializes the service:
  *     Init service context.
  *     DB creation or migration
+ *     Message broker setup
  *   Starts the Grizzly server.
  *
  * The path here is appended to the context root and is configured to work when invoked in a standalone
@@ -147,8 +148,8 @@ public class NotificationsApplication extends ResourceConfig
     ServiceLocator locator = im.getInstance(ServiceLocator.class);
     NotificationsServiceImpl svcImpl = locator.getService(NotificationsServiceImpl.class);
 
-    // Call the main service init method
-    svcImpl.initService(siteId, siteAdminTenantId, RuntimeParameters.getInstance().getServicePassword());
+    // Call the main service init method. Setup service context, DB and message broker.
+    svcImpl.initService(siteAdminTenantId, RuntimeParameters.getInstance());
     // Create and start the server
     final HttpServer server = GrizzlyHttpServerFactory.createHttpServer(baseUri, config, false);
     server.start();

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Random;
 
+import com.rabbitmq.client.ConnectionFactory;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,8 +35,7 @@ import edu.utexas.tacc.tapis.shared.utils.TapisUtils;
  * can be used to fail-fast services that are not configured correctly by
  * calling getInstance() early in a service's initialization sequence.
  */
-public final class RuntimeParameters 
- implements EmailClientParameters
+public final class RuntimeParameters implements EmailClientParameters
 {
     /* ********************************************************************** */
     /*                               Constants                                */
@@ -88,7 +88,18 @@ public final class RuntimeParameters
 	private String tenantsSvcURL;
 	private String skSvcURL;
 
-	// Mail configuration.
+  // RabbitMQ configuration.
+  private String  queueAdminUser;
+  private String  queueAdminPassword;
+  private int     queueAdminPort;
+  private String  queueUser;
+  private String  queuePassword;
+  private String  queueHost;
+  private int     queuePort;
+  private boolean queueSSLEnabled;
+  private boolean queueAutoRecoveryEnabled = true;
+
+  // Mail configuration.
 	private EmailProviderType emailProviderType;
 	private boolean emailAuth;
 	private String  emailHost;
@@ -288,8 +299,124 @@ public final class RuntimeParameters
             throw new TapisRuntimeException(msg, e);
           }
       }
-    
-    // --------------------- Email Parameters -------------------------
+
+      // --------------------- RabbitMQ Parameters ----------------------
+      // The broker's administrator credentials used to set up vhost.
+      parm = inputProperties.getProperty(EnvVar.TAPIS_QUEUE_ADMIN_USER.getEnvName());
+      if (!StringUtils.isBlank(parm)) setQueueAdminUser(parm);
+      else {
+        // Stop on bad input.
+        String msg = MsgUtils.getMsg("TAPIS_SERVICE_PARM_MISSING",
+                TapisConstants.SERVICE_NAME_JOBS,
+                "queueAdminUser");
+        _log.error(msg);
+        throw new TapisRuntimeException(msg);
+      }
+      parm = inputProperties.getProperty(EnvVar.TAPIS_QUEUE_ADMIN_PASSWORD.getEnvName());
+      if (!StringUtils.isBlank(parm)) setQueueAdminPassword(parm);
+      else {
+        // Stop on bad input.
+        String msg = MsgUtils.getMsg("TAPIS_SERVICE_PARM_MISSING",
+                TapisConstants.SERVICE_NAME_JOBS,
+                "queueAdminPassword");
+        _log.error(msg);
+        throw new TapisRuntimeException(msg);
+      }
+
+      // Optional broker port.
+      parm = inputProperties.getProperty(EnvVar.TAPIS_QUEUE_ADMIN_PORT.getEnvName());
+      if (StringUtils.isBlank(parm)) setQueueAdminPort(isQueueSSLEnabled() ? 15671 : 15672);
+      else {
+        try {setQueueAdminPort(Integer.parseInt(parm));}
+        catch (Exception e) {
+          // Stop on bad input.
+          String msg = MsgUtils.getMsg("TAPIS_SERVICE_PARM_INITIALIZATION_FAILED",
+                  TapisConstants.SERVICE_NAME_JOBS,
+                  "queuePort",
+                  e.getMessage());
+          _log.error(msg, e);
+          throw new TapisRuntimeException(msg, e);
+        }
+      }
+
+      // This service's normal runtime credentials.
+      parm = inputProperties.getProperty(EnvVar.TAPIS_QUEUE_USER.getEnvName());
+      if (!StringUtils.isBlank(parm)) setQueueUser(parm);
+      else {
+        // Stop on bad input.
+        String msg = MsgUtils.getMsg("TAPIS_SERVICE_PARM_MISSING",
+                TapisConstants.SERVICE_NAME_JOBS,
+                "queueUser");
+        _log.error(msg);
+        throw new TapisRuntimeException(msg);
+      }
+      parm = inputProperties.getProperty(EnvVar.TAPIS_QUEUE_PASSWORD.getEnvName());
+      if (!StringUtils.isBlank(parm)) setQueuePassword(parm);
+      else {
+        // Stop on bad input.
+        String msg = MsgUtils.getMsg("TAPIS_SERVICE_PARM_MISSING",
+                TapisConstants.SERVICE_NAME_JOBS,
+                "queuePassword");
+        _log.error(msg);
+        throw new TapisRuntimeException(msg);
+      }
+
+      // Optional ssl enabled.  Compute this value before assigning a default port.
+      parm = inputProperties.getProperty(EnvVar.TAPIS_QUEUE_SSL_ENABLE.getEnvName());
+      if (StringUtils.isBlank(parm)) setQueueSSLEnabled(false);
+      else {
+        try {setQueueSSLEnabled(Boolean.parseBoolean(parm));}
+        catch (Exception e) {
+          // Stop on bad input.
+          String msg = MsgUtils.getMsg("TAPIS_SERVICE_PARM_INITIALIZATION_FAILED",
+                  TapisConstants.SERVICE_NAME_JOBS,
+                  "queueSSLEnabled",
+                  e.getMessage());
+          _log.error(msg, e);
+          throw new TapisRuntimeException(msg, e);
+        }
+      }
+
+      // Broker host defaults to localhost.
+      parm = inputProperties.getProperty(EnvVar.TAPIS_QUEUE_HOST.getEnvName());
+      if (!StringUtils.isBlank(parm)) setQueueHost(parm);
+      else setQueueHost("localhost");
+
+      // Optional broker port.
+      parm = inputProperties.getProperty(EnvVar.TAPIS_QUEUE_PORT.getEnvName());
+      if (StringUtils.isBlank(parm))
+        setQueuePort(isQueueSSLEnabled() ? ConnectionFactory.DEFAULT_AMQP_OVER_SSL_PORT :
+                ConnectionFactory.DEFAULT_AMQP_PORT);
+      else {
+        try {setQueuePort(Integer.parseInt(parm));}
+        catch (Exception e) {
+          // Stop on bad input.
+          String msg = MsgUtils.getMsg("TAPIS_SERVICE_PARM_INITIALIZATION_FAILED",
+                  TapisConstants.SERVICE_NAME_JOBS,
+                  "queuePort",
+                  e.getMessage());
+          _log.error(msg, e);
+          throw new TapisRuntimeException(msg, e);
+        }
+      }
+
+      // Optional auto-recovery enabled by default.
+      parm = inputProperties.getProperty(EnvVar.TAPIS_QUEUE_AUTO_RECOVERY.getEnvName());
+      if (StringUtils.isBlank(parm)) setQueueAutoRecoveryEnabled(true);
+      else {
+        try {setQueueAutoRecoveryEnabled(Boolean.parseBoolean(parm));}
+        catch (Exception e) {
+          // Stop on bad input.
+          String msg = MsgUtils.getMsg("TAPIS_SERVICE_PARM_INITIALIZATION_FAILED",
+                  TapisConstants.SERVICE_NAME_JOBS,
+                  "queueAutoRecoveryEnabled",
+                  e.getMessage());
+          _log.error(msg, e);
+          throw new TapisRuntimeException(msg, e);
+        }
+      }
+
+      // --------------------- Email Parameters -------------------------
     // Currently LOG or SMTP.
     parm = inputProperties.getProperty(EnvVar.TAPIS_MAIL_PROVIDER.getEnvName());
     if (StringUtils.isBlank(parm)) parm = DEFAULT_EMAIL_PROVIDER;
@@ -431,7 +558,23 @@ public final class RuntimeParameters
 		buf.append("\ntapis.svc.sk.url: ");
 		buf.append(skSvcURL);
 
-		buf.append("\n------- Email Configuration -----------------------");
+      buf.append("\n------- RabbitMQ Configuration --------------------");
+      buf.append("\ntapis.queue.host: ");
+      buf.append(this.getQueueHost());
+      buf.append("\ntapis.queue.admin.user: ");
+      buf.append(this.getQueueAdminUser());
+      buf.append("\ntapis.queue.admin.port: ");
+      buf.append(this.getQueueAdminPort());
+      buf.append("\ntapis.queue.user: ");
+      buf.append(this.getQueueUser());
+      buf.append("\ntapis.queue.port: ");
+      buf.append(this.getQueuePort());
+      buf.append("\ntapis.queue.ssl.enable: ");
+      buf.append(this.isQueueSSLEnabled());
+      buf.append("\ntapis.queue.auto.recovery: ");
+      buf.append(this.isQueueAutoRecoveryEnabled());
+
+        buf.append("\n------- Email Configuration -----------------------");
 		buf.append("\ntapis.mail.provider: ");
 		buf.append(this.getEmailProviderType().name());
 		buf.append("\ntapis.smtp.auth: ");
@@ -589,11 +732,9 @@ public final class RuntimeParameters
 		return _instance;
 	}
 
-	
 	public String getDbConnectionPoolName() {
 		return dbConnectionPoolName;
 	}
-
 	private void setDbConnectionPoolName(String dbConnectionPoolName) {
 		this.dbConnectionPoolName = dbConnectionPoolName;
 	}
@@ -601,7 +742,6 @@ public final class RuntimeParameters
 	public int getDbConnectionPoolSize() {
 		return dbConnectionPoolSize;
 	}
-
 	private void setDbConnectionPoolSize(int dbConnectionPoolSize) {
 		this.dbConnectionPoolSize = dbConnectionPoolSize;
 	}
@@ -609,7 +749,6 @@ public final class RuntimeParameters
 	public String getDbUser() {
 		return dbUser;
 	}
-
 	private void setDbUser(String dbUser) {
 		this.dbUser = dbUser;
 	}
@@ -617,7 +756,6 @@ public final class RuntimeParameters
 	public String getDbPassword() {
 		return dbPassword;
 	}
-
 	private void setDbPassword(String dbPassword) {
 		this.dbPassword = dbPassword;
 	}
@@ -625,7 +763,6 @@ public final class RuntimeParameters
 	public String getJdbcURL() {
 		return jdbcURL;
 	}
-
 	private void setJdbcURL(String jdbcURL) {
 		this.jdbcURL = jdbcURL;
 	}
@@ -642,39 +779,87 @@ public final class RuntimeParameters
 	public String getInstanceName() {
 	    return instanceName;
 	}
-
-	private void setInstanceName(String name) {
-	    this.instanceName = name;
-	}
+	private void setInstanceName(String s) { instanceName = s; }
 
 	public boolean isAllowTestHeaderParms() {
 	    return allowTestHeaderParms;
 	}
-
-	private void setAllowTestHeaderParms(boolean allowTestHeaderParms) {
-	    this.allowTestHeaderParms = allowTestHeaderParms;
-	}
+	private void setAllowTestHeaderParms(boolean b) {   allowTestHeaderParms = b; }
 
 	public int getDbMeterMinutes() {
 	    return dbMeterMinutes;
 	}
-
 	private void setDbMeterMinutes(int dbMeterMinutes) {
 	    this.dbMeterMinutes = dbMeterMinutes;
 	}
 
+  public String getQueueAdminUser() {
+    return queueAdminUser;
+  }
+  public void setQueueAdminUser(String s) {
+    queueAdminUser = s;
+  }
+
+  public String getQueueAdminPassword() {
+    return queueAdminPassword;
+  }
+  public void setQueueAdminPassword(String s) {
+    queueAdminPassword = s;
+  }
+
+  public int getQueueAdminPort() {
+    return queueAdminPort;
+  }
+  public void setQueueAdminPort(int s) {
+    queueAdminPort = s;
+  }
+
+  public String getQueueUser() {
+    return queueUser;
+  }
+  public void setQueueUser(String s) {
+    queueUser = s;
+  }
+
+  public String getQueuePassword() {
+    return queuePassword;
+  }
+  public void setQueuePassword(String s) {
+    queuePassword = s;
+  }
+
+  public String getQueueHost() { return queueHost; }
+  public void setQueueHost(String s) {
+    queueHost = s;
+  }
+
+  public int getQueuePort() {
+    return queuePort;
+  }
+  public void setQueuePort(int i) {
+    queuePort = i;
+  }
+
+  public boolean isQueueSSLEnabled() {
+    return queueSSLEnabled;
+  }
+  public void setQueueSSLEnabled(boolean queueSSLEnabled) {
+    this.queueSSLEnabled = queueSSLEnabled;
+  }
+
+  public boolean isQueueAutoRecoveryEnabled() {
+    return queueAutoRecoveryEnabled;
+  }
+  public void setQueueAutoRecoveryEnabled(boolean b) { queueAutoRecoveryEnabled = b; }
+
     public EmailProviderType getEmailProviderType() {
         return emailProviderType;
     }
-
-    public void setEmailProviderType(EmailProviderType emailProviderType) {
-        this.emailProviderType = emailProviderType;
-    }
+    public void setEmailProviderType(EmailProviderType e) { emailProviderType = e; }
 
     public boolean isEmailAuth() {
         return emailAuth;
     }
-
     public void setEmailAuth(boolean emailAuth) {
         this.emailAuth = emailAuth;
     }
@@ -682,7 +867,6 @@ public final class RuntimeParameters
     public String getEmailHost() {
         return emailHost;
     }
-
     public void setEmailHost(String emailHost) {
         this.emailHost = emailHost;
     }
@@ -690,7 +874,6 @@ public final class RuntimeParameters
     public int getEmailPort() {
         return emailPort;
     }
-
     public void setEmailPort(int emailPort) {
         this.emailPort = emailPort;
     }
@@ -698,7 +881,6 @@ public final class RuntimeParameters
     public String getEmailUser() {
         return emailUser;
     }
-
     public void setEmailUser(String emailUser) {
         this.emailUser = emailUser;
     }
@@ -706,7 +888,6 @@ public final class RuntimeParameters
     public String getEmailPassword() {
         return emailPassword;
     }
-
     public void setEmailPassword(String emailPassword) {
         this.emailPassword = emailPassword;
     }
@@ -714,7 +895,6 @@ public final class RuntimeParameters
     public String getEmailFromName() {
         return emailFromName;
     }
-
     public void setEmailFromName(String emailFromName) {
         this.emailFromName = emailFromName;
     }
@@ -722,7 +902,6 @@ public final class RuntimeParameters
     public String getEmailFromAddress() {
         return emailFromAddress;
     }
-
     public void setEmailFromAddress(String emailFromAddress) {
         this.emailFromAddress = emailFromAddress;
     }
@@ -730,7 +909,6 @@ public final class RuntimeParameters
     public String getSupportName() {
         return supportName;
     }
-
     public void setSupportName(String supportName) {
         this.supportName = supportName;
     }
@@ -738,7 +916,6 @@ public final class RuntimeParameters
     public String getSupportEmail() {
         return supportEmail;
     }
-
     public void setSupportEmail(String supportEmail) {
         this.supportEmail = supportEmail;
     }
@@ -746,7 +923,6 @@ public final class RuntimeParameters
     public String getLogDirectory() {
         return logDirectory;
     }
-
     public void setLogDirectory(String logDirectory) {
         this.logDirectory = logDirectory;
     }
@@ -754,7 +930,6 @@ public final class RuntimeParameters
     public String getLogFile() {
         return logFile;
     }
-
     public void setLogFile(String logFile) {
         this.logFile = logFile;
     }

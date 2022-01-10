@@ -95,7 +95,7 @@ public class SubscriptionsServiceTest
     // Initialize services
     svc = locator.getService(NotificationsService.class);
     svcImpl = locator.getService(NotificationsServiceImpl.class);
-    svcImpl.initService(siteId, adminTenantName, RuntimeParameters.getInstance().getServicePassword());
+    svcImpl.initService(adminTenantName, RuntimeParameters.getInstance());
 
     // Initialize authenticated user and service
     rAdminUser = new ResourceRequestUser(new AuthenticatedUser(adminUser, tenantName, TapisThreadContext.AccountType.user.name(),

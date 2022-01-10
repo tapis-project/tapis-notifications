@@ -10,7 +10,6 @@ import javax.inject.Inject;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 
-import edu.utexas.tacc.tapis.notifications.model.Event;
 import org.apache.commons.lang3.StringUtils;
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
@@ -31,6 +30,9 @@ import edu.utexas.tacc.tapis.shared.utils.TapisGsonUtils;
 import edu.utexas.tacc.tapis.sharedapi.security.ResourceRequestUser;
 
 
+import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
+import edu.utexas.tacc.tapis.notifications.model.Event;
+import edu.utexas.tacc.tapis.notifications.queue.MessageBrokerManager;
 import edu.utexas.tacc.tapis.notifications.dao.SubscriptionsDao;
 import edu.utexas.tacc.tapis.notifications.model.PatchSubscription;
 import edu.utexas.tacc.tapis.notifications.model.Subscription;
@@ -106,15 +108,19 @@ public class NotificationsServiceImpl implements NotificationsService
    * Initialize the service:
    *   init service context
    *   migrate DB
+   *   init message broker
    */
-  public void initService(String siteId1, String siteAdminTenantId1, String svcPassword) throws TapisException, TapisClientException
+  public void initService(String siteAdminTenantId1, RuntimeParameters runParms)
+          throws TapisException, TapisClientException
   {
     // Initialize service context and site info
-    siteId = siteId1;
+    siteId = runParms.getSiteId();
     siteAdminTenantId = siteAdminTenantId1;
-    serviceContext.initServiceJWT(siteId, NOTIFICATIONS_SERVICE, svcPassword);
+    serviceContext.initServiceJWT(siteId, NOTIFICATIONS_SERVICE, runParms.getServicePassword());
     // Make sure DB is present and updated to latest version using flyway
     dao.migrateDB();
+    // Initialize the singleton instance of the message broker manager
+    MessageBrokerManager.init(runParms);
   }
 
   // -----------------------------------------------------------------------
@@ -816,8 +822,9 @@ public class NotificationsServiceImpl implements NotificationsService
    * @throws NotAuthorizedException - unauthorized
    */
   @Override
-  public void postEvent(ResourceRequestUser rUser, Event event)
+  public void postEvent(ResourceRequestUser rUser, Event event) throws TapisException
   {
+    MessageBrokerManager.getInstance().queueEvent(rUser, event);
   }
 
 
