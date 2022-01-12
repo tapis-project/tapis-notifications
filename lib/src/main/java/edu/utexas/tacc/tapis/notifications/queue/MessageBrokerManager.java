@@ -2,12 +2,10 @@ package edu.utexas.tacc.tapis.notifications.queue;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 import java.util.Map;
-import com.rabbitmq.client.BasicProperties;
+
 import com.rabbitmq.client.BuiltinExchangeType;
 import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Envelope;
 import edu.utexas.tacc.tapis.notifications.model.Event;
 import edu.utexas.tacc.tapis.notifications.utils.LibUtils;
 import edu.utexas.tacc.tapis.sharedapi.security.ResourceRequestUser;
@@ -44,6 +42,8 @@ public final class MessageBrokerManager extends AbstractQueueManager
   // Tracing.
   private static final Logger log = LoggerFactory.getLogger(MessageBrokerManager.class);
 
+  public static final String VHOST = "NotificationsHost";
+  public static final String DEFAULT_BINDING_KEY = "#";
   public static final String EXCHANGE_NAME = "tapis.notifications.submit.exchange";
   public static final String QUEUE_NAME = "tapis.notifications.submit.defaultQueue";
 
@@ -75,7 +75,7 @@ public final class MessageBrokerManager extends AbstractQueueManager
     // Initialize vhost.
     initRabbitVHost();
 
-    // TODO/TBD Create the queues needed by most if not all applications.
+    // Create the queues needed by most if not all applications.
     //  do we need to create these? or just the single exchange and queue that will accept notif events?
     try
     {
@@ -83,7 +83,7 @@ public final class MessageBrokerManager extends AbstractQueueManager
     }
     catch (Exception e)
     {
-      String msg = MsgUtils.getMsg("NTFLIB_MSGBRKR_INIT_ERR", qMgrParms.getService(), qMgrParms.getInstanceName());
+      String msg = LibUtils.getMsg("NTFLIB_MSGBRKR_INIT_ERR", qMgrParms.getService(), qMgrParms.getInstanceName());
       throw new TapisRuntimeException(msg, e);
     }
 
@@ -94,7 +94,7 @@ public final class MessageBrokerManager extends AbstractQueueManager
     }
     catch (Exception e)
     {
-      String msg = MsgUtils.getMsg("NTFLIB_MSGBRKR_INIT_ERR", qMgrParms.getService(), qMgrParms.getInstanceName());
+      String msg = LibUtils.getMsg("NTFLIB_MSGBRKR_INIT_ERR", qMgrParms.getService(), qMgrParms.getInstanceName());
       throw new TapisRuntimeException(msg, e);
     }
   }
@@ -118,9 +118,8 @@ public final class MessageBrokerManager extends AbstractQueueManager
         // Construct QueueManagerParms for the super-class constructor
         qMgrParms = new QueueManagerParms();
         qMgrParms.setService(TapisConstants.SERVICE_NAME_NOTIFICATIONS);
-        qMgrParms.setVhost(TapisConstants.SERVICE_NAME_NOTIFICATIONS);
+        qMgrParms.setVhost(VHOST);
         qMgrParms.setInstanceName(parms.getInstanceName());
-
         qMgrParms.setQueueHost(parms.getQueueHost());
         qMgrParms.setQueuePort(parms.getQueuePort());
         qMgrParms.setQueueUser(parms.getQueueUser());
@@ -328,7 +327,7 @@ public final class MessageBrokerManager extends AbstractQueueManager
 //      // Create a temporary channel.
 //      try {channel = getNewOutChannel();}
 //        catch (Exception e) {
-//          String msg = MsgUtils.getMsg("JOBS_QMGR_OUT_CHANNEL_ERROR");
+//          String msg = LibUtils.getMsg("JOBS_QMGR_OUT_CHANNEL_ERROR");
 //          throw new JobException(msg, e);
 //        }
 //
@@ -343,12 +342,12 @@ public final class MessageBrokerManager extends AbstractQueueManager
 //
 //        // Tracing.
 //        if (log.isDebugEnabled()) {
-//            String msg = MsgUtils.getMsg("JOBS_QMGR_POST", exchangeName, queueName);
+//            String msg = LibUtils.getMsg("JOBS_QMGR_POST", exchangeName, queueName);
 //            log.debug(msg);
 //        }
 //      }
 //      catch (Exception e) {
-//          String msg = MsgUtils.getMsg("JOBS_QMGR_PUBLISH_ERROR", exchangeName,
+//          String msg = LibUtils.getMsg("JOBS_QMGR_PUBLISH_ERROR", exchangeName,
 //                                       getOutConnectionName(), channel.getChannelNumber(),
 //                                       e.getMessage());
 //          throw new JobQueueException(msg, e);
@@ -368,7 +367,7 @@ public final class MessageBrokerManager extends AbstractQueueManager
 //            else channel.close();
 //        }
 //          catch (Exception e) {
-//            String msg = MsgUtils.getMsg("JOBS_QMGR_CHANNEL_CLOSE_ERROR", channel.getChannelNumber(),
+//            String msg = LibUtils.getMsg("JOBS_QMGR_CHANNEL_CLOSE_ERROR", channel.getChannelNumber(),
 //                                         e.getMessage());
 //            log.error(msg, e);
 //          }
@@ -403,12 +402,12 @@ public final class MessageBrokerManager extends AbstractQueueManager
 //
 //        // Tracing.
 //        if (log.isDebugEnabled()) {
-//            String msg = MsgUtils.getMsg("JOBS_QMGR_POST", exchangeName, routingKey);
+//            String msg = LibUtils.getMsg("JOBS_QMGR_POST", exchangeName, routingKey);
 //            log.debug(msg);
 //        }
 //      }
 //      catch (Exception e) {
-//          String msg = MsgUtils.getMsg("JOBS_QMGR_PUBLISH_ERROR", exchangeName,
+//          String msg = LibUtils.getMsg("JOBS_QMGR_PUBLISH_ERROR", exchangeName,
 //                                       getOutConnectionName(), channel.getChannelNumber(),
 //                                       e.getMessage());
 //          throw new JobQueueException(msg, e);
@@ -428,7 +427,7 @@ public final class MessageBrokerManager extends AbstractQueueManager
 //            else channel.close();
 //        }
 //          catch (Exception e) {
-//            String msg = MsgUtils.getMsg("JOBS_QMGR_CHANNEL_CLOSE_ERROR", channel.getChannelNumber(),
+//            String msg = LibUtils.getMsg("JOBS_QMGR_CHANNEL_CLOSE_ERROR", channel.getChannelNumber(),
 //                                         e.getMessage());
 //            log.error(msg, e);
 //          }
@@ -459,7 +458,7 @@ public final class MessageBrokerManager extends AbstractQueueManager
 //      // Create a temporary channel.
 //      try {channel = getNewOutChannel();}
 //        catch (Exception e) {
-//          String msg = MsgUtils.getMsg("JOBS_QMGR_OUT_CHANNEL_ERROR");
+//          String msg = LibUtils.getMsg("JOBS_QMGR_OUT_CHANNEL_ERROR");
 //          throw new JobException(msg, e);
 //        }
 //
@@ -471,12 +470,12 @@ public final class MessageBrokerManager extends AbstractQueueManager
 //
 //        // Tracing.
 //        if (log.isDebugEnabled()) {
-//            String msg = MsgUtils.getMsg("JOBS_QMGR_POST", exchangeName, queueName);
+//            String msg = LibUtils.getMsg("JOBS_QMGR_POST", exchangeName, queueName);
 //            log.debug(msg);
 //        }
 //      }
 //      catch (Exception e) {
-//          String msg = MsgUtils.getMsg("JOBS_QMGR_PUBLISH_ERROR", exchangeName,
+//          String msg = LibUtils.getMsg("JOBS_QMGR_PUBLISH_ERROR", exchangeName,
 //                                       getOutConnectionName(), channel.getChannelNumber(),
 //                                       e.getMessage());
 //          throw new JobQueueException(msg, e);
@@ -496,7 +495,7 @@ public final class MessageBrokerManager extends AbstractQueueManager
 //            else channel.close();
 //        }
 //          catch (Exception e) {
-//            String msg = MsgUtils.getMsg("JOBS_QMGR_CHANNEL_CLOSE_ERROR", channel.getChannelNumber(),
+//            String msg = LibUtils.getMsg("JOBS_QMGR_CHANNEL_CLOSE_ERROR", channel.getChannelNumber(),
 //                                         e.getMessage());
 //            log.error(msg, e);
 //          }
@@ -613,7 +612,7 @@ public final class MessageBrokerManager extends AbstractQueueManager
 //      Channel channel = null;
 //      try {channel = getNewOutChannel();}
 //      catch (Exception e) {
-//          String msg = MsgUtils.getMsg("JOBS_QMGR_Q_UNBIND_ERROR", "topic",
+//          String msg = LibUtils.getMsg("JOBS_QMGR_Q_UNBIND_ERROR", "topic",
 //                                       queue, bindingKey, exchange, e.getMessage());
 //          log.error(msg, e);
 //          return;
@@ -622,7 +621,7 @@ public final class MessageBrokerManager extends AbstractQueueManager
 //      // Unbind.
 //      try {channel.queueUnbind(queue, exchange, bindingKey);}
 //      catch (Exception e) {
-//          String msg = MsgUtils.getMsg("JOBS_QMGR_Q_UNBIND_ERROR", "topic",
+//          String msg = LibUtils.getMsg("JOBS_QMGR_Q_UNBIND_ERROR", "topic",
 //                                       queue, bindingKey, exchange, e.getMessage());
 //          log.error(msg, e);
 //      }
@@ -630,7 +629,7 @@ public final class MessageBrokerManager extends AbstractQueueManager
 //      // Close the just created channel.
 //      try {channel.close();}
 //      catch (Exception e) {
-//          String msg = MsgUtils.getMsg("JOBS_QMGR_CHANNEL_CLOSE_ERROR",
+//          String msg = LibUtils.getMsg("JOBS_QMGR_CHANNEL_CLOSE_ERROR",
 //                                       channel.getChannelNumber(), e.getMessage());
 //          log.warn(msg, e);
 //      }
@@ -719,7 +718,7 @@ public final class MessageBrokerManager extends AbstractQueueManager
 //          if (channel != null)
 //            try {channel.close();}
 //                catch (Exception e1) {
-//                    String msg = MsgUtils.getMsg("JOBS_QMGR_CHANNEL_CLOSE_ERROR",
+//                    String msg = LibUtils.getMsg("JOBS_QMGR_CHANNEL_CLOSE_ERROR",
 //                                                 channel.getChannelNumber(), e1.getMessage());
 //                    log.warn(msg, e1);
 //                }
@@ -759,7 +758,7 @@ public final class MessageBrokerManager extends AbstractQueueManager
 //              if (!exchangeCreated) {
 //                  try {channel.exchangeDeclare(exchangeName, "direct", durable, autodelete, exchangeArgs);}
 //                      catch (Exception e) {
-//                          String msg = MsgUtils.getMsg("JOBS_QMGR_XCHG_ERROR", exchangeName,
+//                          String msg = LibUtils.getMsg("JOBS_QMGR_XCHG_ERROR", exchangeName,
 //                                                        getOutConnectionName(), channel.getChannelNumber(),
 //                                                        e.getMessage());
 //                          throw new TapisQueueException(msg, e);
@@ -776,7 +775,7 @@ public final class MessageBrokerManager extends AbstractQueueManager
 //          if (channel != null)
 //            try {channel.close();}
 //                catch (Exception e1) {
-//                    String msg = MsgUtils.getMsg("JOBS_QMGR_CHANNEL_CLOSE_ERROR",
+//                    String msg = LibUtils.getMsg("JOBS_QMGR_CHANNEL_CLOSE_ERROR",
 //                                                 channel.getChannelNumber(), e1.getMessage());
 //                    log.warn(msg, e1);
 //                }
@@ -790,7 +789,7 @@ public final class MessageBrokerManager extends AbstractQueueManager
   {
     String service = _parms.getService();
     Channel channel = null;
-    String bindingKey = null;
+    String bindingKey = DEFAULT_BINDING_KEY;
     Map<String, Object> exchangeArgs = null;
     try
     {
