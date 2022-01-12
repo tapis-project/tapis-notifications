@@ -251,9 +251,19 @@ public class NotificationsResource
   private Exception checkJWT()
   {
     Exception result = null;
-    try {
+    try
+    {
+      // Make sure we have one.
       String jwt = serviceContext.getServiceJWT().getAccessJWT(NotificationsApplication.getSiteId());
-      if (StringUtils.isBlank(jwt)) result = new TapisClientException(LibUtils.getMsg("NTFLIB_CHECKJWT_EMPTY"));
+      if (StringUtils.isBlank(jwt))
+      {
+        result = new TapisClientException(LibUtils.getMsg("NTFLIB_CHECKJWT_EMPTY"));
+      }
+      // Make sure it has not expired
+      if (serviceContext.getServiceJWT().hasExpiredAccessJWT(NotificationsApplication.getSiteId()))
+      {
+        result =  new TapisClientException(LibUtils.getMsg("NTFLIB_CHECKJWT_EXPIRED"));
+      }
     }
     catch (Exception e) { result = e; }
     return result;
