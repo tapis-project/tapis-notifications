@@ -6,6 +6,7 @@ import java.util.Map;
 
 import com.rabbitmq.client.BuiltinExchangeType;
 import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.DeliverCallback;
 import edu.utexas.tacc.tapis.notifications.model.Event;
 import edu.utexas.tacc.tapis.notifications.utils.LibUtils;
 import edu.utexas.tacc.tapis.sharedapi.security.ResourceRequestUser;
@@ -206,6 +207,44 @@ public final class MessageBrokerManager extends AbstractQueueManager
           // TODO/TBD: Is this needed? Cannot find any doc that discusses this.
           if (abortChannel) channel.abort(); else channel.close();
         }
+        catch (Exception e)
+        {
+          String msg = LibUtils.getMsgAuth("NTFLIB_MSGBRKR_CHAN_CLOSE_ERR", rUser, channel.getChannelNumber(),
+                                           e.getMessage());
+          log.error(msg, e);
+        }
+      }
+    }
+  }
+
+  /**
+   * Read a message from the notifications event queue processing it with the provided DeliverCallback
+   * @param rUser - ResourceRequestUser containing tenant, user and request info
+   * @throws TapisException - on error
+   */
+  public void readMsgWithAutoAck(ResourceRequestUser rUser, DeliverCallback deliverCallback) throws TapisException
+  {
+    boolean autoAck = true;
+
+    // Create a temporary channel.
+    Channel channel = getNewInChannel();
+
+    // Read message from queue. The deliverCallback method will process it.
+    try
+    {
+      channel.basicConsume(QUEUE_NAME, autoAck, deliverCallback, consumerTag -> {});
+    }
+    catch (IOException e)
+    {
+      String msg = LibUtils.getMsgAuth("NTFLIB_EVENT_CON_ERR", rUser, e.getMessage());
+      throw new TapisException(msg, e);
+    }
+    finally
+    {
+      // Channel clean up
+      if (channel != null)
+      {
+        try { channel.close(); }
         catch (Exception e)
         {
           String msg = LibUtils.getMsgAuth("NTFLIB_MSGBRKR_CHAN_CLOSE_ERR", rUser, channel.getChannelNumber(),
@@ -789,14 +828,13 @@ public final class MessageBrokerManager extends AbstractQueueManager
   {
     String service = _parms.getService();
     Channel channel = null;
-    String bindingKey = DEFAULT_BINDING_KEY;
     Map<String, Object> exchangeArgs = null;
     try
     {
       // Create a temporary channel.
       channel = getNewInChannel();
       createExchangeAndQueue(channel, service, EXCHANGE_NAME, BuiltinExchangeType.TOPIC, QUEUE_NAME,
-                             bindingKey, exchangeArgs);
+                             DEFAULT_BINDING_KEY, exchangeArgs);
     }
     finally
     {

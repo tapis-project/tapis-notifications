@@ -230,7 +230,7 @@ public class SubscriptionResource
     String subscriptionId = subscription.getId();
     try
     {
-      notificationsService.createSubscription(rUser, subscription, scrubbedJson);
+      subscriptionId = notificationsService.createSubscription(rUser, subscription, scrubbedJson);
     }
     catch (IllegalStateException e)
     {
@@ -270,7 +270,7 @@ public class SubscriptionResource
       return Response.status(Status.INTERNAL_SERVER_ERROR).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
 
-    // ---------------------------- Success ------------------------------- 
+    // ---------------------------- Success -------------------------------
     // Success means the object was created.
     ResultResourceUrl respUrl = new ResultResourceUrl();
     respUrl.url = _request.getRequestURL().toString() + "/" + subscriptionId;

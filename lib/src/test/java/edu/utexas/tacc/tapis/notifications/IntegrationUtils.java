@@ -10,6 +10,8 @@ import edu.utexas.tacc.tapis.search.parser.ASTNode;
 import edu.utexas.tacc.tapis.shared.threadlocal.OrderBy;
 import edu.utexas.tacc.tapis.shared.utils.TapisGsonUtils;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -98,6 +100,19 @@ public final class IntegrationUtils
   public static final List<String> orderByDirEmptyList = Arrays.asList("");
   public static final int skipZero = 0;
   public static final String startAferEmpty = "";
+
+  // Events
+  public static final URI eventSource1;
+  static
+  {
+    URI eventSource;
+    try { eventSource = new URI("https://dev.develop.tapis.io/v3/jobs");
+    }
+    catch (URISyntaxException e) { eventSource = null; e.printStackTrace(); }
+    eventSource1 = eventSource;
+  }
+  public static final String eventType1 = "tapis.jobs.job.complete";
+  public static final String eventSubject1 = "640ad5a8-1a6e-4189-a334-c4c7226fb9ba-007";
 
   /**
    * Create an array of Subscription objects in memory

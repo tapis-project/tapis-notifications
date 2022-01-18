@@ -42,7 +42,7 @@ public interface NotificationsService
 {
   // ------------------------- Subscriptions -------------------------------
   // -----------------------------------------------------------------------
-  void createSubscription(ResourceRequestUser rUser, Subscription subscription, String scrubbedText)
+  String createSubscription(ResourceRequestUser rUser, Subscription subscription, String scrubbedText)
           throws TapisException, TapisClientException, NotAuthorizedException, IllegalStateException, IllegalArgumentException;
 
   void patchSubscription(ResourceRequestUser rUser, String subscriptionId, PatchSubscription patchSubscription, String scrubbedText)

@@ -1,15 +1,18 @@
 package edu.utexas.tacc.tapis.notifications.service;
 
 import com.google.gson.JsonObject;
+import com.rabbitmq.client.DeliverCallback;
 import edu.utexas.tacc.tapis.notifications.dao.SubscriptionsDao;
 import edu.utexas.tacc.tapis.notifications.dao.SubscriptionsDaoImpl;
 import edu.utexas.tacc.tapis.notifications.model.DeliveryMethod;
+import edu.utexas.tacc.tapis.notifications.model.Event;
 import edu.utexas.tacc.tapis.notifications.model.PatchSubscription;
 import edu.utexas.tacc.tapis.notifications.model.Subscription;
 import edu.utexas.tacc.tapis.shared.security.ServiceClients;
 import edu.utexas.tacc.tapis.shared.security.ServiceContext;
 import edu.utexas.tacc.tapis.shared.security.TenantManager;
 import edu.utexas.tacc.tapis.shared.threadlocal.TapisThreadContext;
+import edu.utexas.tacc.tapis.shared.utils.TapisGsonUtils;
 import edu.utexas.tacc.tapis.shared.utils.TapisUtils;
 import edu.utexas.tacc.tapis.sharedapi.security.AuthenticatedUser;
 import edu.utexas.tacc.tapis.sharedapi.security.ResourceRequestUser;
@@ -18,19 +21,19 @@ import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
 import org.glassfish.hk2.api.ServiceLocator;
 import org.glassfish.hk2.utilities.ServiceLocatorUtilities;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
+import org.jooq.tools.StringUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
-import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import static edu.utexas.tacc.tapis.notifications.IntegrationUtils.*;
 
@@ -46,7 +49,7 @@ import static edu.utexas.tacc.tapis.notifications.IntegrationUtils.*;
  *   testuser1, testuser3 and testuser4 are also used
  */
 @Test(groups={"integration"})
-public class SubscriptionsServiceTest
+public class NotificationsServiceTest
 {
   private NotificationsService svc;
   private NotificationsServiceImpl svcImpl;
@@ -67,13 +70,13 @@ public class SubscriptionsServiceTest
   private static final String testUser5 = "testuser5";
 
   // Create test definitions in memory
-  int numSubscriptions = 14;
+  int numSubscriptions = 15;
   Subscription[] subscriptions = IntegrationUtils.makeSubscriptions(numSubscriptions, testKey);
 
   @BeforeSuite
   public void setUp() throws Exception
   {
-    System.out.println("Executing BeforeSuite setup method: " + SubscriptionsServiceTest.class.getSimpleName());
+    System.out.println("Executing BeforeSuite setup method: " + NotificationsServiceTest.class.getSimpleName());
     // Setup for HK2 dependency injection
     ServiceLocator locator = ServiceLocatorUtilities.createAndPopulateServiceLocator();
     ServiceLocatorUtilities.bind(locator, new AbstractBinder() {
@@ -115,14 +118,14 @@ public class SubscriptionsServiceTest
     rUser5 = new ResourceRequestUser(new AuthenticatedUser(testUser5, tenantName, TapisThreadContext.AccountType.user.name(),
                                       null, testUser5, tenantName, null, null, null));
 
-    // Cleanup anything leftover from previous failed run
+        // Cleanup anything leftover from previous failed run
     tearDown();
   }
 
   @AfterSuite
   public void tearDown() throws Exception
   {
-    System.out.println("Executing AfterSuite teardown for " + SubscriptionsServiceTest.class.getSimpleName());
+    System.out.println("Executing AfterSuite teardown for " + NotificationsServiceTest.class.getSimpleName());
     //Remove all objects created by tests
     for (int i = 0; i < numSubscriptions; i++)
     {
@@ -134,6 +137,9 @@ public class SubscriptionsServiceTest
     Assert.assertNull(tmpSub, "Subscription not deleted. Subscription Id: " + subscriptions[0].getId());
   }
 
+  // -----------------------------------------------------------------------
+  // ------------------------- Subscriptions -------------------------------
+  // -----------------------------------------------------------------------
   // Test creating a resource
   @Test
   public void testCreateSubscription() throws Exception
@@ -153,6 +159,21 @@ public class SubscriptionsServiceTest
     svc.createSubscription(rUser1, sub0, scrubbedJson);
     Subscription tmpSub = svc.getSubscription(rUser1, sub0.getId());
     checkCommonSubscriptionAttrs(sub0, tmpSub);
+  }
+
+  // Test creating a resource with no id specified.
+  // Id should be filled in with a UUID.
+  @Test
+  public void testCreateSubscriptionNoId() throws Exception
+  {
+    Subscription sub0 = new Subscription(subscriptions[14], tenantName, null);
+    String subId = svc.createSubscription(rUser1, sub0, scrubbedJson);
+    Assert.assertFalse(StringUtils.isBlank(subId));
+    Subscription tmpSub = svc.getSubscription(rUser1, subId);
+    Assert.assertNotNull(tmpSub, "Failed to create item: " + sub0.getId());
+    System.out.println("Found item: " + sub0.getId());
+    Subscription sub1 = new Subscription(sub0, tenantName, subId);
+    checkCommonSubscriptionAttrs(sub1, tmpSub);
   }
 
   // Test update using PUT
@@ -419,6 +440,49 @@ public class SubscriptionsServiceTest
     String owner = svc.getSubscriptionOwner(rUser1, fakeSubscriptionName);
     Assert.assertNull(owner, "Owner not null for non-existent subscription.");
   }
+
+  // -----------------------------------------------------------------------
+  // ------------------------- Events --------------------------------------
+  // -----------------------------------------------------------------------
+  // TODO: Test posting an event to the queue
+  //       Putting in sleeps and watching rabbitmq console can see message is posted
+  //       and then read off queue but not able to get the test to fail when it should.
+  //       Where does DeliveryCallback output go?
+  @Test
+  public void testPostEvent() throws Exception
+  {
+    OffsetDateTime eventTime = OffsetDateTime.now();
+    Event event = new Event(tenantName, eventSource1, eventType1, eventSubject1, eventTime.toString());
+    System.out.println("Placing event on queue. Event: " + event);
+    // Put an event on the queue as a message
+    svc.postEvent(rUser1, event);
+    // Create a consumer to handle messages read from the queue
+    DeliverCallback deliverCallback = (consumerTab, delivery) -> {
+      String msg = new String(delivery.getBody(), StandardCharsets.UTF_8);
+      System.out.println("Received msg: " + msg);
+      // Convert received msg into an Event
+      Event tmpEvent = TapisGsonUtils.getGson().fromJson(msg, Event.class);
+      // TODO test does not fail
+      Assert.fail("WE SHOULD FAIL. HOW?");
+      Assert.assertNotNull(msg, "Reading event resulted in null.");
+      Assert.assertEquals(tmpEvent.getTenantId(), event.getTenantId());
+      Assert.assertEquals(tmpEvent.getSource(), event.getSource());
+      Assert.assertEquals(tmpEvent.getType(), event.getType());
+      Assert.assertEquals(tmpEvent.getSubject(), event.getSubject());
+      Assert.assertEquals(tmpEvent.getTime().toString(), event.getTime().toString());
+    };
+    System.out.println("Sleep 20 secs");
+    Thread.sleep(20000);
+    // Read msg off the queue and verify the details
+    System.out.println("Read message");
+    svcImpl.readMsgWithAutoAck(rUser1, deliverCallback);
+    System.out.println("Sleep 20 secs");
+    Thread.sleep(20000);
+  }
+
+  // ************************************************************************
+  // **************************  Private Methods  ***************************
+  // ************************************************************************
 
   /**
    * Check common attributes after creating and retrieving aresource

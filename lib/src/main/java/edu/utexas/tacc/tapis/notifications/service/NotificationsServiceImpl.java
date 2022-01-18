@@ -4,12 +4,14 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 import javax.inject.Inject;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 
+import com.rabbitmq.client.DeliverCallback;
 import org.apache.commons.lang3.StringUtils;
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
@@ -124,22 +126,24 @@ public class NotificationsServiceImpl implements NotificationsService
   }
 
   // -----------------------------------------------------------------------
-  // ------------------------- Notifications -------------------------------
+  // ------------------------- Subscriptions -------------------------------
   // -----------------------------------------------------------------------
 
   /**
    * Create a new resource given a subscription and the text used to create the subscription.
    * Secrets in the text should be masked.
+   * If id is empty then generate a uuid and use that as the id.
    * @param rUser - ResourceRequestUser containing tenant, user and request info
    * @param sub - Pre-populated Subscription object
    * @param scrubbedText - Text used to create the Subscription object - secrets should be scrubbed. Saved in update record.
+   * @return subscription Id
    * @throws TapisException - for Tapis related exceptions
    * @throws IllegalStateException - subscription exists OR subscription in invalid state
    * @throws IllegalArgumentException - invalid parameter passed in
    * @throws NotAuthorizedException - unauthorized
    */
   @Override
-  public void createSubscription(ResourceRequestUser rUser, Subscription sub, String scrubbedText)
+  public String createSubscription(ResourceRequestUser rUser, Subscription sub, String scrubbedText)
           throws TapisException, TapisClientException, IllegalStateException, IllegalArgumentException, NotAuthorizedException
   {
     SubscriptionOperation op = SubscriptionOperation.create;
@@ -150,10 +154,22 @@ public class NotificationsServiceImpl implements NotificationsService
     String resourceId = sub.getId();
 
     // ---------------------------- Check inputs ------------------------------------
-    // Required subscription attributes: id
-    if (StringUtils.isBlank(resourceTenantId) || StringUtils.isBlank(resourceId))
+    if (StringUtils.isBlank(resourceTenantId))
     {
       throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_CREATE_ERROR_ARG", rUser, resourceId));
+    }
+
+    // sub1 is the subscription object that will be passed to the dao layer.
+    Subscription sub1;
+    // If no Id provided then fill in with a UUID.
+    if (StringUtils.isBlank(resourceId))
+    {
+      resourceId = UUID.randomUUID().toString();
+      sub1 = new Subscription(sub, resourceTenantId, resourceId);
+    }
+    else
+    {
+      sub1 = new Subscription(sub);
     }
 
     // Check if subscription already exists
@@ -163,19 +179,19 @@ public class NotificationsServiceImpl implements NotificationsService
     }
 
     // Make sure owner, notes and tags are all set
-    sub.setDefaults();
+    sub1.setDefaults();
 
     // ----------------- Resolve variables for any attributes that might contain them --------------------
-    sub.resolveVariables(rUser.getOboUserId());
+    sub1.resolveVariables(rUser.getOboUserId());
 
     // ------------------------- Check service level authorization -------------------------
-    checkAuth(rUser, op, resourceId, sub.getOwner(), null, null);
+    checkAuth(rUser, op, resourceId, sub1.getOwner(), null, null);
 
     // ---------------- Check constraints on Subscription attributes ------------------------
-    validateSubscription(rUser, sub);
+    validateSubscription(rUser, sub1);
 
     // Construct Json string representing the Subscription about to be created
-    Subscription scrubbedSubscription = new Subscription(sub);
+    Subscription scrubbedSubscription = new Subscription(sub1);
     String createJsonStr = TapisGsonUtils.getGson().toJson(scrubbedSubscription);
 
     // ----------------- Create all artifacts --------------------
@@ -188,11 +204,11 @@ public class NotificationsServiceImpl implements NotificationsService
     var skClient = getSKClient();
     try {
       // ------------------- Make Dao call to persist the subscription -----------------------------------
-      subCreated = dao.createSubscription(rUser, sub, createJsonStr, scrubbedText);
+      subCreated = dao.createSubscription(rUser, sub1, createJsonStr, scrubbedText);
 
       // ------------------- Add permissions -----------------------------
       // Give owner full access to the subscription
-//      skClient.grantUserPermission(resourceTenantId, sub.getOwner(), subsPermSpecALL);
+//      skClient.grantUserPermission(resourceTenantId, sub1.getOwner(), subsPermSpecALL);
     }
     catch (Exception e0)
     {
@@ -206,10 +222,11 @@ public class NotificationsServiceImpl implements NotificationsService
       if (subCreated) try {dao.deleteSubscription(resourceTenantId, resourceId); }
       catch (Exception e) {_log.warn(LibUtils.getMsgAuth(ERROR_ROLLBACK, rUser, resourceId, "delete", e.getMessage()));}
       // Remove perms
-//      try { skClient.revokeUserPermission(resourceTenantId, sub.getOwner(), subsPermSpecALL); }
+//      try { skClient.revokeUserPermission(resourceTenantId, sub1.getOwner(), subsPermSpecALL); }
 //      catch (Exception e) {_log.warn(LibUtils.getMsgAuth(ERROR_ROLLBACK, rUser, resourceId, "revokePermOwner", e.getMessage()));}
       throw e0;
     }
+    return resourceId;
   }
 
   /**
@@ -827,8 +844,20 @@ public class NotificationsServiceImpl implements NotificationsService
     MessageBrokerManager.getInstance().queueEvent(rUser, event);
   }
 
-
-
+  /**
+   * Read an Event from the queue.
+   * NOTE: only used by test, not part of the service interface
+   * @param rUser - ResourceRequestUser containing tenant, user and request info
+   * @throws TapisException - for Tapis related exceptions
+   * @throws IllegalStateException - subscription exists OR subscription in invalid state
+   * @throws IllegalArgumentException - invalid parameter passed in
+   * @throws NotAuthorizedException - unauthorized
+   *
+   */
+  public void readMsgWithAutoAck(ResourceRequestUser rUser, DeliverCallback deliverCallback) throws TapisException
+  {
+    MessageBrokerManager.getInstance().readMsgWithAutoAck(rUser, deliverCallback);
+  }
 
   // ************************************************************************
   // **************************  Private Methods  ***************************
