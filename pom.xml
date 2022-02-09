@@ -137,8 +137,8 @@
   </profiles>
 
   <modules>
-    <module>api</module>
-    <module>lib</module>
+    <module>tapis-notificationsapi</module>
+    <module>tapis-notificationslib</module>
   </modules>
 
 </project>

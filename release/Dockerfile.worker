@@ -3,5 +3,5 @@ WORKDIR /app
 # Just copy the jars needed
 COPY  lib/target  ./lib/target/
 WORKDIR /app/lib
-CMD ["java", "-cp", "target/tapis-notifications.jar:target/dependencies/*", "edu.utexas.tacc.tapis.notifications.WorkerApplication"]
+CMD ["java", "-cp", "target/tapis-notifications.jar:target/dependencies/*", "edu.utexas.tacc.tapis.notifications.DispatcherApplication"]
 

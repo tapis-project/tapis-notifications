@@ -1,7 +1,5 @@
 package edu.utexas.tacc.tapis.notifications;
 
-import edu.utexas.tacc.tapis.notifications.cache.TopicsCache;
-import edu.utexas.tacc.tapis.notifications.dao.NotificationsDAO;
 import edu.utexas.tacc.tapis.notifications.service.NotificationDispatcherService;
 import edu.utexas.tacc.tapis.notifications.service.NotificationsService;
 import org.glassfish.hk2.api.ServiceLocator;
@@ -13,10 +11,10 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Singleton;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class WorkerApplication
+public class DispatcherApplication
 {
 
-    private static final Logger log = LoggerFactory.getLogger(WorkerApplication.class);
+    private static final Logger log = LoggerFactory.getLogger(DispatcherApplication.class);
 
     public static void main(String[] args) throws Exception {
 
@@ -26,8 +24,8 @@ public class WorkerApplication
         ServiceLocatorUtilities.bind(locator, new AbstractBinder() {
             @Override
             protected void configure() {
-                bindAsContract(TopicsCache.class).in(Singleton.class);
-                bindAsContract(NotificationsDAO.class);
+//                bindAsContract(TopicsCache.class).in(Singleton.class);
+//                bindAsContract(NotificationsDAO.class);
                 bindAsContract(NotificationsService.class).in(Singleton.class);
                 bindAsContract(NotificationDispatcherService.class).in(Singleton.class);
             }
