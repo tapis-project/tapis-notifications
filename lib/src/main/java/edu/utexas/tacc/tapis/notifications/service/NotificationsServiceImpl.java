@@ -35,7 +35,7 @@ import edu.utexas.tacc.tapis.sharedapi.security.ResourceRequestUser;
 import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
 import edu.utexas.tacc.tapis.notifications.model.Event;
 import edu.utexas.tacc.tapis.notifications.queue.MessageBrokerManager;
-import edu.utexas.tacc.tapis.notifications.dao.SubscriptionsDao;
+import edu.utexas.tacc.tapis.notifications.dao.NotificationsDao;
 import edu.utexas.tacc.tapis.notifications.model.PatchSubscription;
 import edu.utexas.tacc.tapis.notifications.model.Subscription;
 import edu.utexas.tacc.tapis.notifications.model.Subscription.Permission;
@@ -86,7 +86,7 @@ public class NotificationsServiceImpl implements NotificationsService
 
   // Use HK2 to inject singletons
   @Inject
-  private SubscriptionsDao dao;
+  private NotificationsDao dao;
 
   @Inject
   private ServiceClients serviceClients;

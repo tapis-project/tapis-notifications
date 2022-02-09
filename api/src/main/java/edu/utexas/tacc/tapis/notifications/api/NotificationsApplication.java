@@ -3,8 +3,6 @@ package edu.utexas.tacc.tapis.notifications.api;
 import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
 import edu.utexas.tacc.tapis.notifications.dao.NotificationsDao;
 import edu.utexas.tacc.tapis.notifications.dao.NotificationsDaoImpl;
-import edu.utexas.tacc.tapis.notifications.dao.SubscriptionsDao;
-import edu.utexas.tacc.tapis.notifications.dao.SubscriptionsDaoImpl;
 import edu.utexas.tacc.tapis.notifications.service.NotificationsService;
 import edu.utexas.tacc.tapis.notifications.service.NotificationsServiceImpl;
 import edu.utexas.tacc.tapis.notifications.service.ServiceClientsFactory;
@@ -108,7 +106,7 @@ public class NotificationsApplication extends ResourceConfig
         protected void configure() {
           bind(NotificationsServiceImpl.class).to(NotificationsService.class); // Used in Resource classes for most service calls
           bind(NotificationsServiceImpl.class).to(NotificationsServiceImpl.class); // Used in NotificationsResource for checkDB
-          bind(SubscriptionsDaoImpl.class).to(SubscriptionsDao.class); // Used in service impl
+          bind(NotificationsDaoImpl.class).to(NotificationsDao.class); // Used in service impl
           bindFactory(ServiceContextFactory.class).to(ServiceContext.class); // Used in service impl and NotificationsResource
           bindFactory(ServiceClientsFactory.class).to(ServiceClients.class); // Used in service impl
         }

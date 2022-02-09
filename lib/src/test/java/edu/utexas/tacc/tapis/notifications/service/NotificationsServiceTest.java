@@ -2,8 +2,8 @@ package edu.utexas.tacc.tapis.notifications.service;
 
 import com.google.gson.JsonObject;
 import com.rabbitmq.client.DeliverCallback;
-import edu.utexas.tacc.tapis.notifications.dao.SubscriptionsDao;
-import edu.utexas.tacc.tapis.notifications.dao.SubscriptionsDaoImpl;
+import edu.utexas.tacc.tapis.notifications.dao.NotificationsDao;
+import edu.utexas.tacc.tapis.notifications.dao.NotificationsDaoImpl;
 import edu.utexas.tacc.tapis.notifications.model.DeliveryMethod;
 import edu.utexas.tacc.tapis.notifications.model.Event;
 import edu.utexas.tacc.tapis.notifications.model.PatchSubscription;
@@ -85,7 +85,7 @@ public class NotificationsServiceTest
       protected void configure() {
         bind(NotificationsServiceImpl.class).to(NotificationsService.class);
         bind(NotificationsServiceImpl.class).to(NotificationsServiceImpl.class);
-        bind(SubscriptionsDaoImpl.class).to(SubscriptionsDao.class);
+        bind(NotificationsDaoImpl.class).to(NotificationsDao.class);
         bindFactory(ServiceContextFactory.class).to(ServiceContext.class);
         bindFactory(ServiceClientsFactory.class).to(ServiceClients.class);
       }

@@ -26,7 +26,7 @@ import static edu.utexas.tacc.tapis.notifications.IntegrationUtils.*;
 @Test(groups={"integration"})
 public class SubscriptionsDaoTest
 {
-  private SubscriptionsDaoImpl dao;
+  private NotificationsDaoImpl dao;
   private ResourceRequestUser rUser;
 
   // Create test subscription definitions in memory
@@ -38,7 +38,7 @@ public class SubscriptionsDaoTest
   public void setup() throws Exception
   {
     System.out.println("Executing BeforeSuite setup method: " + SubscriptionsDaoTest.class.getSimpleName());
-    dao = new SubscriptionsDaoImpl();
+    dao = new NotificationsDaoImpl();
     // Initialize authenticated user
     rUser = new ResourceRequestUser(new AuthenticatedUser(apiUser, tenantName, TapisThreadContext.AccountType.user.name(),
                                                           null, apiUser, tenantName, null, null, null));
