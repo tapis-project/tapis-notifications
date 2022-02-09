@@ -15,12 +15,6 @@ import edu.utexas.tacc.tapis.sharedq.exceptions.TapisQueueException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-//import edu.utexas.tacc.tapis.jobs.exceptions.JobException;
-//import edu.utexas.tacc.tapis.jobs.exceptions.JobQueueException;
-//import edu.utexas.tacc.tapis.jobs.model.Job;
-//import edu.utexas.tacc.tapis.jobs.queue.messages.JobSubmitMsg;
-//import edu.utexas.tacc.tapis.jobs.queue.messages.cmd.CmdMsg;
-//import edu.utexas.tacc.tapis.jobs.queue.messages.recover.RecoverMsg;
 import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
 import edu.utexas.tacc.tapis.shared.TapisConstants;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
@@ -159,15 +153,6 @@ public final class MessageBrokerManager extends AbstractQueueManager
    */
   public void queueEvent(ResourceRequestUser rUser, Event event) throws TapisException
   {
-//  /** Write a json message to the named tenant queue.  The queue name is used
-//   * as the routing key on the direct exchange.
-//   *
-//   * @param queueName the target queue name
-//   * @param message a json string
-//   */
-//  public void postSubmitQueue(String queueName, String message) throws JobException
-//  {
-
     // Convert event to json string
     var jsonMessage = TapisGsonUtils.getGson().toJson(event);
 
@@ -218,7 +203,7 @@ public final class MessageBrokerManager extends AbstractQueueManager
   }
 
   /**
-   * Read a message from the notifications event queue processing it with the provided DeliverCallback
+   * Read a message from the notifications event queue, processing it with the provided DeliverCallback
    * @param rUser - ResourceRequestUser containing tenant, user and request info
    * @throws TapisException - on error
    */
@@ -252,6 +237,76 @@ public final class MessageBrokerManager extends AbstractQueueManager
           log.error(msg, e);
         }
       }
+    }
+  }
+
+  // ************************************************************************
+  // **************************  Private Methods  ***************************
+  // ************************************************************************
+
+  /**
+   * Create the exchange and queue for notification events and bind them together
+   */
+  private void createNotifEventExchangeAndQueue() throws TapisQueueException
+  {
+    String service = _parms.getService();
+    Channel channel = null;
+    Map<String, Object> exchangeArgs = null;
+    try
+    {
+      // Create a temporary channel.
+      channel = getNewInChannel();
+      createExchangeAndQueue(channel, service, EXCHANGE_NAME, BuiltinExchangeType.TOPIC, QUEUE_NAME,
+              DEFAULT_BINDING_KEY, exchangeArgs);
+    }
+    finally
+    {
+      // Close the channel
+      if (channel != null)
+      {
+        try
+        {
+          channel.close();
+        }
+        catch (Exception e)
+        {
+          String msg = LibUtils.getMsg("NTFLIB_MSGBRKR_CHAN_CLOSE_ERR2", channel.getChannelNumber(), e.getMessage());
+          log.error(msg, e);
+        }
+      }
+    }
+  }
+
+  /**
+   * Establish the virtual host on the message broker. All interactions with the broker after this will be
+   * on the virtual host. If the host already exists and its administrator user has been granted the proper
+   * permissions, then this method has no effect.
+   *
+   * @throws TapisRuntimeException on error
+   */
+  private void initRabbitVHost() throws TapisRuntimeException
+  {
+    RuntimeParameters rtParms = RuntimeParameters.getInstance();
+    // Collect the runtime message broker information.
+    var host  = _parms.getQueueHost();
+    var user  = _parms.getQueueUser();
+    var pass  = _parms.getQueuePassword();
+    var vhost = _parms.getVhost();
+    var adminPort = rtParms.getQueueAdminPort();
+    var adminUser = rtParms.getQueueAdminUser();
+    var adminPassword = rtParms.getQueueAdminPassword();
+
+    // Create the vhost object and execute the initialization routine.
+    var parms = new VHostParms(host, adminPort, adminUser, adminPassword);
+    var mgr   = new VHostManager(parms);
+    try
+    {
+      mgr.initVHost(vhost, user, pass);
+    }
+    catch (Exception e)
+    {
+      String msg = MsgUtils.getMsg("QMGR_UNINITIALIZED_ERROR");
+      throw new TapisRuntimeException(msg, e);
     }
   }
 
@@ -820,71 +875,4 @@ public final class MessageBrokerManager extends AbstractQueueManager
 //                }
 //      }
 //  }
-
-  /**
-   * Create the exchange and queue for notification events and bind them together
-   */
-  private void createNotifEventExchangeAndQueue() throws TapisQueueException
-  {
-    String service = _parms.getService();
-    Channel channel = null;
-    Map<String, Object> exchangeArgs = null;
-    try
-    {
-      // Create a temporary channel.
-      channel = getNewInChannel();
-      createExchangeAndQueue(channel, service, EXCHANGE_NAME, BuiltinExchangeType.TOPIC, QUEUE_NAME,
-                             DEFAULT_BINDING_KEY, exchangeArgs);
-    }
-    finally
-    {
-      // Close the channel
-      if (channel != null)
-      {
-        try
-        {
-          channel.close();
-        }
-        catch (Exception e)
-        {
-          String msg = LibUtils.getMsg("NTFLIB_MSGBRKR_CHAN_CLOSE_ERR2", channel.getChannelNumber(), e.getMessage());
-          log.error(msg, e);
-        }
-      }
-    }
-  }
-
-  /**
-   * Establish the virtual host on the message broker.  All interactions
-   * with the broker after this will be on the virtual host.  If the host
-   * already exists and its administrator user has been granted the proper
-   * permissions, then this method has no effect.
-   *
-   * @throws TapisRuntimeException on error
-   */
-  private void initRabbitVHost() throws TapisRuntimeException
-  {
-    RuntimeParameters rtParms = RuntimeParameters.getInstance();
-    // Collect the runtime message broker information.
-    var host  = _parms.getQueueHost();
-    var user  = _parms.getQueueUser();
-    var pass  = _parms.getQueuePassword();
-    var vhost = _parms.getVhost();
-    var adminPort = rtParms.getQueueAdminPort();
-    var adminUser = rtParms.getQueueAdminUser();
-    var adminPassword = rtParms.getQueueAdminPassword();
-
-    // Create the vhost object and execute the initialization routine.
-    var parms = new VHostParms(host, adminPort, adminUser, adminPassword);
-    var mgr   = new VHostManager(parms);
-    try
-    {
-      mgr.initVHost(vhost, user, pass);
-    }
-    catch (Exception e)
-    {
-      String msg = MsgUtils.getMsg("QMGR_UNINITIALIZED_ERROR");
-      throw new TapisRuntimeException(msg, e);
-    }
-  }
 }

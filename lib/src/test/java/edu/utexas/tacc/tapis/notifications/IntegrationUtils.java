@@ -113,6 +113,7 @@ public final class IntegrationUtils
   }
   public static final String eventType1 = "tapis.jobs.job.complete";
   public static final String eventSubject1 = "640ad5a8-1a6e-4189-a334-c4c7226fb9ba-007";
+  public static final String seriesId1 = "111a2228-1a6e-4189-a334-c4c722666666-007";
 
   /**
    * Create an array of Subscription objects in memory

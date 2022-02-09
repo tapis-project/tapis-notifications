@@ -5,6 +5,7 @@ import edu.utexas.tacc.tapis.shared.utils.TapisUtils;
 
 import java.net.URI;
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 /*
  * Notification event in the Tapis ecosystem.
@@ -36,24 +37,28 @@ public final class Event
   private final URI source; // Context in which event happened. Required
   private final String type; // Type of event related to originating occurrence. Required
   private final String subject; // Subject of event in context of event producer.
+  private final String seriesId; // Optional Id for grouping events from same source.
   private final String time; // Timestamp of when the occurrence happened. RFC 3339 (ISO 8601)
-  private final String datacontenttype; // Content type of data value. RFC 2046. E.g. application/xml, text/xml, etc.
-  private final Object data; // Data associated with the event.
-  private final String data_base64; // If data is binary it must be base64 encoded.
+  private final UUID uuid;
+//  private final String datacontenttype; // Content type of data value. RFC 2046. E.g. application/xml, text/xml, etc.
+//  private final Object data; // Data associated with the event.
+//  private final String data_base64; // If data is binary it must be base64 encoded.
 
   /* ********************************************************************** */
   /*                           Constructors                                 */
   /* ********************************************************************** */
-  public Event(String tenantId1, URI source1, String type1, String subject1, String time1)
+  public Event(String tenantId1, URI source1, String type1, String subject1, String seriesId1, String time1, UUID uuid1)
   {
     tenantId = tenantId1;
     source = source1;
     type = type1;
     subject = subject1;
+    seriesId = seriesId1;
     time = time1;
-    datacontenttype = null;
-    data = null;
-    data_base64 = null;
+    uuid = uuid1;
+//    datacontenttype = null;
+//    data = null;
+//    data_base64 = null;
   }
 
   /* ********************************************************************** */
@@ -64,10 +69,12 @@ public final class Event
   public URI getSource() { return source; }
   public String getType() { return type; }
   public String getSubject() { return subject; }
+  public String getSeriesId() { return seriesId; }
   public String getTime() { return time; }
-  public String getDatacontenttype() { return datacontenttype; }
-  public Object getData() { return data; }
-  public String getData_base64() { return data_base64; }
+  public UUID getUuid() { return uuid; }
+//  public String getDatacontenttype() { return datacontenttype; }
+//  public Object getData() { return data; }
+//  public String getData_base64() { return data_base64; }
 
   @Override
   public String toString() {return TapisUtils.toString(this);}

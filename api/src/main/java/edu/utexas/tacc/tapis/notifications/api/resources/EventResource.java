@@ -36,6 +36,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 
 /*
  * JAX-RS REST resource for a Tapis Event (edu.utexas.tacc.tapis.notifications.model.Event)
@@ -154,7 +155,8 @@ public class EventResource
     }
 
     // Create an Event from the request
-    Event event = new Event(rUser.getOboTenantId(), source, req.type, req.subject, req.time);
+    Event event = new Event(rUser.getOboTenantId(), source, req.type, req.subject, req.seriesId, req.time,
+                            UUID.randomUUID());
 
     // ---------------------------- Make service call to post the event -------------------------------
     try

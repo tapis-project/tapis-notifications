@@ -65,8 +65,9 @@ public final class Subscription
   private static final String TOO_LONG_ATTR = "NTFLIB_TOO_LONG_ATTR";
 
   // Validation patterns
-  //ID Must start alphabetic and contain only alphanumeric and 4 special characters: - . _ ~
-  public static final String PATTERN_VALID_ID = "^[a-zA-Z]([a-zA-Z0-9]|[-\\._~])*";
+  //ID Must start alphanumeric and contain only alphanumeric and 4 special characters: - . _ ~
+  //Note that we allow starting with a number so we can use a UUID.
+  public static final String PATTERN_VALID_ID = "^[a-zA-Z0-9]([a-zA-Z0-9]|[-\\._~])*";
 
   // Validation constants
   private static final Integer MAX_ID_LEN = 80;

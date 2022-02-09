@@ -8,5 +8,6 @@ public final class ReqPostEvent
   public String source;
   public String type;
   public String subject;
+  public String seriesId;
   public String time;
 }

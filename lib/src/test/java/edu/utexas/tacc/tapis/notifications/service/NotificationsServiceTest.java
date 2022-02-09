@@ -34,6 +34,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.HashSet;
 import java.util.List;
+import java.util.UUID;
 
 import static edu.utexas.tacc.tapis.notifications.IntegrationUtils.*;
 
@@ -166,12 +167,16 @@ public class NotificationsServiceTest
   @Test
   public void testCreateSubscriptionNoId() throws Exception
   {
-    Subscription sub0 = new Subscription(subscriptions[14], tenantName, null);
-    String subId = svc.createSubscription(rUser1, sub0, scrubbedJson);
+    String subId = null;
+    Subscription sub0 = new Subscription(-1, tenantName, subId, description1, owner1, isEnabledTrue, typeFilter1,
+                                         subjectFilter1, dmList1, notes1, uuidNull, createdNull, updatedNull);
+    System.out.println("Initial subscription Id: " + sub0.getId());
+    subId = svc.createSubscription(rUser1, sub0, scrubbedJson);
+    System.out.println("Subscription Id from createSubscription: " + subId);
     Assert.assertFalse(StringUtils.isBlank(subId));
     Subscription tmpSub = svc.getSubscription(rUser1, subId);
     Assert.assertNotNull(tmpSub, "Failed to create item: " + sub0.getId());
-    System.out.println("Found item: " + sub0.getId());
+    System.out.println("Found item: " + tmpSub.getId());
     Subscription sub1 = new Subscription(sub0, tenantName, subId);
     checkCommonSubscriptionAttrs(sub1, tmpSub);
   }
@@ -447,12 +452,13 @@ public class NotificationsServiceTest
   // TODO: Test posting an event to the queue
   //       Putting in sleeps and watching rabbitmq console can see message is posted
   //       and then read off queue but not able to get the test to fail when it should.
-  //       Where does DeliveryCallback output go?
+  //       And not able to see output. Where does DeliveryCallback output go?
   @Test
   public void testPostEvent() throws Exception
   {
     OffsetDateTime eventTime = OffsetDateTime.now();
-    Event event = new Event(tenantName, eventSource1, eventType1, eventSubject1, eventTime.toString());
+    Event event = new Event(tenantName, eventSource1, eventType1, eventSubject1, seriesId1, eventTime.toString(),
+                            UUID.randomUUID());
     System.out.println("Placing event on queue. Event: " + event);
     // Put an event on the queue as a message
     svc.postEvent(rUser1, event);
@@ -471,13 +477,13 @@ public class NotificationsServiceTest
       Assert.assertEquals(tmpEvent.getSubject(), event.getSubject());
       Assert.assertEquals(tmpEvent.getTime().toString(), event.getTime().toString());
     };
-    System.out.println("Sleep 20 secs");
-    Thread.sleep(20000);
+//    System.out.println("Sleep 20 secs");
+//    Thread.sleep(20000);
     // Read msg off the queue and verify the details
     System.out.println("Read message");
     svcImpl.readMsgWithAutoAck(rUser1, deliverCallback);
-    System.out.println("Sleep 20 secs");
-    Thread.sleep(20000);
+//    System.out.println("Sleep 20 secs");
+//    Thread.sleep(20000);
   }
 
   // ************************************************************************
