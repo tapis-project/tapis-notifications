@@ -91,11 +91,6 @@
           </archive>
         </configuration>
       </plugin>
-<!-- Looks like removing shaded jar and copying dependencies instead
-     may solve SelectableEntityFilteringFeature problem. Needs more testing.
-     Previously found needed to use JacksonFeature instead of moxy to avoid error when running under docker
-     but needed to run moxy instead of JacksonFeature to avoid problem with not returning these attributes: notes, created, updated.
--->
       <plugin>
         <artifactId>maven-dependency-plugin</artifactId>
         <version>3.1.1</version>

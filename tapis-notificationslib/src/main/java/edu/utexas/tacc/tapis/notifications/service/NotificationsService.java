@@ -40,6 +40,7 @@ import java.util.Set;
 @Contract
 public interface NotificationsService
 {
+  // -----------------------------------------------------------------------
   // ------------------------- Subscriptions -------------------------------
   // -----------------------------------------------------------------------
   String createSubscription(ResourceRequestUser rUser, Subscription subscription, String scrubbedText)
@@ -89,6 +90,7 @@ public interface NotificationsService
   String getSubscriptionOwner(ResourceRequestUser rUser, String subscriptionId)
           throws TapisException, TapisClientException, NotAuthorizedException;
 
+  // -----------------------------------------------------------------------
   // ------------------------- Events --------------------------------------
   // -----------------------------------------------------------------------
   void postEvent(ResourceRequestUser rUser, Event event) throws TapisException;

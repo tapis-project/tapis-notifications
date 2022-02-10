@@ -549,6 +549,16 @@ public class NotificationsServiceImpl implements NotificationsService
   }
 
   /**
+   * TODO: Check that we can connect with our message broker.
+   * @return null if all OK else return an Exception
+   */
+  public Exception checkMQ()
+  {
+    // TODO
+    return null;
+  }
+
+  /**
    * checkForSubscription
    * @param rUser - ResourceRequestUser containing tenant, user and request info
    * @param subId - Name of the subscription

@@ -4,8 +4,8 @@ package edu.utexas.tacc.tapis.notifications.service;
 import org.jvnet.hk2.annotations.Service;
 
 @Service
-public class SubscriptionCache {
-
+public class SubscriptionCache
+{
 //    private static final Duration CACHE_TIMEOUT = Duration.ofMinutes(5);
 //    private final NotificationsDAO notificationsDAO;
 //    private final LoadingCache<UUID, List<Subscription>> cache;
@@ -28,7 +28,4 @@ public class SubscriptionCache {
 //    public List<Subscription> getSubscriptionsByTopicUUID(UUID topicUUID) throws Exception {
 //        return cache.get(topicUUID);
 //    }
-
-
-
 }

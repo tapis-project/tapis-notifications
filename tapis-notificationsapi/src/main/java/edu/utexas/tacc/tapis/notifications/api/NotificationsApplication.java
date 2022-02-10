@@ -46,10 +46,8 @@ import javax.ws.rs.ApplicationPath;
  *     path set at the class level. See SubscriptionResource.java, etc.
  *     This has been found to be a more robust scheme for keeping startup working for both
  *     running in an IDE and standalone.
- *
- * For all logging use println or similar so we do not have a dependency on a logging subsystem.
  */
-@ApplicationPath("/notifications")
+@ApplicationPath("/")
 public class NotificationsApplication extends ResourceConfig
 {
   // We must be running on a specific site and this will never change
@@ -58,6 +56,7 @@ public class NotificationsApplication extends ResourceConfig
   private static String siteAdminTenantId;
   public static String getSiteAdminTenantId() {return siteAdminTenantId;}
 
+  // For all logging use println or similar so we do not have a dependency on a logging subsystem.
   public NotificationsApplication()
   {
     // Log our existence.

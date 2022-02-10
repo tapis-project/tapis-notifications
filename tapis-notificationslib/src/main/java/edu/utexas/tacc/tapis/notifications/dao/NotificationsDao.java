@@ -12,6 +12,17 @@ import java.util.Set;
 
 public interface NotificationsDao
 {
+  // ====================
+  // General
+  // ====================
+
+  Exception checkDB();
+
+  void migrateDB() throws TapisException;
+
+  // -----------------------------------------------------------------------
+  // ------------------------- Subscriptions -------------------------------
+  // -----------------------------------------------------------------------
   boolean createSubscription(ResourceRequestUser rUser, Subscription sub, String createJsonStr, String scrubbedText)
           throws TapisException, IllegalStateException;
 
@@ -31,10 +42,6 @@ public interface NotificationsDao
 
   int deleteSubscription(String tenant, String id) throws TapisException;
 
-  Exception checkDB();
-
-  void migrateDB() throws TapisException;
-
   boolean checkForSubscription(String tenant, String id) throws TapisException;
 
   boolean isEnabled(String tenant, String id) throws TapisException;
@@ -52,4 +59,8 @@ public interface NotificationsDao
   Set<String> getSubscriptionIDs(String tenant) throws TapisException;
 
   String getSubscriptionOwner(String tenant, String id) throws TapisException;
+
+  // -----------------------------------------------------------------------
+  // ------------------------- Events --------------------------------------
+  // -----------------------------------------------------------------------
 }
