@@ -31,7 +31,6 @@ import edu.utexas.tacc.tapis.notifications.model.Subscription;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 import java.util.List;
-import java.util.Set;
 
 /*
  * Interface for Subscriptions Service
@@ -62,6 +61,9 @@ public interface NotificationsService
           throws TapisException, TapisClientException, NotAuthorizedException, IllegalArgumentException;
 
   int changeSubscriptionOwner(ResourceRequestUser rUser, String subscriptionId, String newOwnerName)
+          throws TapisException, TapisClientException, NotAuthorizedException, IllegalArgumentException, NotFoundException;
+
+  int updateSubscriptionTTL(ResourceRequestUser rUser, String subscriptionId, String newTTL)
           throws TapisException, TapisClientException, NotAuthorizedException, IllegalArgumentException, NotFoundException;
 
   boolean checkForSubscription(ResourceRequestUser rUser, String subscriptionId)

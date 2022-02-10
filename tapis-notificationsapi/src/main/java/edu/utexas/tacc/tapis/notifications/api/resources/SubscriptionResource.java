@@ -42,7 +42,6 @@ import javax.inject.Inject;
 import javax.servlet.ServletContext;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
-import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.PATCH;
@@ -51,7 +50,6 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
@@ -112,6 +110,7 @@ public class SubscriptionResource
   private static final String OP_ENABLE = "enableSubscription";
   private static final String OP_DISABLE = "disableSubscription";
   private static final String OP_CHANGEOWNER = "changeSubscriptionOwner";
+  private static final String OP_UPDATE_TTL = "updateTTL";
   private static final String OP_DELETE = "deleteSubscription";
 
   // Always return a nicely formatted response
@@ -597,6 +596,24 @@ public class SubscriptionResource
   }
 
   /**
+   * Update TTL for a subscription
+   * @param subscriptionId - name of the subscription
+   * @param ttl - new value for TTL
+   * @param securityContext - user identity
+   * @return - response with change count as the result
+   */
+  @POST
+  @Path("{subscriptionId}/updateTTL/{ttl}")
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response updateTTL(@PathParam("subscriptionId") String subscriptionId,
+                                          @PathParam("ttl") String ttl,
+                                          @Context SecurityContext securityContext)
+  {
+    return postSubscriptionSingleUpdate(OP_UPDATE_TTL, subscriptionId, ttl, securityContext);
+  }
+
+  /**
    * getSubscription
    * Retrieve a subscription
    * @param subscriptionId - name of the subscription
@@ -907,11 +924,11 @@ public class SubscriptionResource
    * Note that userName only used for changeOwner
    * @param opName Name of operation.
    * @param subscriptionId Id of subscription to update
-   * @param userName new owner name for op changeOwner
+   * @param updatedValue new owner name for op changeOwner
    * @param securityContext Security context from client call
    * @return Response to be returned to the client.
    */
-  private Response postSubscriptionSingleUpdate(String opName, String subscriptionId, String userName,
+  private Response postSubscriptionSingleUpdate(String opName, String subscriptionId, String updatedValue,
                                                 SecurityContext securityContext)
   {
     // ------------------------- Retrieve and validate thread context -------------------------
@@ -928,10 +945,10 @@ public class SubscriptionResource
     if (_log.isTraceEnabled())
     {
       // NOTE: We deliberately do not check for blank. If empty string passed in we want to record it here.
-      if (userName!=null)
+      if (updatedValue!=null)
       {
         ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(),
-                            "subscriptionId=" + subscriptionId, "userName=" + userName);
+                            "subscriptionId=" + subscriptionId, "userName=" + updatedValue);
       }
       else
       {
@@ -952,7 +969,9 @@ public class SubscriptionResource
       else if (OP_DELETE.equals(opName))
         changeCount = notificationsService.deleteSubscription(rUser, subscriptionId);
       else if (OP_CHANGEOWNER.equals(opName))
-        changeCount = notificationsService.changeSubscriptionOwner(rUser, subscriptionId, userName);
+        changeCount = notificationsService.changeSubscriptionOwner(rUser, subscriptionId, updatedValue);
+      else if (OP_UPDATE_TTL.equals(opName))
+        changeCount = notificationsService.updateSubscriptionTTL(rUser, subscriptionId, updatedValue);
       else
       {
         msg = ApiUtils.getMsgAuth("NTFAPI_OP_UNKNOWN", rUser, subscriptionId, opName);

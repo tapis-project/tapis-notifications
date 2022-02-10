@@ -8,6 +8,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import org.apache.commons.lang3.StringUtils;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -80,7 +82,7 @@ public final class Subscription
   // ************************************************************************
   // *********************** Enums ******************************************
   // ************************************************************************
-  public enum SubscriptionOperation {create, read, modify, delete, changeOwner, enable, disable,
+  public enum SubscriptionOperation {create, read, modify, delete, changeOwner, enable, disable, updateTTL,
                                      getPerms, grantPerms, revokePerms}
   public enum Permission {READ, MODIFY}
   public enum DeliveryType {WEBHOOK, EMAIL}
@@ -204,6 +206,7 @@ public final class Subscription
     // Note that for a user request oboUser and apiUserId are the same and for a service request we want oboUser here.
     if (StringUtils.isBlank(owner) || owner.equalsIgnoreCase(APIUSERID_VAR)) setOwner(apiUserId);
   }
+
   /**
    * Fill in defaults
    */
@@ -228,6 +231,22 @@ public final class Subscription
     checkAttrStringLengths(errMessages);
     checkAttrMisc(errMessages);
     return errMessages;
+  }
+
+  /*
+   *  Compute a new expiry based on the current time and the new TTL
+   *  TTL is the number of minutes
+   *  A value of <= 0 indicates no expiration, null is returned
+   */
+  public static Instant computeExpiryFromNow(int newTTL)
+  {
+    // A ttl of 0 or less indicates no expiration, return null.
+    if (newTTL <= 0) return null;
+
+    // Compute expiry as epoch time in seconds.
+    long epochSecond = Instant.now().getEpochSecond() + 60L * newTTL;
+    // Convert epoch time to LocalDateTime
+    return Instant.ofEpochSecond(epochSecond);
   }
 
   // ************************************************************************

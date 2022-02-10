@@ -154,7 +154,8 @@ public class NotificationsDaoImpl implements NotificationsDao
    * @throws IllegalStateException - if resource already exists
    */
   @Override
-  public boolean createSubscription(ResourceRequestUser rUser, Subscription subscr, String createJsonStr, String scrubbedText)
+  public boolean createSubscription(ResourceRequestUser rUser, Subscription subscr, Instant expiryI,
+                                    String createJsonStr, String scrubbedText)
           throws TapisException, IllegalStateException
   {
     String opName = "createSubscription";
@@ -173,6 +174,9 @@ public class NotificationsDaoImpl implements NotificationsDao
     JsonElement deliveryMethodsJson = Subscription.DEFAULT_DELIVERY_METHODS;
     if (subscr.getDeliveryMethods() != null) deliveryMethodsJson = TapisGsonUtils.getGson().toJsonTree(subscr.getDeliveryMethods());
 
+    // Convert expiry from Instant to LocalDateTime
+    LocalDateTime expiry = (expiryI == null) ? null :  LocalDateTime.ofInstant(expiryI, ZoneOffset.UTC);
+
     // ------------------------- Call SQL ----------------------------
     Connection conn = null;
     try
@@ -188,6 +192,7 @@ public class NotificationsDaoImpl implements NotificationsDao
       // Generate uuid for the new resource
       subscr.setUuid(UUID.randomUUID());
 
+      // Insert the record
       Record record = db.insertInto(SUBSCRIPTIONS)
               .set(SUBSCRIPTIONS.TENANT, subscr.getTenant())
               .set(SUBSCRIPTIONS.ID, subscr.getId())
@@ -199,6 +204,7 @@ public class NotificationsDaoImpl implements NotificationsDao
               .set(SUBSCRIPTIONS.DELIVERY_METHODS, deliveryMethodsJson)
               .set(SUBSCRIPTIONS.NOTES, notesObj)
               .set(SUBSCRIPTIONS.UUID, subscr.getUuid())
+              .set(SUBSCRIPTIONS.EXPIRY, expiry)
               .returningResult(SUBSCRIPTIONS.SEQ_ID)
               .fetchOne();
 
@@ -469,6 +475,52 @@ public class NotificationsDaoImpl implements NotificationsDao
       // Persist update record
       String updateJsonStr = TapisGsonUtils.getGson().toJson(newOwnerName);
       addUpdate(db, rUser, tenantId, id, INVALID_SEQ_ID, SubscriptionOperation.changeOwner, updateJsonStr , null,
+                getUUIDUsingDb(db, tenantId, id));
+      // Close out and commit
+      LibUtils.closeAndCommitDB(conn, null, null);
+    }
+    catch (Exception e)
+    {
+      // Rollback transaction and throw an exception
+      LibUtils.rollbackDB(conn, e,"DB_UPDATE_FAILURE", "subscriptions", id);
+    }
+    finally
+    {
+      // Always return the connection back to the connection pool.
+      LibUtils.finalCloseDB(conn);
+    }
+  }
+
+  /**
+   * Update attribute TTL for a subscription given subscription Id and value
+   * Also update expiry since update of TTL should always include update of expiry
+   */
+  @Override
+  public void updateSubscriptionTTL(ResourceRequestUser rUser, String tenantId, String id, int newTTL, Instant newExpiry)
+          throws TapisException
+  {
+    String opName = "updateTTL";
+    // ------------------------- Check Input -------------------------
+    if (StringUtils.isBlank(id)) LibUtils.logAndThrowNullParmException(opName, "subscriptionId");
+
+    // Convert expiry from Instant to LocalDateTime
+    LocalDateTime expiry = (newExpiry == null) ? null :  LocalDateTime.ofInstant(newExpiry, ZoneOffset.UTC);
+
+    // ------------------------- Call SQL ----------------------------
+    Connection conn = null;
+    try
+    {
+      // Get a database connection.
+      conn = getConnection();
+      DSLContext db = DSL.using(conn);
+      db.update(SUBSCRIPTIONS)
+              .set(SUBSCRIPTIONS.TTL, newTTL)
+              .set(SUBSCRIPTIONS.EXPIRY, expiry)
+              .set(SUBSCRIPTIONS.UPDATED, TapisUtils.getUTCTimeNow())
+              .where(SUBSCRIPTIONS.TENANT.eq(tenantId),SUBSCRIPTIONS.ID.eq(id)).execute();
+      // Persist update record
+      String updateJsonStr = "{\"ttl\":" +  newTTL + "}";
+      addUpdate(db, rUser, tenantId, id, INVALID_SEQ_ID, SubscriptionOperation.updateTTL, updateJsonStr , null,
                 getUUIDUsingDb(db, tenantId, id));
       // Close out and commit
       LibUtils.closeAndCommitDB(conn, null, null);

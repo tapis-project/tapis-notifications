@@ -1,5 +1,7 @@
 package edu.utexas.tacc.tapis.notifications.service;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -194,6 +196,9 @@ public class NotificationsServiceImpl implements NotificationsService
     Subscription scrubbedSubscription = new Subscription(sub1);
     String createJsonStr = TapisGsonUtils.getGson().toJson(scrubbedSubscription);
 
+    // Compute the expiry time from now
+    Instant expiry = Subscription.computeExpiryFromNow(sub1.getTtl());
+
     // ----------------- Create all artifacts --------------------
     // Creation of subscription and perms not in single DB transaction.
     // Use try/catch to rollback any writes in case of failure.
@@ -202,9 +207,10 @@ public class NotificationsServiceImpl implements NotificationsService
 
     // Get SK client now. If we cannot get this rollback not needed.
     var skClient = getSKClient();
-    try {
+    try
+    {
       // ------------------- Make Dao call to persist the subscription -----------------------------------
-      subCreated = dao.createSubscription(rUser, sub1, createJsonStr, scrubbedText);
+      subCreated = dao.createSubscription(rUser, sub1, expiry, createJsonStr, scrubbedText);
 
       // ------------------- Add permissions -----------------------------
       // Give owner full access to the subscription
@@ -305,7 +311,7 @@ public class NotificationsServiceImpl implements NotificationsService
   @Override
   public void putSubscription(ResourceRequestUser rUser, Subscription putSub, String scrubbedText)
           throws TapisException, TapisClientException, IllegalStateException, IllegalArgumentException,
-          NotAuthorizedException, NotFoundException
+                 NotAuthorizedException, NotFoundException
   {
     SubscriptionOperation op = SubscriptionOperation.modify;
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
@@ -359,7 +365,8 @@ public class NotificationsServiceImpl implements NotificationsService
    */
   @Override
   public int enableSubscription(ResourceRequestUser rUser, String subId)
-          throws TapisException, IllegalStateException, IllegalArgumentException, NotAuthorizedException, NotFoundException, TapisClientException
+          throws TapisException, IllegalStateException, IllegalArgumentException, NotAuthorizedException,
+                 NotFoundException, TapisClientException
   {
     return updateEnabled(rUser, subId, SubscriptionOperation.enable);
   }
@@ -378,7 +385,8 @@ public class NotificationsServiceImpl implements NotificationsService
    */
   @Override
   public int disableSubscription(ResourceRequestUser rUser, String subId)
-          throws TapisException, IllegalStateException, IllegalArgumentException, NotAuthorizedException, NotFoundException, TapisClientException
+          throws TapisException, IllegalStateException, IllegalArgumentException, NotAuthorizedException,
+                 NotFoundException, TapisClientException
   {
     return updateEnabled(rUser, subId, SubscriptionOperation.disable);
   }
@@ -429,7 +437,8 @@ public class NotificationsServiceImpl implements NotificationsService
    */
   @Override
   public int changeSubscriptionOwner(ResourceRequestUser rUser, String subId, String newOwnerName)
-          throws TapisException, IllegalStateException, IllegalArgumentException, NotAuthorizedException, NotFoundException, TapisClientException
+          throws TapisException, IllegalStateException, IllegalArgumentException, NotAuthorizedException,
+                 NotFoundException, TapisClientException
   {
     SubscriptionOperation op = SubscriptionOperation.changeOwner;
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
@@ -483,16 +492,65 @@ public class NotificationsServiceImpl implements NotificationsService
   }
 
   /**
-   * Hard delete a subscription record given the subscription name.
-   * Also remove artifacts from the Security Kernel.
-   * NOTE: This is package-private. Only test code should ever use it.
-   *
+   * Update TTL for a subscription
    * @param rUser - ResourceRequestUser containing tenant, user and request info
    * @param subId - name of subscription
-   * @return Number of items deleted
+   * @param newTTLStr - New value for TTL
+   * @return Number of items updated
+   *
    * @throws TapisException - for Tapis related exceptions
+   * @throws IllegalStateException - Resulting Subscription would be in an invalid state
+   * @throws IllegalArgumentException - invalid parameter passed in
    * @throws NotAuthorizedException - unauthorized
+   * @throws NotFoundException - Resource not found
    */
+  @Override
+  public int updateSubscriptionTTL(ResourceRequestUser rUser, String subId, String newTTLStr)
+          throws TapisException, IllegalStateException, IllegalArgumentException, NotAuthorizedException,
+                 NotFoundException, TapisClientException
+  {
+    SubscriptionOperation op = SubscriptionOperation.updateTTL;
+    if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
+    if (StringUtils.isBlank(subId) || StringUtils.isBlank(newTTLStr))
+      throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_NULL_INPUT", rUser));
+
+    String resourceTenantId = rUser.getOboTenantId();
+
+    // ---------------------------- Check inputs ------------------------------------
+    if (StringUtils.isBlank(resourceTenantId))
+      throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_CREATE_ERROR_ARG", rUser, subId));
+
+    // Subscription must already exist
+    if (!dao.checkForSubscription(resourceTenantId, subId))
+      throw new NotFoundException(LibUtils.getMsgAuth(NOT_FOUND, rUser, subId));
+
+    // ------------------------- Check service level authorization -------------------------
+    checkAuth(rUser, op, subId, null, null, null);
+
+    // If TTL provided is not an integer then throw an exception
+    int newTTL;
+    try { newTTL = Integer.parseInt(newTTLStr); }
+    catch (NumberFormatException e)
+    {
+      throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_TTL_NOTINT", rUser, subId, newTTLStr));
+    }
+
+    // ----------------- Make update --------------------
+    dao.updateSubscriptionTTL(rUser, resourceTenantId, subId, newTTL, Subscription.computeExpiryFromNow(newTTL));
+    return 1;
+  }
+
+//  /**
+//   * Hard delete a subscription record given the subscription name.
+//   * Also remove artifacts from the Security Kernel.
+//   * NOTE: This is package-private. Only test code should ever use it.
+//   *
+//   * @param rUser - ResourceRequestUser containing tenant, user and request info
+//   * @param subId - name of subscription
+//   * @return Number of items deleted
+//   * @throws TapisException - for Tapis related exceptions
+//   * @throws NotAuthorizedException - unauthorized
+//   */
 //  int hardDeleteSubscription(ResourceRequestUser rUser, String resourceTenantId, String subId)
 //          throws TapisException, TapisClientException, NotAuthorizedException
 //  {
