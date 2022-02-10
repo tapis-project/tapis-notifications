@@ -14,9 +14,11 @@
     "typeFilter": { "type": "string" },
     "subjectFilter": { "type": ["string", "null"] },
     "deliveryMethods": { "$ref": "resource:///edu/utexas/tacc/tapis/notifications/api/jsonschema/Definitions.json#/DeliveryMethodList" },
+    "ttl": { "type":  "integer" },
     "notes": { "type": "object" },
     "tenant": { "type":  "string" },
     "uuid": { "type":  "string" },
+    "expiry": { "type":  "string" },
     "created": { "type":  "string" },
     "updated": { "type":  "string" }
   }

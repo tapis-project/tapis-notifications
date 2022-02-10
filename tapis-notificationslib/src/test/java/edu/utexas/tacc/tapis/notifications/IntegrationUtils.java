@@ -73,8 +73,12 @@ public final class IntegrationUtils
   public static final DeliveryMethod dmB2 = new DeliveryMethod(DeliveryType.EMAIL, webhookUrlB2, emailAddressB2);
   public static final List<DeliveryMethod> dmList2 = new ArrayList<>(List.of(dmA2, dmB2));
 
+  public static final int ttl1 = 1000;
+  public static final int ttl2 = 2000;
+
   public static final boolean isEnabledTrue = true;
   public static final UUID uuidNull = null;
+  public static final Instant expiryNull = null;
   public static final Instant createdNull = null;
   public static final Instant updatedNull = null;
 
@@ -135,8 +139,8 @@ public final class IntegrationUtils
       String subscrId = getSubscrName(key, i+1);
       // Constructor initializes all attributes
       subscriptions[i] = new Subscription(-1, tenantName, subscrId, description1+suffix, owner1, isEnabledTrue,
-                                          typeFilter1, subjectFilter1, dmList1,
-                                          notes1, uuidNull, createdNull, updatedNull);
+                                          typeFilter1, subjectFilter1, dmList1, ttl1, notes1, uuidNull,
+                                          expiryNull, createdNull, updatedNull);
     }
     return subscriptions;
   }
@@ -149,7 +153,7 @@ public final class IntegrationUtils
   {
     Subscription putSubscr = new Subscription(sub.getSeqId(), tenantName, sub.getId(), description2,
                        sub.getOwner(), sub.isEnabled(), typeFilter2, subjectFilter2,
-                       dmList2, notes2, null, null, null);
+                       dmList2, ttl2, notes2, null, null, null, null);
     return putSubscr;
   }
 
@@ -159,7 +163,7 @@ public final class IntegrationUtils
    */
   public static PatchSubscription makePatchSubscriptionFull()
   {
-    return new PatchSubscription(description2, typeFilter2, subjectFilter2, dmList2, notes2);
+    return new PatchSubscription(description2, typeFilter2, subjectFilter2, dmList2, ttl2, notes2);
   }
 
   public static String getSubscrName(String key, int idx)

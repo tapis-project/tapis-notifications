@@ -16,10 +16,12 @@ import static edu.utexas.tacc.tapis.notifications.model.Subscription.CREATED_FIE
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.DESCRIPTION_FIELD;
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.ENABLED_FIELD;
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.ID_FIELD;
+import static edu.utexas.tacc.tapis.notifications.model.Subscription.TTL_FIELD;
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.NOTES_FIELD;
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.OWNER_FIELD;
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.TENANT_FIELD;
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.UPDATED_FIELD;
+import static edu.utexas.tacc.tapis.notifications.model.Subscription.EXPIRY_FIELD;
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.UUID_FIELD;
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.TYPE_FILTER_FIELD;
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.SUBJECT_FILTER_FIELD;
@@ -40,8 +42,10 @@ public final class TapisSubscriptionDTO
   public String typeFilter;
   public String subjectFilter;
   public List<DeliveryMethod> deliveryMethods;
+  public int ttl;
   public Object notes;
   public UUID uuid;
+  public Instant expiry;
   public Instant created;
   public Instant updated;
 
@@ -55,8 +59,10 @@ public final class TapisSubscriptionDTO
     typeFilter = s.getTypeFilter();
     subjectFilter = s.getSubjectFilter();
     deliveryMethods = s.getDeliveryMethods();
+    ttl = s.getTtl();
     notes = s.getNotes();
     uuid = s.getUuid();
+    expiry = s.getExpiry();
     created = s.getCreated();
     updated = s.getUpdated();
   }
@@ -130,11 +136,13 @@ public final class TapisSubscriptionDTO
         jsonStr = gson.toJson(deliveryMethods);
         jsonObject.add(DELIVERY_METHODS_FIELD, gson.fromJson(jsonStr, JsonObject.class));
       }
+      case TTL_FIELD -> jsonObject.addProperty(TTL_FIELD, ttl);
       case NOTES_FIELD -> {
         jsonStr = gson.toJson(notes);
         jsonObject.add(NOTES_FIELD, gson.fromJson(jsonStr, JsonObject.class));
       }
       case UUID_FIELD -> jsonObject.addProperty(UUID_FIELD, uuid.toString());
+      case EXPIRY_FIELD -> jsonObject.addProperty(EXPIRY_FIELD, expiry.toString());
       case CREATED_FIELD -> jsonObject.addProperty(CREATED_FIELD, created.toString());
       case UPDATED_FIELD -> jsonObject.addProperty(UPDATED_FIELD, updated.toString());
     }

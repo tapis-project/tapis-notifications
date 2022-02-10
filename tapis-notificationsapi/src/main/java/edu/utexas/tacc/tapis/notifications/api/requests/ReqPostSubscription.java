@@ -6,6 +6,7 @@ import edu.utexas.tacc.tapis.notifications.model.DeliveryMethod;
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.DEFAULT_OWNER;
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.DEFAULT_ENABLED;
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.DEFAULT_NOTES;
+import static edu.utexas.tacc.tapis.notifications.model.Subscription.DEFAULT_TTL;
 
 /*
  * Class representing all attributes that can be set in an incoming POST subscription request json body
@@ -19,5 +20,6 @@ public final class ReqPostSubscription
   public String typeFilter;
   public String subjectFilter;
   public List<DeliveryMethod> deliveryMethods;
+  public int ttl = DEFAULT_TTL;
   public Object notes = DEFAULT_NOTES;
 }

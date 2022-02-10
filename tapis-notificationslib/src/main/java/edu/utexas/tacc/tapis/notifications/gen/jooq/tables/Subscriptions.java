@@ -22,7 +22,7 @@ import org.jooq.Identity;
 import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row13;
+import org.jooq.Row15;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -100,6 +100,11 @@ public class Subscriptions extends TableImpl<SubscriptionsRecord> {
     public final TableField<SubscriptionsRecord, JsonElement> DELIVERY_METHODS = createField(DSL.name("delivery_methods"), SQLDataType.JSONB.nullable(false), this, "", new JSONBToJsonElementBinding());
 
     /**
+     * The column <code>tapis_ntf.subscriptions.ttl</code>.
+     */
+    public final TableField<SubscriptionsRecord, Integer> TTL = createField(DSL.name("ttl"), SQLDataType.INTEGER.nullable(false).defaultValue(DSL.field("'-1'::integer", SQLDataType.INTEGER)), this, "");
+
+    /**
      * The column <code>tapis_ntf.subscriptions.notes</code>.
      */
     public final TableField<SubscriptionsRecord, JsonElement> NOTES = createField(DSL.name("notes"), SQLDataType.JSONB.nullable(false), this, "", new JSONBToJsonElementBinding());
@@ -108,6 +113,11 @@ public class Subscriptions extends TableImpl<SubscriptionsRecord> {
      * The column <code>tapis_ntf.subscriptions.uuid</code>.
      */
     public final TableField<SubscriptionsRecord, java.util.UUID> UUID = createField(DSL.name("uuid"), SQLDataType.UUID.nullable(false), this, "");
+
+    /**
+     * The column <code>tapis_ntf.subscriptions.expiry</code>.
+     */
+    public final TableField<SubscriptionsRecord, LocalDateTime> EXPIRY = createField(DSL.name("expiry"), SQLDataType.LOCALDATETIME(6), this, "");
 
     /**
      * The column <code>tapis_ntf.subscriptions.created</code>. UTC time for when record was created
@@ -204,11 +214,11 @@ public class Subscriptions extends TableImpl<SubscriptionsRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row13 type methods
+    // Row15 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row13<Integer, String, String, String, String, Boolean, String, String, JsonElement, JsonElement, java.util.UUID, LocalDateTime, LocalDateTime> fieldsRow() {
-        return (Row13) super.fieldsRow();
+    public Row15<Integer, String, String, String, String, Boolean, String, String, JsonElement, Integer, JsonElement, java.util.UUID, LocalDateTime, LocalDateTime, LocalDateTime> fieldsRow() {
+        return (Row15) super.fieldsRow();
     }
 }

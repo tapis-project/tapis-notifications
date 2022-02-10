@@ -3,6 +3,7 @@ package edu.utexas.tacc.tapis.notifications.dao;
 import java.sql.Connection;
 import java.sql.Types;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1505,6 +1506,8 @@ public class NotificationsDaoImpl implements NotificationsDao
     int subSeqId = r.get(SUBSCRIPTIONS.SEQ_ID);
 
     // Convert LocalDateTime to Instant. Note that although "Local" is in the type, timestamps from the DB are in UTC.
+    LocalDateTime ldt = r.get(SUBSCRIPTIONS.EXPIRY);
+    Instant expiry = (ldt == null) ? null : ldt.toInstant(ZoneOffset.UTC);
     Instant created = r.get(SUBSCRIPTIONS.CREATED).toInstant(ZoneOffset.UTC);
     Instant updated = r.get(SUBSCRIPTIONS.UPDATED).toInstant(ZoneOffset.UTC);
 
@@ -1514,7 +1517,7 @@ public class NotificationsDaoImpl implements NotificationsDao
     subscription = new Subscription(subSeqId, r.get(SUBSCRIPTIONS.TENANT), r.get(SUBSCRIPTIONS.ID),
             r.get(SUBSCRIPTIONS.DESCRIPTION), r.get(SUBSCRIPTIONS.OWNER), r.get(SUBSCRIPTIONS.ENABLED),
             r.get(SUBSCRIPTIONS.TYPE_FILTER), r.get(SUBSCRIPTIONS.SUBJECT_FILTER), deliveryMethods,
-            r.get(SUBSCRIPTIONS.NOTES), r.get(SUBSCRIPTIONS.UUID), created, updated);
+            r.get(SUBSCRIPTIONS.TTL), r.get(SUBSCRIPTIONS.NOTES), r.get(SUBSCRIPTIONS.UUID), expiry, created, updated);
     return subscription;
   }
 }

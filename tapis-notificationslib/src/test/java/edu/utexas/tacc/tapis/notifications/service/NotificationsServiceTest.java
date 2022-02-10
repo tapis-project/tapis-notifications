@@ -169,7 +169,7 @@ public class NotificationsServiceTest
   {
     String subId = null;
     Subscription sub0 = new Subscription(-1, tenantName, subId, description1, owner1, isEnabledTrue, typeFilter1,
-                                         subjectFilter1, dmList1, notes1, uuidNull, createdNull, updatedNull);
+                                        subjectFilter1, dmList1, ttl1, notes1, uuidNull, expiryNull, createdNull, updatedNull);
     System.out.println("Initial subscription Id: " + sub0.getId());
     subId = svc.createSubscription(rUser1, sub0, scrubbedJson);
     System.out.println("Subscription Id from createSubscription: " + subId);

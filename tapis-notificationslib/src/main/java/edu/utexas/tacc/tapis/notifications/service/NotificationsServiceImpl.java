@@ -1329,13 +1329,14 @@ public class NotificationsServiceImpl implements NotificationsService
    */
   private Subscription createPatchedSubscription(Subscription o, PatchSubscription p)
   {
-    // Start off with the current subscr
+    // Start off with the current subscription
     Subscription sub1 = new Subscription(o);
     // Now update fields that are being patched
     if (p.getDescription() != null) sub1.setDescription(p.getDescription());
     if (p.getTypeFilter() != null) sub1.setTypeFilter(p.getTypeFilter());
     if (p.getSubjectFilter() != null) sub1.setSubjectFilter(p.getSubjectFilter());
     if (p.getDeliveryMethods() != null) sub1.setDeliveryMethods(p.getDeliveryMethods());
+    if (p.getTtl() != null) sub1.setTtl(p.getTtl());
     if (p.getNotes() != null) sub1.setNotes(p.getNotes());
     return sub1;
   }

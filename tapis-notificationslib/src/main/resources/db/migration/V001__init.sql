@@ -45,15 +45,17 @@ CREATE TABLE subscriptions
     tenant  TEXT NOT NULL,
     id      TEXT NOT NULL,
     description TEXT,
-    owner    TEXT NOT NULL,
+    owner   TEXT NOT NULL,
     enabled  BOOLEAN NOT NULL DEFAULT true,
     type_filter TEXT NOT NULL,
     subject_filter TEXT,
     delivery_methods JSONB NOT NULL,
-    notes      JSONB NOT NULL,
-    uuid uuid NOT NULL,
-    created    TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),
-    updated    TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),
+    ttl INTEGER NOT NULL DEFAULT -1,
+    notes JSONB NOT NULL,
+    uuid  uuid NOT NULL,
+    expiry  TIMESTAMP WITHOUT TIME ZONE,
+    created TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),
+    updated TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),
     UNIQUE (tenant,id)
 );
 ALTER TABLE subscriptions OWNER TO tapis_ntf;

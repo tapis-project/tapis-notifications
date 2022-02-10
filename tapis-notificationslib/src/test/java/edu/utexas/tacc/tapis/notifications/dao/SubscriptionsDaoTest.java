@@ -191,7 +191,7 @@ public class SubscriptionsDaoTest
     String fakeSubscriptionName = "AMissingSubscriptionName";
     Subscription patchedSubscription =
             new Subscription(1, tenantName, fakeSubscriptionName, "description", "owner", isEnabledTrue,
-                             typeFilter1, subjectFilter1, dmList1, notes1, uuidNull, createdNull, updatedNull);
+                             typeFilter1, subjectFilter1, dmList1, ttl1, notes1, uuidNull, expiryNull, createdNull, updatedNull);
     // Make sure subscription does not exist
     Assert.assertFalse(dao.checkForSubscription(tenantName, fakeSubscriptionName));
     // update should throw not found exception

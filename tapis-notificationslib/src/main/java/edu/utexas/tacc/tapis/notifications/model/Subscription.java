@@ -43,6 +43,7 @@ public final class Subscription
   public static final String DEFAULT_OWNER = APIUSERID_VAR;
   public static final boolean DEFAULT_ENABLED = true;
   public static final JsonElement DEFAULT_DELIVERY_METHODS = TapisGsonUtils.getGson().fromJson("[]", JsonElement.class);
+  public static final int DEFAULT_TTL = 7*24*60; // One week in minutes
   public static final JsonObject DEFAULT_NOTES = TapisGsonUtils.getGson().fromJson("{}", JsonObject.class);
 
   // Attribute names, also used as field names in Json
@@ -54,8 +55,10 @@ public final class Subscription
   public static final String TYPE_FILTER_FIELD = "typeFilter";
   public static final String SUBJECT_FILTER_FIELD = "subjectFilter";
   public static final String DELIVERY_METHODS_FIELD = "deliveryMethods";
+  public static final String TTL_FIELD = "ttl";
   public static final String NOTES_FIELD = "notes";
   public static final String UUID_FIELD = "uuid";
+  public static final String EXPIRY_FIELD = "expiry";
   public static final String CREATED_FIELD = "created";
   public static final String UPDATED_FIELD = "updated";
 
@@ -88,14 +91,16 @@ public final class Subscription
   private int seqId;
   private String tenant;
   private String id;
+  private String description;
   private String owner;
   private boolean enabled;
-  private String description;
   private String typeFilter;
   private String subjectFilter;
   private List<DeliveryMethod> deliveryMethods;
+  private int ttl;
   private Object notes;   // Simple metadata as json.
   private UUID uuid;
+  private Instant expiry;
   private Instant created; // UTC time for when record was created
   private Instant updated; // UTC time for when record was last updated
 
@@ -120,19 +125,21 @@ public final class Subscription
   {
     if (s==null || StringUtils.isBlank(tenant1) || StringUtils.isBlank(id1))
       throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT"));
+    seqId = s.getSeqId();
     tenant = tenant1;
     id = id1;
+    description = s.getDescription();
     owner = s.getOwner();
     enabled = s.isEnabled();
-    seqId = s.getSeqId();
-    created = s.getCreated();
-    updated = s.getUpdated();
-    description = s.getDescription();
     typeFilter = s.getTypeFilter();
     subjectFilter = s.getSubjectFilter();
     deliveryMethods = s.getDeliveryMethods();
+    ttl = s.getTtl();
     notes = s.getNotes();
     uuid = s.getUuid();
+    expiry = s.getExpiry();
+    created = s.getCreated();
+    updated = s.getUpdated();
   }
 
   /**
@@ -140,8 +147,8 @@ public final class Subscription
    * Also useful for testing
    */
   public Subscription(int seqId1, String tenant1, String id1, String description1, String owner1, boolean enabled1,
-                      String typeFilter1, String subjectFilter1, List<DeliveryMethod> dmList1, Object notes1,
-                      UUID uuid1, Instant created1, Instant updated1)
+                      String typeFilter1, String subjectFilter1, List<DeliveryMethod> dmList1, int ttl1, Object notes1,
+                      UUID uuid1, Instant expiry1, Instant created1, Instant updated1)
   {
     seqId = seqId1;
     tenant = tenant1;
@@ -152,8 +159,10 @@ public final class Subscription
     typeFilter = typeFilter1;
     subjectFilter = subjectFilter1;
     deliveryMethods = (dmList1 == null) ? null : new ArrayList<>(dmList1);
+    ttl = ttl1;
     notes = notes1;
     uuid = uuid1;
+    expiry = expiry1;
     created = created1;
     updated = updated1;
   }
@@ -174,8 +183,10 @@ public final class Subscription
     typeFilter = s.getTypeFilter();
     subjectFilter = s.getSubjectFilter();
     deliveryMethods = s.getDeliveryMethods();
+    ttl = s.getTtl();
     notes = s.getNotes();
     uuid = s.getUuid();
+    expiry = s.getExpiry();
     created = s.getCreated();
     updated = s.getUpdated();
   }
@@ -321,12 +332,6 @@ public final class Subscription
 
   public int getSeqId() { return seqId; }
 
-  @Schema(type = "string")
-  public Instant getCreated() { return created; }
-
-  @Schema(type = "string")
-  public Instant getUpdated() { return updated; }
-
   public String getTenant() { return tenant; }
 
   public String getId() { return id; }
@@ -355,9 +360,21 @@ public final class Subscription
     deliveryMethods = (dmList1 == null) ? null : new ArrayList<>(dmList1);
   }
 
+  public int getTtl() { return ttl; }
+  public void setTtl(int i) { ttl = i;  }
+
   public Object getNotes() { return notes; }
   public void setNotes(Object n) { notes = n;  }
 
   public UUID getUuid() { return uuid; }
   public void setUuid(UUID u) { uuid = u;  }
+
+  @Schema(type = "string")
+  public Instant getExpiry() { return expiry; }
+
+  @Schema(type = "string")
+  public Instant getCreated() { return created; }
+
+  @Schema(type = "string")
+  public Instant getUpdated() { return updated; }
 }
