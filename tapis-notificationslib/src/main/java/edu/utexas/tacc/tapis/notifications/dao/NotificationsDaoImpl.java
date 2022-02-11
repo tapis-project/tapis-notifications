@@ -202,6 +202,7 @@ public class NotificationsDaoImpl implements NotificationsDao
               .set(SUBSCRIPTIONS.TYPE_FILTER, subscr.getTypeFilter())
               .set(SUBSCRIPTIONS.SUBJECT_FILTER, subscr.getSubjectFilter())
               .set(SUBSCRIPTIONS.DELIVERY_METHODS, deliveryMethodsJson)
+              .set(SUBSCRIPTIONS.TTL, subscr.getTtl())
               .set(SUBSCRIPTIONS.NOTES, notesObj)
               .set(SUBSCRIPTIONS.UUID, subscr.getUuid())
               .set(SUBSCRIPTIONS.EXPIRY, expiry)
@@ -519,7 +520,7 @@ public class NotificationsDaoImpl implements NotificationsDao
               .set(SUBSCRIPTIONS.UPDATED, TapisUtils.getUTCTimeNow())
               .where(SUBSCRIPTIONS.TENANT.eq(tenantId),SUBSCRIPTIONS.ID.eq(id)).execute();
       // Persist update record
-      String updateJsonStr = "{\"ttl\":" +  newTTL + "}";
+      String updateJsonStr = "{\"ttl\":" +  newTTL + ", \"expiry\":\"" + expiry + "\"}";
       addUpdate(db, rUser, tenantId, id, INVALID_SEQ_ID, SubscriptionOperation.updateTTL, updateJsonStr , null,
                 getUUIDUsingDb(db, tenantId, id));
       // Close out and commit

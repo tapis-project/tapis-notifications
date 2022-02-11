@@ -29,9 +29,11 @@ import org.testng.annotations.Test;
 
 import javax.ws.rs.NotFoundException;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
@@ -71,7 +73,7 @@ public class NotificationsServiceTest
   private static final String testUser5 = "testuser5";
 
   // Create test definitions in memory
-  int numSubscriptions = 15;
+  int numSubscriptions = 13;
   Subscription[] subscriptions = IntegrationUtils.makeSubscriptions(numSubscriptions, testKey);
 
   @BeforeSuite
@@ -300,27 +302,11 @@ public class NotificationsServiceTest
     }
   }
 
-//  @Test
-//  public void testGetSubscriptionIDs() throws Exception
-//  {
-//    Subscription sub1 = subscriptions[5];
-//    svc.createSubscription(rUser1, sub1, scrubbedJson);
-//    Subscription sub2 = subscriptions[6];
-//    svc.createSubscription(rUser1, sub2, scrubbedJson);
-//    Set<String> subIDs = svc.getAllowedSubscriptionIDs(rUser1);
-//    for (String name : subIDs)
-//    {
-//      System.out.println("Found item: " + name);
-//    }
-//    Assert.assertTrue(subIDs.contains(sub1.getId()), "List of subs did not contain sub name: " + sub1.getId());
-//    Assert.assertTrue(subIDs.contains(sub2.getId()), "List of subs did not contain sub name: " + sub2.getId());
-//  }
-
   // Test retrieving all
   @Test
   public void testGetSubscriptions() throws Exception
   {
-    Subscription sub0 = subscriptions[7];
+    Subscription sub0 = subscriptions[5];
     svc.createSubscription(rUser1, sub0, scrubbedJson);
     List<Subscription> subscriptions = svc.getSubscriptions(rUser1, null, -1, null, -1, null);
     for (Subscription sub : subscriptions)
@@ -334,17 +320,17 @@ public class NotificationsServiceTest
   public void testGetSubscriptionsAuth() throws Exception
   {
     // Create 3 resources, 2 of which are owned by testUser5.
-    Subscription sub0 = subscriptions[8];
+    Subscription sub0 = subscriptions[6];
     String sub1Name = sub0.getId();
     sub0.setOwner(rUser5.getOboUserId());
     svc.createSubscription(rUser5, sub0, scrubbedJson);
 
-    sub0 = subscriptions[9];
+    sub0 = subscriptions[7];
     String sub2Name = sub0.getId();
     sub0.setOwner(rUser5.getOboUserId());
     svc.createSubscription(rUser5, sub0, scrubbedJson);
 
-    sub0 = subscriptions[10];
+    sub0 = subscriptions[8];
     svc.createSubscription(rUser1, sub0, scrubbedJson);
 
     // When retrieving as testUser5 only 2 should be returned
@@ -363,7 +349,7 @@ public class NotificationsServiceTest
   public void testEnableDisableDelete() throws Exception
   {
     // Create the resource
-    Subscription sub0 = subscriptions[11];
+    Subscription sub0 = subscriptions[9];
     String subId = sub0.getId();
     svc.createSubscription(rUser1, sub0, scrubbedJson);
     // Enabled should start off true, then become false and finally true again.
@@ -392,7 +378,7 @@ public class NotificationsServiceTest
   @Test
   public void testSubscriptionExists() throws Exception
   {
-    Subscription sub0 = subscriptions[12];
+    Subscription sub0 = subscriptions[10];
     // If not there we should get false
     Assert.assertFalse(svc.checkForSubscription(rUser1, sub0.getId()));
     // After creating we should get true
@@ -405,11 +391,46 @@ public class NotificationsServiceTest
   public void testCreateSubscriptionAlreadyExists() throws Exception
   {
     // Create the subscription
-    Subscription sub0 = subscriptions[13];
+    Subscription sub0 = subscriptions[11];
     svc.createSubscription(rUser1, sub0, scrubbedJson);
     Assert.assertTrue(svc.checkForSubscription(rUser1, sub0.getId()));
     // Now attempt to create again, should get IllegalStateException with msg NTFLIB_SUBSCR_EXISTS
     svc.createSubscription(rUser1, sub0, scrubbedJson);
+  }
+
+  // Test set and update of TTL, Expiry should also be set and updated.
+  @Test
+  public void testTTL() throws Exception
+  {
+    // Create the resource
+    Subscription sub0 = subscriptions[12];
+    String subId = sub0.getId();
+    // Get the current time
+    Instant now = Instant.now();
+    svc.createSubscription(rUser1, sub0, scrubbedJson);
+    Subscription tmpSub = svc.getSubscription(rUser1, subId);
+    // Get and check the initial expiry.
+    // TTL is in minutes so it should be ttl*60 seconds after the time of creation.
+    // Check to the nearest second, i.e., assume it took much less than one second to create the subscription
+    Instant expiry = tmpSub.getExpiry();
+    long expirySeconds = expiry.truncatedTo(ChronoUnit.SECONDS).getEpochSecond() - now.truncatedTo(ChronoUnit.SECONDS).getEpochSecond();
+    Assert.assertEquals(tmpSub.getTtl()*60L, expirySeconds);
+
+    // Sleep a couple of seconds
+    Thread.sleep(2000);
+    // Update the TTL and make sure the expiry is also updated.
+    String newTTLStr = "60";
+    now = Instant.now();
+    svc.updateSubscriptionTTL(rUser1, subId, newTTLStr);
+    tmpSub = svc.getSubscription(rUser1, subId);
+    expiry = tmpSub.getExpiry();
+    expirySeconds = expiry.truncatedTo(ChronoUnit.SECONDS).getEpochSecond() - now.truncatedTo(ChronoUnit.SECONDS).getEpochSecond();
+    Assert.assertEquals(tmpSub.getTtl()*60L, expirySeconds);
+
+    // Test that setting TTL to 0 results in expiry of null
+    svc.updateSubscriptionTTL(rUser1, subId, "0");
+    tmpSub = svc.getSubscription(rUser1, subId);
+    Assert.assertNull(tmpSub.getExpiry());
   }
 
   // Test various cases when resource is missing
@@ -504,6 +525,7 @@ public class NotificationsServiceTest
     Assert.assertEquals(fetchedSub.getDescription(), origSub.getDescription());
     Assert.assertEquals(fetchedSub.getTypeFilter(), origSub.getTypeFilter());
     Assert.assertEquals(fetchedSub.getSubjectFilter(), origSub.getSubjectFilter());
+    Assert.assertEquals(fetchedSub.getTtl(), origSub.getTtl());
     Assert.assertEquals(fetchedSub.getOwner(), origSub.getOwner());
     Assert.assertEquals(fetchedSub.isEnabled(), origSub.isEnabled());
     // Verify deliveryMethods

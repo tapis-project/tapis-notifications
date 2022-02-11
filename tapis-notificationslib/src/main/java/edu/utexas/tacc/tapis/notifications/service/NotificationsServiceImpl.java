@@ -1208,6 +1208,7 @@ public class NotificationsServiceImpl implements NotificationsService
 //          return;
 //        break;
       case modify:
+      case updateTTL:
         if (owner.equals(userName) || hasAdminRole(rUser, tenantName, userName)) return;
         break;
 //        if (owner.equals(userName) || hasAdminRole(rUser, tenantName, userName) ||

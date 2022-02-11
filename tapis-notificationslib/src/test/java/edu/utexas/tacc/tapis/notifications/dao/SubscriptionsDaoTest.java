@@ -11,6 +11,10 @@ import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -30,7 +34,7 @@ public class SubscriptionsDaoTest
   private ResourceRequestUser rUser;
 
   // Create test subscription definitions in memory
-  int numSubscriptions = 7;
+  int numSubscriptions = 8;
   String testKey = "Dao";
   Subscription[] subscriptions = IntegrationUtils.makeSubscriptions(numSubscriptions, testKey);
 
@@ -81,6 +85,8 @@ public class SubscriptionsDaoTest
     Assert.assertEquals(tmpSub.getOwner(), sub0.getOwner());
     Assert.assertEquals(tmpSub.getTypeFilter(), sub0.getTypeFilter());
     Assert.assertEquals(tmpSub.getSubjectFilter(), sub0.getSubjectFilter());
+    Assert.assertEquals(tmpSub.getTtl(), sub0.getTtl());
+    Assert.assertNull(tmpSub.getExpiry());
 
     // Verify notes
     JsonObject obj = (JsonObject) tmpSub.getNotes();
@@ -179,6 +185,33 @@ public class SubscriptionsDaoTest
     dao.updateSubscriptionOwner(rUser, tenantName, sub0.getId(), "newOwner");
     Subscription tmpSubscription = dao.getSubscription(sub0.getTenant(), sub0.getId());
     Assert.assertEquals(tmpSubscription.getOwner(), "newOwner");
+  }
+
+  // Test update TTL
+  @Test
+  public void testUpdateTTL() throws Exception {
+    Subscription sub0 = subscriptions[7];
+    Instant newExpiry = Instant.now();
+    boolean itemCreated = dao.createSubscription(rUser, sub0, expiryNull, gson.toJson(sub0), scrubbedJson);
+    System.out.println("Created item with subscriptionId: " + sub0.getId());
+    Assert.assertTrue(itemCreated, "Item not created, id: " + sub0.getId());
+    // Interesting, storing and retrieving from DB truncates/rounds from nanoseconds to microseconds.
+    System.out.println("Old Expiry: " + sub0.getExpiry());
+    System.out.println("New Expiry: " + newExpiry);
+    dao.updateSubscriptionTTL(rUser, tenantName, sub0.getId(), ttl2, newExpiry);
+    Subscription tmpSub = dao.getSubscription(sub0.getTenant(), sub0.getId());
+    System.out.println("Got Expiry: " + tmpSub.getExpiry());
+    LocalDateTime newExpiryLDT =  LocalDateTime.ofInstant(newExpiry, ZoneOffset.UTC);
+    LocalDateTime gotExpiryLDT =  LocalDateTime.ofInstant(tmpSub.getExpiry(), ZoneOffset.UTC);
+    System.out.println("New ExpiryLDT: " + newExpiryLDT);
+    System.out.println("Got ExpiryLDT: " + gotExpiryLDT);
+    // Truncate expiry values to milliseconds. Since the new TTL is many seconds this is OK.
+    LocalDateTime newExpiryLDTms = newExpiryLDT.truncatedTo(ChronoUnit.MILLIS);
+    LocalDateTime gotExpiryLDTms = gotExpiryLDT.truncatedTo(ChronoUnit.MILLIS);
+    System.out.println("New ExpiryLDTms: " + newExpiryLDTms);
+    System.out.println("Got ExpiryLDTms: " + gotExpiryLDTms);
+    Assert.assertEquals(tmpSub.getTtl(), ttl2);
+    Assert.assertEquals(gotExpiryLDTms, newExpiryLDTms);
   }
 
   // Test behavior when subscription is missing, especially for cases where service layer depends on the behavior.
