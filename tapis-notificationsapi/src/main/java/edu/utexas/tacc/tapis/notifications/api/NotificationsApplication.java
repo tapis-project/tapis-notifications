@@ -79,8 +79,9 @@ public class NotificationsApplication extends ResourceConfig
     // Set the application name. Note that this has no impact on base URL
     setApplicationName(TapisConstants.SERVICE_NAME_NOTIFICATIONS);
 
-    // Perform remaining init steps in try block so we can print a fatal error message if something goes wrong.
-    try {
+    // Perform remaining init steps in try block, so that we can print a fatal error message if something goes wrong.
+    try
+    {
       // Get runtime parameters
       RuntimeParameters runParms = RuntimeParameters.getInstance();
 
