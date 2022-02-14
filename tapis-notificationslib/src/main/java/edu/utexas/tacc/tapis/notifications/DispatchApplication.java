@@ -4,6 +4,7 @@ import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
 import edu.utexas.tacc.tapis.notifications.dao.NotificationsDao;
 import edu.utexas.tacc.tapis.notifications.dao.NotificationsDaoImpl;
 import edu.utexas.tacc.tapis.notifications.service.DispatchService;
+import edu.utexas.tacc.tapis.notifications.service.NotificationsService;
 import edu.utexas.tacc.tapis.notifications.service.NotificationsServiceImpl;
 import edu.utexas.tacc.tapis.notifications.service.ServiceClientsFactory;
 import edu.utexas.tacc.tapis.notifications.service.ServiceContextFactory;
@@ -14,8 +15,6 @@ import edu.utexas.tacc.tapis.shared.utils.TapisUtils;
 import org.glassfish.hk2.api.ServiceLocator;
 import org.glassfish.hk2.utilities.ServiceLocatorUtilities;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.inject.Singleton;
 
@@ -54,20 +53,27 @@ public class DispatchApplication
       protected void configure()
       {
         bind(DispatchService.class).to(DispatchService.class);
-        bind(NotificationsServiceImpl.class).to(NotificationsServiceImpl.class); // TODO: Used in Dispatch service impl
-        bind(NotificationsDaoImpl.class).to(NotificationsDao.class); // Used in Notifications service impl
-        bindFactory(ServiceContextFactory.class).to(ServiceContext.class); // Used in Notifications service impl
-        bindFactory(ServiceClientsFactory.class).to(ServiceClients.class); // Used in Notifications service impl
-//        bindAsContract(NotificationsDao.class);
-//        bindAsContract(NotificationsService.class).in(Singleton.class);
-//        bindAsContract(DispatchService.class).in(Singleton.class);
+        bind(NotificationsDao.class).to(NotificationsDaoImpl.class); // Used in Dispatch service
+        bind(NotificationsService.class).to(NotificationsServiceImpl.class); // Used in Dispatch service
+        bindFactory(ServiceClientsFactory.class).to(ServiceClients.class); // TODO/TBD: Used in Dispatch service
       }
     });
 
     DispatchService dispatchService = locator.getService(DispatchService.class);
-    // Call the main service init method. Setup service context, DB and message broker.
+
+    // Call the main service init method. Setup DB and message broker.
     dispatchService.initService(siteAdminTenantId, RuntimeParameters.getInstance());
+
+    // Start background thread to clean up expired subscriptions.
+    // TODO dispatchService.startReaper();
+
     // Start the main loop that processes events.
     dispatchService.processEvents();
+
+    // We are shutting down, stop the reaper thread.
+    // TODO dispatchService.stopReaper();
+
+    System.out.println("**** Stopping Notifications Dispatch Service. Version: " + TapisUtils.getTapisFullVersion() + " ****");
+    System.exit(0);
   }
 }

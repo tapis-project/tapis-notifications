@@ -59,10 +59,6 @@ public class NotificationsApplication extends ResourceConfig
   // For all logging use println or similar so we do not have a dependency on a logging subsystem.
   public NotificationsApplication()
   {
-    // Log our existence.
-    // Output version information on startup
-    System.out.println("**** Starting Notifications Service. Version: " + TapisUtils.getTapisFullVersion() + " ****");
-
     // Needed for properly returning timestamps
     // Also allows for setting a breakpoint when response is being constructed.
     register(ObjectMapperContextResolver.class);
@@ -124,6 +120,10 @@ public class NotificationsApplication extends ResourceConfig
    */
   public static void main(String[] args) throws Exception
   {
+    // Log our existence.
+    // Output version information on startup
+    System.out.println("**** Starting Notifications Service. Version: " + TapisUtils.getTapisFullVersion() + " ****");
+
     // If TAPIS_SERVICE_PORT set in env then use it.
     // Useful for starting service locally on a busy system where 8080 may not be available.
     String servicePort = System.getenv("TAPIS_SERVICE_PORT");
@@ -151,5 +151,7 @@ public class NotificationsApplication extends ResourceConfig
     // Create and start the server
     final HttpServer server = GrizzlyHttpServerFactory.createHttpServer(baseUri, config, false);
     server.start();
+
+    System.out.println("**** Stopping Notifications Service. Version: " + TapisUtils.getTapisFullVersion() + " ****");
   }
 }

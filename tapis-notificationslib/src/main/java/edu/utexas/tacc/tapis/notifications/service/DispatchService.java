@@ -57,8 +57,11 @@ public class DispatchService
   // ************************************************************************
 
   // Use HK2 to inject singletons
-  @Inject
-  private NotificationsDao dao;
+//  @Inject
+//  private NotificationsDao dao;
+
+//  @Inject
+//  private NotificationsService notifSvc;
 
   @Inject
   private ServiceClients serviceClients;
@@ -86,7 +89,7 @@ public class DispatchService
     siteId = runParms.getSiteId();
     siteAdminTenantId = siteAdminTenantId1;
     // Make sure DB is present and updated to latest version using flyway
-    dao.migrateDB();
+//    dao.migrateDB();
     // TODO/TBD Initialize the singleton instance of the message broker manager
     MessageBrokerManager.init(runParms);
   }
