@@ -47,15 +47,16 @@ public class DispatchApplication
     // Set admin tenant also, needed when building a client for calling other services (such as SK) as ourselves.
     siteAdminTenantId = TenantManager.getInstance(url).getSiteAdminTenantId(siteId);
 
+    // Initialize bindings for HK2 dependency injection
     ServiceLocator locator = ServiceLocatorUtilities.createAndPopulateServiceLocator();
     ServiceLocatorUtilities.bind(locator, new AbstractBinder() {
       @Override
       protected void configure()
       {
-        bind(DispatchService.class).to(DispatchService.class);
-        bind(NotificationsDao.class).to(NotificationsDaoImpl.class); // Used in Dispatch service
-        bind(NotificationsService.class).to(NotificationsServiceImpl.class); // Used in Dispatch service
-        bindFactory(ServiceClientsFactory.class).to(ServiceClients.class); // TODO/TBD: Used in Dispatch service
+        bind(DispatchService.class).to(DispatchService.class); // Used here in this class.
+//        bind(NotificationsDao.class).to(NotificationsDaoImpl.class); // Used in Dispatch service
+//        bind(NotificationsService.class).to(NotificationsServiceImpl.class); // Used in Dispatch service
+//        bindFactory(ServiceClientsFactory.class).to(ServiceClients.class); // TODO/TBD: Used in Dispatch service
       }
     });
 
@@ -65,15 +66,23 @@ public class DispatchApplication
     dispatchService.initService(siteAdminTenantId, RuntimeParameters.getInstance());
 
     // Start background thread to clean up expired subscriptions.
-    // TODO dispatchService.startReaper();
+    dispatchService.startReaper();
 
-    // Start the main loop that processes events.
+    // Start the workers that send out notifications
+    dispatchService.startWorkers();
+
+    // Start the main loop that processes events and hands them out to workers.
     dispatchService.processEvents();
 
-    // We are shutting down, stop the reaper thread.
-    // TODO dispatchService.stopReaper();
-
     System.out.println("**** Stopping Notifications Dispatch Service. Version: " + TapisUtils.getTapisFullVersion() + " ****");
+
+    // Stop the workers that send out notifications
+    dispatchService.stopWorkers();
+
+    // We are shutting down, stop the reaper thread.
+    dispatchService.stopReaper();
+
+    dispatchService.shutDown();
     System.exit(0);
   }
 }

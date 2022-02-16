@@ -39,6 +39,7 @@ SET search_path TO tapis_ntf;
 --    Subscriptions
 -- ----------------------------------------------------------------------------------------
 -- Subscriptions table
+-- A subscription is a request to receive notification of events.
 CREATE TABLE subscriptions
 (
     seq_id  SERIAL PRIMARY KEY,
@@ -85,3 +86,38 @@ CREATE TABLE subscription_updates
     created TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc')
 );
 ALTER TABLE subscription_updates OWNER TO tapis_ntf;
+
+-- Notifications table
+-- In-flight notifications. A notification represents an event being delivered to a subscriber
+CREATE TABLE notifications
+(
+    seq_id SERIAL PRIMARY KEY,
+    subscr_seq_id INTEGER REFERENCES subscriptions(seq_id) ON DELETE CASCADE,
+    tenant TEXT NOT NULL,
+    bucket_number INTEGER NOT NULL DEFAULT 0,
+    event_uuid uuid NOT NULL,
+    event JSONB NOT NULL,
+    delivery_method JSONB NOT NULL,
+    created TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),
+    updated TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc')
+);
+ALTER TABLE notifications OWNER TO tapis_ntf;
+
+-- Notifications recovery table
+-- In-flight notifications that are in recovery.
+CREATE TABLE notifications_recovery
+(
+    seq_id SERIAL PRIMARY KEY,
+    subscr_seq_id INTEGER REFERENCES subscriptions(seq_id) ON DELETE CASCADE,
+    tenant TEXT NOT NULL,
+    bucket_number INTEGER NOT NULL DEFAULT 0,
+    event_uuid uuid NOT NULL,
+    event JSONB NOT NULL,
+    delivery_method JSONB NOT NULL,
+    recovery_attempt INTEGER NOT NULL DEFAULT 0,
+    last_attempt TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),
+    expiry TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),
+    created TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),
+    updated TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc')
+);
+ALTER TABLE notifications_recovery OWNER TO tapis_ntf;

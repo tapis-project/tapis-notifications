@@ -4,6 +4,7 @@ package edu.utexas.tacc.tapis.notifications.service;
 //import com.rabbitmq.client.AMQP;
 //import com.rabbitmq.client.ConnectionFactory;
 //import com.rabbitmq.client.Delivery;
+import com.rabbitmq.client.DeliverCallback;
 import edu.utexas.tacc.tapis.notifications.model.Event;
 import org.jvnet.hk2.annotations.Contract;
 //import reactor.core.publisher.Flux;
@@ -30,6 +31,7 @@ import edu.utexas.tacc.tapis.notifications.model.Subscription;
 
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
+import java.io.IOException;
 import java.util.List;
 
 /*
@@ -95,5 +97,7 @@ public interface NotificationsService
   // -----------------------------------------------------------------------
   // ------------------------- Events --------------------------------------
   // -----------------------------------------------------------------------
-  void postEvent(ResourceRequestUser rUser, Event event) throws TapisException;
+  void postEvent(ResourceRequestUser rUser, Event event) throws IOException;
+
+  Event readEvent(ResourceRequestUser rUser) throws TapisException;
 }

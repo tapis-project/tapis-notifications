@@ -1,36 +1,11 @@
 package edu.utexas.tacc.tapis.notifications.service;
 
-import com.rabbitmq.client.DeliverCallback;
-import edu.utexas.tacc.tapis.client.shared.exceptions.TapisClientException;
 import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
-import edu.utexas.tacc.tapis.notifications.dao.NotificationsDao;
-import edu.utexas.tacc.tapis.notifications.model.Event;
-import edu.utexas.tacc.tapis.notifications.model.Subscription;
-import edu.utexas.tacc.tapis.notifications.queue.MessageBrokerManager;
 import edu.utexas.tacc.tapis.notifications.utils.LibUtils;
-import edu.utexas.tacc.tapis.security.client.SKClient;
-import edu.utexas.tacc.tapis.shared.TapisConstants;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
-import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
-import edu.utexas.tacc.tapis.shared.security.ServiceClients;
-import edu.utexas.tacc.tapis.shared.utils.TapisGsonUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import javax.ws.rs.NotAuthorizedException;
-import javax.ws.rs.NotFoundException;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-import java.util.regex.Pattern;
-
-import static edu.utexas.tacc.tapis.shared.TapisConstants.NOTIFICATIONS_SERVICE;
 
 /*
  * Notifications Dispatch Service.
@@ -48,6 +23,8 @@ public class DispatchService
   // Tracing.
   private static final Logger log = LoggerFactory.getLogger(DispatchService.class);
 
+  private static final int SHUTDOWN_TIMEOUT_MS = 10000;
+
   // ************************************************************************
   // *********************** Enums ******************************************
   // ************************************************************************
@@ -63,8 +40,8 @@ public class DispatchService
 //  @Inject
 //  private NotificationsService notifSvc;
 
-  @Inject
-  private ServiceClients serviceClients;
+//  @Inject
+//  private ServiceClients serviceClients;
 
   // We must be running on a specific site and this will never change
   // These are initialized in method initService()
@@ -90,8 +67,17 @@ public class DispatchService
     siteAdminTenantId = siteAdminTenantId1;
     // Make sure DB is present and updated to latest version using flyway
 //    dao.migrateDB();
-    // TODO/TBD Initialize the singleton instance of the message broker manager
-    MessageBrokerManager.init(runParms);
+    // Initialize the singleton instance of the message broker manager
+    MessageBroker.init(runParms);
+  }
+
+  /**
+   * Stop the service
+   */
+  public void shutDown()
+  {
+    log.info(LibUtils.getMsg("NTFLIB_MSGBRKR_CONN_CLOSE", SHUTDOWN_TIMEOUT_MS));
+    MessageBroker.getInstance().shutDown(SHUTDOWN_TIMEOUT_MS);
   }
 
   // -----------------------------------------------------------------------
@@ -105,6 +91,42 @@ public class DispatchService
   {
     log.error("TODO: Implement processEvents");
     try {Thread.sleep(5000);} catch (Exception e) {}
+  }
+
+  /**
+   * Start the reaper thread for cleaning up expired subscriptions
+   */
+  public void startReaper() throws TapisException
+  {
+    log.error("TODO: Implement startReaper");
+    try {Thread.sleep(2000);} catch (Exception e) {}
+  }
+
+  /**
+   * Stop the reaper thread for cleaning up expired subscriptions
+   */
+  public void stopReaper() throws TapisException
+  {
+    log.error("TODO: Implement stopReaper");
+    try {Thread.sleep(1000);} catch (Exception e) {}
+  }
+
+  /**
+   * Start the workers that would do the main work of sending out notifications based on subscriptions
+   */
+  public void startWorkers() throws TapisException
+  {
+    log.error("TODO: Implement startWorkers");
+    try {Thread.sleep(1000);} catch (Exception e) {}
+  }
+
+  /**
+   * Stop the workers
+   */
+  public void stopWorkers() throws TapisException
+  {
+    log.error("TODO: Implement stopWorkers");
+    try {Thread.sleep(1000);} catch (Exception e) {}
   }
 
 

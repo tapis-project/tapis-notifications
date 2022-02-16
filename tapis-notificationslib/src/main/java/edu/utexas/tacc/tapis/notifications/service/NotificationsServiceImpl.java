@@ -1,7 +1,7 @@
 package edu.utexas.tacc.tapis.notifications.service;
 
+import java.io.IOException;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -13,7 +13,6 @@ import javax.inject.Inject;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 
-import com.rabbitmq.client.DeliverCallback;
 import org.apache.commons.lang3.StringUtils;
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
@@ -36,7 +35,6 @@ import edu.utexas.tacc.tapis.sharedapi.security.ResourceRequestUser;
 
 import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
 import edu.utexas.tacc.tapis.notifications.model.Event;
-import edu.utexas.tacc.tapis.notifications.queue.MessageBrokerManager;
 import edu.utexas.tacc.tapis.notifications.dao.NotificationsDao;
 import edu.utexas.tacc.tapis.notifications.model.PatchSubscription;
 import edu.utexas.tacc.tapis.notifications.model.Subscription;
@@ -96,6 +94,8 @@ public class NotificationsServiceImpl implements NotificationsService
   @Inject
   private ServiceContext serviceContext;
 
+  private MessageBroker msgBroker;
+
   // We must be running on a specific site and this will never change
   // These are initialized in method initService()
   private static String siteId;
@@ -124,7 +124,8 @@ public class NotificationsServiceImpl implements NotificationsService
     // Make sure DB is present and updated to latest version using flyway
     dao.migrateDB();
     // Initialize the singleton instance of the message broker manager
-    MessageBrokerManager.init(runParms);
+    MessageBroker.init(runParms);
+    msgBroker = MessageBroker.getInstance();
   }
 
   // -----------------------------------------------------------------------
@@ -897,34 +898,32 @@ public class NotificationsServiceImpl implements NotificationsService
   // -----------------------------------------------------------------------
   // ------------------------- Events --------------------------------------
   // -----------------------------------------------------------------------
+
   /**
    * Post an Event to the queue.
    * @param rUser - ResourceRequestUser containing tenant, user and request info
    * @param event - Pre-populated Event object
-   * @throws TapisException - for Tapis related exceptions
-   * @throws IllegalStateException - subscription exists OR subscription in invalid state
-   * @throws IllegalArgumentException - invalid parameter passed in
-   * @throws NotAuthorizedException - unauthorized
+   * @throws IOException - on error
    */
   @Override
-  public void postEvent(ResourceRequestUser rUser, Event event) throws TapisException
+  public void postEvent(ResourceRequestUser rUser, Event event) throws IOException
   {
-    MessageBrokerManager.getInstance().queueEvent(rUser, event);
+    msgBroker.publishEvent(rUser, event);
   }
 
   /**
    * Read an Event from the queue.
-   * NOTE: only used by test, not part of the service interface
+   * Event is removed from the queue.
+   * TODO/TBD: May only use for testing. If so consider removing this from public interface of service.
    * @param rUser - ResourceRequestUser containing tenant, user and request info
    * @throws TapisException - for Tapis related exceptions
-   * @throws IllegalStateException - subscription exists OR subscription in invalid state
-   * @throws IllegalArgumentException - invalid parameter passed in
-   * @throws NotAuthorizedException - unauthorized
    *
    */
-  public void readMsgWithAutoAck(ResourceRequestUser rUser, DeliverCallback deliverCallback) throws TapisException
+  @Override
+  public Event readEvent(ResourceRequestUser rUser) throws TapisException
   {
-    MessageBrokerManager.getInstance().readMsgWithAutoAck(rUser, deliverCallback);
+    boolean autoAck = true;
+    return msgBroker.readEvent(rUser, autoAck);
   }
 
   // ************************************************************************
