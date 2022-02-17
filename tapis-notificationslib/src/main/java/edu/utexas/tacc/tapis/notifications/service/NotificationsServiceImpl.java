@@ -914,16 +914,15 @@ public class NotificationsServiceImpl implements NotificationsService
   /**
    * Read an Event from the queue.
    * Event is removed from the queue.
-   * TODO/TBD: May only use for testing. If so consider removing this from public interface of service.
-   * @param rUser - ResourceRequestUser containing tenant, user and request info
+   *   NOTE: currently only used for testing. Not part of public interface of service.
    * @throws TapisException - for Tapis related exceptions
    *
    */
-  @Override
-  public Event readEvent(ResourceRequestUser rUser) throws TapisException
+//  @Override
+  public Event readEvent() throws TapisException
   {
     boolean autoAck = true;
-    return msgBroker.readEvent(rUser, autoAck);
+    return msgBroker.readEvent(autoAck);
   }
 
   // ************************************************************************

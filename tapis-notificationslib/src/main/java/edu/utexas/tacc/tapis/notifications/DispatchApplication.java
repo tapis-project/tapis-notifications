@@ -31,7 +31,7 @@ public class DispatchApplication
   {
     // Log our existence.
     // Output version information on startup
-    System.out.println("**** Starting Notifications Dispatch Service. Version: " + TapisUtils.getTapisFullVersion() + " ****");
+    System.out.printf("**** Starting Notifications Dispatch Service. Version: %s ****%n", TapisUtils.getTapisFullVersion());
 
     // Get runtime parameters
     RuntimeParameters runParms = RuntimeParameters.getInstance();
@@ -54,7 +54,7 @@ public class DispatchApplication
       protected void configure()
       {
         bind(DispatchService.class).to(DispatchService.class); // Used here in this class.
-//        bind(NotificationsDao.class).to(NotificationsDaoImpl.class); // Used in Dispatch service
+        bind(NotificationsDao.class).to(NotificationsDaoImpl.class); // Used in DispatchService, DeliveryWorker
 //        bind(NotificationsService.class).to(NotificationsServiceImpl.class); // Used in Dispatch service
 //        bindFactory(ServiceClientsFactory.class).to(ServiceClients.class); // TODO/TBD: Used in Dispatch service
       }
@@ -68,10 +68,10 @@ public class DispatchApplication
     // Start background thread to clean up expired subscriptions.
     dispatchService.startReaper();
 
-    // Start the workers that send out notifications
+    // Start the worker threads that send out notifications
     dispatchService.startWorkers();
 
-    // Start the main loop that processes events and hands them out to workers.
+    // Start the main loop to process events and hand them out to workers.
     dispatchService.processEvents();
 
     System.out.println("**** Stopping Notifications Dispatch Service. Version: " + TapisUtils.getTapisFullVersion() + " ****");

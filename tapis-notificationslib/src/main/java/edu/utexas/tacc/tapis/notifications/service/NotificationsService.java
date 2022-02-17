@@ -98,6 +98,6 @@ public interface NotificationsService
   // ------------------------- Events --------------------------------------
   // -----------------------------------------------------------------------
   void postEvent(ResourceRequestUser rUser, Event event) throws IOException;
-
-  Event readEvent(ResourceRequestUser rUser) throws TapisException;
+//
+//  Event readEvent(ResourceRequestUser rUser) throws TapisException;
 }

@@ -1,5 +1,6 @@
 package edu.utexas.tacc.tapis.notifications.dao;
 
+import edu.utexas.tacc.tapis.notifications.model.Notification;
 import edu.utexas.tacc.tapis.notifications.model.Subscription;
 import edu.utexas.tacc.tapis.notifications.model.Subscription.SubscriptionOperation;
 import edu.utexas.tacc.tapis.search.parser.ASTNode;
@@ -67,6 +68,11 @@ public interface NotificationsDao
   String getSubscriptionOwner(String tenant, String id) throws TapisException;
 
   // -----------------------------------------------------------------------
-  // ------------------------- Events --------------------------------------
+  // -------------------- Notifications ------------------------------------
   // -----------------------------------------------------------------------
+
+//  boolean createNotification(Notification notification) throws TapisException;
+
+//  int deleteNotification(Notification notification) throws TapisException;
+
 }

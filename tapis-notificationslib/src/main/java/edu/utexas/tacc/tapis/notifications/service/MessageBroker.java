@@ -2,21 +2,18 @@ package edu.utexas.tacc.tapis.notifications.service;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeoutException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Consumer;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import com.rabbitmq.client.GetResponse;
-import com.rabbitmq.client.ShutdownListener;
-import com.rabbitmq.client.ShutdownSignalException;
-import edu.utexas.tacc.tapis.sharedq.DeliveryResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.rabbitmq.client.BuiltinExchangeType;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
@@ -34,6 +31,7 @@ import edu.utexas.tacc.tapis.sharedq.VHostManager;
 import edu.utexas.tacc.tapis.sharedq.VHostParms;
 
 import edu.utexas.tacc.tapis.notifications.model.Event;
+import edu.utexas.tacc.tapis.notifications.model.Delivery;
 import edu.utexas.tacc.tapis.notifications.utils.LibUtils;
 import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
 
@@ -68,6 +66,7 @@ public final class MessageBroker // extends AbstractQueueManager
   /* ********************************************************************** */
   /*                                 Fields                                 */
   /* ********************************************************************** */
+
   // Singleton instance of this class.
   private static MessageBroker instance;
 
@@ -165,9 +164,7 @@ public final class MessageBroker // extends AbstractQueueManager
       try { mbChannel.close(); }
       catch (Exception e)
       {
-//        String msg = LibUtils.getMsgAuth("NTFLIB_MSGBRKR_CHAN_CLOSE_ERR", rUser, channel.getChannelNumber(),
-//                e.getMessage());
-        String msg = "Error closing channel: " + e.getMessage();
+        String msg = LibUtils.getMsg("NTFLIB_MSGBRKR_CHAN_CLOSE_ERR", mbChannel.getChannelNumber(), e.getMessage());
         log.error(msg, e);
       }
     }
@@ -193,43 +190,33 @@ public final class MessageBroker // extends AbstractQueueManager
   {
     // Convert event to json string
     var jsonMessage = TapisGsonUtils.getGson().toJson(event);
-//    try
-//    {
     // Publish the event to the queue.
     getChannel().basicPublish(EXCHANGE_MAIN, QUEUE_MAIN, QueueManagerNames.PERSISTENT_JSON,
                            jsonMessage.getBytes(StandardCharsets.UTF_8));
     if (log.isTraceEnabled())
     {
-      log.trace(LibUtils.getMsgAuth("NTFLIB_EVENT_PUB", rUser, event.getSource(), event.getType(), event.getSubject()));
+      log.trace(LibUtils.getMsgAuth("NTFLIB_EVENT_PUB", rUser, event.getSource(), event.getType(), event.getSubject(),
+                                    event.getSeriesId(), event.getTime(), event.getUuid()));
     }
-//  }
-//    catch (IOException e)
-//    {
-//      String msg = LibUtils.getMsgAuth("NTFLIB_EVENT_PUB_ERR", rUser, event.getSource(), event.getType(),
-//                                       event.getSubject(), e.getMessage());
-//      throw new TapisException(msg, e);
-//    }
   }
 
   /**
-   * Read a message from the primary event queue.
+   * Read a message from the main event queue.
    * If autoAck is true then message is removed from the queue.
-   * @param rUser - ResourceRequestUser containing tenant, user and request info
    * @throws TapisException - on error
    */
-  public Event readEvent(ResourceRequestUser rUser, boolean autoAck) throws TapisException
+  public Event readEvent(boolean autoAck) throws TapisException
   {
     Event retEvent = null;
     GetResponse resp = null;
-    // Read message from queue. The deliverCallback method will process it.
+    // Read message from queue.
     try
     {
       resp = getChannel().basicGet(QUEUE_MAIN, autoAck);
-//      getChannel().basicConsume(QUEUE_MAIN, autoAck, deliverCallback, consumerTag -> {});
     }
     catch (IOException e)
     {
-      String msg = LibUtils.getMsgAuth("NTFLIB_EVENT_CON_ERR", rUser, e.getMessage());
+      String msg = LibUtils.getMsg("NTFLIB_EVENT_READ_ERR", e.getMessage());
       throw new TapisException(msg, e);
     }
 
@@ -241,28 +228,35 @@ public final class MessageBroker // extends AbstractQueueManager
   }
 
   /**
+   * Acknowledge a message so that is removed from the main event queue.
+   * If autoAck is true then message is removed from the queue.
+   * @param deliveryTag - deliveryTag provide my message broker
+   * @throws IOException - on error
+   */
+  public void ackMsg(long deliveryTag) throws IOException
+  {
+     boolean ackMultiple = false; // do NOT ack all messages up to and including the deliveryTag
+     mbChannel.basicAck(deliveryTag, ackMultiple);
+  }
+
+  /**
    * Start the consumer that handles events delivered to the main queue.
    * Return the consumer tag
-   * @throws TapisException - on error
+   * @param deliveryQueues - in-memory queues used to pass events to worker threads
+   * @throws IOException - on error
    * @return consumer tag
    */
-  public String startConsumer() throws TapisException
+  public String startConsumer(List<BlockingQueue<Delivery>> deliveryQueues) throws IOException
   {
     // Create the consumer that handles receiving messages from the queue.
-    // It turns the message into an Event, persists the event, acks the event and then
-    //   hands the event off to a worker thread
+    // It turns the message into an Event, computes the bucket number
+    //   and then places it on a queue for a worker thread to pick up.
+    // The worker thread must do the final message acknowledgement
     Consumer consumer = new DefaultConsumer(mbChannel)
     {
       @Override
       public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body)
-              throws IOException
       {
-        // Package the message into a DeliveryResponse defined in tapis-shared-java/tapis-shared-queue
-        DeliveryResponse delivery = new DeliveryResponse();
-        delivery.consumerTag = consumerTag;
-        delivery.envelope = envelope;
-        delivery.properties = properties;
-        delivery.body = body;
         // Convert event to json string
         String jsonStr = new String(body, StandardCharsets.UTF_8);
         Event event = TapisGsonUtils.getGson().fromJson(jsonStr, Event.class);
@@ -270,41 +264,45 @@ public final class MessageBroker // extends AbstractQueueManager
         if (log.isTraceEnabled())
         {
           log.trace(LibUtils.getMsg("NTFLIB_EVENT_RCV", event.getTenantId(), event.getSource(), event.getType(),
-                  event.getSubject(), event.getSeriesId(), event.getUuid(), event.getTime()));
+                                    event.getSubject(), event.getSeriesId(), event.getTime(), event.getUuid()));
         }
-// TODO
-//  -  store event to DB
-//  -  ack the event
-//  -  pass event to worker thread through an in-memory queue
-//
-//        // Queue the response locally.
-//        try {_deliveryQueue.put(delivery);}
-//        catch (InterruptedException e) {
-//          String msg = MsgUtils.getMsg("JOBS_THREAD_CONSUMER_INTERRUPTED",
-//                  Thread.currentThread().getName(),
-//                  Thread.currentThread().getId(),
-//                  _jobWorker.getParms().name,
-//                  _queueName);
-//          _log.info(msg, e);
 
-        // Event is persisted, can now remove it from the queue
-        mbChannel.basicAck(envelope.getDeliveryTag(), false);
+        // Create the Delivery object to be passed to the worker.
+        Delivery delivery = new Delivery(event, envelope.getDeliveryTag());
+
+        // TODO Compute the bucket number
+        int bucketNum = 0; //computeBucketNumber(event, delivery???);
+        // Pass event to worker thread through an in-memory queue
+        // NOTE: worker thread will need deliveryTag in order to ack the message
+        try
+        {
+          deliveryQueues.get(bucketNum).put(delivery);
+        }
+        catch (InterruptedException e)
+        {
+          String msg = LibUtils.getMsg("NTFLIB_EVENT_PUT_INTRPT", event.getTenantId(), event.getSource(),
+                                       event.getType(), event.getSubject(), event.getSeriesId(), event.getUuid());
+          log.info(msg);
+        }
+
+//TODO move this to worker
+//   All notifications for the event have been persisted, remove message from message broker queue
+//        boolean ackMultiple = false; // do not ack all messages up to and including the deliveryTag
+//        mbChannel.basicAck(envelope.getDeliveryTag(), ackMultiple);
       }
     };
 
-    // Now start consuming with no auto-ack. Delivery handle must ack.
+    // Now start consuming with no auto-ack. Ack should happen once event has been processed and notifications table
+    //   has been populated for all subscriptions matching the event.
     boolean autoAck = false;
     String consumerTag;
-    // TODO/TBD: If throws exception then log error and re-throw tapis runtime exception
-    //           see AbstractProcessor.java or AbstractQueueReader.java
     consumerTag = mbChannel.basicConsume(QUEUE_MAIN, autoAck, consumer);
     return consumerTag;
   }
 
-
-  // ************************************************************************
-  // **************************  Private Methods  ***************************
-  // ************************************************************************
+  /* ********************************************************************** */
+  /*                             Private Methods                            */
+  /* ********************************************************************** */
 
   /**
    * Create the exchanges and queues for notification events and bind them together
@@ -370,36 +368,18 @@ public final class MessageBroker // extends AbstractQueueManager
     connectionFactory.setVirtualHost(qMgrParms.getVhost());
     mbConnection = connectionFactory.newConnection();
     mbChannel = mbConnection.createChannel();
-    // TODO/TBD: it is recommended that isOpen not be used in production code, can have race conditions.
-    //           use shutdownlistener instead? does that really help?
-//    // Add shutdownListener that recreates the channel when it is closed
-//    mbChannel.addShutdownListener(
-//      new ShutdownListener()
-//      {
-//        @Override
-//        public void shutdownCompleted(ShutdownSignalException e)
-//        {
-//          log.warn("Channel shutdown signal received. " + e.getReason());
-// TODO/TBD: createChannel() throws IOException. If that happens throw a tapis runtime exception?
-//          mbChannel = mbConnection.createChannel();
-//        }
-//      }
-//    );
   }
-
 
   /*
    * Get the channel
    * Channels can close due to exceptions, re-create as needed.
-   * TODO/TBD: Channel instances should not be shared between threads.
-   *  re-visit this when spawning threads to handle processing of events.
-   *  Currently we have a singleton MessageBroker with a single connection and channel.
-   *  Should be able to share connection.
+   * NOTE: although it is recommended that isOpen not be used in production code because there can be race conditions,
+   *   in our case we only have one thread that deals with rabbitmq (the DispatchApplication), so we will not have
+   *   multiple threads accessing the channel.
    */
   private Channel getChannel() throws IOException
   {
     if (mbChannel.isOpen()) return mbChannel;
     else return mbConnection.createChannel();
   }
-
 }

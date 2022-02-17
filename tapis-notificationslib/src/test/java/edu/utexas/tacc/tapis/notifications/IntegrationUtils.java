@@ -53,10 +53,6 @@ public final class IntegrationUtils
   public static final String subjectFilter2 = "subject_filter_2";
   public static final String webhookUrlA1 = "https://my.fake.webhook/urlA1";
   public static final String webhookUrlA2 = "https://my.fake.webhook/urlA2";
-  public static final String webhookUrlB1 = "https://my.fake.webhook/urlB1";
-  public static final String webhookUrlB2 = "https://my.fake.webhook/urlB2";
-  public static final String emailAddressA1 = "my.fake.emailA1@my.example.com";
-  public static final String emailAddressA2 = "my.fake.emailA2@my.example.com";
   public static final String emailAddressB1 = "my.fake.emailB1@my.example.com";
   public static final String emailAddressB2 = "my.fake.emailB2@my.example.com";
   public static final Object notes1 = TapisGsonUtils.getGson().fromJson("{\"project\": \"myproj1\", \"testdata\": \"abc1\"}", JsonObject.class);
@@ -66,11 +62,11 @@ public final class IntegrationUtils
   public static final String scrubbedJson = "{}";
 
   // Delivery Methods
-  public static final DeliveryMethod dmA1 = new DeliveryMethod(DeliveryType.WEBHOOK, webhookUrlA1, emailAddressA1);
-  public static final DeliveryMethod dmB1 = new DeliveryMethod(DeliveryType.EMAIL, webhookUrlB1, emailAddressB1);
+  public static final DeliveryMethod dmA1 = new DeliveryMethod(DeliveryType.WEBHOOK, webhookUrlA1);
+  public static final DeliveryMethod dmB1 = new DeliveryMethod(DeliveryType.EMAIL, emailAddressB1);
   public static final List<DeliveryMethod> dmList1 = new ArrayList<>(List.of(dmA1, dmB1));
-  public static final DeliveryMethod dmA2 = new DeliveryMethod(DeliveryType.WEBHOOK, webhookUrlA2, emailAddressA2);
-  public static final DeliveryMethod dmB2 = new DeliveryMethod(DeliveryType.EMAIL, webhookUrlB2, emailAddressB2);
+  public static final DeliveryMethod dmA2 = new DeliveryMethod(DeliveryType.WEBHOOK, webhookUrlA2);
+  public static final DeliveryMethod dmB2 = new DeliveryMethod(DeliveryType.EMAIL, emailAddressB2);
   public static final List<DeliveryMethod> dmList2 = new ArrayList<>(List.of(dmA2, dmB2));
 
   public static final int ttl1 = 1000;

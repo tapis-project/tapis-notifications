@@ -102,12 +102,12 @@ public class SubscriptionsDaoTest
     Assert.assertNotNull(origDMs, "Orig deliveryMethods was null");
     Assert.assertNotNull(deliveryMethods, "Fetched deliveryMethods was null");
     Assert.assertEquals(deliveryMethods.size(), origDMs.size());
-    var dmWebhooksFound = new ArrayList<String>();
-    for (DeliveryMethod dmFound : deliveryMethods) {dmWebhooksFound.add(dmFound.getWebhookUrl());}
+    var dmAddrsFound = new ArrayList<String>();
+    for (DeliveryMethod dmFound : deliveryMethods) {dmAddrsFound.add(dmFound.getDeliveryAddress());}
     for (DeliveryMethod dmSeedItem : origDMs)
     {
-      Assert.assertTrue(dmWebhooksFound.contains(dmSeedItem.getWebhookUrl()),
-              "List of delivery methods did not contain a method with webhookUrl: " + dmSeedItem.getWebhookUrl());
+      Assert.assertTrue(dmAddrsFound.contains(dmSeedItem.getDeliveryAddress()),
+              "List of delivery methods did not contain a method with address: " + dmSeedItem.getDeliveryAddress());
     }
     Assert.assertNotNull(tmpSub.getCreated(), "Fetched created timestamp should not be null");
     Assert.assertNotNull(tmpSub.getUpdated(), "Fetched updated timestamp should not be null");

@@ -9,6 +9,10 @@ import java.util.UUID;
 
 /*
  * Notification event in the Tapis ecosystem.
+ * Subscriptions are used to request that notifications be sent when Events are received.
+ * Receipt of an event can result in 0 or more notifications.
+ * It is possible for an event be received and then effectively discarded because there are no subscriptions for it.
+ *
  * Based on the CloudEvent specification.
  * Represents an event associated with an occurrence. An Occurrence may produce multiple events.
  * Based on version 1.0 of the CloudEvents specification

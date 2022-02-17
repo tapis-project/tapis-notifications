@@ -165,7 +165,8 @@ public class EventResource
     }
     catch (Exception e)
     {
-      msg = ApiUtils.getMsgAuth("NTFAPI_EVENT_POST_ERR", rUser, req.source, req.type, req.subject, req.time, e.getMessage());
+      msg = ApiUtils.getMsgAuth("NTFAPI_EVENT_POST_ERR", rUser, req.source, req.type, req.subject, req.seriesId,
+                                req.time, e.getMessage());
       _log.error(msg);
       return Response.status(Status.INTERNAL_SERVER_ERROR).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }

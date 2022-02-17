@@ -1,7 +1,6 @@
 package edu.utexas.tacc.tapis.notifications.service;
 
 import com.google.gson.JsonObject;
-import com.rabbitmq.client.DeliverCallback;
 import edu.utexas.tacc.tapis.notifications.dao.NotificationsDao;
 import edu.utexas.tacc.tapis.notifications.dao.NotificationsDaoImpl;
 import edu.utexas.tacc.tapis.notifications.model.DeliveryMethod;
@@ -12,7 +11,6 @@ import edu.utexas.tacc.tapis.shared.security.ServiceClients;
 import edu.utexas.tacc.tapis.shared.security.ServiceContext;
 import edu.utexas.tacc.tapis.shared.security.TenantManager;
 import edu.utexas.tacc.tapis.shared.threadlocal.TapisThreadContext;
-import edu.utexas.tacc.tapis.shared.utils.TapisGsonUtils;
 import edu.utexas.tacc.tapis.shared.utils.TapisUtils;
 import edu.utexas.tacc.tapis.sharedapi.security.AuthenticatedUser;
 import edu.utexas.tacc.tapis.sharedapi.security.ResourceRequestUser;
@@ -29,7 +27,6 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import javax.ws.rs.NotFoundException;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -507,7 +504,7 @@ public class NotificationsServiceTest
     // Read msg off the queue and verify the details
     System.out.println("Take event off queue.");
 //    svcImpl.readEvent(rUser1, deliverCallback);
-    Event tmpEvent = svcImpl.readEvent(rUser1);
+    Event tmpEvent = svcImpl.readEvent();
     System.out.println("Read event from queue. Event: " + tmpEvent);
     Assert.assertNotNull(tmpEvent);
     Assert.assertEquals(event.getTenantId(), tmpEvent.getTenantId());
@@ -549,17 +546,14 @@ public class NotificationsServiceTest
     Assert.assertNotNull(dmList0);
     // Make sure the two dm lists are the same size
     Assert.assertEquals(fetchedDMList.size(), dmList0.size());
-    // Make sure the fetched DMs contain all the expected webookUrls and emailAddresses
-    // Put all the fetched webhookUrls and emailAddresses into lists
-    var whSet = new HashSet<String>();
-    var emailSet = new HashSet<String>();
-    for (DeliveryMethod dm : fetchedDMList) { whSet.add(dm.getWebhookUrl()); emailSet.add(dm.getEmailAddress()); }
+    // Make sure the fetched DMs contain all the expected delivery addresses
+    // Put all the fetched delivery addresses into a list
+    var addrSet = new HashSet<String>();
+    for (DeliveryMethod dm : fetchedDMList) { addrSet.add(dm.getDeliveryAddress()); }
     for (DeliveryMethod dMethod : origSub.getDeliveryMethods())
     {
-      Assert.assertTrue(whSet.contains(dMethod.getWebhookUrl()),
-                        "List of webhookUrls did not contain: " + dMethod.getWebhookUrl());
-      Assert.assertTrue(emailSet.contains(dMethod.getEmailAddress()),
-                        "List of emailAddresses did not contain: " + dMethod.getEmailAddress());
+      Assert.assertTrue(addrSet.contains(dMethod.getDeliveryAddress()),
+                        "List of addresses did not contain: " + dMethod.getDeliveryAddress());
     }
     // Verify notes
     Assert.assertNotNull(origSub.getNotes(), "Orig Notes should not be null");

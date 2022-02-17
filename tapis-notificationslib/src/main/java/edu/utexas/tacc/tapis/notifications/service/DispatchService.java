@@ -1,11 +1,22 @@
 package edu.utexas.tacc.tapis.notifications.service;
 
-import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
-import edu.utexas.tacc.tapis.notifications.utils.LibUtils;
-import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import javax.inject.Inject;
+
+import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
+import edu.utexas.tacc.tapis.notifications.dao.NotificationsDao;
+import edu.utexas.tacc.tapis.notifications.utils.LibUtils;
+import edu.utexas.tacc.tapis.notifications.model.Delivery;
+import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
+
 
 /*
  * Notifications Dispatch Service.
@@ -34,8 +45,8 @@ public class DispatchService
   // ************************************************************************
 
   // Use HK2 to inject singletons
-//  @Inject
-//  private NotificationsDao dao;
+  @Inject
+  private NotificationsDao dao;
 
 //  @Inject
 //  private NotificationsService notifSvc;
@@ -43,12 +54,16 @@ public class DispatchService
 //  @Inject
 //  private ServiceClients serviceClients;
 
+  // In-memory queues used to pass messages from rabbitmq to worker threads
+  private final List<BlockingQueue<Delivery>> deliveryQueues = new ArrayList<>();
+
   // We must be running on a specific site and this will never change
   // These are initialized in method initService()
   private static String siteId;
   private static String siteAdminTenantId;
   public static String getSiteId() {return siteId;}
   public static String getServiceTenantId() {return siteAdminTenantId;}
+
 
   // ************************************************************************
   // *********************** Public Methods *********************************
@@ -59,16 +74,20 @@ public class DispatchService
    *   init service context
    *   migrate DB
    *   init message broker
+   *   init in-memory queues for event processing
    */
   public void initService(String siteAdminTenantId1, RuntimeParameters runParms) throws TapisException
   {
     // Initialize service context and site info
     siteId = runParms.getSiteId();
     siteAdminTenantId = siteAdminTenantId1;
-    // Make sure DB is present and updated to latest version using flyway
-//    dao.migrateDB();
+    // Make sure DB is present and updated to the latest version using flyway
+    dao.migrateDB();
     // Initialize the singleton instance of the message broker manager
     MessageBroker.init(runParms);
+    // Create in-memory queues for processing of events
+    // TODO: use one queue per bucket
+    deliveryQueues.add(new LinkedBlockingQueue<>());
   }
 
   /**
@@ -87,10 +106,10 @@ public class DispatchService
   /**
    * Start main loop for processing of events
    */
-  public void processEvents() throws TapisException
+  public void processEvents() throws IOException
   {
     // Start our basic consumer for main queue that handles incoming events
-    String consumerTag = MessageBroker.getInstance().startConsumer();
+    String consumerTag = MessageBroker.getInstance().startConsumer(deliveryQueues);
 
     // TODO: Wait for event processing worker threads to complete
 //    waitForShutdown();

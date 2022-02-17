@@ -122,7 +122,7 @@ public class NotificationsApplication extends ResourceConfig
   {
     // Log our existence.
     // Output version information on startup
-    System.out.println("**** Starting Notifications Service. Version: " + TapisUtils.getTapisFullVersion() + " ****");
+    System.out.printf("**** Starting Notifications Service. Version: %s ****%n", TapisUtils.getTapisFullVersion());
 
     // If TAPIS_SERVICE_PORT set in env then use it.
     // Useful for starting service locally on a busy system where 8080 may not be available.
@@ -152,6 +152,6 @@ public class NotificationsApplication extends ResourceConfig
     final HttpServer server = GrizzlyHttpServerFactory.createHttpServer(baseUri, config, false);
     server.start();
 
-    System.out.println("**** Stopping Notifications Service. Version: " + TapisUtils.getTapisFullVersion() + " ****");
+    System.out.printf("**** Stopping Notifications Service. Version: %s ****%n", TapisUtils.getTapisFullVersion());
   }
 }

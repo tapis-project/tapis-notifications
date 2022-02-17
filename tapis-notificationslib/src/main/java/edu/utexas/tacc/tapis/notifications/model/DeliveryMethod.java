@@ -2,17 +2,26 @@ package edu.utexas.tacc.tapis.notifications.model;
 
 import edu.utexas.tacc.tapis.notifications.model.Subscription.DeliveryType;
 
+/*
+ * A DeliveryMethod is used by subscribers to indicate how they want to be notified of events.
+ * Each subscription will contain 1 or more such methods.
+ * Each method has a type and an address where the address is appropriate for the type:
+ *  - EMAIL - email address
+ *  - WEBHOOK - webhook url
+ *
+ * This class is intended to represent an immutable object.
+ * Please keep it immutable.
+ *
+ */
 public final class DeliveryMethod
 {
   private final DeliveryType deliveryType;
-  private final String webhookUrl;
-  private final String emailAddress;
+  private final String deliveryAddress;
 
-  public DeliveryMethod(DeliveryType deliveryType1, String webhookUrl1, String emailAddress1)
+  public DeliveryMethod(DeliveryType deliveryType1, String deliveryAddress1)
   {
     deliveryType = deliveryType1;
-    webhookUrl = webhookUrl1;
-    emailAddress = emailAddress1;
+    deliveryAddress = deliveryAddress1;
   }
 
 //  private void validate() throws ValidationException
@@ -34,7 +43,5 @@ public final class DeliveryMethod
     return deliveryType;
   }
 
-  public String getWebhookUrl() { return webhookUrl; }
-
-  public String getEmailAddress() { return emailAddress; }
+  public String getDeliveryAddress() { return deliveryAddress; }
 }
