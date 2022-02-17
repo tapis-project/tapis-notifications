@@ -36,6 +36,9 @@ public class DispatchService
 
   private static final int SHUTDOWN_TIMEOUT_MS = 10000;
 
+  // TODO: read this from env variable
+  private static final int DEFAULT_NUM_BUCKETS = 1;
+
   // ************************************************************************
   // *********************** Enums ******************************************
   // ************************************************************************
@@ -56,6 +59,9 @@ public class DispatchService
 
   // In-memory queues used to pass messages from rabbitmq to worker threads
   private final List<BlockingQueue<Delivery>> deliveryQueues = new ArrayList<>();
+
+  // DeliveryWorkers for processing events, one per bucket
+  private final List<DeliveryWorker> deliveryWorkers = new ArrayList<>();
 
   // We must be running on a specific site and this will never change
   // These are initialized in method initService()
@@ -81,13 +87,19 @@ public class DispatchService
     // Initialize service context and site info
     siteId = runParms.getSiteId();
     siteAdminTenantId = siteAdminTenantId1;
+
     // Make sure DB is present and updated to the latest version using flyway
     dao.migrateDB();
+
     // Initialize the singleton instance of the message broker manager
     MessageBroker.init(runParms);
-    // Create in-memory queues for processing of events
-    // TODO: use one queue per bucket
-    deliveryQueues.add(new LinkedBlockingQueue<>());
+
+    // Create in-memory queues and workers for multi-threaded processing of events
+    for (int i = 0; i < DEFAULT_NUM_BUCKETS; i++)
+    {
+      deliveryQueues.add(new LinkedBlockingQueue<>());
+      deliveryWorkers.add(new DeliveryWorker(deliveryQueues, i));
+    }
   }
 
   /**
@@ -112,7 +124,7 @@ public class DispatchService
     String consumerTag = MessageBroker.getInstance().startConsumer(deliveryQueues);
 
     // TODO: Wait for event processing worker threads to complete
-//    waitForShutdown();
+    waitForShutdown();
 
     log.error("TODO: Implement processEvents");
     try {Thread.sleep(5000);} catch (Exception e) {}
@@ -141,8 +153,12 @@ public class DispatchService
    */
   public void startWorkers() throws TapisException
   {
-    log.error("TODO: Implement startWorkers");
-    try {Thread.sleep(1000);} catch (Exception e) {}
+    for (DeliveryWorker worker : deliveryWorkers)
+    {
+      log.info("Starting worker for bucket: {}", worker.getBucketNum());
+      worker.start();
+      try {log.info("Sleep 1 second"); Thread.sleep(1000);} catch (Exception e) {}
+    }
   }
 
   /**
@@ -158,4 +174,15 @@ public class DispatchService
   // ************************************************************************
   // **************************  Private Methods  ***************************
   // ************************************************************************
+
+  /*
+   * Wait for worker threads to finish
+   */
+  private void waitForShutdown()
+  {
+    // TODO
+    log.error("TODO: Implement waitForShutdown: sleeping for 300 seconds ...");
+    try {Thread.sleep(300000);} catch (Exception e) {}
+
+  }
 }

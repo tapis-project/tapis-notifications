@@ -54,8 +54,8 @@ public class DispatchApplication
       protected void configure()
       {
         bind(DispatchService.class).to(DispatchService.class); // Used here in this class.
-        bind(NotificationsDao.class).to(NotificationsDaoImpl.class); // Used in DispatchService, DeliveryWorker
-//        bind(NotificationsService.class).to(NotificationsServiceImpl.class); // Used in Dispatch service
+        bind(NotificationsDaoImpl.class).to(NotificationsDao.class); // Used in DispatchService, DeliveryWorker
+//        bind(NotificationsServiceImpl.class).to(NotificationsService.class); // Used in Dispatch service
 //        bindFactory(ServiceClientsFactory.class).to(ServiceClients.class); // TODO/TBD: Used in Dispatch service
       }
     });
