@@ -6,7 +6,13 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
+import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.Consumer;
+import com.rabbitmq.client.DefaultConsumer;
+import com.rabbitmq.client.Envelope;
 import com.rabbitmq.client.GetResponse;
+import com.rabbitmq.client.ShutdownListener;
+import com.rabbitmq.client.ShutdownSignalException;
 import edu.utexas.tacc.tapis.sharedq.DeliveryResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -154,7 +160,7 @@ public final class MessageBroker // extends AbstractQueueManager
   public void shutDown(int timeoutMs)
   {
     // Close channel
-    if (mbChannel != null && mbChannel.isOpen())
+    if (mbChannel != null)
     {
       try { mbChannel.close(); }
       catch (Exception e)
@@ -166,7 +172,7 @@ public final class MessageBroker // extends AbstractQueueManager
       }
     }
     // Close connection
-    if (mbConnection != null && mbConnection.isOpen())
+    if (mbConnection != null)
     {
       try { mbConnection.close(timeoutMs); }
       catch (Exception e)
@@ -232,6 +238,67 @@ public final class MessageBroker // extends AbstractQueueManager
     retEvent = TapisGsonUtils.getGson().fromJson(jsonStr, Event.class);
 
     return retEvent;
+  }
+
+  /**
+   * Start the consumer that handles events delivered to the main queue.
+   * Return the consumer tag
+   * @throws TapisException - on error
+   * @return consumer tag
+   */
+  public String startConsumer() throws TapisException
+  {
+    // Create the consumer that handles receiving messages from the queue.
+    // It turns the message into an Event, persists the event, acks the event and then
+    //   hands the event off to a worker thread
+    Consumer consumer = new DefaultConsumer(mbChannel)
+    {
+      @Override
+      public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body)
+              throws IOException
+      {
+        // Package the message into a DeliveryResponse defined in tapis-shared-java/tapis-shared-queue
+        DeliveryResponse delivery = new DeliveryResponse();
+        delivery.consumerTag = consumerTag;
+        delivery.envelope = envelope;
+        delivery.properties = properties;
+        delivery.body = body;
+        // Convert event to json string
+        String jsonStr = new String(body, StandardCharsets.UTF_8);
+        Event event = TapisGsonUtils.getGson().fromJson(jsonStr, Event.class);
+        // Trace receipt of the event
+        if (log.isTraceEnabled())
+        {
+          log.trace(LibUtils.getMsg("NTFLIB_EVENT_RCV", event.getTenantId(), event.getSource(), event.getType(),
+                  event.getSubject(), event.getSeriesId(), event.getUuid(), event.getTime()));
+        }
+// TODO
+//  -  store event to DB
+//  -  ack the event
+//  -  pass event to worker thread through an in-memory queue
+//
+//        // Queue the response locally.
+//        try {_deliveryQueue.put(delivery);}
+//        catch (InterruptedException e) {
+//          String msg = MsgUtils.getMsg("JOBS_THREAD_CONSUMER_INTERRUPTED",
+//                  Thread.currentThread().getName(),
+//                  Thread.currentThread().getId(),
+//                  _jobWorker.getParms().name,
+//                  _queueName);
+//          _log.info(msg, e);
+
+        // Event is persisted, can now remove it from the queue
+        mbChannel.basicAck(envelope.getDeliveryTag(), false);
+      }
+    };
+
+    // Now start consuming with no auto-ack. Delivery handle must ack.
+    boolean autoAck = false;
+    String consumerTag;
+    // TODO/TBD: If throws exception then log error and re-throw tapis runtime exception
+    //           see AbstractProcessor.java or AbstractQueueReader.java
+    consumerTag = mbChannel.basicConsume(QUEUE_MAIN, autoAck, consumer);
+    return consumerTag;
   }
 
 
@@ -303,6 +370,21 @@ public final class MessageBroker // extends AbstractQueueManager
     connectionFactory.setVirtualHost(qMgrParms.getVhost());
     mbConnection = connectionFactory.newConnection();
     mbChannel = mbConnection.createChannel();
+    // TODO/TBD: it is recommended that isOpen not be used in production code, can have race conditions.
+    //           use shutdownlistener instead? does that really help?
+//    // Add shutdownListener that recreates the channel when it is closed
+//    mbChannel.addShutdownListener(
+//      new ShutdownListener()
+//      {
+//        @Override
+//        public void shutdownCompleted(ShutdownSignalException e)
+//        {
+//          log.warn("Channel shutdown signal received. " + e.getReason());
+// TODO/TBD: createChannel() throws IOException. If that happens throw a tapis runtime exception?
+//          mbChannel = mbConnection.createChannel();
+//        }
+//      }
+//    );
   }
 
 

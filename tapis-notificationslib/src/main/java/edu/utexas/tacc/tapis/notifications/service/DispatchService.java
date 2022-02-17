@@ -89,6 +89,12 @@ public class DispatchService
    */
   public void processEvents() throws TapisException
   {
+    // Start our basic consumer for main queue that handles incoming events
+    String consumerTag = MessageBroker.getInstance().startConsumer();
+
+    // TODO: Wait for event processing worker threads to complete
+//    waitForShutdown();
+
     log.error("TODO: Implement processEvents");
     try {Thread.sleep(5000);} catch (Exception e) {}
   }
