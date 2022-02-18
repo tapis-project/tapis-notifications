@@ -130,12 +130,13 @@ public class DispatchService
   }
 
   /*
-   * Start the message broker consumer and
-   *   start bucket managers that do the main work of sending out notifications based on subscriptions
+   * Start the message broker consumer and start bucket managers that do the main work of sending out
+   *   notifications based on subscriptions
    */
   public void processEvents() throws IOException, InterruptedException
   {
-    // Start our basic consumer for main queue that handles incoming events
+    // Start our basic consumer for main queue.
+    // Consumer handles incoming events.
     // Consumer will compute bucket number for the event and hand it off to a bucket manager.
     String consumerTag = MessageBroker.getInstance().startConsumer(deliveryQueues);
 
@@ -172,7 +173,6 @@ public class DispatchService
       bucketManagerFutures.get(i).cancel(mayInterruptIfRunning);
     }
   }
-
 
   // ************************************************************************
   // **************************  Private Methods  ***************************

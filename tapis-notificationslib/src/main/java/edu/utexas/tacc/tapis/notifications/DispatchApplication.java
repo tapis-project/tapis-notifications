@@ -10,6 +10,18 @@ import org.glassfish.hk2.api.ServiceLocator;
 import org.glassfish.hk2.utilities.ServiceLocatorUtilities;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
+/*
+ * Main startup class for the Dispatch application.
+ * The dispatcher application handles:
+ *  - receiving events from the message broker
+ *  - matching events with subscriptions which creates 0 or more notifications
+ *  - sending notifications to subscribers
+ *  - removing subscriptions when they expire
+ * Note that an event may match 0 or more subscription and for each subscription matched there will be 1 or more
+ *   notifications created. Each deliveryMethod in a subscription will result in a notification.
+ * In-flight notifications are persisted and best effort is made to provide at least once delivery and recovery
+ *   on errors and crashes.
+ */
 public class DispatchApplication
 {
   // We must be running on a specific site and this will never change

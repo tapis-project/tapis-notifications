@@ -256,6 +256,7 @@ public final class Subscription
   /**
    * Check for missing required attributes
    *   Id, typeFilter and deliveryMethods are required
+   *   deliveryMethods must have at least one entry
    */
   private void checkAttrRequired(List<String> errMessages)
   {

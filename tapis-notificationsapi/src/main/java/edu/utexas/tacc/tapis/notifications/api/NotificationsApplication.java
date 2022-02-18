@@ -151,7 +151,5 @@ public class NotificationsApplication extends ResourceConfig
     // Create and start the server
     final HttpServer server = GrizzlyHttpServerFactory.createHttpServer(baseUri, config, false);
     server.start();
-
-    System.out.printf("**** Stopping Notifications Service. Version: %s ****%n", TapisUtils.getTapisFullVersion());
   }
 }
