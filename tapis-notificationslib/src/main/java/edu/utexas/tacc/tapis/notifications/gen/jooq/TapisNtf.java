@@ -5,6 +5,9 @@ package edu.utexas.tacc.tapis.notifications.gen.jooq;
 
 
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.FlywaySchemaHistory;
+import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.Notifications;
+import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.NotificationsLastEvent;
+import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.NotificationsRecovery;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.SubscriptionUpdates;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.Subscriptions;
 
@@ -36,6 +39,21 @@ public class TapisNtf extends SchemaImpl {
     public final FlywaySchemaHistory FLYWAY_SCHEMA_HISTORY = FlywaySchemaHistory.FLYWAY_SCHEMA_HISTORY;
 
     /**
+     * The table <code>tapis_ntf.notifications</code>.
+     */
+    public final Notifications NOTIFICATIONS = Notifications.NOTIFICATIONS;
+
+    /**
+     * The table <code>tapis_ntf.notifications_last_event</code>.
+     */
+    public final NotificationsLastEvent NOTIFICATIONS_LAST_EVENT = NotificationsLastEvent.NOTIFICATIONS_LAST_EVENT;
+
+    /**
+     * The table <code>tapis_ntf.notifications_recovery</code>.
+     */
+    public final NotificationsRecovery NOTIFICATIONS_RECOVERY = NotificationsRecovery.NOTIFICATIONS_RECOVERY;
+
+    /**
      * The table <code>tapis_ntf.subscription_updates</code>.
      */
     public final SubscriptionUpdates SUBSCRIPTION_UPDATES = SubscriptionUpdates.SUBSCRIPTION_UPDATES;
@@ -61,6 +79,8 @@ public class TapisNtf extends SchemaImpl {
     @Override
     public final List<Sequence<?>> getSequences() {
         return Arrays.<Sequence<?>>asList(
+            Sequences.NOTIFICATIONS_RECOVERY_SEQ_ID_SEQ,
+            Sequences.NOTIFICATIONS_SEQ_ID_SEQ,
             Sequences.SUBSCRIPTION_UPDATES_SEQ_ID_SEQ,
             Sequences.SUBSCRIPTIONS_SEQ_ID_SEQ);
     }
@@ -69,6 +89,9 @@ public class TapisNtf extends SchemaImpl {
     public final List<Table<?>> getTables() {
         return Arrays.<Table<?>>asList(
             FlywaySchemaHistory.FLYWAY_SCHEMA_HISTORY,
+            Notifications.NOTIFICATIONS,
+            NotificationsLastEvent.NOTIFICATIONS_LAST_EVENT,
+            NotificationsRecovery.NOTIFICATIONS_RECOVERY,
             SubscriptionUpdates.SUBSCRIPTION_UPDATES,
             Subscriptions.SUBSCRIPTIONS);
     }

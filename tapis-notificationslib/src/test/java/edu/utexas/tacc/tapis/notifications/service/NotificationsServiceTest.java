@@ -471,6 +471,22 @@ public class NotificationsServiceTest
   // -----------------------------------------------------------------------
   // ------------------------- Events --------------------------------------
   // -----------------------------------------------------------------------
+
+  // Test posting an event to the queue
+  // NOTE: Event is left on the queue so it can be processed later.
+  //       This method is useful for manually testing the processing of an event when the
+  //       NotificationApplication and DispatchApplication have been started up.
+  @Test(enabled = false)
+  public void testPostEventAndLeave() throws Exception
+  {
+    OffsetDateTime eventTime = OffsetDateTime.now();
+    Event event = new Event(tenantName, eventSource1, eventType1, eventSubject1, seriesId1, eventTime.toString(),
+            UUID.randomUUID());
+    System.out.println("Placing event on queue. Event: " + event);
+    // Put an event on the queue as a message
+    svcImpl.postEvent(rUser1, event);
+  }
+
   // Test posting an event to the queue and reading it back
   // TODO/TBD When using deliveryCallback with basicPublish found putting in sleeps and watching rabbitmq console can
   //  see message is posted and then read off queue but not able to get the test to fail when it should.

@@ -240,7 +240,7 @@ public final class MessageBroker // extends AbstractQueueManager
   }
 
   /**
-   * Start the consumer that handles events delivered to the main queue.
+   * Create and start the consumer that handles events delivered to the main queue.
    * Return the consumer tag
    * @param deliveryQueues - in-memory queues used to pass events to worker threads
    * @throws IOException - on error
@@ -273,7 +273,7 @@ public final class MessageBroker // extends AbstractQueueManager
         // TODO Compute the bucket number
         int bucketNum = 0; //computeBucketNumber(event, delivery???);
         // Pass event to worker thread through an in-memory queue
-        // NOTE: worker thread will need deliveryTag in order to ack the message
+        // NOTE: worker thread uses deliveryTag in order to ack the message
         try
         {
           deliveryQueues.get(bucketNum).put(delivery);

@@ -123,11 +123,11 @@ CREATE TABLE notifications_recovery
 ALTER TABLE notifications_recovery OWNER TO tapis_ntf;
 
 -- Notifications last_event
--- Record of last event that a delivery worker was processing. To avoid re-processing after a crash
---   Very few rows expected, one per bucket, i.e. one per delivery worker.
+-- Record of last event that a delivery bucket manager was processing. To avoid re-processing after a crash
+--   Very few rows expected, one per bucket, i.e. one per delivery bucket manager.
 CREATE TABLE notifications_last_event
 (
     bucket_number int PRIMARY KEY,
-    event_uuid uuid NOT NULL,
+    event_uuid uuid NOT NULL
 );
 ALTER TABLE notifications_last_event OWNER TO tapis_ntf;

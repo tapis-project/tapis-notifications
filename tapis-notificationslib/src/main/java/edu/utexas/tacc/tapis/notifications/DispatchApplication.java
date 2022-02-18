@@ -4,23 +4,14 @@ import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
 import edu.utexas.tacc.tapis.notifications.dao.NotificationsDao;
 import edu.utexas.tacc.tapis.notifications.dao.NotificationsDaoImpl;
 import edu.utexas.tacc.tapis.notifications.service.DispatchService;
-import edu.utexas.tacc.tapis.notifications.service.NotificationsService;
-import edu.utexas.tacc.tapis.notifications.service.NotificationsServiceImpl;
-import edu.utexas.tacc.tapis.notifications.service.ServiceClientsFactory;
-import edu.utexas.tacc.tapis.notifications.service.ServiceContextFactory;
-import edu.utexas.tacc.tapis.shared.security.ServiceClients;
-import edu.utexas.tacc.tapis.shared.security.ServiceContext;
 import edu.utexas.tacc.tapis.shared.security.TenantManager;
 import edu.utexas.tacc.tapis.shared.utils.TapisUtils;
 import org.glassfish.hk2.api.ServiceLocator;
 import org.glassfish.hk2.utilities.ServiceLocatorUtilities;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
-import javax.inject.Singleton;
-
 public class DispatchApplication
 {
-
   // We must be running on a specific site and this will never change
   private static String siteId;
   public static String getSiteId() {return siteId;}
@@ -54,34 +45,31 @@ public class DispatchApplication
       protected void configure()
       {
         bind(DispatchService.class).to(DispatchService.class); // Used here in this class.
-        bind(NotificationsDaoImpl.class).to(NotificationsDao.class); // Used in DispatchService, DeliveryWorker
-//        bind(NotificationsServiceImpl.class).to(NotificationsService.class); // Used in Dispatch service
-//        bindFactory(ServiceClientsFactory.class).to(ServiceClients.class); // TODO/TBD: Used in Dispatch service
+        bind(NotificationsDaoImpl.class).to(NotificationsDao.class); // Used in DispatchService, DeliveryBucketManager
+//        bind(NotificationsServiceImpl.class).to(NotificationsService.class); // TODO/TBD Used in Dispatch service
       }
     });
 
+    // Get the service so we can do stuff.
     DispatchService dispatchService = locator.getService(DispatchService.class);
 
-    // Call the main service init method. Setup DB and message broker.
+    // Call the main service init method. Setup DB, message broker, executor services, etc
     dispatchService.initService(siteAdminTenantId, RuntimeParameters.getInstance());
 
-    // Start background thread to clean up expired subscriptions.
+    // Start background process to clean up expired subscriptions.
     dispatchService.startReaper();
 
-    // Start the worker threads that send out notifications
-    dispatchService.startWorkers();
-
-    // Start the main loop to process events and hand them out to workers.
+    // Start message broker consumer and bucket managers.
+    // This is the main loop to process events while the service is running.
     dispatchService.processEvents();
 
     System.out.println("**** Stopping Notifications Dispatch Service. Version: " + TapisUtils.getTapisFullVersion() + " ****");
 
-    // Stop the workers that send out notifications
-    dispatchService.stopWorkers();
-
-    // We are shutting down, stop the reaper thread.
+    // We are shutting down, stop the delivery bucket managers and the reaper
+    dispatchService.stopBucketManagers();
     dispatchService.stopReaper();
 
+    // Perform any remaining shutdown steps
     dispatchService.shutDown();
     System.exit(0);
   }

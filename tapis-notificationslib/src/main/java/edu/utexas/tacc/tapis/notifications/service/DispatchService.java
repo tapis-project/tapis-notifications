@@ -4,7 +4,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
@@ -34,10 +39,15 @@ public class DispatchService
   // Tracing.
   private static final Logger log = LoggerFactory.getLogger(DispatchService.class);
 
-  private static final int SHUTDOWN_TIMEOUT_MS = 10000;
+  private static final int SHUTDOWN_TIMEOUT_MS = 4000;
 
-  // TODO: read this from env variable
-  private static final int DEFAULT_NUM_BUCKETS = 1;
+  // Number of buckets for grouping events for processing
+  private static final int NUM_BUCKETS = 20;
+  // Number of workers per bucket to start for handling notification delivery
+  private static final int NUM_DELIVERY_WORKERS = 5;
+
+  // Allow interrupt when shutting down executor services.
+  private static final boolean mayInterruptIfRunning = true;
 
   // ************************************************************************
   // *********************** Enums ******************************************
@@ -54,14 +64,19 @@ public class DispatchService
 //  @Inject
 //  private NotificationsService notifSvc;
 
-//  @Inject
-//  private ServiceClients serviceClients;
-
   // In-memory queues used to pass messages from rabbitmq to worker threads
   private final List<BlockingQueue<Delivery>> deliveryQueues = new ArrayList<>();
 
-  // DeliveryWorkers for processing events, one per bucket
-  private final List<DeliveryWorker> deliveryWorkers = new ArrayList<>();
+  // DeliveryBucketManagers for processing events, one per bucket
+  private final List<Callable<String>> bucketManagers = new ArrayList<>();
+
+  // ExecutorService and futures for bucket managers
+  private final ExecutorService bucketManagerExecService =  Executors.newFixedThreadPool(NUM_BUCKETS);
+  private List<Future<String>> bucketManagerFutures;
+
+  // ExecutorService and future for subscription reaper
+  private final ExecutorService reaperExecService = Executors.newSingleThreadExecutor();
+  private Future<String> reaperFuture;
 
   // We must be running on a specific site and this will never change
   // These are initialized in method initService()
@@ -75,12 +90,13 @@ public class DispatchService
   // *********************** Public Methods *********************************
   // ************************************************************************
 
-  /**
+  /*
    * Initialize the service:
    *   init service context
    *   migrate DB
    *   init message broker
    *   init in-memory queues for event processing
+   *   init bucket manager callables
    */
   public void initService(String siteAdminTenantId1, RuntimeParameters runParms) throws TapisException
   {
@@ -94,80 +110,67 @@ public class DispatchService
     // Initialize the singleton instance of the message broker manager
     MessageBroker.init(runParms);
 
-    // Create in-memory queues and workers for multi-threaded processing of events
-    for (int i = 0; i < DEFAULT_NUM_BUCKETS; i++)
+    // Create in-memory queues and callables for multi-threaded processing of events
+    for (int i = 0; i < NUM_BUCKETS; i++)
     {
       deliveryQueues.add(new LinkedBlockingQueue<>());
-      deliveryWorkers.add(new DeliveryWorker(deliveryQueues, i));
+      bucketManagers.add(new DeliveryBucketManager(deliveryQueues, i));
     }
   }
 
-  /**
-   * Stop the service
+  /*
+   * Final shut down of service
    */
   public void shutDown()
   {
     log.info(LibUtils.getMsg("NTFLIB_MSGBRKR_CONN_CLOSE", SHUTDOWN_TIMEOUT_MS));
     MessageBroker.getInstance().shutDown(SHUTDOWN_TIMEOUT_MS);
+    // Force shutdown of executor services
+    shutdownExecutors(SHUTDOWN_TIMEOUT_MS);
   }
 
-  // -----------------------------------------------------------------------
-  // ------------------------- Events -------------------------------
-  // -----------------------------------------------------------------------
-
-  /**
-   * Start main loop for processing of events
+  /*
+   * Start the message broker consumer and
+   *   start bucket managers that do the main work of sending out notifications based on subscriptions
    */
-  public void processEvents() throws IOException
+  public void processEvents() throws IOException, InterruptedException
   {
     // Start our basic consumer for main queue that handles incoming events
+    // Consumer will compute bucket number for the event and hand it off to a bucket manager.
     String consumerTag = MessageBroker.getInstance().startConsumer(deliveryQueues);
 
-    // TODO: Wait for event processing worker threads to complete
-    waitForShutdown();
-
-    log.error("TODO: Implement processEvents");
-    try {Thread.sleep(5000);} catch (Exception e) {}
+    // Start up the bucket managers and wait for them to finish
+    // The bucket managers should only finish on interrupt or error.
+    bucketManagerFutures = bucketManagerExecService.invokeAll(bucketManagers);
   }
 
-  /**
+  /*
    * Start the reaper thread for cleaning up expired subscriptions
    */
-  public void startReaper() throws TapisException
+  public void startReaper()
   {
-    log.error("TODO: Implement startReaper");
-    try {Thread.sleep(2000);} catch (Exception e) {}
+    reaperFuture = reaperExecService.submit(new SubscriptionReaper());
   }
 
-  /**
-   * Stop the reaper thread for cleaning up expired subscriptions
+  /*
+   * Stop the subscription reaper thread
    */
-  public void stopReaper() throws TapisException
+  public void stopReaper()
   {
-    log.error("TODO: Implement stopReaper");
-    try {Thread.sleep(1000);} catch (Exception e) {}
+    log.error("Stopping Subscription Reaper");
+    reaperFuture.cancel(mayInterruptIfRunning);
   }
 
-  /**
-   * Start the workers that would do the main work of sending out notifications based on subscriptions
+  /*
+   * Stop the bucket managers
    */
-  public void startWorkers() throws TapisException
+  public void stopBucketManagers()
   {
-    for (DeliveryWorker worker : deliveryWorkers)
+    for (int i = 0; i < NUM_BUCKETS; i++)
     {
-      log.info("Starting worker for bucket: {}", worker.getBucketNum());
-      worker.start();
-      try {log.info("Sleep 1 second"); Thread.sleep(1000);} catch (Exception e) {}
+      log.info("Stopping Bucket Manager for bucket: " + i);
+      bucketManagerFutures.get(i).cancel(mayInterruptIfRunning);
     }
-  }
-
-  /**
-   * Stop the workers
-   */
-  public void stopWorkers() throws TapisException
-  {
-    log.error("TODO: Implement stopWorkers");
-    try {Thread.sleep(1000);} catch (Exception e) {}
   }
 
 
@@ -176,13 +179,32 @@ public class DispatchService
   // ************************************************************************
 
   /*
-   * Wait for worker threads to finish
+   * Wait for all callables to finish
    */
-  private void waitForShutdown()
+  private void shutdownExecutors(int shutdownTimeout)
   {
-    // TODO
-    log.error("TODO: Implement waitForShutdown: sleeping for 300 seconds ...");
-    try {Thread.sleep(300000);} catch (Exception e) {}
+    // Make sure reaper is shut down.
+    log.info("Waiting for Subscription Reaper shutdown. Timeout in ms: " + shutdownTimeout);
+    reaperExecService.shutdown();
+    try
+    {
+      if (!reaperExecService.awaitTermination(shutdownTimeout, TimeUnit.MILLISECONDS)) reaperExecService.shutdown();
+    }
+    catch (InterruptedException e)
+    {
+      reaperExecService.shutdownNow();
+    }
 
+    // Make sure bucket managers are shut down.
+    log.info("Waiting for shutdown of bucket managers. Timeout in ms: " + shutdownTimeout);
+    bucketManagerExecService.shutdown();
+    try
+    {
+      if (!bucketManagerExecService.awaitTermination(shutdownTimeout, TimeUnit.MILLISECONDS)) bucketManagerExecService.shutdown();
+    }
+    catch (InterruptedException e)
+    {
+      bucketManagerExecService.shutdownNow();
+    }
   }
 }

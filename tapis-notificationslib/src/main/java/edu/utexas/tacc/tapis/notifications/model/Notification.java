@@ -8,9 +8,9 @@ import java.time.Instant;
  * When an event is received it can result in 0 or more notifications since there may be 0 or more matching
  *   subscriptions and each subscription has 1 or more delivery methods.
  *   Each delivery method in a matching subscription will result in a notification.
- * Notifications are created by the Delivery worker processes. Workers are identified by bucket number.
- * The delivery workers persist each notification in the DB while the notification is in-flight. Once the worker
- *   confirms that the notification has been delivered the notification is removed from the DB.
+ * Notifications are created by the Delivery Bucket Manager processes. Managers are identified by bucket number.
+ * The delivery bucket managers persist each notification in the DB while the notification is in-flight.
+ *   Once the manager confirms that the notification has been delivered the notification is removed from the DB.
  *
  * This class is intended to represent an immutable object.
  * Please keep it immutable.

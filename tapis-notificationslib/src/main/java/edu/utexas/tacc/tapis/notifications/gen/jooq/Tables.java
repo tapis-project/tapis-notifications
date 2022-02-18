@@ -5,6 +5,9 @@ package edu.utexas.tacc.tapis.notifications.gen.jooq;
 
 
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.FlywaySchemaHistory;
+import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.Notifications;
+import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.NotificationsLastEvent;
+import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.NotificationsRecovery;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.SubscriptionUpdates;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.Subscriptions;
 
@@ -19,6 +22,21 @@ public class Tables {
      * The table <code>tapis_ntf.flyway_schema_history</code>.
      */
     public static final FlywaySchemaHistory FLYWAY_SCHEMA_HISTORY = FlywaySchemaHistory.FLYWAY_SCHEMA_HISTORY;
+
+    /**
+     * The table <code>tapis_ntf.notifications</code>.
+     */
+    public static final Notifications NOTIFICATIONS = Notifications.NOTIFICATIONS;
+
+    /**
+     * The table <code>tapis_ntf.notifications_last_event</code>.
+     */
+    public static final NotificationsLastEvent NOTIFICATIONS_LAST_EVENT = NotificationsLastEvent.NOTIFICATIONS_LAST_EVENT;
+
+    /**
+     * The table <code>tapis_ntf.notifications_recovery</code>.
+     */
+    public static final NotificationsRecovery NOTIFICATIONS_RECOVERY = NotificationsRecovery.NOTIFICATIONS_RECOVERY;
 
     /**
      * The table <code>tapis_ntf.subscription_updates</code>.
