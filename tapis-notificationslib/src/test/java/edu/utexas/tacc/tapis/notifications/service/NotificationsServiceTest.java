@@ -491,7 +491,7 @@ public class NotificationsServiceTest
   // TODO/TBD When using deliveryCallback with basicPublish found putting in sleeps and watching rabbitmq console can
   //  see message is posted and then read off queue but not able to get the test to fail when it should.
   //  And not able to see output. Where does DeliveryCallback output go?
-  @Test
+  @Test(enabled = false)
   public void testPostReadEvent() throws Exception
   {
     OffsetDateTime eventTime = OffsetDateTime.now();
