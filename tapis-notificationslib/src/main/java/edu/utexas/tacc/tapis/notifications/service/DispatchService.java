@@ -42,9 +42,9 @@ public class DispatchService
   private static final int SHUTDOWN_TIMEOUT_MS = 4000;
 
   // Number of buckets for grouping events for processing
-  private static final int NUM_BUCKETS = 20;
-  // Number of workers per bucket to start for handling notification delivery
-  private static final int NUM_DELIVERY_WORKERS = 5;
+  public static final int NUM_BUCKETS = 20;
+  // Number of workers per bucket for handling notification delivery
+  public static final int NUM_DELIVERY_WORKERS = 5;
 
   // Allow interrupt when shutting down executor services.
   private static final boolean mayInterruptIfRunning = true;
@@ -64,7 +64,7 @@ public class DispatchService
 //  @Inject
 //  private NotificationsService notifSvc;
 
-  // In-memory queues used to pass messages from rabbitmq to worker threads
+  // In-memory queues used to pass messages from rabbitmq to bucker managers
   private final List<BlockingQueue<Delivery>> deliveryQueues = new ArrayList<>();
 
   // DeliveryBucketManagers for processing events, one per bucket
@@ -150,6 +150,7 @@ public class DispatchService
    */
   public void startReaper()
   {
+    log.error("Starting Subscription Reaper");
     reaperFuture = reaperExecService.submit(new SubscriptionReaper());
   }
 

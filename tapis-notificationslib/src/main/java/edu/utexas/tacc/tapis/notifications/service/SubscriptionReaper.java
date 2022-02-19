@@ -58,7 +58,11 @@ public final class SubscriptionReaper implements Callable<String>
   public String call()
   {
     log.info("**** Starting Subscription Reaper");
-
+    try {Thread.sleep(300000); }
+    catch (InterruptedException e)
+    {
+      log.info("Subscription Reaper interrupted");
+    }
 //    // Wait for and process items until we are interrupted
 //    Delivery delivery;
 //    try
@@ -72,7 +76,6 @@ public final class SubscriptionReaper implements Callable<String>
 //      log.warn("Caught exception: " + e.getMessage(), e);
 //    }
 //
-
     log.info("**** Stopping Subscription Reaper");
     return "shutdown";
   }

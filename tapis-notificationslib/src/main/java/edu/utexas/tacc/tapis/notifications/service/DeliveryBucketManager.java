@@ -2,16 +2,24 @@ package edu.utexas.tacc.tapis.notifications.service;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import edu.utexas.tacc.tapis.notifications.model.Event;
+import edu.utexas.tacc.tapis.notifications.model.Notification;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import edu.utexas.tacc.tapis.notifications.model.Delivery;
 import edu.utexas.tacc.tapis.notifications.dao.NotificationsDao;
+
+import static edu.utexas.tacc.tapis.notifications.service.DispatchService.NUM_DELIVERY_WORKERS;
 
 /*
  * Callable for sending out notifications when an event is received and assigned to a bucket.
@@ -48,6 +56,16 @@ public final class DeliveryBucketManager implements Callable<String>
   private final int bucketNum;
   private final BlockingQueue<Delivery> deliveryQueue;
 
+  // In-memory queues used to pass notifications to delivery workers
+  private final List<BlockingQueue<Notification>> deliveryWorkerQueues = new ArrayList<>();
+
+  // DeliveryWorkers for processing notifications
+  private final List<Callable<String>> deliveryWorkers = new ArrayList<>();
+
+  // ExecutorService and futures for delivery workers
+  private final ExecutorService deliveryWorkerExecService =  Executors.newFixedThreadPool(NUM_DELIVERY_WORKERS);
+  private List<Future<String>> deliveryWorkerFutures;
+
   /* ********************************************************************** */
   /*                             Constructors                               */
   /* ********************************************************************** */
@@ -65,6 +83,13 @@ public final class DeliveryBucketManager implements Callable<String>
     }
     bucketNum = bucketNum1;
     deliveryQueue = deliveryQueues.get(bucketNum);
+
+    // Create in-memory queues and callables for multi-threaded processing of notifications
+    for (int i = 0; i < NUM_DELIVERY_WORKERS; i++)
+    {
+      deliveryWorkerQueues.add(new LinkedBlockingQueue<>());
+      deliveryWorkers.add(new DeliveryWorker(deliveryWorkerQueues, bucketNum1, i));
+    }
   }
   
   /* ********************************************************************** */
