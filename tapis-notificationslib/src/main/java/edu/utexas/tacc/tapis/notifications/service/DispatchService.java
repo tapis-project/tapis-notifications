@@ -39,7 +39,7 @@ public class DispatchService
   // Tracing.
   private static final Logger log = LoggerFactory.getLogger(DispatchService.class);
 
-  private static final int SHUTDOWN_TIMEOUT_MS = 4000;
+  private static final int SHUTDOWN_TIMEOUT_MS = 5000;
 
   // Number of buckets for grouping events for processing
   public static final int NUM_BUCKETS = 20;
@@ -65,7 +65,7 @@ public class DispatchService
 //  private NotificationsService notifSvc;
 
   // In-memory queues used to pass messages from rabbitmq to bucker managers
-  private final List<BlockingQueue<Delivery>> deliveryQueues = new ArrayList<>();
+  private final List<BlockingQueue<Delivery>> deliveryBucketQueues = new ArrayList<>();
 
   // DeliveryBucketManagers for processing events, one per bucket
   private final List<Callable<String>> bucketManagers = new ArrayList<>();
@@ -76,7 +76,7 @@ public class DispatchService
 
   // ExecutorService and future for subscription reaper
   private final ExecutorService reaperExecService = Executors.newSingleThreadExecutor();
-  private Future<String> reaperFuture;
+  private Future<String> reaperTaskFuture;
 
   // We must be running on a specific site and this will never change
   // These are initialized in method initService()
@@ -113,8 +113,8 @@ public class DispatchService
     // Create in-memory queues and callables for multi-threaded processing of events
     for (int i = 0; i < NUM_BUCKETS; i++)
     {
-      deliveryQueues.add(new LinkedBlockingQueue<>());
-      bucketManagers.add(new DeliveryBucketManager(deliveryQueues, i));
+      deliveryBucketQueues.add(new LinkedBlockingQueue<>());
+      bucketManagers.add(new DeliveryBucketManager(deliveryBucketQueues.get(i), i));
     }
   }
 
@@ -138,10 +138,10 @@ public class DispatchService
     // Start our basic consumer for main queue.
     // Consumer handles incoming events.
     // Consumer will compute bucket number for the event and hand it off to a bucket manager.
-    String consumerTag = MessageBroker.getInstance().startConsumer(deliveryQueues);
+    String consumerTag = MessageBroker.getInstance().startConsumer(deliveryBucketQueues);
 
     // Start up the bucket managers and wait for them to finish
-    // The bucket managers should only finish on interrupt or error.
+    // The bucket managers will only finish on interrupt or error.
     bucketManagerFutures = bucketManagerExecService.invokeAll(bucketManagers);
   }
 
@@ -150,8 +150,8 @@ public class DispatchService
    */
   public void startReaper()
   {
-    log.error("Starting Subscription Reaper");
-    reaperFuture = reaperExecService.submit(new SubscriptionReaper());
+    log.info("Starting Subscription Reaper");
+    reaperTaskFuture = reaperExecService.submit(new SubscriptionReaper());
   }
 
   /*
@@ -159,8 +159,8 @@ public class DispatchService
    */
   public void stopReaper()
   {
-    log.error("Stopping Subscription Reaper");
-    reaperFuture.cancel(mayInterruptIfRunning);
+    log.info("Stopping Subscription Reaper");
+    reaperTaskFuture.cancel(mayInterruptIfRunning);
   }
 
   /*
@@ -180,31 +180,39 @@ public class DispatchService
   // ************************************************************************
 
   /*
-   * Wait for all callables to finish
+   * Shut down Executors after giving tasks some time to finish up.
    */
   private void shutdownExecutors(int shutdownTimeout)
   {
     // Make sure reaper is shut down.
     log.info("Waiting for Subscription Reaper shutdown. Timeout in ms: " + shutdownTimeout);
+    // Stop the service from accepting any new tasks.
     reaperExecService.shutdown();
     try
     {
-      if (!reaperExecService.awaitTermination(shutdownTimeout, TimeUnit.MILLISECONDS)) reaperExecService.shutdown();
+      // Give any running tasks some time to complete before forcing a shutdown
+      if (!reaperExecService.awaitTermination(shutdownTimeout, TimeUnit.MILLISECONDS))
+        reaperExecService.shutdownNow();
     }
     catch (InterruptedException e)
     {
+      // We may have been interrupted waiting to finish. Force it to complete.
       reaperExecService.shutdownNow();
     }
 
     // Make sure bucket managers are shut down.
     log.info("Waiting for shutdown of bucket managers. Timeout in ms: " + shutdownTimeout);
+    // Stop the service from accepting any new tasks.
     bucketManagerExecService.shutdown();
     try
     {
-      if (!bucketManagerExecService.awaitTermination(shutdownTimeout, TimeUnit.MILLISECONDS)) bucketManagerExecService.shutdown();
+      // Give any running tasks some time to complete before forcing a shutdown
+      if (!bucketManagerExecService.awaitTermination(shutdownTimeout, TimeUnit.MILLISECONDS))
+        bucketManagerExecService.shutdownNow();
     }
     catch (InterruptedException e)
     {
+      // We may have been interrupted waiting to finish. Force it to complete.
       bucketManagerExecService.shutdownNow();
     }
   }

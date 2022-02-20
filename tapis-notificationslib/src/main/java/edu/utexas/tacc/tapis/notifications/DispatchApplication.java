@@ -10,6 +10,8 @@ import org.glassfish.hk2.api.ServiceLocator;
 import org.glassfish.hk2.utilities.ServiceLocatorUtilities;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
+import java.util.concurrent.Future;
+
 /*
  * Main startup class for the Dispatch application.
  * The dispatcher application handles:

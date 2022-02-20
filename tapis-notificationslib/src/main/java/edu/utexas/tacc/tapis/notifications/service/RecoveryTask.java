@@ -8,16 +8,16 @@ import javax.inject.Inject;
 import java.util.concurrent.Callable;
 
 /*
- * Callable process for cleaning up expired subscriptions.
+ * Callable for processing notifications that are in recovery.
  *
  */
-public final class SubscriptionReaper implements Callable<String>
+public final class RecoveryTask implements Callable<String>
 {
   /* ********************************************************************** */
   /*                               Constants                                */
   /* ********************************************************************** */
   // Tracing.
-  private static final Logger log = LoggerFactory.getLogger(SubscriptionReaper.class);
+  private static final Logger log = LoggerFactory.getLogger(RecoveryTask.class);
 
 //  public static final String VHOST = "NotificationsHost";
 //  public static final String DEFAULT_BINDING_KEY = "#";
@@ -32,6 +32,8 @@ public final class SubscriptionReaper implements Callable<String>
   /*                                 Fields                                 */
   /* ********************************************************************** */
 
+  private final int bucketNum;
+
   // Use HK2 to inject singletons
   @Inject
   private NotificationsDao dao;
@@ -43,8 +45,9 @@ public final class SubscriptionReaper implements Callable<String>
   /*
    * Default constructor
    */
-  SubscriptionReaper()
+  RecoveryTask(int bucketNum1)
   {
+    bucketNum = bucketNum1;
   }
   
   /* ********************************************************************** */
@@ -57,7 +60,7 @@ public final class SubscriptionReaper implements Callable<String>
   @Override
   public String call()
   {
-    log.info("**** Starting Subscription Reaper");
+    log.info("**** Starting notification delivery recovery for bucket number: {}", bucketNum);
     // TODO
     try
     {
@@ -65,7 +68,7 @@ public final class SubscriptionReaper implements Callable<String>
     }
     catch (InterruptedException e)
     {
-      log.info("Subscription Reaper interrupted");
+      log.info("Notification delivery recovery interrupted. Bucket number: {}", bucketNum);
     }
 //    // Wait for and process items until we are interrupted
 //    Delivery delivery;
@@ -80,7 +83,7 @@ public final class SubscriptionReaper implements Callable<String>
 //      log.warn("Caught exception: " + e.getMessage(), e);
 //    }
 //
-    log.info("**** Stopping Subscription Reaper");
+    log.info("**** Stopping notification delivery recovery for bucket number: {}", bucketNum);
     return "shutdown";
   }
 
