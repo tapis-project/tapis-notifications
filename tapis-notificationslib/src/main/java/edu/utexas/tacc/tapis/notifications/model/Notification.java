@@ -24,34 +24,21 @@ public final class Notification
   // Attributes used to track in-flight notifications while delivery attempt is in progress.
   private final Subscription subscription; // Subscription associated with the notification.
   private final int bucketNum; // Bucket/DeliverWorker to which it has been assigned
-  private final int recoveryAttemptNum;
-  private final Instant lastRecoveryAttempt;
-  private final Instant recoveryExpiry;
-  private Instant created; // UTC time for when record was created
-  private Instant updated; // UTC time for when record was last updated
+  private final Instant created; // UTC time for when record was created
 
   public Notification(Event event1, DeliveryMethod deliveryMethod1, Subscription subscription1, int bucketNum1,
-                      int recoveryAttemptNum1, Instant lastRecoveryAttempt1, Instant recoveryExpiry1,
-                      Instant created1, Instant updated1)
+                      Instant created1)
   {
     event = event1;
     deliveryMethod = deliveryMethod1;
     subscription = subscription1;
     bucketNum = bucketNum1;
-    recoveryAttemptNum = recoveryAttemptNum1;
-    lastRecoveryAttempt = lastRecoveryAttempt1;
-    recoveryExpiry = recoveryExpiry1;
     created = created1;
-    updated = updated1;
   }
 
   public Event getEvent() { return event; }
   public DeliveryMethod getDeliveryMethod() { return deliveryMethod; }
   public Subscription getSubscription() { return subscription; }
   public int getBucketNum() { return bucketNum; }
-  public int getRecoveryAttemptNum() { return recoveryAttemptNum; }
-  public Instant getLastRecoveryAttempt() { return lastRecoveryAttempt; }
-  public Instant getRecoveryExpiry() { return recoveryExpiry; }
   public Instant getCreated() { return created; }
-  public Instant getUpdated() { return updated; }
 }

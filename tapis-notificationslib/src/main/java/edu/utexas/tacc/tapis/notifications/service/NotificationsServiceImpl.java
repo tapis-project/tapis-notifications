@@ -56,8 +56,8 @@ public class NotificationsServiceImpl implements NotificationsService
   // *********************** Constants **************************************
   // ************************************************************************
 
-  // Tracing.
-  private static final Logger _log = LoggerFactory.getLogger(NotificationsServiceImpl.class);
+  // Logging
+  private static final Logger log = LoggerFactory.getLogger(NotificationsServiceImpl.class);
 
   private static final Set<Permission> ALL_PERMS = new HashSet<>(Set.of(Permission.READ, Permission.MODIFY));
   private static final Set<Permission> READMODIFY_PERMS = new HashSet<>(Set.of(Permission.READ, Permission.MODIFY));
@@ -94,8 +94,6 @@ public class NotificationsServiceImpl implements NotificationsService
   @Inject
   private ServiceContext serviceContext;
 
-  private MessageBroker msgBroker;
-
   // We must be running on a specific site and this will never change
   // These are initialized in method initService()
   private static String siteId;
@@ -125,7 +123,6 @@ public class NotificationsServiceImpl implements NotificationsService
     dao.migrateDB();
     // Initialize the singleton instance of the message broker manager
     MessageBroker.init(runParms);
-    msgBroker = MessageBroker.getInstance();
   }
 
   // -----------------------------------------------------------------------
@@ -152,7 +149,7 @@ public class NotificationsServiceImpl implements NotificationsService
     SubscriptionOperation op = SubscriptionOperation.create;
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
     if (sub == null) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_NULL_INPUT", rUser));
-    _log.trace(LibUtils.getMsgAuth("NTFLIB_CREATE_TRACE", rUser, scrubbedText));
+    log.trace(LibUtils.getMsgAuth("NTFLIB_CREATE_TRACE", rUser, scrubbedText));
     String resourceTenantId = sub.getTenant();
     String resourceId = sub.getId();
 
@@ -222,12 +219,13 @@ public class NotificationsServiceImpl implements NotificationsService
       // Something went wrong. Attempt to undo all changes and then re-throw the exception
       // Log error
       String msg = LibUtils.getMsgAuth("NTFLIB_CREATE_ERROR_ROLLBACK", rUser, resourceId, e0.getMessage());
-      _log.error(msg);
+      log.error(msg);
 
       // Rollback
       // Remove subscription from DB
       if (subCreated) try {dao.deleteSubscription(resourceTenantId, resourceId); }
-      catch (Exception e) {_log.warn(LibUtils.getMsgAuth(ERROR_ROLLBACK, rUser, resourceId, "delete", e.getMessage()));}
+      catch (Exception e) {
+        log.warn(LibUtils.getMsgAuth(ERROR_ROLLBACK, rUser, resourceId, "delete", e.getMessage()));}
       // Remove perms
 //      try { skClient.revokeUserPermission(resourceTenantId, sub1.getOwner(), subsPermSpecALL); }
 //      catch (Exception e) {_log.warn(LibUtils.getMsgAuth(ERROR_ROLLBACK, rUser, resourceId, "revokePermOwner", e.getMessage()));}
@@ -482,7 +480,8 @@ public class NotificationsServiceImpl implements NotificationsService
     catch (Exception e0)
     {
       // Something went wrong. Attempt to undo all changes and then re-throw the exception
-      try { dao.updateSubscriptionOwner(rUser, resourceTenantId, subId, oldOwnerName); } catch (Exception e) {_log.warn(LibUtils.getMsgAuth(ERROR_ROLLBACK, rUser, subId, "updateOwner", e.getMessage()));}
+      try { dao.updateSubscriptionOwner(rUser, resourceTenantId, subId, oldOwnerName); } catch (Exception e) {
+        log.warn(LibUtils.getMsgAuth(ERROR_ROLLBACK, rUser, subId, "updateOwner", e.getMessage()));}
 //      try { skClient.revokeUserPermission(resourceTenantId, newOwnerName, subsPermSpec); }
 //      catch (Exception e) {_log.warn(LibUtils.getMsgAuth(ERROR_ROLLBACK, rUser, subId, "revokePermNewOwner", e.getMessage()));}
 //      try { skClient.grantUserPermission(resourceTenantId, oldOwnerName, subsPermSpec); }
@@ -732,7 +731,7 @@ public class NotificationsServiceImpl implements NotificationsService
       catch (Exception e)
       {
         String msg = LibUtils.getMsgAuth("NTFLIB_SEARCH_ERROR", rUser, e.getMessage());
-        _log.error(msg, e);
+        log.error(msg, e);
         throw new IllegalArgumentException(msg);
       }
     }
@@ -782,7 +781,7 @@ public class NotificationsServiceImpl implements NotificationsService
       catch (Exception e)
       {
         String msg = LibUtils.getMsgAuth("NTFLIB_SEARCH_ERROR", rUser, e.getMessage());
-        _log.error(msg, e);
+        log.error(msg, e);
         throw new IllegalArgumentException(msg);
       }
     }
@@ -830,7 +829,7 @@ public class NotificationsServiceImpl implements NotificationsService
     catch (Exception e)
     {
       String msg = LibUtils.getMsgAuth("NTFLIB_SEARCH_ERROR", rUser, e.getMessage());
-      _log.error(msg, e);
+      log.error(msg, e);
       throw new IllegalArgumentException(msg);
     }
 
@@ -908,7 +907,7 @@ public class NotificationsServiceImpl implements NotificationsService
   @Override
   public void postEvent(ResourceRequestUser rUser, Event event) throws IOException
   {
-    msgBroker.publishEvent(rUser, event);
+    MessageBroker.getInstance().publishEvent(rUser, event);
   }
 
   /**
@@ -922,7 +921,7 @@ public class NotificationsServiceImpl implements NotificationsService
   public Event readEvent() throws TapisException
   {
     boolean autoAck = true;
-    return msgBroker.readEvent(autoAck);
+    return MessageBroker.getInstance().readEvent(autoAck);
   }
 
   // ************************************************************************
@@ -1009,7 +1008,7 @@ public class NotificationsServiceImpl implements NotificationsService
     {
       // Construct message reporting all errors
       String allErrors = getListOfErrors(rUser, sub.getId(), errMessages);
-      _log.error(allErrors);
+      log.error(allErrors);
       throw new IllegalStateException(allErrors);
     }
   }
@@ -1185,7 +1184,7 @@ public class NotificationsServiceImpl implements NotificationsService
     if (StringUtils.isBlank(owner)) owner = dao.getSubscriptionOwner(tenantName, subId);
     if (StringUtils.isBlank(owner)) {
       String msg = LibUtils.getMsgAuth("NTFLIB_AUTH_NO_OWNER", rUser, subId, op.name());
-      _log.error(msg);
+      log.error(msg);
       throw new NotAuthorizedException(msg, NO_CHALLENGE);
     }
     switch(op) {

@@ -12,12 +12,11 @@
   },
   "DeliveryMethod": {
     "type": "object",
-    "required": [ "deliveryType" ],
+    "required": [ "deliveryType", "deliveryAddress" ],
     "additionalProperties": false,
     "properties": {
       "deliveryType": { "$ref": "#/DeliveryTypeEnum" },
-      "webhookUrl": { "type": ["string", "null"]  },
-      "emailAddress": { "type": ["string", "null"] }
+      "deliveryAddress": { "type": "string" }
       }
   }
 }

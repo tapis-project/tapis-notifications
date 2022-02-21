@@ -81,5 +81,9 @@ public final class Event
 //  public String getData_base64() { return data_base64; }
 
   @Override
-  public String toString() {return TapisUtils.toString(this);}
+  public String toString()
+  {
+    String msg = "Source: %s%nType: %s%nSubject: %s%nSeriesId: %s%nTime: %s%nUUID: %s";
+    return msg.formatted(source, type, subject, seriesId, time, uuid);
+  }
 }

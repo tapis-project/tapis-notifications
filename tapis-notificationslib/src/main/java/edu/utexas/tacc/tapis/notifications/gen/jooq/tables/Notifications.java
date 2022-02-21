@@ -21,7 +21,7 @@ import org.jooq.ForeignKey;
 import org.jooq.Identity;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row9;
+import org.jooq.Row8;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -92,11 +92,6 @@ public class Notifications extends TableImpl<NotificationsRecord> {
      * The column <code>tapis_ntf.notifications.created</code>.
      */
     public final TableField<NotificationsRecord, LocalDateTime> CREATED = createField(DSL.name("created"), SQLDataType.LOCALDATETIME(6).nullable(false).defaultValue(DSL.field("timezone('utc'::text, now())", SQLDataType.LOCALDATETIME)), this, "");
-
-    /**
-     * The column <code>tapis_ntf.notifications.updated</code>.
-     */
-    public final TableField<NotificationsRecord, LocalDateTime> UPDATED = createField(DSL.name("updated"), SQLDataType.LOCALDATETIME(6).nullable(false).defaultValue(DSL.field("timezone('utc'::text, now())", SQLDataType.LOCALDATETIME)), this, "");
 
     private Notifications(Name alias, Table<NotificationsRecord> aliased) {
         this(alias, aliased, null);
@@ -192,11 +187,11 @@ public class Notifications extends TableImpl<NotificationsRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row9 type methods
+    // Row8 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row9<Integer, Integer, String, Integer, UUID, JsonElement, JsonElement, LocalDateTime, LocalDateTime> fieldsRow() {
-        return (Row9) super.fieldsRow();
+    public Row8<Integer, Integer, String, Integer, UUID, JsonElement, JsonElement, LocalDateTime> fieldsRow() {
+        return (Row8) super.fieldsRow();
     }
 }

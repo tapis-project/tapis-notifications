@@ -44,4 +44,11 @@ public final class DeliveryMethod
   }
 
   public String getDeliveryAddress() { return deliveryAddress; }
+
+  @Override
+  public String toString()
+  {
+    String msg = "DeliveryType: %s%nDeliveryAddress: %s";
+    return msg.formatted(deliveryType, deliveryAddress);
+  }
 }

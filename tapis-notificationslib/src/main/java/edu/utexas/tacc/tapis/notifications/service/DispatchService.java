@@ -36,7 +36,7 @@ public class DispatchService
   // *********************** Constants **************************************
   // ************************************************************************
 
-  // Tracing.
+  // Logging
   private static final Logger log = LoggerFactory.getLogger(DispatchService.class);
 
   private static final int SHUTDOWN_TIMEOUT_MS = 5000;
@@ -114,19 +114,8 @@ public class DispatchService
     for (int i = 0; i < NUM_BUCKETS; i++)
     {
       deliveryBucketQueues.add(new LinkedBlockingQueue<>());
-      bucketManagers.add(new DeliveryBucketManager(deliveryBucketQueues.get(i), i));
+      bucketManagers.add(new DeliveryBucketManager(dao, deliveryBucketQueues.get(i), i));
     }
-  }
-
-  /*
-   * Final shut down of service
-   */
-  public void shutDown()
-  {
-    log.info(LibUtils.getMsg("NTFLIB_MSGBRKR_CONN_CLOSE", SHUTDOWN_TIMEOUT_MS));
-    MessageBroker.getInstance().shutDown(SHUTDOWN_TIMEOUT_MS);
-    // Force shutdown of executor services
-    shutdownExecutors(SHUTDOWN_TIMEOUT_MS);
   }
 
   /*
@@ -173,6 +162,17 @@ public class DispatchService
       log.info("Stopping Bucket Manager for bucket: " + i);
       bucketManagerFutures.get(i).cancel(mayInterruptIfRunning);
     }
+  }
+
+  /*
+   * Final shut down of service
+   */
+  public void shutDown()
+  {
+    log.info(LibUtils.getMsg("NTFLIB_MSGBRKR_CONN_CLOSE", SHUTDOWN_TIMEOUT_MS));
+    MessageBroker.getInstance().shutDown(SHUTDOWN_TIMEOUT_MS);
+    // Force shutdown of executor services
+    shutdownExecutors(SHUTDOWN_TIMEOUT_MS);
   }
 
   // ************************************************************************

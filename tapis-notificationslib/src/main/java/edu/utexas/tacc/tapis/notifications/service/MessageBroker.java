@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeoutException;
+
+import com.google.common.base.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,6 +37,8 @@ import edu.utexas.tacc.tapis.notifications.model.Delivery;
 import edu.utexas.tacc.tapis.notifications.utils.LibUtils;
 import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
 
+import static edu.utexas.tacc.tapis.notifications.service.DispatchService.NUM_BUCKETS;
+
 /*
  * Singleton class to provide message broker services:
  *  - initialize create connections and channels.
@@ -43,14 +47,14 @@ import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
  *  - read an event from a queue
  *
  * Notifications uses a single primary queue for events, so we include all support in this one service.
- * TODO/TBD: What about ALT, DEADLETTER and RECOVERY queues?
+ * What about ALT, DEADLETTER and RECOVERY queues?
  */
 public final class MessageBroker // extends AbstractQueueManager
 {
   /* ********************************************************************** */
   /*                               Constants                                */
   /* ********************************************************************** */
-  // Tracing.
+  // Logging
   private static final Logger log = LoggerFactory.getLogger(MessageBroker.class);
 
   public static final String VHOST = "NotificationsHost";
@@ -61,7 +65,7 @@ public final class MessageBroker // extends AbstractQueueManager
   /* ********************************************************************** */
   /*                                Enums                                   */
   /* ********************************************************************** */
-// TODO  public enum ExchangeName {MAIN, RECOVERY, ALT, DEAD}
+// public enum ExchangeName {MAIN, RECOVERY, ALT, DEAD}
 
   /* ********************************************************************** */
   /*                                 Fields                                 */
@@ -207,8 +211,8 @@ public final class MessageBroker // extends AbstractQueueManager
    */
   public Event readEvent(boolean autoAck) throws TapisException
   {
-    Event retEvent = null;
-    GetResponse resp = null;
+    Event retEvent;
+    GetResponse resp;
     // Read message from queue.
     try
     {
@@ -229,7 +233,7 @@ public final class MessageBroker // extends AbstractQueueManager
 
   /**
    * Acknowledge a message so that is removed from the main event queue.
-   * If autoAck is true then message is removed from the queue.
+   *
    * @param deliveryTag - deliveryTag provide my message broker
    * @throws IOException - on error
    */
@@ -270,8 +274,8 @@ public final class MessageBroker // extends AbstractQueueManager
         // Create the Delivery object to be passed to the worker.
         Delivery delivery = new Delivery(event, envelope.getDeliveryTag());
 
-        // TODO Compute the bucket number
-        int bucketNum = 0; //computeBucketNumber(event, delivery???);
+        // Compute the bucket number
+        int bucketNum = computeBucketNumber(event);
         // Pass event to worker thread through an in-memory queue
         // NOTE: worker thread uses deliveryTag in order to ack the message
         try
@@ -284,11 +288,6 @@ public final class MessageBroker // extends AbstractQueueManager
                                        event.getType(), event.getSubject(), event.getSeriesId(), event.getUuid());
           log.info(msg);
         }
-
-//TODO move this to worker
-//   All notifications for the event have been persisted, remove message from message broker queue
-//        boolean ackMultiple = false; // do not ack all messages up to and including the deliveryTag
-//        mbChannel.basicAck(envelope.getDeliveryTag(), ackMultiple);
       }
     };
 
@@ -371,6 +370,17 @@ public final class MessageBroker // extends AbstractQueueManager
   }
 
   /*
+   * Compute a bucket number from 0 to NUM_BUCKETS-1
+   *   based on hash of event source, subject and seriesId
+   *
+   */
+  private int computeBucketNumber(Event event)
+  {
+    int hash = Objects.hashCode(event.getSource(), event.getSubject(), event.getSeriesId());
+    return hash % NUM_BUCKETS;
+  }
+
+  /*
    * Get the channel
    * Channels can close due to exceptions, re-create as needed.
    * NOTE: although it is recommended that isOpen not be used in production code because there can be race conditions,
@@ -382,4 +392,5 @@ public final class MessageBroker // extends AbstractQueueManager
     if (mbChannel.isOpen()) return mbChannel;
     else return mbConnection.createChannel();
   }
+
 }

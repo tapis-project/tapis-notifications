@@ -70,6 +70,7 @@ public interface NotificationsDao
   // -----------------------------------------------------------------------
   // -------------------- Notifications ------------------------------------
   // -----------------------------------------------------------------------
+  boolean persistNotifications(String tenant, List<Notification> notifications) throws TapisException;
 
 //  boolean createNotification(Notification notification) throws TapisException;
 

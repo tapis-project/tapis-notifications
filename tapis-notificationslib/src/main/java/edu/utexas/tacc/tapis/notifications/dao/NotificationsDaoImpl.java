@@ -17,10 +17,8 @@ import java.util.regex.Pattern;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-import edu.utexas.tacc.tapis.notifications.model.DeliveryMethod;
-import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisDBConnectionException;
-import edu.utexas.tacc.tapis.shareddb.datasource.TapisDataSource;
-import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
+import javax.sql.DataSource;
+
 import org.flywaydb.core.Flyway;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
@@ -28,6 +26,7 @@ import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
 import org.jooq.Result;
+import org.jooq.UpdatableRecord;
 import org.jooq.impl.DSL;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -43,21 +42,26 @@ import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.shared.threadlocal.OrderBy;
 import edu.utexas.tacc.tapis.shared.threadlocal.OrderBy.OrderByDir;
 import edu.utexas.tacc.tapis.sharedapi.security.ResourceRequestUser;
-
-import static edu.utexas.tacc.tapis.shared.threadlocal.OrderBy.DEFAULT_ORDERBY_DIRECTION;
-
-import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.SubscriptionsRecord;
-import static edu.utexas.tacc.tapis.notifications.gen.jooq.Tables.*;
-import static edu.utexas.tacc.tapis.notifications.gen.jooq.Tables.SUBSCRIPTIONS;
-
 import edu.utexas.tacc.tapis.search.SearchUtils;
 import edu.utexas.tacc.tapis.search.SearchUtils.SearchOperator;
 import edu.utexas.tacc.tapis.shared.utils.TapisGsonUtils;
+import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisDBConnectionException;
+import edu.utexas.tacc.tapis.shareddb.datasource.TapisDataSource;
+import static edu.utexas.tacc.tapis.shared.threadlocal.OrderBy.DEFAULT_ORDERBY_DIRECTION;
+
+import edu.utexas.tacc.tapis.notifications.model.Notification;
 import edu.utexas.tacc.tapis.notifications.model.Subscription;
 import edu.utexas.tacc.tapis.notifications.model.Subscription.SubscriptionOperation;
 import edu.utexas.tacc.tapis.notifications.utils.LibUtils;
+import edu.utexas.tacc.tapis.notifications.model.DeliveryMethod;
+import edu.utexas.tacc.tapis.notifications.model.Event;
+import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
+import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.NotificationsRecord;
+import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.SubscriptionsRecord;
+import static edu.utexas.tacc.tapis.notifications.gen.jooq.Tables.SUBSCRIPTIONS;
+import static edu.utexas.tacc.tapis.notifications.gen.jooq.Tables.SUBSCRIPTION_UPDATES;
+import static edu.utexas.tacc.tapis.notifications.gen.jooq.Tables.NOTIFICATIONS;
 
-import javax.sql.DataSource;
 
 /*
  * Class to handle persistence and queries for Tapis Subscription objects.
@@ -72,6 +76,9 @@ public class NotificationsDaoImpl implements NotificationsDao
 
   private static final String EMPTY_JSON = "{}";
   private static final int INVALID_SEQ_ID = -1;
+
+  public static final JsonElement EMPTY_JSON_ARRAY = TapisGsonUtils.getGson().fromJson("[]", JsonElement.class);
+  public static final JsonElement EMPTY_JSON_ELEM = TapisGsonUtils.getGson().fromJson("{}", JsonElement.class);
 
   // Create a static Set of column names for table SUBSCRIPTIONS
   private static final Set<String> SUBSCRIPTIONS_FIELDS = new HashSet<>();
@@ -1128,6 +1135,70 @@ public class NotificationsDaoImpl implements NotificationsDao
     }
   }
 
+  // -----------------------------------------------------------------------
+  // ------------------------- Notifications -------------------------------
+  // -----------------------------------------------------------------------
+
+  /**
+   * Persist a batch of notifications
+   * @return true on success
+   * @throws TapisException - on error
+   */
+  @Override
+  public boolean persistNotifications(String tenant, List<Notification> notifications) throws TapisException
+  {
+    String opName = "persistNotifications";
+    // ------------------------- Check Input -------------------------
+    if (StringUtils.isBlank(tenant)) LibUtils.logAndThrowNullParmException(opName, "tenant");
+    if (notifications == null || notifications.isEmpty()) return true;
+
+    // ------------------------- Call SQL ----------------------------
+    Connection conn = null;
+    try
+    {
+      // Get a database connection.
+      conn = getConnection();
+      DSLContext db = DSL.using(conn);
+
+      // Put together all the records we will be inserting.
+      List<UpdatableRecord<NotificationsRecord>> notificationRecords = new ArrayList<>();
+      for (Notification n : notifications)
+      {
+        DeliveryMethod dm =  n.getDeliveryMethod();
+        Event event = n.getEvent();
+        // Convert event and deliveryMethod to json
+        JsonElement eventJson = EMPTY_JSON_ELEM;
+        if (event != null) eventJson = TapisGsonUtils.getGson().toJsonTree(eventJson);
+        JsonElement deliveryMethodJson = EMPTY_JSON_ELEM;
+        if (dm != null) deliveryMethodJson = TapisGsonUtils.getGson().toJsonTree(dm);
+
+        UpdatableRecord<NotificationsRecord> notifRecord = db.newRecord(NOTIFICATIONS);
+        notifRecord.set(NOTIFICATIONS.SUBSCR_SEQ_ID, n.getSubscription().getSeqId());
+        notifRecord.set(NOTIFICATIONS.TENANT, tenant);
+        notifRecord.set(NOTIFICATIONS.BUCKET_NUMBER, n.getBucketNum());
+        notifRecord.set(NOTIFICATIONS.EVENT_UUID, event.getUuid());
+        notifRecord.set(NOTIFICATIONS.EVENT, eventJson);
+        notifRecord.set(NOTIFICATIONS.DELIVERY_METHOD, deliveryMethodJson);
+        notifRecord.changed(true);
+        notificationRecords.add(notifRecord);
+      }
+      db.batchInsert(notificationRecords);
+      // Close out and commit
+      LibUtils.closeAndCommitDB(conn, null, null);
+    }
+    catch (Exception e)
+    {
+      // Rollback transaction and throw an exception
+      LibUtils.rollbackDB(conn, e,"DB_INSERT_FAILURE", "notifications");
+    }
+    finally
+    {
+      // Always return the connection back to the connection pool.
+      LibUtils.finalCloseDB(conn);
+    }
+    return true;
+  }
+
   /* ********************************************************************** */
   /*                             Private Methods                            */
   /* ********************************************************************** */
@@ -1573,4 +1644,20 @@ public class NotificationsDaoImpl implements NotificationsDao
             r.get(SUBSCRIPTIONS.TTL), r.get(SUBSCRIPTIONS.NOTES), r.get(SUBSCRIPTIONS.UUID), expiry, created, updated);
     return subscription;
   }
+
+  /**
+   * Given an sql connection retrieve the subscription sequence id.
+   * @param db - jooq context
+   * @param tenant - name of tenant
+   * @param subscrId - Id of the subscription
+   * @return - sequence id
+   */
+  private static int getSubscriptionSeqIdUsingDb(DSLContext db, String tenant, String subscrId)
+  {
+    Integer sid = db.selectFrom(SUBSCRIPTIONS).where(SUBSCRIPTIONS.TENANT.eq(tenant),SUBSCRIPTIONS.ID.eq(subscrId))
+            .fetchOne(SUBSCRIPTIONS.SEQ_ID);
+    if (sid == null) return 0;
+    else return sid;
+  }
+
 }

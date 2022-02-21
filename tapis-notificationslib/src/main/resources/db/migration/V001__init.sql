@@ -98,13 +98,12 @@ CREATE TABLE notifications
     event_uuid uuid NOT NULL,
     event JSONB NOT NULL,
     delivery_method JSONB NOT NULL,
-    created TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),
-    updated TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc')
+    created TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc')
 );
 ALTER TABLE notifications OWNER TO tapis_ntf;
 
 -- Notifications recovery table
--- In-flight notifications that are in recovery.
+-- In-flight notifications that have failed and are in recovery.
 CREATE TABLE notifications_recovery
 (
     seq_id SERIAL PRIMARY KEY,

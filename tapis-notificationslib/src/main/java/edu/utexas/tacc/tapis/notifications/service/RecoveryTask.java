@@ -70,19 +70,7 @@ public final class RecoveryTask implements Callable<String>
     {
       log.info("Notification delivery recovery interrupted. Bucket number: {}", bucketNum);
     }
-//    // Wait for and process items until we are interrupted
-//    Delivery delivery;
-//    try
-//    {
-//      delivery = deliveryQueue.take();
-//      processDelivery(delivery);
-//    }
-//    catch (IOException | InterruptedException e)
-//    {
-//      // TODO
-//      log.warn("Caught exception: " + e.getMessage(), e);
-//    }
-//
+
     log.info("**** Stopping notification delivery recovery for bucket number: {}", bucketNum);
     return "shutdown";
   }

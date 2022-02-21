@@ -8,8 +8,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import org.apache.commons.lang3.StringUtils;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -44,6 +42,7 @@ public final class Subscription
   public static final String[] EMPTY_STR_ARRAY = new String[0];
   public static final String DEFAULT_OWNER = APIUSERID_VAR;
   public static final boolean DEFAULT_ENABLED = true;
+  private static final String EMPTY_JSON_OBJ = "{}";
   public static final JsonElement DEFAULT_DELIVERY_METHODS = TapisGsonUtils.getGson().fromJson("[]", JsonElement.class);
   public static final int DEFAULT_TTL = 7*24*60; // One week in minutes
   public static final JsonObject DEFAULT_NOTES = TapisGsonUtils.getGson().fromJson("{}", JsonObject.class);

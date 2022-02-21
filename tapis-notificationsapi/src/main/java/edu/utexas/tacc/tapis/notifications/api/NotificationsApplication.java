@@ -56,7 +56,7 @@ public class NotificationsApplication extends ResourceConfig
   private static String siteAdminTenantId;
   public static String getSiteAdminTenantId() {return siteAdminTenantId;}
 
-  // For all logging use println or similar so we do not have a dependency on a logging subsystem.
+  // For all logging use println or similar, so we do not have a dependency on a logging subsystem.
   public NotificationsApplication()
   {
     // Needed for properly returning timestamps
