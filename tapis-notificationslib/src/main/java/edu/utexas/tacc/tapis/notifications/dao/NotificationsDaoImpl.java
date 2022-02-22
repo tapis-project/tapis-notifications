@@ -13,11 +13,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Pattern;
+import javax.sql.DataSource;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-import javax.sql.DataSource;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.flywaydb.core.Flyway;
 import org.jooq.BatchBindStep;
@@ -27,11 +30,7 @@ import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
 import org.jooq.Result;
-import org.jooq.UpdatableRecord;
 import org.jooq.impl.DSL;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import edu.utexas.tacc.tapis.search.parser.ASTBinaryExpression;
 import edu.utexas.tacc.tapis.search.parser.ASTLeaf;
@@ -1037,18 +1036,6 @@ public class NotificationsDaoImpl implements NotificationsDao
 
       if (results == null || results.isEmpty()) return retList;
 
-      // Fill in batch logical queues and job capabilities list from aux tables
-      // TODO: Looks like jOOQ has fetchGroups() which should allow us to retrieve LogicalQueues and Capabilities
-      //       in one call which might improve performance.
-//      for (SubscriptionsRecord r : results)
-//      {
-//        Subscription s = r.into(Subscription.class);
-//        s.setJobRuntimes(retrieveJobRuntimes(db, s.getSeqId()));
-//        s.setBatchLogicalQueues(retrieveLogicalQueues(db, s.getSeqId()));
-//        s.setJobCapabilities(retrieveJobCaps(db, s.getSeqId()));
-//        retList.add(s);
-//      }
-
       for (Record r : results) { Subscription s = getSubscriptionFromRecord(r); retList.add(s); }
 
       // Close out and commit
@@ -1237,7 +1224,6 @@ public class NotificationsDaoImpl implements NotificationsDao
                        .where(NOTIFICATIONS.TENANT.eq(tenantId),
                               NOTIFICATIONS.BUCKET_NUMBER.eq(bucketNum),
                               NOTIFICATIONS.EVENT_UUID.eq(event.getUuid())).fetch();
-//              .fetchInto(Notification.class);
 
       if (results == null || results.isEmpty()) return retList;
 

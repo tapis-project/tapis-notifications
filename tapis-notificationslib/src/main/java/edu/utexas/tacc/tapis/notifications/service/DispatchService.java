@@ -61,10 +61,7 @@ public class DispatchService
   @Inject
   private NotificationsDao dao;
 
-//  @Inject
-//  private NotificationsService notifSvc;
-
-  // In-memory queues used to pass messages from rabbitmq to bucker managers
+  // In-memory queues used to pass messages from rabbitmq to bucket managers
   private final List<BlockingQueue<Delivery>> deliveryBucketQueues = new ArrayList<>();
 
   // DeliveryBucketManagers for processing events, one per bucket
@@ -140,7 +137,7 @@ public class DispatchService
   public void startReaper()
   {
     log.info("Starting Subscription Reaper");
-    reaperTaskFuture = reaperExecService.submit(new SubscriptionReaper());
+    reaperTaskFuture = reaperExecService.submit(new SubscriptionReaper(dao));
   }
 
   /*

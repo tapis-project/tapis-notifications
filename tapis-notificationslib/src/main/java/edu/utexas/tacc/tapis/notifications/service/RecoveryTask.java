@@ -1,11 +1,9 @@
 package edu.utexas.tacc.tapis.notifications.service;
 
-import edu.utexas.tacc.tapis.notifications.dao.NotificationsDao;
+import java.util.concurrent.Callable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import java.util.concurrent.Callable;
+import edu.utexas.tacc.tapis.notifications.dao.NotificationsDao;
 
 /*
  * Callable for processing notifications that are in recovery.
@@ -19,11 +17,6 @@ public final class RecoveryTask implements Callable<String>
   // Tracing.
   private static final Logger log = LoggerFactory.getLogger(RecoveryTask.class);
 
-//  public static final String VHOST = "NotificationsHost";
-//  public static final String DEFAULT_BINDING_KEY = "#";
-//  public static final String EXCHANGE_MAIN = "tapis.notifications.exchange";
-//  public static final String QUEUE_MAIN = "tapis.notifications.queue";
-
   /* ********************************************************************** */
   /*                                Enums                                   */
   /* ********************************************************************** */
@@ -34,9 +27,7 @@ public final class RecoveryTask implements Callable<String>
 
   private final int bucketNum;
 
-  // Use HK2 to inject singletons
-  @Inject
-  private NotificationsDao dao;
+  private final NotificationsDao dao;
 
   /* ********************************************************************** */
   /*                             Constructors                               */
@@ -45,9 +36,10 @@ public final class RecoveryTask implements Callable<String>
   /*
    * Default constructor
    */
-  RecoveryTask(int bucketNum1)
+  RecoveryTask(int bucketNum1, NotificationsDao dao1)
   {
     bucketNum = bucketNum1;
+    dao = dao1;
   }
   
   /* ********************************************************************** */
@@ -64,6 +56,7 @@ public final class RecoveryTask implements Callable<String>
     // TODO
     try
     {
+      log.info("TODO: For now, sleeping ...");
       Thread.sleep(3000000);
     }
     catch (InterruptedException e)

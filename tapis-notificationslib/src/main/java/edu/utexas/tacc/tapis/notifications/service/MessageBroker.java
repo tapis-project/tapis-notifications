@@ -46,10 +46,9 @@ import static edu.utexas.tacc.tapis.notifications.service.DispatchService.NUM_BU
  *  - publish an event to a queue
  *  - read an event from a queue
  *
- * Notifications uses a single primary queue for events, so we include all support in this one service.
- * What about ALT, DEADLETTER and RECOVERY queues?
+ * Notifications service uses a single primary queue for events, so we include all support in this one class.
  */
-public final class MessageBroker // extends AbstractQueueManager
+public final class MessageBroker
 {
   /* ********************************************************************** */
   /*                               Constants                                */
@@ -65,7 +64,6 @@ public final class MessageBroker // extends AbstractQueueManager
   /* ********************************************************************** */
   /*                                Enums                                   */
   /* ********************************************************************** */
-// public enum ExchangeName {MAIN, RECOVERY, ALT, DEAD}
 
   /* ********************************************************************** */
   /*                                 Fields                                 */
@@ -118,12 +116,12 @@ public final class MessageBroker // extends AbstractQueueManager
    */
   public static void init(RuntimeParameters parms) throws TapisRuntimeException
   {
-    // Create the singleton instance without setting up a synchronized block in the common case.
+    // Create the singleton instance
     if (instance == null)
     {
       synchronized (MessageBroker.class)
       {
-        // Construct QueueManagerParms for the super-class constructor
+        // Create and initialize qMgrParameters from RuntimeParameters.
         qMgrParms = new QueueManagerParms();
         qMgrParms.setService(TapisConstants.SERVICE_NAME_NOTIFICATIONS);
         qMgrParms.setVhost(VHOST);
@@ -246,16 +244,18 @@ public final class MessageBroker // extends AbstractQueueManager
   /**
    * Create and start the consumer that handles events delivered to the main queue.
    * Return the consumer tag
-   * @param deliveryQueues - in-memory queues used to pass events to worker threads
+   * @param deliveryQueues - in-memory queues used to pass events to bucket manager threads
    * @throws IOException - on error
    * @return consumer tag
    */
   public String startConsumer(List<BlockingQueue<Delivery>> deliveryQueues) throws IOException
   {
     // Create the consumer that handles receiving messages from the queue.
-    // It turns the message into an Event, computes the bucket number
-    //   and then places it on a queue for a worker thread to pick up.
-    // The worker thread must do the final message acknowledgement
+    //   The consumer:
+    //     - turns the message into an Event and constructs a Delivery object
+    //     - computes the bucket number
+    //     - places Delivery on a queue for a bucket manager thread to pick up.
+    // The bucket manager thread must do the final message acknowledgement
     Consumer consumer = new DefaultConsumer(mbChannel)
     {
       @Override
@@ -271,13 +271,13 @@ public final class MessageBroker // extends AbstractQueueManager
                                     event.getSubject(), event.getSeriesId(), event.getTime(), event.getUuid()));
         }
 
-        // Create the Delivery object to be passed to the worker.
+        // Create the Delivery object to be passed to the bucket manager.
         Delivery delivery = new Delivery(event, envelope.getDeliveryTag());
 
         // Compute the bucket number
         int bucketNum = computeBucketNumber(event);
-        // Pass event to worker thread through an in-memory queue
-        // NOTE: worker thread uses deliveryTag in order to ack the message
+        // Pass event to bucket manager thread through an in-memory queue
+        // NOTE: bucket manager thread uses deliveryTag in order to ack the message
         try
         {
           deliveryQueues.get(bucketNum).put(delivery);
@@ -299,7 +299,19 @@ public final class MessageBroker // extends AbstractQueueManager
     return consumerTag;
   }
 
-  /* ********************************************************************** */
+  /**
+   * Check status
+   */
+  public Exception checkConnection()
+  {
+    if (!mbConnection.isOpen())
+    {
+      return new TapisException(LibUtils.getMsg("NTFLIB_MSGBRKR_NO_CONN"));
+    }
+    return null;
+  }
+
+    /* ********************************************************************** */
   /*                             Private Methods                            */
   /* ********************************************************************** */
 
@@ -370,17 +382,6 @@ public final class MessageBroker // extends AbstractQueueManager
   }
 
   /*
-   * Compute a bucket number from 0 to NUM_BUCKETS-1
-   *   based on hash of event source, subject and seriesId
-   *
-   */
-  private int computeBucketNumber(Event event)
-  {
-    int hash = Objects.hashCode(event.getSource(), event.getSubject(), event.getSeriesId());
-    return hash % NUM_BUCKETS;
-  }
-
-  /*
    * Get the channel
    * Channels can close due to exceptions, re-create as needed.
    * NOTE: although it is recommended that isOpen not be used in production code because there can be race conditions,
@@ -393,4 +394,14 @@ public final class MessageBroker // extends AbstractQueueManager
     else return mbConnection.createChannel();
   }
 
+  /*
+   * Compute a bucket number from 0 to NUM_BUCKETS-1
+   *   based on hash of event source, subject and seriesId
+   *
+   */
+  private static int computeBucketNumber(Event event)
+  {
+    int hash = Objects.hashCode(event.getSource(), event.getSubject(), event.getSeriesId());
+    return hash % NUM_BUCKETS;
+  }
 }

@@ -18,10 +18,8 @@ import org.slf4j.LoggerFactory;
 import edu.utexas.tacc.tapis.notifications.model.Event;
 import edu.utexas.tacc.tapis.notifications.model.Notification;
 import edu.utexas.tacc.tapis.notifications.model.Subscription;
-
 import edu.utexas.tacc.tapis.notifications.model.Delivery;
 import edu.utexas.tacc.tapis.notifications.dao.NotificationsDao;
-
 import static edu.utexas.tacc.tapis.notifications.service.DispatchService.NUM_DELIVERY_WORKERS;
 
 /*
@@ -51,7 +49,7 @@ public final class DeliveryBucketManager implements Callable<String>
   /*                                 Fields                                 */
   /* ********************************************************************** */
 
-  private NotificationsDao dao;
+  private final NotificationsDao dao;
 
   private final int bucketNum;
   private final BlockingQueue<Delivery> deliveryBucketQueue;
@@ -99,7 +97,7 @@ public final class DeliveryBucketManager implements Callable<String>
   public String call()
   {
     log.info("**** Starting Delivery Bucket Manager for bucket: {}", bucketNum);
-    try { log.info("Sleep 2 seconds"); Thread.sleep(2000); } catch (InterruptedException e) {}
+    try { log.info("TODO, for now Sleep 2 seconds"); Thread.sleep(2000); } catch (InterruptedException e) {}
 
     // Start our recovery thread.
     startRecoveryTask();
@@ -234,7 +232,7 @@ public final class DeliveryBucketManager implements Callable<String>
   {
     log.info("Starting Recovery task for bucket number: {}", bucketNum);
     try { log.info("Sleep 2 seconds"); Thread.sleep(2000); } catch (InterruptedException e) {}
-    recoveryTaskFuture = recoveryExecService.submit(new RecoveryTask(bucketNum));
+    recoveryTaskFuture = recoveryExecService.submit(new RecoveryTask(bucketNum, dao));
   }
 
   /*

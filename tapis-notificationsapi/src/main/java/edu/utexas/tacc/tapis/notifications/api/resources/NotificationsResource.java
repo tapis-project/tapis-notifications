@@ -191,11 +191,11 @@ public class NotificationsResource
       if (checkDBOK.toggleOn()) _log.info(ApiUtils.getMsg("NTFAPI_READYCHECK_DB_ERRTOGGLE_CLEARED"));
     }
 
-    //  TODO Check that rabbitmq is available
-    readyCheckException = checkRabbitMQ();
+    //  Check that message broker is available
+    readyCheckException = checkMessageBroker();
     if (readyCheckException != null)
     {
-      RespBasic r = new RespBasic("Readiness RabbitMQ check failed. Check number: " + checkNum);
+      RespBasic r = new RespBasic("Readiness MessageBroker check failed. Check number: " + checkNum);
       String msg = MsgUtils.getMsg("TAPIS_NOT_READY", "Notifications Service");
       // We failed so set the log limiter check.
       if (checkMQOK.toggleOff())
@@ -212,6 +212,7 @@ public class NotificationsResource
     }
 
 //  TODO/TBD Check that the dispatcher is ready
+    // TODO: Set up special readyCheck queue that we can use to test out both MessageBroker and DispatchService.
 //    readyCheckException = checkDispatcher();
 //    if (readyCheckException != null)
 //    {
@@ -283,13 +284,13 @@ public class NotificationsResource
   }
 
   /**
-   * TODO Check the message queue service
+   * Check the message broker
    * @return null if OK, otherwise return an exception
    */
-  private Exception checkRabbitMQ()
+  private Exception checkMessageBroker()
   {
     Exception result;
-    try { result = svcImpl.checkMQ(); }
+    try { result = svcImpl.checkMessageBroker(); }
     catch (Exception e) { result = e; }
     return result;
   }

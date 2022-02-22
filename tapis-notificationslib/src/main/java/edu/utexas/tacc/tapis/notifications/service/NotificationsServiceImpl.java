@@ -607,13 +607,14 @@ public class NotificationsServiceImpl implements NotificationsService
   }
 
   /**
-   * TODO: Check that we can connect with our message broker.
+   * Check that we can connect with our message broker.
    * @return null if all OK else return an Exception
    */
-  public Exception checkMQ()
+  public Exception checkMessageBroker()
   {
-    // TODO
-    return null;
+    MessageBroker mb = MessageBroker.getInstance();
+    if (mb == null) return new TapisException(LibUtils.getMsg("NTFLIB_MSGBRKR_NULL"));
+    return mb.checkConnection();
   }
 
   /**
@@ -914,13 +915,12 @@ public class NotificationsServiceImpl implements NotificationsService
    * Read an Event from the queue.
    * Event is removed from the queue.
    *   NOTE: currently only used for testing. Not part of public interface of service.
-   * @throws TapisException - for Tapis related exceptions
+   * @throws TapisException - on error
    *
    */
 //  @Override
-  public Event readEvent() throws TapisException
+  public Event readEvent(boolean autoAck) throws TapisException
   {
-    boolean autoAck = true;
     return MessageBroker.getInstance().readEvent(autoAck);
   }
 

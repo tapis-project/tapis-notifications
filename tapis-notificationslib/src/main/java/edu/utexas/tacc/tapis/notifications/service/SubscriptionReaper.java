@@ -1,11 +1,9 @@
 package edu.utexas.tacc.tapis.notifications.service;
 
-import edu.utexas.tacc.tapis.notifications.dao.NotificationsDao;
+import java.util.concurrent.Callable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import java.util.concurrent.Callable;
+import edu.utexas.tacc.tapis.notifications.dao.NotificationsDao;
 
 /*
  * Callable process for cleaning up expired subscriptions.
@@ -19,11 +17,6 @@ public final class SubscriptionReaper implements Callable<String>
   // Tracing.
   private static final Logger log = LoggerFactory.getLogger(SubscriptionReaper.class);
 
-//  public static final String VHOST = "NotificationsHost";
-//  public static final String DEFAULT_BINDING_KEY = "#";
-//  public static final String EXCHANGE_MAIN = "tapis.notifications.exchange";
-//  public static final String QUEUE_MAIN = "tapis.notifications.queue";
-
   /* ********************************************************************** */
   /*                                Enums                                   */
   /* ********************************************************************** */
@@ -32,19 +25,15 @@ public final class SubscriptionReaper implements Callable<String>
   /*                                 Fields                                 */
   /* ********************************************************************** */
 
-  // Use HK2 to inject singletons
-  @Inject
   private NotificationsDao dao;
 
   /* ********************************************************************** */
   /*                             Constructors                               */
   /* ********************************************************************** */
 
-  /*
-   * Default constructor
-   */
-  SubscriptionReaper()
+  SubscriptionReaper(NotificationsDao dao1)
   {
+    dao = dao1;
   }
   
   /* ********************************************************************** */
@@ -58,28 +47,16 @@ public final class SubscriptionReaper implements Callable<String>
   public String call()
   {
     log.info("**** Starting Subscription Reaper");
-    // TODO
     try
     {
+      // TODO
+      log.info("TODO: For now, sleeping ...");
       Thread.sleep(3000000);
     }
     catch (InterruptedException e)
     {
       log.info("Subscription Reaper interrupted");
     }
-//    // Wait for and process items until we are interrupted
-//    Delivery delivery;
-//    try
-//    {
-//      delivery = deliveryQueue.take();
-//      processDelivery(delivery);
-//    }
-//    catch (IOException | InterruptedException e)
-//    {
-//      // TODO
-//      log.warn("Caught exception: " + e.getMessage(), e);
-//    }
-//
     log.info("**** Stopping Subscription Reaper");
     return "shutdown";
   }

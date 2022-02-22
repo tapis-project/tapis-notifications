@@ -520,7 +520,8 @@ public class NotificationsServiceTest
     // Read msg off the queue and verify the details
     System.out.println("Take event off queue.");
 //    svcImpl.readEvent(rUser1, deliverCallback);
-    Event tmpEvent = svcImpl.readEvent();
+    boolean autoAck = true;
+    Event tmpEvent = svcImpl.readEvent(autoAck);
     System.out.println("Read event from queue. Event: " + tmpEvent);
     Assert.assertNotNull(tmpEvent);
     Assert.assertEquals(event.getTenantId(), tmpEvent.getTenantId());
