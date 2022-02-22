@@ -1,7 +1,5 @@
 package edu.utexas.tacc.tapis.notifications.model;
 
-import edu.utexas.tacc.tapis.notifications.model.Subscription.DeliveryType;
-
 /*
  * A DeliveryMethod is used by subscribers to indicate how they want to be notified of events.
  * Each subscription will contain 1 or more such methods.
@@ -15,6 +13,8 @@ import edu.utexas.tacc.tapis.notifications.model.Subscription.DeliveryType;
  */
 public final class DeliveryMethod
 {
+  public enum DeliveryType {WEBHOOK, EMAIL}
+
   private final DeliveryType deliveryType;
   private final String deliveryAddress;
 
@@ -48,7 +48,7 @@ public final class DeliveryMethod
   @Override
   public String toString()
   {
-    String msg = "DeliveryType: %s%nDeliveryAddress: %s";
+    String msg = "DeliveryType: %s DeliveryAddress: %s";
     return msg.formatted(deliveryType, deliveryAddress);
   }
 }

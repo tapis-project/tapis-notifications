@@ -83,7 +83,7 @@ public final class Event
   @Override
   public String toString()
   {
-    String msg = "Source: %s%nType: %s%nSubject: %s%nSeriesId: %s%nTime: %s%nUUID: %s";
+    String msg = "Source: %s Type: %s Subject: %s SeriesId: %s Time: %s UUID: %s";
     return msg.formatted(source, type, subject, seriesId, time, uuid);
   }
 }

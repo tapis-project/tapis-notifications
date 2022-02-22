@@ -84,7 +84,6 @@ public final class Subscription
   public enum SubscriptionOperation {create, read, modify, delete, changeOwner, enable, disable, updateTTL,
                                      getPerms, grantPerms, revokePerms}
   public enum Permission {READ, MODIFY}
-  public enum DeliveryType {WEBHOOK, EMAIL}
 
   // ************************************************************************
   // *********************** Fields *****************************************

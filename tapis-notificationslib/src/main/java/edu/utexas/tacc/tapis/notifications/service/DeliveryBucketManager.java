@@ -3,6 +3,7 @@ package edu.utexas.tacc.tapis.notifications.service;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -265,6 +266,9 @@ public final class DeliveryBucketManager implements Callable<String>
     var notifList = new ArrayList<Notification>();
     if (event == null || subscriptions == null || subscriptions.isEmpty()) return notifList;
 
+    String tenant = event.getTenantId();
+    UUID eventUuid = event.getUuid();
+
     // For each deliveryMethod in a Subscription
     for (Subscription s : subscriptions)
     {
@@ -272,10 +276,10 @@ public final class DeliveryBucketManager implements Callable<String>
       if (deliveryMethods == null || deliveryMethods.isEmpty()) continue;
       for (DeliveryMethod dm : deliveryMethods)
       {
-        notifList.add(new Notification(event, dm, s, bucketNum, null));
+        notifList.add(new Notification(-1, s.getSeqId(), tenant, bucketNum, eventUuid, event, dm, null));
       }
     }
-    dao.persistNotifications(event.getTenantId(), notifList);
+    dao.persistNotificationsForEvent(event.getTenantId(), event, bucketNum, notifList);
     return notifList;
   }
 }

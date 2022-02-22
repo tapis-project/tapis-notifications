@@ -1,5 +1,6 @@
 package edu.utexas.tacc.tapis.notifications.dao;
 
+import edu.utexas.tacc.tapis.notifications.model.Event;
 import edu.utexas.tacc.tapis.notifications.model.Notification;
 import edu.utexas.tacc.tapis.notifications.model.Subscription;
 import edu.utexas.tacc.tapis.notifications.model.Subscription.SubscriptionOperation;
@@ -9,7 +10,6 @@ import edu.utexas.tacc.tapis.shared.threadlocal.OrderBy;
 import edu.utexas.tacc.tapis.sharedapi.security.ResourceRequestUser;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -70,7 +70,11 @@ public interface NotificationsDao
   // -----------------------------------------------------------------------
   // -------------------- Notifications ------------------------------------
   // -----------------------------------------------------------------------
-  boolean persistNotifications(String tenant, List<Notification> notifications) throws TapisException;
+
+  boolean persistNotificationsForEvent(String tenant, Event event, int bucketNum, List<Notification> notifications)
+          throws TapisException;
+
+  List<Notification> getNotificationsForEvent(String tenant, Event event, int bucketNum) throws TapisException;
 
 //  boolean createNotification(Notification notification) throws TapisException;
 

@@ -1,7 +1,5 @@
 package edu.utexas.tacc.tapis.notifications.model;
 
-import edu.utexas.tacc.tapis.notifications.model.Subscription.DeliveryType;
-
 /*
  * A Delivery represents an event that is being processed in order to determine matching subscribers and
  *   create one or more notifications for each subscriber.

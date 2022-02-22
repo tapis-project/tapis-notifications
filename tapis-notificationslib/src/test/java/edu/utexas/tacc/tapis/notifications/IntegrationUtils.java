@@ -3,9 +3,12 @@ package edu.utexas.tacc.tapis.notifications;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import edu.utexas.tacc.tapis.notifications.model.DeliveryMethod;
+import edu.utexas.tacc.tapis.notifications.model.Event;
+import edu.utexas.tacc.tapis.notifications.model.Notification;
 import edu.utexas.tacc.tapis.notifications.model.PatchSubscription;
 import edu.utexas.tacc.tapis.notifications.model.Subscription;
-import edu.utexas.tacc.tapis.notifications.model.Subscription.DeliveryType;
+import edu.utexas.tacc.tapis.notifications.model.DeliveryMethod.DeliveryType;
+import edu.utexas.tacc.tapis.notifications.service.DispatchService;
 import edu.utexas.tacc.tapis.search.parser.ASTNode;
 import edu.utexas.tacc.tapis.shared.threadlocal.OrderBy;
 import edu.utexas.tacc.tapis.shared.utils.TapisGsonUtils;
@@ -13,6 +16,7 @@ import edu.utexas.tacc.tapis.shared.utils.TapisGsonUtils;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -102,6 +106,7 @@ public final class IntegrationUtils
   public static final String startAferEmpty = "";
 
   // Events
+  public static final int bucketNum1 = 1;
   public static final URI eventSource1;
   static
   {
@@ -114,6 +119,9 @@ public final class IntegrationUtils
   public static final String eventType1 = "tapis.jobs.job.complete";
   public static final String eventSubject1 = "640ad5a8-1a6e-4189-a334-c4c7226fb9ba-007";
   public static final String seriesId1 = "111a2228-1a6e-4189-a334-c4c722666666-007";
+
+  public static final Event event1 = new Event(tenantName, eventSource1, eventType1, eventSubject1, seriesId1,
+                                               OffsetDateTime.now().toString(), UUID.randomUUID());
 
   /**
    * Create an array of Subscription objects in memory
@@ -166,5 +174,28 @@ public final class IntegrationUtils
   {
     String suffix = key + "_" + String.format("%03d", idx);
     return subIdPrefix + "_" + suffix;
+  }
+
+  /**
+   * Create an array of Notification objects in memory
+   * We need a key because maven runs the tests in parallel so each set of items created by an integration
+   *   test will need its own namespace.
+   * @param n number of items to create
+   * @return array of Notification objects
+   */
+  public static List<Notification> makeNotifications(int n, String key, int subSeqId)
+  {
+    List<Notification> notifications = new ArrayList<>();
+    UUID eventUuid = event1.getUuid();
+    for (int i = 0; i < n; i++)
+    {
+      String iStr = String.format("%03d", i+1);
+      String suffix = key + "_" + iStr;
+      String dmAddress = suffix + ".fake.person@example.com";
+      DeliveryMethod dm = new DeliveryMethod(DeliveryType.EMAIL, dmAddress);
+      Notification ntf = new Notification(-1, subSeqId, tenantName, bucketNum1, eventUuid, event1, dm, createdNull);
+      notifications.add(ntf);
+    }
+    return notifications;
   }
 }

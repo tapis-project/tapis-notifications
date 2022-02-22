@@ -1,6 +1,7 @@
 package edu.utexas.tacc.tapis.notifications.model;
 
 import java.time.Instant;
+import java.util.UUID;
 
 /*
  * A Notification is a notice to a subscriber that an event has occurred.
@@ -17,28 +18,56 @@ import java.time.Instant;
  */
 public final class Notification
 {
+  private int seqId;           // Unique database sequence number
+  private String tenant;
+  private UUID eventUuid;
+
   // What and how to deliver the notification to the recipient
   private final Event event; // The event being delivered
   private final DeliveryMethod deliveryMethod; // How and where it is to be delivered
 
   // Attributes used to track in-flight notifications while delivery attempt is in progress.
-  private final Subscription subscription; // Subscription associated with the notification.
+  private final int subscrSeqId; // Subscription associated with the notification.
   private final int bucketNum; // Bucket/DeliverWorker to which it has been assigned
   private final Instant created; // UTC time for when record was created
 
-  public Notification(Event event1, DeliveryMethod deliveryMethod1, Subscription subscription1, int bucketNum1,
-                      Instant created1)
+//  public Notification(Event event1, DeliveryMethod deliveryMethod1, Subscription subscription1, int bucketNum1,
+//                      Instant created1)
+//  {
+//    event = event1;
+//    deliveryMethod = deliveryMethod1;
+//    subscription = subscription1;
+//    bucketNum = bucketNum1;
+//    created = created1;
+//  }
+//
+  /**
+   * Constructor for jOOQ with input parameter matching order of columns in DB
+   * Also useful for testing
+   */
+  public Notification(int seqId1, int subscrSeqId1, String tenant1, int bucketNum1, UUID eventUuid1, Event event1,
+                      DeliveryMethod deliveryMethod1, Instant created1)
   {
+    seqId = seqId1;
+    subscrSeqId = subscrSeqId1;
+    tenant = tenant1;
+    bucketNum = bucketNum1;
+    eventUuid = eventUuid1;
     event = event1;
     deliveryMethod = deliveryMethod1;
-    subscription = subscription1;
-    bucketNum = bucketNum1;
     created = created1;
   }
 
   public Event getEvent() { return event; }
   public DeliveryMethod getDeliveryMethod() { return deliveryMethod; }
-  public Subscription getSubscription() { return subscription; }
+  public int getSubscrSeqId() { return subscrSeqId; }
   public int getBucketNum() { return bucketNum; }
   public Instant getCreated() { return created; }
+
+  @Override
+  public String toString()
+  {
+    String msg = "SeqId: %d%nSubscrSeqId: %d%nTenant: %s%nbucketNum: %d%neventUuid: %s%nEvent %s%nDeliveryMethod: %s%nCreated: %s";
+    return msg.formatted(seqId, subscrSeqId, tenant, bucketNum, eventUuid, event, deliveryMethod, created);
+  }
 }

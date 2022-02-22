@@ -20,6 +20,7 @@ import com.google.gson.JsonObject;
 import javax.sql.DataSource;
 
 import org.flywaydb.core.Flyway;
+import org.jooq.BatchBindStep;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
@@ -1140,17 +1141,26 @@ public class NotificationsDaoImpl implements NotificationsDao
   // -----------------------------------------------------------------------
 
   /**
-   * Persist a batch of notifications
+   * Persist a batch of notifications associated with an Event and bucket
+   * @param tenant - name of tenant
+   * @param event - Event associated with the notifications
+   * @param bucketNum - Bucket associated with the notifications
    * @return true on success
    * @throws TapisException - on error
    */
   @Override
-  public boolean persistNotifications(String tenant, List<Notification> notifications) throws TapisException
+  public boolean persistNotificationsForEvent(String tenant, Event event, int bucketNum, List<Notification> notifications)
+          throws TapisException
   {
-    String opName = "persistNotifications";
+    String opName = "persistNotificationsForEvent";
     // ------------------------- Check Input -------------------------
     if (StringUtils.isBlank(tenant)) LibUtils.logAndThrowNullParmException(opName, "tenant");
+    if (event == null) LibUtils.logAndThrowNullParmException(opName, "event");
     if (notifications == null || notifications.isEmpty()) return true;
+
+    // Event is same for all items.
+    UUID eventUUID = event.getUuid();
+    JsonElement eventJson = TapisGsonUtils.getGson().toJsonTree(event);
 
     // ------------------------- Call SQL ----------------------------
     Connection conn = null;
@@ -1160,29 +1170,29 @@ public class NotificationsDaoImpl implements NotificationsDao
       conn = getConnection();
       DSLContext db = DSL.using(conn);
 
+      // Create template for inserts
+      BatchBindStep batch = db.batch(db.insertInto(NOTIFICATIONS,
+              NOTIFICATIONS.SUBSCR_SEQ_ID,
+              NOTIFICATIONS.TENANT,
+              NOTIFICATIONS.BUCKET_NUMBER,
+              NOTIFICATIONS.EVENT_UUID,
+              NOTIFICATIONS.EVENT,
+              NOTIFICATIONS.DELIVERY_METHOD).values((Integer) null, null, null, null, null, null));
+
       // Put together all the records we will be inserting.
-      List<UpdatableRecord<NotificationsRecord>> notificationRecords = new ArrayList<>();
       for (Notification n : notifications)
       {
         DeliveryMethod dm =  n.getDeliveryMethod();
-        Event event = n.getEvent();
-        // Convert event and deliveryMethod to json
-        JsonElement eventJson = EMPTY_JSON_ELEM;
-        if (event != null) eventJson = TapisGsonUtils.getGson().toJsonTree(eventJson);
+        // Convert deliveryMethod to json
         JsonElement deliveryMethodJson = EMPTY_JSON_ELEM;
         if (dm != null) deliveryMethodJson = TapisGsonUtils.getGson().toJsonTree(dm);
 
-        UpdatableRecord<NotificationsRecord> notifRecord = db.newRecord(NOTIFICATIONS);
-        notifRecord.set(NOTIFICATIONS.SUBSCR_SEQ_ID, n.getSubscription().getSeqId());
-        notifRecord.set(NOTIFICATIONS.TENANT, tenant);
-        notifRecord.set(NOTIFICATIONS.BUCKET_NUMBER, n.getBucketNum());
-        notifRecord.set(NOTIFICATIONS.EVENT_UUID, event.getUuid());
-        notifRecord.set(NOTIFICATIONS.EVENT, eventJson);
-        notifRecord.set(NOTIFICATIONS.DELIVERY_METHOD, deliveryMethodJson);
-        notifRecord.changed(true);
-        notificationRecords.add(notifRecord);
+        int subSeqId = n.getSubscrSeqId();
+        batch.bind(subSeqId, tenant, bucketNum, eventUUID, eventJson, deliveryMethodJson);
       }
-      db.batchInsert(notificationRecords);
+
+      // Now execute the final batch statement
+      batch.execute();
       // Close out and commit
       LibUtils.closeAndCommitDB(conn, null, null);
     }
@@ -1197,6 +1207,56 @@ public class NotificationsDaoImpl implements NotificationsDao
       LibUtils.finalCloseDB(conn);
     }
     return true;
+  }
+
+  /**
+   * Retrieve all Notifications associated with an Event and bucket
+   *
+   * @param tenantId - tenant name
+   * @param event - Event associated with the notifications
+   * @param bucketNum - Bucket associated with the notifications
+   * @return - list of Notification objects
+   * @throws TapisException - on error
+   */
+  @Override
+  public List<Notification> getNotificationsForEvent(String tenantId, Event event, int bucketNum)
+          throws TapisException
+  {
+    // The result list should always be non-null.
+    List<Notification> retList = new ArrayList<>();
+
+    // ------------------------- Build and execute SQL ----------------------------
+    Connection conn = null;
+    try
+    {
+      // Get a database connection.
+      conn = getConnection();
+      DSLContext db = DSL.using(conn);
+
+      Result<NotificationsRecord> results = db.selectFrom(NOTIFICATIONS)
+                       .where(NOTIFICATIONS.TENANT.eq(tenantId),
+                              NOTIFICATIONS.BUCKET_NUMBER.eq(bucketNum),
+                              NOTIFICATIONS.EVENT_UUID.eq(event.getUuid())).fetch();
+//              .fetchInto(Notification.class);
+
+      if (results == null || results.isEmpty()) return retList;
+
+      for (Record r : results) { retList.add(getNotificationFromRecord(r)); }
+
+      // Close out and commit
+      LibUtils.closeAndCommitDB(conn, null, null);
+    }
+    catch (Exception e)
+    {
+      // Rollback transaction and throw an exception
+      LibUtils.rollbackDB(conn, e,"DB_QUERY_ERROR", "notifications", e.getMessage());
+    }
+    finally
+    {
+      // Always return the connection back to the connection pool.
+      LibUtils.finalCloseDB(conn);
+    }
+    return retList;
   }
 
   /* ********************************************************************** */
@@ -1660,4 +1720,24 @@ public class NotificationsDaoImpl implements NotificationsDao
     else return sid;
   }
 
+  /**
+   * Given a record from a select, create a Notification object
+   *
+   */
+  private static Notification getNotificationFromRecord(Record r)
+  {
+    Notification ntf;
+    // Convert LocalDateTime to Instant. Note that although "Local" is in the type, timestamps from the DB are in UTC.
+    Instant created = r.get(NOTIFICATIONS.CREATED).toInstant(ZoneOffset.UTC);
+
+    // Convert JSONB columns to native types
+    JsonElement eventJson = r.get(NOTIFICATIONS.EVENT);
+    Event event = TapisGsonUtils.getGson().fromJson(eventJson, Event.class);
+    JsonElement dmJson = r.get(NOTIFICATIONS.DELIVERY_METHOD);
+    DeliveryMethod dm = TapisGsonUtils.getGson().fromJson(dmJson, DeliveryMethod.class);
+
+    ntf = new Notification(r.get(NOTIFICATIONS.SEQ_ID), r.get(NOTIFICATIONS.SUBSCR_SEQ_ID), r.get(NOTIFICATIONS.TENANT),
+                           r.get(NOTIFICATIONS.BUCKET_NUMBER), r.get(NOTIFICATIONS.EVENT_UUID), event, dm, created);
+    return ntf;
+  }
 }
