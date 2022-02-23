@@ -76,8 +76,7 @@ public final class DeliveryTask implements Callable<String>
       log.warn("Caught exception: " + e.getMessage(), e);
     }
 
-//    log.info("**** Stopping Delivery Worker: {}", workerId);
-    return "Delivery task complete";
+    return "Delivery task complete. deliveryMethod: " + notification.getDeliveryMethod();
   }
 
   /* ********************************************************************** */

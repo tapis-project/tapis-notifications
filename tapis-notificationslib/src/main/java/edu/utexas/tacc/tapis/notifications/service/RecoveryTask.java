@@ -56,7 +56,7 @@ public final class RecoveryTask implements Callable<String>
     // TODO
     try
     {
-      log.info("TODO: For now, sleeping ...");
+      log.info("TODO: For now, bucketRecovery task just sleeping ...");
       Thread.sleep(3000000);
     }
     catch (InterruptedException e)

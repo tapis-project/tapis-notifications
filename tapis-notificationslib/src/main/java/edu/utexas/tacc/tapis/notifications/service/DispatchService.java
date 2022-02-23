@@ -42,7 +42,7 @@ public class DispatchService
   private static final int SHUTDOWN_TIMEOUT_MS = 5000;
 
   // Number of buckets for grouping events for processing
-  public static final int NUM_BUCKETS = 20;
+  public static final int NUM_BUCKETS = 1;
   // Number of workers per bucket for handling notification delivery
   public static final int NUM_DELIVERY_WORKERS = 5;
 
@@ -67,9 +67,8 @@ public class DispatchService
   // DeliveryBucketManagers for processing events, one per bucket
   private final List<Callable<String>> bucketManagers = new ArrayList<>();
 
-  // ExecutorService and futures for bucket managers
+  // ExecutorService for bucket managers
   private final ExecutorService bucketManagerExecService =  Executors.newFixedThreadPool(NUM_BUCKETS);
-  private List<Future<String>> bucketManagerFutures;
 
   // ExecutorService and future for subscription reaper
   private final ExecutorService reaperExecService = Executors.newSingleThreadExecutor();
@@ -128,7 +127,7 @@ public class DispatchService
 
     // Start up the bucket managers and wait for them to finish
     // The bucket managers will only finish on interrupt or error.
-    bucketManagerFutures = bucketManagerExecService.invokeAll(bucketManagers);
+    bucketManagerExecService.invokeAll(bucketManagers);
   }
 
   /*
@@ -146,19 +145,7 @@ public class DispatchService
   public void stopReaper()
   {
     log.info("Stopping Subscription Reaper");
-    reaperTaskFuture.cancel(mayInterruptIfRunning);
-  }
-
-  /*
-   * Stop the bucket managers
-   */
-  public void stopBucketManagers()
-  {
-    for (int i = 0; i < NUM_BUCKETS; i++)
-    {
-      log.info("Stopping Bucket Manager for bucket: " + i);
-      bucketManagerFutures.get(i).cancel(mayInterruptIfRunning);
-    }
+    if (reaperTaskFuture != null) reaperTaskFuture.cancel(mayInterruptIfRunning);
   }
 
   /*
@@ -168,6 +155,8 @@ public class DispatchService
   {
     log.info(LibUtils.getMsg("NTFLIB_MSGBRKR_CONN_CLOSE", SHUTDOWN_TIMEOUT_MS));
     MessageBroker.getInstance().shutDown(SHUTDOWN_TIMEOUT_MS);
+    log.info("Sleep 5 seconds before final shutdown of executors");
+    try { log.info("Sleep 5 seconds"); Thread.sleep(5000); } catch (InterruptedException e) {}
     // Force shutdown of executor services
     shutdownExecutors(SHUTDOWN_TIMEOUT_MS);
   }

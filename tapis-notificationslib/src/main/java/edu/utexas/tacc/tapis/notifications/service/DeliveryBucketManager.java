@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -39,7 +40,6 @@ public final class DeliveryBucketManager implements Callable<String>
 
   // Allow interrupt when shutting down executor services.
   private static final boolean mayInterruptIfRunning = true;
-
 
   /* ********************************************************************** */
   /*                                Enums                                   */
@@ -97,9 +97,8 @@ public final class DeliveryBucketManager implements Callable<String>
   public String call()
   {
     log.info("**** Starting Delivery Bucket Manager for bucket: {}", bucketNum);
-    try { log.info("TODO, for now Sleep 2 seconds"); Thread.sleep(2000); } catch (InterruptedException e) {}
 
-    // Start our recovery thread.
+    // Start a thread to work on notifications that are in recovery.
     startRecoveryTask();
 
     // Process any deliveries that were interrupted during a crash.
@@ -112,10 +111,6 @@ public final class DeliveryBucketManager implements Callable<String>
       while (true)
       {
         // Blocking call to get next event
-        try {
-          log.info("Sleep 2 seconds then take from bucket queue for bucket: {}", bucketNum);
-          Thread.sleep(2000);
-        } catch (InterruptedException e) {}
         delivery = deliveryBucketQueue.take();
         processDelivery(delivery);
       }
@@ -134,12 +129,13 @@ public final class DeliveryBucketManager implements Callable<String>
       // TODO
       log.warn("Caught TapisException for bucket manager. Bucket: {} Exception: {}", bucketNum, e.getMessage());
     }
+    finally
+    {
+      stopRecoveryTask();
+    }
 
-    log.info("**** Stopping Delivery Bucket Manager for bucket: {}", bucketNum);
-
-    stopRecoveryTask();
-
-    return "Delivery Bucket Manager shutdown for bucket: " + bucketNum;
+    log.info("Delivery Bucket Manager shutdown for bucket: {}", bucketNum);
+    return "shutdown";
   }
 
 
@@ -179,12 +175,10 @@ public final class DeliveryBucketManager implements Callable<String>
     log.info("Number of subscriptions found: {} eventUUID: {} ", matchingSubscriptions.size(), event.getUuid());
     try { log.info("Sleep 2 seconds"); Thread.sleep(2000); } catch (InterruptedException e) {}
 
-    // TODO Generate and persist notifications based on subscriptions
+    // Generate and persist notifications based on subscriptions
     log.info("Creating and persisting notifications. Bucket: {} Event: {}", bucketNum, event.getUuid());
-    try { log.info("Sleep 2 seconds"); Thread.sleep(2000); } catch (InterruptedException e) {}
     List<Notification> notifications = createAndPersistNotifications(event, matchingSubscriptions);
-//    Notification notif1 = new Notification(event, dm1, sub1, bucketNum, 1, null, null, null, null);
-//    notifications.add(notif1);
+
     log.info("Number of notifications generated. Bucket: {} Number: {} eventUUID: {} ", bucketNum, notifications.size(), event.getUuid());
     try { log.info("Sleep 2 seconds"); Thread.sleep(2000); } catch (InterruptedException e) {}
 
@@ -204,13 +198,42 @@ public final class DeliveryBucketManager implements Callable<String>
       deliveryTaskFutures.add(future);
     }
 
-    // TODO/TBD: Wait for all tasks to finish? Or continue so one event does not block next event?
-    log.info("Number of notifications queued for processing: {}", deliveryTaskFutures.size());
+    // Wait for all tasks to finish
+    log.info("Waiting for queued notifications to finish. Number queued: {}", deliveryTaskFutures.size());
+
+    // Loop indefinetely waiting for tasks to finish
+    boolean notDone = true;
+    while (notDone)
+    {
+      notDone = false;
+      // Check each task. If any have not finished then notDone ends up true
+      for (Future<String> f : deliveryTaskFutures)
+      {
+        // If task is done then log the return value, else reset notDone to true
+        // TODO: This could log return values multiple times.
+        if (f.isDone())
+        {
+          try { log.info("Bucket {} A DeliveryTask is done. Return value: {}", bucketNum, f.get()); }
+          catch (ExecutionException | InterruptedException e) {}
+        }
+        else
+        {
+          notDone = true;
+        }
+      }
+      // Pause briefly
+      try
+      {
+        log.info("Sleep 2 seconds while waiting on delivery tasks. Bucket: {}", bucketNum);
+        Thread.sleep(2000);
+      }
+      catch (InterruptedException e) {}
+    }
 
     // Clear out futures
     deliveryTaskFutures.clear();
 
-    // TODO/TBD Remove notifications from DB (or is this handled by callables in threadpool?)
+    // TODO/TBD Remove notifications from DB (or is this handled by callables in threadpool?, vis a vis recovery?)
     log.info("Removing notifications from DB {}", event.getUuid());
   }
 
@@ -222,7 +245,6 @@ public final class DeliveryBucketManager implements Callable<String>
   {
     // TODO
     log.info("Checking for interrupted deliveries. Bucket number: {}", bucketNum);
-    try { log.info("Sleep 2 seconds"); Thread.sleep(2000); } catch (InterruptedException e) {}
   }
 
   /*
@@ -231,7 +253,6 @@ public final class DeliveryBucketManager implements Callable<String>
   private void startRecoveryTask()
   {
     log.info("Starting Recovery task for bucket number: {}", bucketNum);
-    try { log.info("Sleep 2 seconds"); Thread.sleep(2000); } catch (InterruptedException e) {}
     recoveryTaskFuture = recoveryExecService.submit(new RecoveryTask(bucketNum, dao));
   }
 
@@ -241,7 +262,7 @@ public final class DeliveryBucketManager implements Callable<String>
   public void stopRecoveryTask()
   {
     log.info("Stopping Recovery task for bucket number: {}", bucketNum);
-    recoveryTaskFuture.cancel(mayInterruptIfRunning);
+    if (recoveryTaskFuture != null)  recoveryTaskFuture.cancel(mayInterruptIfRunning);
   }
 
   /*

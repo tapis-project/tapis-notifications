@@ -11,8 +11,6 @@ import edu.utexas.tacc.tapis.notifications.service.DispatchService;
 import edu.utexas.tacc.tapis.shared.security.TenantManager;
 import edu.utexas.tacc.tapis.shared.utils.TapisUtils;
 
-import java.util.concurrent.Callable;
-
 /*
  * Main startup class for the Dispatch application.
  * The dispatcher application handles:
@@ -94,9 +92,8 @@ public class DispatchApplication
     @Override
     public void run()
     {
-      System.out.println("**** Stopping Notifications Dispatch Service. Version: " + TapisUtils.getTapisFullVersion() + " ****");
-      // We are shutting down, stop the delivery bucket managers and the reaper
-      svc.stopBucketManagers();
+      System.out.printf("**** Stopping Notifications Dispatch Service. Version: %s ****%n", TapisUtils.getTapisFullVersion());
+      // We are shutting down, stop the reaper and the bucket managers
       svc.stopReaper();
       // Perform any remaining shutdown steps
       svc.shutDown();

@@ -50,7 +50,7 @@ public final class SubscriptionReaper implements Callable<String>
     try
     {
       // TODO
-      log.info("TODO: For now, sleeping ...");
+      log.info("TODO: For now, reaper only sleeps ...");
       Thread.sleep(3000000);
     }
     catch (InterruptedException e)
