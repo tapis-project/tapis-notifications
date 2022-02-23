@@ -2,7 +2,9 @@ package edu.utexas.tacc.tapis.notifications.service;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
@@ -57,6 +59,8 @@ public final class DeliveryBucketManager implements Callable<String>
   // ExecutorService and futures for delivery workers
   private final ExecutorService deliveryTaskExecService =  Executors.newFixedThreadPool(NUM_DELIVERY_WORKERS);
   private final List<Future<String>> deliveryTaskFutures = new ArrayList<>();
+  private final Map<Future<String>, String> deliveryTaskReturns = new HashMap<>();
+
 
   // ExecutorService and future for the recovery task
   private final ExecutorService recoveryExecService = Executors.newSingleThreadExecutor();
@@ -196,12 +200,13 @@ public final class DeliveryBucketManager implements Callable<String>
       try { log.info("Sleep 2 seconds"); Thread.sleep(2000); } catch (InterruptedException e) {}
       Future<String> future = deliveryTaskExecService.submit(new DeliveryTask(notification, bucketNum));
       deliveryTaskFutures.add(future);
+      deliveryTaskReturns.put(future, null);
     }
 
     // Wait for all tasks to finish
     log.info("Waiting for queued notifications to finish. Number queued: {}", deliveryTaskFutures.size());
 
-    // Loop indefinetely waiting for tasks to finish
+    // Loop indefinitely waiting for tasks to finish
     boolean notDone = true;
     while (notDone)
     {
@@ -209,23 +214,34 @@ public final class DeliveryBucketManager implements Callable<String>
       // Check each task. If any have not finished then notDone ends up true
       for (Future<String> f : deliveryTaskFutures)
       {
-        // If task is done then log the return value, else reset notDone to true
-        // TODO: This could log return values multiple times.
-        if (f.isDone())
+        // If task is not done then reset notDone to true, else record and log the return value
+        if (!f.isDone())
         {
-          try { log.info("Bucket {} A DeliveryTask is done. Return value: {}", bucketNum, f.get()); }
-          catch (ExecutionException | InterruptedException e) {}
+          notDone = true;
         }
         else
         {
-          notDone = true;
+          if (deliveryTaskReturns.get(f) == null)
+          {
+            String retStr = null;
+            try
+            {
+              retStr = f.get();
+              log.info("Bucket {}. A DeliveryTask is done. Return value: {}", bucketNum, retStr);
+              deliveryTaskReturns.put(f, retStr);
+            }
+            catch (ExecutionException | InterruptedException e)
+            {
+              log.error("Caught exception while trying to capture return value. Bucket: {}.", bucketNum);
+            }
+          }
         }
       }
       // Pause briefly
       try
       {
-        log.info("Sleep 2 seconds while waiting on delivery tasks. Bucket: {}", bucketNum);
-        Thread.sleep(2000);
+        log.info("Sleep 1 second while waiting on delivery tasks. Bucket: {}", bucketNum);
+        Thread.sleep(1000);
       }
       catch (InterruptedException e) {}
     }
