@@ -69,7 +69,6 @@ public class DispatchApplication
     dispatchService.initService(siteAdminTenantId, RuntimeParameters.getInstance());
 
     // Add a shutdown hook so we can gracefully stop
-
     Thread shudownHook = new DispatchShutdown(dispatchService);
     Runtime.getRuntime().addShutdownHook(shudownHook);
 
@@ -79,7 +78,6 @@ public class DispatchApplication
     // Start message broker consumer and bucket managers.
     // This is the main loop to process events while the service is running.
     dispatchService.processEvents();
-    System.exit(0);
   }
 
   // Private class used to gracefully shut down the application

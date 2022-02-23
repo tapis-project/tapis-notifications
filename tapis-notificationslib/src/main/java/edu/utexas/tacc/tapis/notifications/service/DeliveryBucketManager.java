@@ -112,6 +112,20 @@ public final class DeliveryBucketManager implements Callable<String>
     Delivery delivery;
     try
     {
+      // Blocking call to get first event
+      // For first event received check for a duplicate. If already processed then simply ack it, else process it.
+      delivery = deliveryBucketQueue.take();
+      if (dao.checkForLastEvent(delivery.getEvent().getUuid(), bucketNum))
+      {
+        log.info("Acking event {}", delivery.getEvent().getUuid());
+        MessageBroker.getInstance().ackMsg(delivery.getDeliveryTag());
+      }
+      else
+      {
+        processDelivery(delivery);
+      }
+
+      // Now processes events as they come in
       while (true)
       {
         // Blocking call to get next event
@@ -164,17 +178,9 @@ public final class DeliveryBucketManager implements Callable<String>
     //      refactor into separate calls to private methods
 
     log.info("Processing event. Bucket: {} DeliveryTag: {} Event: {}", bucketNum, delivery.getDeliveryTag(), event);
-    try { log.info("Sleep 2 seconds"); Thread.sleep(2000); } catch (InterruptedException e) {}
     if (log.isTraceEnabled())
     {
       log.trace("Processing event. Bucket: {} DeliveryTag: {} Event: {}", bucketNum, delivery.getDeliveryTag(), event);
-    }
-
-    // TODO Check to see if we have already processed this event. If so TODO
-    log.info("Checking for duplicate. Bucket: {} Event {}", bucketNum, event.getUuid());
-    if (dao.checkForLastEvent(event.getUuid(), bucketNum))
-    {
-      // TODO
     }
 
     try { log.info("Sleep 2 seconds"); Thread.sleep(2000); } catch (InterruptedException e) {}

@@ -42,10 +42,14 @@ public class DispatchService
   private static final int SHUTDOWN_TIMEOUT_MS = 5000;
 
   // Number of buckets for grouping events for processing
-  // TODO: Change to 20
+  // Leave hard-coded, changing would cause trouble for re-starts and recovery
+  //  - would need to quiesce and clean out queue.
+  //  - e.g., reducing number could lead to orphan entries
+  // TODO: Change to 23
   public static final int NUM_BUCKETS = 1;
   // Number of workers per bucket for handling notification delivery
   // TODO: Change to 5
+  // add to runtime parms
   public static final int NUM_DELIVERY_WORKERS = 1;
 
   // Allow interrupt when shutting down executor services.

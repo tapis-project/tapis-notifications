@@ -2,12 +2,12 @@ package edu.utexas.tacc.tapis.notifications.service;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeoutException;
 
-import com.google.common.base.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -397,11 +397,11 @@ public final class MessageBroker
   /*
    * Compute a bucket number from 0 to NUM_BUCKETS-1
    *   based on hash of event source, subject and seriesId
-   *
    */
   private static int computeBucketNumber(Event event)
   {
-    int hash = Objects.hashCode(event.getSource(), event.getSubject(), event.getSeriesId());
+    Object[] hashObjects = {event.getSource(), event.getSubject(), event.getSeriesId()};
+    int hash = Arrays.hashCode(hashObjects);
     return hash % NUM_BUCKETS;
   }
 }
