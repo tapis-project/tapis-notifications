@@ -159,7 +159,10 @@ public final class DeliveryBucketManager implements Callable<String>
   private void processDelivery(Delivery delivery) throws IOException, TapisException
   {
     Event event = delivery.getEvent();
-    // TODO Remove most info messages
+
+    // TODO Clean up messages
+    //      refactor into separate calls to private methods
+
     log.info("Processing event. Bucket: {} DeliveryTag: {} Event: {}", bucketNum, delivery.getDeliveryTag(), event);
     try { log.info("Sleep 2 seconds"); Thread.sleep(2000); } catch (InterruptedException e) {}
     if (log.isTraceEnabled())
@@ -167,8 +170,13 @@ public final class DeliveryBucketManager implements Callable<String>
       log.trace("Processing event. Bucket: {} DeliveryTag: {} Event: {}", bucketNum, delivery.getDeliveryTag(), event);
     }
 
-    // TODO Check to see if we have already processed this event
+    // TODO Check to see if we have already processed this event. If so TODO
     log.info("Checking for duplicate. Bucket: {} Event {}", bucketNum, event.getUuid());
+    if (dao.checkForLastEvent(event.getUuid(), bucketNum))
+    {
+      // TODO
+    }
+
     try { log.info("Sleep 2 seconds"); Thread.sleep(2000); } catch (InterruptedException e) {}
 
     // TODO Find matching subscriptions
@@ -179,7 +187,7 @@ public final class DeliveryBucketManager implements Callable<String>
     log.info("Number of subscriptions found: {} eventUUID: {} ", matchingSubscriptions.size(), event.getUuid());
     try { log.info("Sleep 2 seconds"); Thread.sleep(2000); } catch (InterruptedException e) {}
 
-    // Generate and persist notifications based on subscriptions
+    // Generate and persist notifications based on subscriptions, update last_event table.
     log.info("Creating and persisting notifications. Bucket: {} Event: {}", bucketNum, event.getUuid());
     List<Notification> notifications = createAndPersistNotifications(event, matchingSubscriptions);
 
@@ -198,7 +206,7 @@ public final class DeliveryBucketManager implements Callable<String>
     {
       log.info("Delivering notification for event: {} deliveryMethod: {}", event.getUuid(), notification.getDeliveryMethod());
       try { log.info("Sleep 2 seconds"); Thread.sleep(2000); } catch (InterruptedException e) {}
-      Future<String> future = deliveryTaskExecService.submit(new DeliveryTask(notification, bucketNum));
+      Future<String> future = deliveryTaskExecService.submit(new DeliveryTask(dao, notification));
       deliveryTaskFutures.add(future);
       deliveryTaskReturns.put(future, null);
     }
@@ -211,7 +219,8 @@ public final class DeliveryBucketManager implements Callable<String>
     while (notDone)
     {
       notDone = false;
-      // Check each task. If any have not finished then notDone ends up true
+      // Check each task and capture return values when available.
+      // If any have not finished then notDone ends up true
       for (Future<String> f : deliveryTaskFutures)
       {
         // If task is not done then reset notDone to true, else record and log the return value
@@ -221,18 +230,18 @@ public final class DeliveryBucketManager implements Callable<String>
         }
         else
         {
+          // Task is done. If we have not captured the return value do it now.
           if (deliveryTaskReturns.get(f) == null)
           {
-            String retStr = null;
             try
             {
-              retStr = f.get();
+              String retStr = f.get();
               log.info("Bucket {}. A DeliveryTask is done. Return value: {}", bucketNum, retStr);
               deliveryTaskReturns.put(f, retStr);
             }
             catch (ExecutionException | InterruptedException e)
             {
-              log.error("Caught exception while trying to capture return value. Bucket: {}.", bucketNum);
+              log.error("Caught exception while trying to capture return value. Bucket: {}. Exception: {}", bucketNum, e);
             }
           }
         }
@@ -249,7 +258,7 @@ public final class DeliveryBucketManager implements Callable<String>
     // Clear out futures
     deliveryTaskFutures.clear();
 
-    // TODO/TBD Remove notifications from DB (or is this handled by callables in threadpool?, vis a vis recovery?)
+    // TODO/TBD Remove notifications from DB (or is this handled by DeliveryTask callables in threadpool?, vis a vis recovery?)
     log.info("Removing notifications from DB {}", event.getUuid());
   }
 
@@ -293,6 +302,7 @@ public final class DeliveryBucketManager implements Callable<String>
 
   /*
    * Create and persist notifications given an event and a list of matching subscriptions
+   * Also update the last_event table as part of the transaction.
    */
   private List<Notification> createAndPersistNotifications(Event event, List<Subscription> subscriptions)
           throws TapisException

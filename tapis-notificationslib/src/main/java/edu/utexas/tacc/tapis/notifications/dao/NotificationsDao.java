@@ -12,6 +12,7 @@ import edu.utexas.tacc.tapis.sharedapi.security.ResourceRequestUser;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 public interface NotificationsDao
 {
@@ -75,6 +76,8 @@ public interface NotificationsDao
           throws TapisException;
 
   List<Notification> getNotificationsForEvent(String tenant, Event event, int bucketNum) throws TapisException;
+
+  boolean checkForLastEvent(UUID eventUuid, int bucketNum) throws TapisException;
 
 //  boolean createNotification(Notification notification) throws TapisException;
 

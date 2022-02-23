@@ -39,17 +39,20 @@ public final class DeliveryTask implements Callable<String>
   @Inject
   private NotificationsDao dao;
 
-  private final int bucketNum; // Bucket that generated the notification
   private final Notification notification; // The notification to be processed
+  private final int bucketNum; // Bucket that generated the notification
+  private final DeliveryMethod deliveryMethod;
 
   /* ********************************************************************** */
   /*                             Constructors                               */
   /* ********************************************************************** */
 
-  DeliveryTask(Notification n1, int bucketNum1)
+  DeliveryTask(NotificationsDao dao1, Notification n1)
   {
-    bucketNum = bucketNum1;
+    dao = dao1;
     notification = n1;
+    bucketNum = n1.getBucketNum();
+    deliveryMethod = n1.getDeliveryMethod();
   }
   
   /* ********************************************************************** */
@@ -62,13 +65,15 @@ public final class DeliveryTask implements Callable<String>
   @Override
   public String call()
   {
-//    log.info("**** Starting Delivery task: {}", workerId);
     log.info("**** Starting Delivery task");
-    try {log.info("Sleep 2 seconds"); Thread.sleep(2000); } catch (InterruptedException e) {}
+    String retSuccess = "Delivery task complete. deliveryMethod: " + deliveryMethod;
+    String retFail = "Delivery task failed. deliveryMethod: " + deliveryMethod;
 
+    boolean delivered = false;
+    log.info("**** Delivery task first attempt");
     try
     {
-        processNotification(notification);
+      delivered = deliverNotification();
     }
     catch (IOException e)
     {
@@ -76,7 +81,34 @@ public final class DeliveryTask implements Callable<String>
       log.warn("Caught exception: " + e.getMessage(), e);
     }
 
-    return "Delivery task complete. deliveryMethod: " + notification.getDeliveryMethod();
+    if (delivered)
+    {
+      // First attempt succeeded
+      // TODO: What if we crash before removing notification?
+      //       and what if dao call throws exception?
+//      dao.deleteNotification(notification);
+      return retSuccess;
+    }
+
+    // Pause and then try one more time
+    try {log.info("Sleep 15 seconds"); Thread.sleep(15000); } catch (InterruptedException e) {}
+    log.info("**** Delivery task second attempt");
+    try
+    {
+      delivered = deliverNotification();
+    }
+    catch (IOException e)
+    {
+      // TODO
+      log.warn("Caught exception: " + e.getMessage(), e);
+      return retFail;
+    }
+
+    // Second attempt succeeded
+    // TODO: What if we crash before removing notification?
+    //       and what if dao call throws exception? return false? re-throw?
+//      dao.deleteNotification(notification);
+    return retSuccess;
   }
 
   /* ********************************************************************** */
@@ -89,15 +121,18 @@ public final class DeliveryTask implements Callable<String>
   /*                             Private Methods                            */
   /* ********************************************************************** */
 
-  private void processNotification(Notification notification) throws IOException
+  /*
+   * TODO Send out the notification
+   */
+  private boolean deliverNotification() throws IOException
   {
     Event event = notification.getEvent();
-    DeliveryMethod deliveryMethod = notification.getDeliveryMethod();
     log.info("Processing notification for event. Source: {} Type: {} Subject: {} SeriesId: {} Time: {} UUID {}",
              event.getSource(), event.getType(), event.getSubject(), event.getSeriesId(),
              event.getTime(), event.getUuid());
     log.info("TODO Deliver notification. DeliveryType: {} DeliveryAddress: {}", deliveryMethod.getDeliveryType(),
              deliveryMethod.getDeliveryAddress());
     try {log.info("Sleep 2 seconds"); Thread.sleep(2000); } catch (InterruptedException e) {};
+    return true;
   }
 }

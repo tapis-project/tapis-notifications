@@ -47,6 +47,8 @@ import edu.utexas.tacc.tapis.search.SearchUtils.SearchOperator;
 import edu.utexas.tacc.tapis.shared.utils.TapisGsonUtils;
 import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisDBConnectionException;
 import edu.utexas.tacc.tapis.shareddb.datasource.TapisDataSource;
+
+import static edu.utexas.tacc.tapis.notifications.gen.jooq.Tables.NOTIFICATIONS_LAST_EVENT;
 import static edu.utexas.tacc.tapis.shared.threadlocal.OrderBy.DEFAULT_ORDERBY_DIRECTION;
 
 import edu.utexas.tacc.tapis.notifications.model.Notification;
@@ -1129,6 +1131,7 @@ public class NotificationsDaoImpl implements NotificationsDao
 
   /**
    * Persist a batch of notifications associated with an Event and bucket
+   * Also update the last_event table as part of the transaction.
    * @param tenant - name of tenant
    * @param event - Event associated with the notifications
    * @param bucketNum - Bucket associated with the notifications
@@ -1180,6 +1183,13 @@ public class NotificationsDaoImpl implements NotificationsDao
 
       // Now execute the final batch statement
       batch.execute();
+
+      // Update the last_event table
+      db.update(NOTIFICATIONS_LAST_EVENT)
+              .set(NOTIFICATIONS_LAST_EVENT.EVENT_UUID, event.getUuid())
+              .set(NOTIFICATIONS_LAST_EVENT.BUCKET_NUMBER, bucketNum)
+              .where(NOTIFICATIONS_LAST_EVENT.BUCKET_NUMBER.eq(bucketNum));
+
       // Close out and commit
       LibUtils.closeAndCommitDB(conn, null, null);
     }
@@ -1243,6 +1253,45 @@ public class NotificationsDaoImpl implements NotificationsDao
       LibUtils.finalCloseDB(conn);
     }
     return retList;
+  }
+
+  /**
+   * checkForLastEvent
+   * @param eventUuid -
+   * @param bucketNum -
+   * @return true if found else false
+   * @throws TapisException - on error
+   */
+  @Override
+  public boolean checkForLastEvent(UUID eventUuid, int bucketNum) throws TapisException
+  {
+    // Initialize result.
+    boolean result = false;
+
+    // ------------------------- Call SQL ----------------------------
+    Connection conn = null;
+    try
+    {
+      // Get a database connection.
+      conn = getConnection();
+      DSLContext db = DSL.using(conn);
+      // Run the sql
+      result = db.fetchExists(NOTIFICATIONS_LAST_EVENT,NOTIFICATIONS_LAST_EVENT.BUCKET_NUMBER.eq(bucketNum),
+                              NOTIFICATIONS_LAST_EVENT.EVENT_UUID.eq(eventUuid));
+      // Close out and commit
+      LibUtils.closeAndCommitDB(conn, null, null);
+    }
+    catch (Exception e)
+    {
+      // Rollback transaction and throw an exception
+      LibUtils.rollbackDB(conn, e,"DB_SELECT_UUID_ERROR", "notifications_last_event", eventUuid, e.getMessage());
+    }
+    finally
+    {
+      // Always return the connection back to the connection pool.
+      LibUtils.finalCloseDB(conn);
+    }
+    return result;
   }
 
   /* ********************************************************************** */
