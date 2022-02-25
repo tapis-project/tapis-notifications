@@ -220,7 +220,10 @@ public final class RuntimeParameters implements EmailClientParameters
       if (StringUtils.isBlank(parm)) {
         String msg = MsgUtils.getMsg("TAPIS_SERVICE_PARM_MISSING", TapisConstants.SERVICE_NAME_NOTIFICATIONS, "siteId");
         _log.error(msg);
-        throw new TapisRuntimeException(msg);
+        // TODO Figure out why for notifications in k8s this is not getting picket up.
+        //      for now hard code a fallback
+//TODO         throw new TapisRuntimeException(msg);
+        parm = "tacc";
       }
       setSiteId(parm);
 
