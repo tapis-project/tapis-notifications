@@ -1,5 +1,5 @@
 #!/bin/sh
-# Start up local docker image for the service.
+# Start up local docker image for the api or dispatcher service.
 # Environment value must be passed in as first argument: dev, staging, prod
 # Special argument "dev_local" means use a special tag that should only be available
 #   locally and use services from dev environment
@@ -10,23 +10,32 @@
 
 PrgName=$(basename "$0")
 
-USAGE1="Usage: $PRG_NAME { dev_local, dev, staging, prod }"
-
-SVC_NAME="notifications"
-
-# Run docker image for the service
-BUILD_DIR=../api/target
-ENV=$1
-TAG="tapis/${SVC_NAME}:${ENV}"
-
+USAGE1="Usage: $PRG_NAME { dev_local, dev, staging, prod } {api, dispatcher}"
+USAGE2="For example: $PRG_NAME dev_local api"
 ##########################################################
 # Check number of arguments.
 ##########################################################
-if [ $# -ne 1 ]; then
-  echo "Please provide environment"
+if [ $# -ne 2 ]; then
+  echo "Please provide environment and service to start"
   echo $USAGE1
+  echo $USAGE2
   exit 1
 fi
+
+ENV=$1
+if [ "$2" = "api" ]; then
+  SVC_NAME="notifications"
+elif [ "$2" = "dispatcher" ]; then
+ SVC_NAME="notifications-dispatcher"
+else
+  echo $USAGE1
+  echo $USAGE2
+  exit 1
+fi
+
+# Run docker image for the service
+BUILD_DIR=../tapis-notificationsapi/target
+TAG="tapis/${SVC_NAME}:${ENV}"
 
 if [ -z "$TAPIS_SERVICE_PASSWORD" ]; then
   echo "Please set env variable TAPIS_SERVICE_PASSWORD to the service password"
@@ -64,10 +73,10 @@ echo "Build version: $VER"
 echo
 
 # Running with network=host exposes ports directly. Only works for linux
+#           -d --rm --network="host" "${TAG}"
 set -xv
 docker run -e TAPIS_SERVICE_PASSWORD="${TAPIS_SERVICE_PASSWORD}" \
            -e TAPIS_TENANT_SVC_BASEURL="$BASE_URL" \
            -e TAPIS_SITE_ID="$TAPIS_SITE_ID" \
            --rm --network="host" "${TAG}"
-#           -d --rm --network="host" "${TAG}"
 cd "$RUN_DIR"

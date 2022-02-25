@@ -36,7 +36,7 @@ if [ ! -d "$BUILD_DIR" ]; then
   exit 1
 fi
 
-# Copy Dockerfile to build dir
+# Copy Dockerfile_api to build dir
 cp Dockerfile $BUILD_DIR
 
 # Move to the build directory
@@ -56,7 +56,7 @@ if [ -z "$GIT_BRANCH_LBL" -o "x$GIT_BRANCH_LBL" = "xUNKNOWN" ]; then
   GIT_BRANCH_LBL=$(echo "$GIT_BRANCH" | awk -F"/" '{print $2}')
 fi
 
-# Build image from Dockerfile
+# Build image from Dockerfile_api
 echo "Building local image using primary tag: $TAG_UNIQ"
 echo "  ENV=        ${ENV}"
 echo "  VER=        ${VER}"

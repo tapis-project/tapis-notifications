@@ -35,14 +35,6 @@
       <skipIntegrationTests>true</skipIntegrationTests>
     </properties>
 
-<!--
-        <dependency>
-            <groupId>com.github.java-json-tools</groupId>
-            <artifactId>json-schema-validator</artifactId>
-            <version>${json-schema-validator.version}</version>
-        </dependency>
--->
-
   <build>
     <plugins>
       <!--  gitflow-maven-plugin supports various git workflow steps, such as gitflow:release-start-->
@@ -137,8 +129,8 @@
   </profiles>
 
   <modules>
-    <module>api</module>
-    <module>lib</module>
+    <module>tapis-notificationsapi</module>
+    <module>tapis-notificationslib</module>
   </modules>
 
 </project>
