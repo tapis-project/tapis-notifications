@@ -1,6 +1,8 @@
 package edu.utexas.tacc.tapis.notifications.service;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.FutureTask;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import edu.utexas.tacc.tapis.notifications.dao.NotificationsDao;
@@ -53,6 +55,8 @@ public final class RecoveryTask implements Callable<String>
   public String call()
   {
     log.info("**** Starting notification delivery recovery for bucket number: {}", bucketNum);
+    Thread.currentThread().setName("ThreadRecovery-bucket-"+ bucketNum);
+    log.info("ThreadId: {} ThreadName: {}", Thread.currentThread().getId(), Thread.currentThread().getName());
     // TODO
     try
     {
@@ -67,7 +71,6 @@ public final class RecoveryTask implements Callable<String>
     log.info("**** Stopping notification delivery recovery for bucket number: {}", bucketNum);
     return "shutdown";
   }
-
 
   /* ********************************************************************** */
   /*                             Accessors                                  */
@@ -99,4 +102,21 @@ public final class RecoveryTask implements Callable<String>
 //    // TODO Remove notifications from DB (handled by workers in threadpool?)
 //    log.info("Removing notifications from DB {}", delivery.getEvent().getUuid());
 //  }
+
+//  // TODO/TBD: This might help in supporting a callable along with afterExecute
+//  //           also need a custom threadfactory?
+//
+//class RecoveryFutureTask<T> extends FutureTask<T>
+//{
+//  private Callable<T> callable;
+//
+//  public RecoveryFutureTask(Callable<T> callable){
+//    super(callable);
+//    this.callable = callable;
+//  }
+//
+//  public Callable<T> getCallable(){
+//    return this.callable;
+//  }
+//}
 }

@@ -13,6 +13,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
 import edu.utexas.tacc.tapis.notifications.model.DeliveryMethod;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import org.slf4j.Logger;
@@ -23,7 +24,7 @@ import edu.utexas.tacc.tapis.notifications.model.Notification;
 import edu.utexas.tacc.tapis.notifications.model.Subscription;
 import edu.utexas.tacc.tapis.notifications.model.Delivery;
 import edu.utexas.tacc.tapis.notifications.dao.NotificationsDao;
-import static edu.utexas.tacc.tapis.notifications.service.DispatchService.NUM_DELIVERY_WORKERS;
+import static edu.utexas.tacc.tapis.notifications.service.DispatchService.DEFAULT_NUM_DELIVERY_WORKERS;
 
 /*
  * Callable for sending out notifications when an event is received and assigned to a bucket.
@@ -57,10 +58,15 @@ public final class DeliveryBucketManager implements Callable<String>
   private final BlockingQueue<Delivery> deliveryBucketQueue;
 
   // ExecutorService and futures for delivery workers
-  private final ExecutorService deliveryTaskExecService =  Executors.newFixedThreadPool(NUM_DELIVERY_WORKERS);
-  private final List<Future<String>> deliveryTaskFutures = new ArrayList<>();
-  private final Map<Future<String>, String> deliveryTaskReturns = new HashMap<>();
+//  private final ExecutorService deliveryTaskExecService = Executors.newFixedThreadPool(DEFAULT_NUM_DELIVERY_WORKERS);
+  private final ExecutorService deliveryTaskExecService;
 
+  // TODO/TBD: can use a custom threadfactory to create our own thread names?
+  //           will custom threadfactory also help with exceptions, afterexecute, beforeexecute? especially if we
+  //           use submit with a callable?
+//  private final ExecutorService deliveryTaskExecServiceC =  Executors.newFixedThreadPool(DEFAULT_NUM_DELIVERY_WORKERS, myThreadFactory);
+  private final List<Future<Notification>> deliveryTaskFutures = new ArrayList<>();
+  private final Map<Future<Notification>, Notification> deliveryTaskReturns = new HashMap<>();
 
   // ExecutorService and future for the recovery task
   private final ExecutorService recoveryExecService = Executors.newSingleThreadExecutor();
@@ -72,7 +78,7 @@ public final class DeliveryBucketManager implements Callable<String>
 
   /*
    * Callable is associated with a specific bucket
-   * deliveryBucketQueue must be non-null.
+   * dao and deliveryBucketQueue must be non-null.
    */
   DeliveryBucketManager(NotificationsDao dao1, BlockingQueue<Delivery> deliveryBucketQueue1, int bucketNum1)
   {
@@ -88,6 +94,7 @@ public final class DeliveryBucketManager implements Callable<String>
     dao = dao1;
     bucketNum = bucketNum1;
     deliveryBucketQueue = deliveryBucketQueue1;
+    deliveryTaskExecService =  Executors.newFixedThreadPool(RuntimeParameters.getInstance().getNtfDeliveryThreadPoolSize());
   }
   
   /* ********************************************************************** */
@@ -101,23 +108,26 @@ public final class DeliveryBucketManager implements Callable<String>
   public String call()
   {
     log.info("**** Starting Delivery Bucket Manager for bucket: {}", bucketNum);
+    Thread.currentThread().setName("ThreadBucket-bucket-"+ bucketNum);
+    log.info("ThreadId: {} ThreadName: {}", Thread.currentThread().getId(), Thread.currentThread().getName());
 
-    // Start a thread to work on notifications that are in recovery.
+    // RECOVERY Start a thread to work on notifications that are in recovery.
     startRecoveryTask();
 
-    // Process any deliveries that were interrupted during a crash.
+    // RECOVERY Process any deliveries that were interrupted during a crash.
     proccessInterruptedDeliveries();
 
     // Wait for and process items until we are interrupted
     Delivery delivery;
     try
     {
+      // RECOVERY
       // Blocking call to get first event
       // For first event received check for a duplicate. If already processed then simply ack it, else process it.
       delivery = deliveryBucketQueue.take();
       if (dao.checkForLastEvent(delivery.getEvent().getUuid(), bucketNum))
       {
-        log.info("Acking event {}", delivery.getEvent().getUuid());
+        log.info("Acking duplicate event {}", delivery.getEvent().getUuid());
         MessageBroker.getInstance().ackMsg(delivery.getDeliveryTag());
       }
       else
@@ -200,6 +210,9 @@ public final class DeliveryBucketManager implements Callable<String>
     log.info("Number of notifications generated. Bucket: {} Number: {} eventUUID: {} ", bucketNum, notifications.size(), event.getUuid());
     try { log.info("Sleep 2 seconds"); Thread.sleep(2000); } catch (InterruptedException e) {}
 
+    // RECOVERY NOTE: If we crash here, notifications will have been persisted but the event will not have been
+    //                ack'd off the message queue. Hence the check above in the call() method for a duplicate event.
+
     // All notifications for the event have been persisted, remove message from message broker queue
     log.info("Acking event {}", event.getUuid());
     try { log.info("Sleep 2 seconds"); Thread.sleep(2000); } catch (InterruptedException e) {}
@@ -212,7 +225,7 @@ public final class DeliveryBucketManager implements Callable<String>
     {
       log.info("Delivering notification for event: {} deliveryMethod: {}", event.getUuid(), notification.getDeliveryMethod());
       try { log.info("Sleep 2 seconds"); Thread.sleep(2000); } catch (InterruptedException e) {}
-      Future<String> future = deliveryTaskExecService.submit(new DeliveryTask(dao, notification));
+      Future<Notification> future = deliveryTaskExecService.submit(new DeliveryTask(dao, notification));
       deliveryTaskFutures.add(future);
       deliveryTaskReturns.put(future, null);
     }
@@ -227,7 +240,7 @@ public final class DeliveryBucketManager implements Callable<String>
       notDone = false;
       // Check each task and capture return values when available.
       // If any have not finished then notDone ends up true
-      for (Future<String> f : deliveryTaskFutures)
+      for (Future<Notification> f : deliveryTaskFutures)
       {
         // If task is not done then reset notDone to true, else record and log the return value
         if (!f.isDone())
@@ -237,17 +250,22 @@ public final class DeliveryBucketManager implements Callable<String>
         else
         {
           // Task is done. If we have not captured the return value do it now.
+          // Note that the Future.get() will throw an exception if the underlying thread threw an exception
           if (deliveryTaskReturns.get(f) == null)
           {
             try
             {
-              String retStr = f.get();
-              log.info("Bucket {}. A DeliveryTask is done. Return value: {}", bucketNum, retStr);
-              deliveryTaskReturns.put(f, retStr);
+              Notification ret = f.get();
+              log.info("Bucket {}. A DeliveryTask is done. Return value: {}", bucketNum, ret.getDeliveryMethod().getDeliveryAddress());
+              deliveryTaskReturns.put(f, ret);
             }
-            catch (ExecutionException | InterruptedException e)
+            catch (InterruptedException e)
             {
-              log.error("Caught exception while trying to capture return value. Bucket: {}. Exception: {}", bucketNum, e);
+              log.error("Caught InterruptedException while trying to capture return value. Bucket: {}. Exception: {}", bucketNum, e);
+            }
+            catch (ExecutionException e)
+            {
+              log.error("Caught ExecutionException while trying to capture return value. Bucket: {}. Exception: {}", bucketNum, e);
             }
           }
         }

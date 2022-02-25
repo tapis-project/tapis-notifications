@@ -72,8 +72,8 @@ public final class MessageBroker
   // Singleton instance of this class.
   private static MessageBroker instance;
 
-  // RabbitMQ specific parameters. Set from RuntimeParameters.
-  private static QueueManagerParms qMgrParms;
+  // RabbitMQ specific parameters. Mostly set from RuntimeParameters.
+  private static QueueManagerParms mbParms;
 
   // Connection for talking to RabbitMQ
   private final ConnectionFactory connectionFactory = new ConnectionFactory();
@@ -100,7 +100,7 @@ public final class MessageBroker
     }
     catch (Exception e)
     {
-      String msg = LibUtils.getMsg("NTFLIB_MSGBRKR_INIT_ERR", qMgrParms.getService(), qMgrParms.getInstanceName(),
+      String msg = LibUtils.getMsg("NTFLIB_MSGBRKR_INIT_ERR", mbParms.getService(), mbParms.getInstanceName(),
                                    e.getMessage());
       throw new TapisRuntimeException(msg, e);
     }
@@ -114,28 +114,23 @@ public final class MessageBroker
    * Create singleton instance of this class if necessary.
    * This method must be called before getInstance()
    */
-  public static void init(RuntimeParameters parms) throws TapisRuntimeException
+  public synchronized static void init(RuntimeParameters parms) throws TapisRuntimeException
   {
     // Create the singleton instance
-    if (instance == null)
-    {
-      synchronized (MessageBroker.class)
-      {
-        // Create and initialize qMgrParameters from RuntimeParameters.
-        qMgrParms = new QueueManagerParms();
-        qMgrParms.setService(TapisConstants.SERVICE_NAME_NOTIFICATIONS);
-        qMgrParms.setVhost(VHOST);
-        qMgrParms.setInstanceName(parms.getInstanceName());
-        qMgrParms.setQueueHost(parms.getQueueHost());
-        qMgrParms.setQueuePort(parms.getQueuePort());
-        qMgrParms.setQueueUser(parms.getQueueUser());
-        qMgrParms.setQueuePassword(parms.getQueuePassword());
-        qMgrParms.setQueueSSLEnabled(parms.isQueueSSLEnabled());
-        qMgrParms.setQueueAutoRecoveryEnabled(parms.isQueueAutoRecoveryEnabled());
+    if (instance != null) return;
+    // Create and initialize qMgrParameters from RuntimeParameters.
+    mbParms = new QueueManagerParms();
+    mbParms.setService(TapisConstants.SERVICE_NAME_NOTIFICATIONS);
+    mbParms.setVhost(VHOST);
+    mbParms.setInstanceName(parms.getInstanceName());
+    mbParms.setQueueHost(parms.getQueueHost());
+    mbParms.setQueuePort(parms.getQueuePort());
+    mbParms.setQueueUser(parms.getQueueUser());
+    mbParms.setQueuePassword(parms.getQueuePassword());
+    mbParms.setQueueSSLEnabled(parms.isQueueSSLEnabled());
+    mbParms.setQueueAutoRecoveryEnabled(parms.isQueueAutoRecoveryEnabled());
 
-        if (instance == null) instance = new MessageBroker();
-      }
-    }
+    instance = new MessageBroker();
   }
   
   /*
@@ -342,10 +337,10 @@ public final class MessageBroker
   {
     RuntimeParameters rtParms = RuntimeParameters.getInstance();
     // Collect the runtime message broker information.
-    var host  = qMgrParms.getQueueHost();
-    var user  = qMgrParms.getQueueUser();
-    var pass  = qMgrParms.getQueuePassword();
-    var vhost = qMgrParms.getVhost();
+    var host  = mbParms.getQueueHost();
+    var user  = mbParms.getQueueUser();
+    var pass  = mbParms.getQueuePassword();
+    var vhost = mbParms.getVhost();
     var adminPort = rtParms.getQueueAdminPort();
     var adminUser = rtParms.getQueueAdminUser();
     var adminPassword = rtParms.getQueueAdminPassword();
@@ -371,12 +366,12 @@ public final class MessageBroker
    */
   private void initConnectionAndChannel() throws IOException, TimeoutException
   {
-    connectionFactory.setHost(qMgrParms.getQueueHost());
-    connectionFactory.setPort(qMgrParms.getQueuePort());
-    connectionFactory.setUsername(qMgrParms.getQueueUser());
-    connectionFactory.setPassword(qMgrParms.getQueuePassword());
-    connectionFactory.setAutomaticRecoveryEnabled(qMgrParms.isQueueAutoRecoveryEnabled());
-    connectionFactory.setVirtualHost(qMgrParms.getVhost());
+    connectionFactory.setHost(mbParms.getQueueHost());
+    connectionFactory.setPort(mbParms.getQueuePort());
+    connectionFactory.setUsername(mbParms.getQueueUser());
+    connectionFactory.setPassword(mbParms.getQueuePassword());
+    connectionFactory.setAutomaticRecoveryEnabled(mbParms.isQueueAutoRecoveryEnabled());
+    connectionFactory.setVirtualHost(mbParms.getVhost());
     mbConnection = connectionFactory.newConnection();
     mbChannel = mbConnection.createChannel();
   }

@@ -20,6 +20,8 @@ import edu.utexas.tacc.tapis.shared.parameters.TapisInput;
 import edu.utexas.tacc.tapis.shared.providers.email.EmailClientParameters;
 import edu.utexas.tacc.tapis.shared.providers.email.enumeration.EmailProviderType;
 import edu.utexas.tacc.tapis.shared.utils.TapisUtils;
+import edu.utexas.tacc.tapis.notifications.service.DispatchService;
+import edu.utexas.tacc.tapis.notifications.utils.LibUtils;
 
 /** This class contains the complete and effective set of runtime parameters
  * for this service.  Each service has it own version of this file that
@@ -119,6 +121,9 @@ public final class RuntimeParameters implements EmailClientParameters
 	// The slf4j/logback target directory and file.
 	private String  logDirectory;
 	private String  logFile;
+
+    // TAPIS_NTF_DELIVERY_THREAD_POOL_SIZE
+    private int ntfDeliveryThreadPoolSize = DispatchService.DEFAULT_NUM_DELIVERY_WORKERS;
 	
 	/* ********************************************************************** */
 	/*                              Constructors                              */
@@ -130,8 +135,7 @@ public final class RuntimeParameters implements EmailClientParameters
 	 * 
 	 * @throws TapisRuntimeException on error
 	 */
-	private RuntimeParameters()
-	 throws TapisRuntimeException
+	private RuntimeParameters() throws TapisRuntimeException
 	{
 	  // --------------------- Get Input Parameters ---------------------
 	  // Get the input parameter values from resource file and environment.
@@ -214,7 +218,7 @@ public final class RuntimeParameters implements EmailClientParameters
       // Site is required. Throw runtime exception if not found.
       parm = inputProperties.getProperty(EnvVar.TAPIS_SITE_ID.getEnvName());
       if (StringUtils.isBlank(parm)) {
-        String msg = MsgUtils.getMsg("TAPIS_SERVICE_PARM_MISSING", TapisConstants.SERVICE_NAME_SYSTEMS, "siteId");
+        String msg = MsgUtils.getMsg("TAPIS_SERVICE_PARM_MISSING", TapisConstants.SERVICE_NAME_NOTIFICATIONS, "siteId");
         _log.error(msg);
         throw new TapisRuntimeException(msg);
       }
@@ -307,7 +311,7 @@ public final class RuntimeParameters implements EmailClientParameters
       else {
         // Stop on bad input.
         String msg = MsgUtils.getMsg("TAPIS_SERVICE_PARM_MISSING",
-                TapisConstants.SERVICE_NAME_JOBS,
+                TapisConstants.SERVICE_NAME_NOTIFICATIONS,
                 "queueAdminUser");
         _log.error(msg);
         throw new TapisRuntimeException(msg);
@@ -317,7 +321,7 @@ public final class RuntimeParameters implements EmailClientParameters
       else {
         // Stop on bad input.
         String msg = MsgUtils.getMsg("TAPIS_SERVICE_PARM_MISSING",
-                TapisConstants.SERVICE_NAME_JOBS,
+                TapisConstants.SERVICE_NAME_NOTIFICATIONS,
                 "queueAdminPassword");
         _log.error(msg);
         throw new TapisRuntimeException(msg);
@@ -331,7 +335,7 @@ public final class RuntimeParameters implements EmailClientParameters
         catch (Exception e) {
           // Stop on bad input.
           String msg = MsgUtils.getMsg("TAPIS_SERVICE_PARM_INITIALIZATION_FAILED",
-                  TapisConstants.SERVICE_NAME_JOBS,
+                  TapisConstants.SERVICE_NAME_NOTIFICATIONS,
                   "queuePort",
                   e.getMessage());
           _log.error(msg, e);
@@ -345,7 +349,7 @@ public final class RuntimeParameters implements EmailClientParameters
       else {
         // Stop on bad input.
         String msg = MsgUtils.getMsg("TAPIS_SERVICE_PARM_MISSING",
-                TapisConstants.SERVICE_NAME_JOBS,
+                TapisConstants.SERVICE_NAME_NOTIFICATIONS,
                 "queueUser");
         _log.error(msg);
         throw new TapisRuntimeException(msg);
@@ -355,7 +359,7 @@ public final class RuntimeParameters implements EmailClientParameters
       else {
         // Stop on bad input.
         String msg = MsgUtils.getMsg("TAPIS_SERVICE_PARM_MISSING",
-                TapisConstants.SERVICE_NAME_JOBS,
+                TapisConstants.SERVICE_NAME_NOTIFICATIONS,
                 "queuePassword");
         _log.error(msg);
         throw new TapisRuntimeException(msg);
@@ -369,7 +373,7 @@ public final class RuntimeParameters implements EmailClientParameters
         catch (Exception e) {
           // Stop on bad input.
           String msg = MsgUtils.getMsg("TAPIS_SERVICE_PARM_INITIALIZATION_FAILED",
-                  TapisConstants.SERVICE_NAME_JOBS,
+                  TapisConstants.SERVICE_NAME_NOTIFICATIONS,
                   "queueSSLEnabled",
                   e.getMessage());
           _log.error(msg, e);
@@ -392,7 +396,7 @@ public final class RuntimeParameters implements EmailClientParameters
         catch (Exception e) {
           // Stop on bad input.
           String msg = MsgUtils.getMsg("TAPIS_SERVICE_PARM_INITIALIZATION_FAILED",
-                  TapisConstants.SERVICE_NAME_JOBS,
+                  TapisConstants.SERVICE_NAME_NOTIFICATIONS,
                   "queuePort",
                   e.getMessage());
           _log.error(msg, e);
@@ -408,13 +412,25 @@ public final class RuntimeParameters implements EmailClientParameters
         catch (Exception e) {
           // Stop on bad input.
           String msg = MsgUtils.getMsg("TAPIS_SERVICE_PARM_INITIALIZATION_FAILED",
-                  TapisConstants.SERVICE_NAME_JOBS,
+                  TapisConstants.SERVICE_NAME_NOTIFICATIONS,
                   "queueAutoRecoveryEnabled",
                   e.getMessage());
           _log.error(msg, e);
           throw new TapisRuntimeException(msg, e);
         }
       }
+
+      //  ntfDeliveryThreadPoolSize
+      parm = inputProperties.getProperty(EnvVar2.TAPIS_NTF_DELIVERY_THREAD_POOL_SIZE.getEnvName());
+      int tps = DispatchService.DEFAULT_NUM_DELIVERY_WORKERS;
+      try { tps = Integer.parseInt(parm); }
+      catch (NumberFormatException e)
+      {
+        // Log a warning
+        _log.warn(LibUtils.getMsg("NTFLIB_NUM_WORKERS_PARSE_ERR", parm));
+        parm = null;
+      }
+      if (!StringUtils.isBlank(parm)) setNtfDeliveryThreadPoolSize(tps);
 
       // --------------------- Email Parameters -------------------------
     // Currently LOG or SMTP.
@@ -933,4 +949,19 @@ public final class RuntimeParameters implements EmailClientParameters
     public void setLogFile(String logFile) {
         this.logFile = logFile;
     }
+
+  // property TAPIS_NTF_DELIVERY_THREAD_POOL_SIZE
+  public int getNtfDeliveryThreadPoolSize() { return ntfDeliveryThreadPoolSize; }
+  private void setNtfDeliveryThreadPoolSize(int i) { ntfDeliveryThreadPoolSize = i; }
+
+    /*
+     * Env variables specific to this service
+     */
+    private enum EnvVar2
+    {
+      TAPIS_NTF_DELIVERY_THREAD_POOL_SIZE("tapis.ntf.delivery.thread.pool.size");
+      private final String _envName;
+      EnvVar2(String envName) { _envName = envName; }
+      public String getEnvName() { return this._envName; }
+  }
 }

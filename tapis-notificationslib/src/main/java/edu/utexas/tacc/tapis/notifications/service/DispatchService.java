@@ -49,8 +49,8 @@ public class DispatchService
   public static final int NUM_BUCKETS = 1;
   // Number of workers per bucket for handling notification delivery
   // TODO: Change to 5
-  // add to runtime parms
-  public static final int NUM_DELIVERY_WORKERS = 1;
+  // TODO: add to runtime parms
+  public static final int DEFAULT_NUM_DELIVERY_WORKERS = 1;
 
   // Allow interrupt when shutting down executor services.
   private static final boolean mayInterruptIfRunning = true;

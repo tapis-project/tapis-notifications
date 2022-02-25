@@ -80,7 +80,11 @@ public class DispatchApplication
     dispatchService.processEvents();
   }
 
-  // Private class used to gracefully shut down the application
+  /*
+   *
+   * Private class used to gracefully shut down the application
+   *
+   */
   private static class DispatchShutdown extends Thread
   {
     private final DispatchService svc;
