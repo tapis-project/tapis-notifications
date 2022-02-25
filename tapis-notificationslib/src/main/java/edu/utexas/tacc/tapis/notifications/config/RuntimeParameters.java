@@ -220,10 +220,7 @@ public final class RuntimeParameters implements EmailClientParameters
       if (StringUtils.isBlank(parm)) {
         String msg = MsgUtils.getMsg("TAPIS_SERVICE_PARM_MISSING", TapisConstants.SERVICE_NAME_NOTIFICATIONS, "siteId");
         _log.error(msg);
-        // TODO Figure out why for notifications in k8s this is not getting picket up.
-        //      for now hard code a fallback
-//TODO         throw new TapisRuntimeException(msg);
-        parm = "tacc";
+        throw new TapisRuntimeException(msg);
       }
       setSiteId(parm);
 
@@ -426,14 +423,17 @@ public final class RuntimeParameters implements EmailClientParameters
       //  ntfDeliveryThreadPoolSize
       parm = inputProperties.getProperty(EnvVar2.TAPIS_NTF_DELIVERY_THREAD_POOL_SIZE.getEnvName());
       int tps = DispatchService.DEFAULT_NUM_DELIVERY_WORKERS;
-      try { tps = Integer.parseInt(parm); }
-      catch (NumberFormatException e)
+      // If parameter is set attempt to parse it as an integer
+      if (!StringUtils.isBlank(parm))
       {
-        // Log a warning
-        _log.warn(LibUtils.getMsg("NTFLIB_NUM_WORKERS_PARSE_ERR", parm));
-        parm = null;
+        try { tps = Integer.parseInt(parm); }
+        catch (NumberFormatException e)
+        {
+          // Log a warning
+          _log.warn(LibUtils.getMsg("NTFLIB_NUM_WORKERS_PARSE_ERR", parm));
+        }
       }
-      if (!StringUtils.isBlank(parm)) setNtfDeliveryThreadPoolSize(tps);
+      setNtfDeliveryThreadPoolSize(tps);
 
       // --------------------- Email Parameters -------------------------
     // Currently LOG or SMTP.
