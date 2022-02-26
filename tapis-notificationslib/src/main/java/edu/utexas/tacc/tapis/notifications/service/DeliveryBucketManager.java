@@ -24,12 +24,11 @@ import edu.utexas.tacc.tapis.notifications.model.Notification;
 import edu.utexas.tacc.tapis.notifications.model.Subscription;
 import edu.utexas.tacc.tapis.notifications.model.Delivery;
 import edu.utexas.tacc.tapis.notifications.dao.NotificationsDao;
-import static edu.utexas.tacc.tapis.notifications.service.DispatchService.DEFAULT_NUM_DELIVERY_WORKERS;
 
 /*
  * Callable for sending out notifications when an event is received and assigned to a bucket.
  *
- * Each callable works on a queue associated with a bucket.
+ * Each callable works from an in-memory queue associated with a bucket.
  * Number and types of delivery notifications will be determined by subscriptions for the event.
  *
  */
@@ -58,17 +57,11 @@ public final class DeliveryBucketManager implements Callable<String>
   private final BlockingQueue<Delivery> deliveryBucketQueue;
 
   // ExecutorService and futures for delivery workers
-//  private final ExecutorService deliveryTaskExecService = Executors.newFixedThreadPool(DEFAULT_NUM_DELIVERY_WORKERS);
   private final ExecutorService deliveryTaskExecService;
-
-  // TODO/TBD: can use a custom threadfactory to create our own thread names?
-  //           will custom threadfactory also help with exceptions, afterexecute, beforeexecute? especially if we
-  //           use submit with a callable?
-//  private final ExecutorService deliveryTaskExecServiceC =  Executors.newFixedThreadPool(DEFAULT_NUM_DELIVERY_WORKERS, myThreadFactory);
   private final List<Future<Notification>> deliveryTaskFutures = new ArrayList<>();
   private final Map<Future<Notification>, Notification> deliveryTaskReturns = new HashMap<>();
 
-  // ExecutorService and future for the recovery task
+  // ExecutorService and future for the long-running background recovery task
   private final ExecutorService recoveryExecService = Executors.newSingleThreadExecutor();
   private Future<String> recoveryTaskFuture;
 
@@ -94,6 +87,8 @@ public final class DeliveryBucketManager implements Callable<String>
     dao = dao1;
     bucketNum = bucketNum1;
     deliveryBucketQueue = deliveryBucketQueue1;
+    // NOTE: Can also pass in a custom ThreadFactory if we need more control of the threads created, such
+    //       as setting the thread names or possibly handling exceptions
     deliveryTaskExecService =  Executors.newFixedThreadPool(RuntimeParameters.getInstance().getNtfDeliveryThreadPoolSize());
   }
   
@@ -108,26 +103,25 @@ public final class DeliveryBucketManager implements Callable<String>
   public String call()
   {
     log.info("**** Starting Delivery Bucket Manager for bucket: {}", bucketNum);
-    Thread.currentThread().setName("ThreadBucket-bucket-"+ bucketNum);
+    Thread.currentThread().setName("Bucket-"+ bucketNum);
     log.info("ThreadId: {} ThreadName: {}", Thread.currentThread().getId(), Thread.currentThread().getName());
 
-    // RECOVERY Start a thread to work on notifications that are in recovery.
+    // RECOVERY Start a thread to work on notifications associated with this bucket that are in recovery.
     startRecoveryTask();
 
-    // RECOVERY Process any deliveries that were interrupted during a crash.
+    // RECOVERY Process any deliveries for this bucket that were interrupted during a crash.
     proccessInterruptedDeliveries();
 
     // Wait for and process items until we are interrupted
     Delivery delivery;
     try
     {
-      // RECOVERY
-      // Blocking call to get first event
+      // RECOVERY Blocking call to get first event
       // For first event received check for a duplicate. If already processed then simply ack it, else process it.
       delivery = deliveryBucketQueue.take();
       if (dao.checkForLastEvent(delivery.getEvent().getUuid(), bucketNum))
       {
-        log.info("Acking duplicate event {}", delivery.getEvent().getUuid());
+        log.warn("Acking duplicate event {}", delivery.getEvent().getUuid());
         MessageBroker.getInstance().ackMsg(delivery.getDeliveryTag());
       }
       else
@@ -184,18 +178,17 @@ public final class DeliveryBucketManager implements Callable<String>
   {
     Event event = delivery.getEvent();
 
-    // TODO Clean up messages
-    //      refactor into separate calls to private methods
+    // TODO Clean up messages and sleeps
+    // TODO/TBD: refactor into separate calls to private methods
 
     log.info("Processing event. Bucket: {} DeliveryTag: {} Event: {}", bucketNum, delivery.getDeliveryTag(), event);
     if (log.isTraceEnabled())
     {
       log.trace("Processing event. Bucket: {} DeliveryTag: {} Event: {}", bucketNum, delivery.getDeliveryTag(), event);
     }
-
     try { log.info("Sleep 2 seconds"); Thread.sleep(2000); } catch (InterruptedException e) {}
 
-    // TODO Find matching subscriptions
+    // Find matching subscriptions
     log.info("Checking for subscriptions. Bucket: {} eventUUID: {}", bucketNum, event.getUuid());
     try { log.info("Sleep 2 seconds"); Thread.sleep(2000); } catch (InterruptedException e) {}
     List<Subscription> matchingSubscriptions = getMatchingSubscriptions(event);
@@ -211,14 +204,14 @@ public final class DeliveryBucketManager implements Callable<String>
     try { log.info("Sleep 2 seconds"); Thread.sleep(2000); } catch (InterruptedException e) {}
 
     // RECOVERY NOTE: If we crash here, notifications will have been persisted but the event will not have been
-    //                ack'd off the message queue. Hence the check above in the call() method for a duplicate event.
+    //    ack'd off the message queue. Hence, the check above in the call() method for a duplicate event.
 
     // All notifications for the event have been persisted, remove message from message broker queue
     log.info("Acking event {}", event.getUuid());
     try { log.info("Sleep 2 seconds"); Thread.sleep(2000); } catch (InterruptedException e) {}
     MessageBroker.getInstance().ackMsg(delivery.getDeliveryTag());
 
-    // TODO Deliver notifications using an ExecutorService.
+    // Deliver notifications using an ExecutorService.
     log.info("Number of notifications found: {} for event: {}", notifications.size(), event.getUuid());
     try { log.info("Sleep 2 seconds"); Thread.sleep(2000); } catch (InterruptedException e) {}
     for (Notification notification : notifications)
@@ -232,7 +225,7 @@ public final class DeliveryBucketManager implements Callable<String>
 
     // Wait for all tasks to finish
     log.info("Waiting for queued notifications to finish. Number queued: {}", deliveryTaskFutures.size());
-
+    // TODO/TBD: Refactor into private method
     // Loop indefinitely waiting for tasks to finish
     boolean notDone = true;
     while (notDone)
@@ -250,7 +243,9 @@ public final class DeliveryBucketManager implements Callable<String>
         else
         {
           // Task is done. If we have not captured the return value do it now.
-          // Note that the Future.get() will throw an exception if the underlying thread threw an exception
+          // Note that the Future.get() will throw an InterruptedException or ExecutionException if the underlying
+          //   thread threw an exception, including runtime exceptions.
+          // TODO deal with exceptions
           if (deliveryTaskReturns.get(f) == null)
           {
             try
@@ -281,9 +276,6 @@ public final class DeliveryBucketManager implements Callable<String>
 
     // Clear out futures
     deliveryTaskFutures.clear();
-
-    // TODO/TBD Remove notifications from DB (or is this handled by DeliveryTask callables in threadpool?, vis a vis recovery?)
-    log.info("Removing notifications from DB {}", event.getUuid());
   }
 
   /*
@@ -293,7 +285,7 @@ public final class DeliveryBucketManager implements Callable<String>
   private void proccessInterruptedDeliveries()
   {
     // TODO
-    log.info("Checking for interrupted deliveries. Bucket number: {}", bucketNum);
+    log.info("TODO Checking for interrupted deliveries. Bucket number: {}", bucketNum);
   }
 
   /*
@@ -315,13 +307,13 @@ public final class DeliveryBucketManager implements Callable<String>
   }
 
   /*
-   * Get all subscriptions matching the event
+   * Get subscriptions matching the event
    */
   private List<Subscription> getMatchingSubscriptions(Event event) throws TapisException
   {
     // TODO - for now, get all subscriptions
-    log.info("Getting subscriptions. Bucket number: {}", bucketNum);
-    return dao.getSubscriptions(event.getTenantId(), null, null, null, -1, null, 0, null);
+    log.info("Getting matching subscriptions for an event. Bucket number: {}", bucketNum);
+    return dao.getSubscriptionsForEvent(event);
   }
 
   /*

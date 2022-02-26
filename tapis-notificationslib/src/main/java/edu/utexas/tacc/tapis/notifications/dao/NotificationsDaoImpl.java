@@ -1057,6 +1057,85 @@ public class NotificationsDaoImpl implements NotificationsDao
   }
 
   /**
+   * getSubscriptionsForEvent
+   * Retrieve all Subscriptions matching an event.
+   * Event must be non-null and have tenantId and type filled in.
+   * If no subscriptions match or the event is null then return an empty list
+   * @param event - Event to match
+   * @return - list of Subscription objects
+   * @throws TapisException - on error
+   */
+  @Override
+  public List<Subscription> getSubscriptionsForEvent(Event event) throws TapisException
+  {
+    // The result list should always be non-null.
+    List<Subscription> retList = new ArrayList<>();
+
+    // If event is null or any attributes required for matching are missing return an empty list.
+    if (event == null || StringUtils.isBlank(event.getTenantId()) || StringUtils.isBlank(event.getType()))
+    {
+      return retList;
+    }
+
+    String tenantId = event.getTenantId();
+    String eventType = event.getType();
+    String eventSubject = event.getSubject();
+
+    // ------------------------- Build and execute SQL ----------------------------
+    Connection conn = null;
+    try
+    {
+      // Get a database connection.
+      conn = getConnection();
+      DSLContext db = DSL.using(conn);
+
+      Result<SubscriptionsRecord> results;
+
+      // TODO: no, no, no. We have an event and looking for subscriptions, not other way around
+      // Build up the WHERE clause.
+      // WHERE tenant = '<tenantId>'
+      //       AND type_filter LIKE '<typeFilter>'
+      //       AND (subject_filter IS NULL OR subject_filter LIKE '<subjectFilter>')
+      Condition whereCondition = SUBSCRIPTIONS.TENANT.eq(tenantId);
+      String searchStr = ".like." + eventType;
+
+      whereCondition = addSearchCondStrToWhere(whereCondition, searchStr, "AND");
+      whereCondition.
+
+      // If subject filter is set then must match subject
+      if (!StringUtils.isBlank(eventSubject))
+      {
+        // TODO best way to add subject_filter IS NULL ????
+        searchStr = "subject_filter.eq." + eventSubject;
+        whereCondition = addSearchCondStrToWhere(whereCondition, searchStr, "AND");
+      }
+
+
+      results = db.selectFrom(SUBSCRIPTIONS).where(whereCondition).fetch();
+//              .where(SUBSCRIPTIONS.TENANT.eq(tenantId), SUBSCRIPTIONS.TYPE_FILTER.eq(eventType))
+//              .fetch();
+
+      if (results.isEmpty()) return retList;
+
+      for (Record r : results) { Subscription s = getSubscriptionFromRecord(r); retList.add(s); }
+
+      // Close out and commit
+      LibUtils.closeAndCommitDB(conn, null, null);
+    }
+    catch (Exception e)
+    {
+      // Rollback transaction and throw an exception
+      LibUtils.rollbackDB(conn, e,"DB_QUERY_ERROR", "subscriptions", e.getMessage());
+    }
+    finally
+    {
+      // Always return the connection back to the connection pool.
+      LibUtils.finalCloseDB(conn);
+    }
+    return retList;
+  }
+
+  /**
    * getSubscriptionOwner
    * @param tenantId - name of tenant
    * @param id - name of subscription

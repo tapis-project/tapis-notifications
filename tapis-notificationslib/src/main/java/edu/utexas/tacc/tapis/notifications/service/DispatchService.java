@@ -45,12 +45,11 @@ public class DispatchService
   // Leave hard-coded, changing would cause trouble for re-starts and recovery
   //  - would need to quiesce and clean out queue.
   //  - e.g., reducing number could lead to orphan entries
+  //          and increasing number could lead to events moving from one bucket to another which wouldbreak recovery
   // TODO: Change to 23
   public static final int NUM_BUCKETS = 1;
   // Number of workers per bucket for handling notification delivery
-  // TODO: Change to 5
-  // TODO: add to runtime parms
-  public static final int DEFAULT_NUM_DELIVERY_WORKERS = 1;
+  public static final int DEFAULT_NUM_DELIVERY_WORKERS = 5;
 
   // Allow interrupt when shutting down executor services.
   private static final boolean mayInterruptIfRunning = true;
@@ -107,10 +106,14 @@ public class DispatchService
     siteAdminTenantId = siteAdminTenantId1;
 
     // Make sure DB is present and updated to the latest version using flyway
+    System.out.println("Start migrateDB");
     dao.migrateDB();
+    System.out.println("Finish migrateDB");
 
     // Initialize the singleton instance of the message broker manager
+    System.out.println("Init MessageBroker");
     MessageBroker.init(runParms);
+    System.out.println("Finished init of MessageBroker");
 
     // Create in-memory queues and callables for multi-threaded processing of events
     for (int i = 0; i < NUM_BUCKETS; i++)
@@ -122,7 +125,8 @@ public class DispatchService
 
   /*
    * Start the message broker consumer and start bucket managers that do the main work of sending out
-   *   notifications based on subscriptions
+   *   notifications based on subscriptions.
+   * This is expected to run until the dispatcher shuts down.
    */
   public void processEvents() throws IOException, InterruptedException
   {
