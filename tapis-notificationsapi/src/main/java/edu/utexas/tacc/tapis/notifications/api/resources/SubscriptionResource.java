@@ -7,6 +7,7 @@ import edu.utexas.tacc.tapis.notifications.api.requests.ReqPutSubscription;
 import edu.utexas.tacc.tapis.notifications.api.responses.RespSubscription;
 import edu.utexas.tacc.tapis.notifications.api.responses.RespSubscriptions;
 import edu.utexas.tacc.tapis.notifications.api.utils.ApiUtils;
+import edu.utexas.tacc.tapis.notifications.model.Event;
 import edu.utexas.tacc.tapis.notifications.model.PatchSubscription;
 import edu.utexas.tacc.tapis.notifications.model.Subscription;
 import edu.utexas.tacc.tapis.notifications.service.NotificationsService;
@@ -213,6 +214,14 @@ public class SubscriptionResource
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
 
+    // Validate the subscription type filter
+    if (!Subscription.isValidTypeFilter(req.typeFilter))
+    {
+      msg = ApiUtils.getMsgAuth("NTFAPI_SUBSCR_TYPE_ERR", rUser, req.id, req.typeFilter);
+      _log.error(msg);
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+    }
+
     // Create a subscription from the request
     Subscription subscription = createSubscriptionFromPostRequest(rUser.getOboTenantId(), req, rawJson);
 
@@ -347,6 +356,14 @@ public class SubscriptionResource
     // convert to a JsonObject.
     patchSubscription.setNotes(extractNotes(rawJson));
 
+    // Validate the subscription type filter
+    if (!Subscription.isValidTypeFilter(patchSubscription.getTypeFilter()))
+    {
+      msg = ApiUtils.getMsgAuth("NTFAPI_SUBSCR_TYPE_ERR", rUser, subscriptionId, patchSubscription.getTypeFilter());
+      _log.error(msg);
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+    }
+
     // No attributes are required. Constraints validated and defaults filled in on server side.
     // No secrets in PatchSubscription so no need to scrub
 
@@ -466,6 +483,14 @@ public class SubscriptionResource
     if (req == null)
     {
       msg = ApiUtils.getMsgAuth("NTFAPI_SUBSCR_UPDATE_ERROR", rUser, subscriptionId, opName, "ReqPutSubscription == null");
+      _log.error(msg);
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+    }
+
+    // Validate the subscription type filter
+    if (!Subscription.isValidTypeFilter(req.typeFilter))
+    {
+      msg = ApiUtils.getMsgAuth("NTFAPI_SUBSCR_TYPE_ERR", rUser, subscriptionId, req.typeFilter);
       _log.error(msg);
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }

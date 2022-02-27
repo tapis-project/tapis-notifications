@@ -209,6 +209,9 @@ public class NotificationsDaoImpl implements NotificationsDao
               .set(SUBSCRIPTIONS.OWNER, owner)
               .set(SUBSCRIPTIONS.ENABLED, subscr.isEnabled())
               .set(SUBSCRIPTIONS.TYPE_FILTER, subscr.getTypeFilter())
+              .set(SUBSCRIPTIONS.TYPE_FILTER1, subscr.getTypeFilter1())
+              .set(SUBSCRIPTIONS.TYPE_FILTER2, subscr.getTypeFilter2())
+              .set(SUBSCRIPTIONS.TYPE_FILTER3, subscr.getTypeFilter3())
               .set(SUBSCRIPTIONS.SUBJECT_FILTER, subscr.getSubjectFilter())
               .set(SUBSCRIPTIONS.DELIVERY_METHODS, deliveryMethodsJson)
               .set(SUBSCRIPTIONS.TTL, subscr.getTtl())
@@ -300,6 +303,9 @@ public class NotificationsDaoImpl implements NotificationsDao
       var result = db.update(SUBSCRIPTIONS)
               .set(SUBSCRIPTIONS.DESCRIPTION, putSubscr.getDescription())
               .set(SUBSCRIPTIONS.TYPE_FILTER, putSubscr.getTypeFilter())
+              .set(SUBSCRIPTIONS.TYPE_FILTER1, putSubscr.getTypeFilter1())
+              .set(SUBSCRIPTIONS.TYPE_FILTER2 , putSubscr.getTypeFilter2())
+              .set(SUBSCRIPTIONS.TYPE_FILTER3, putSubscr.getTypeFilter3())
               .set(SUBSCRIPTIONS.SUBJECT_FILTER, putSubscr.getSubjectFilter())
               .set(SUBSCRIPTIONS.DELIVERY_METHODS, deliveryMethodsJson)
               .set(SUBSCRIPTIONS.NOTES, notesObj)
@@ -379,6 +385,9 @@ public class NotificationsDaoImpl implements NotificationsDao
       var result = db.update(SUBSCRIPTIONS)
               .set(SUBSCRIPTIONS.DESCRIPTION, patchedSubscription.getDescription())
               .set(SUBSCRIPTIONS.TYPE_FILTER, patchedSubscription.getTypeFilter())
+              .set(SUBSCRIPTIONS.TYPE_FILTER1, patchedSubscription.getTypeFilter1())
+              .set(SUBSCRIPTIONS.TYPE_FILTER2, patchedSubscription.getTypeFilter2())
+              .set(SUBSCRIPTIONS.TYPE_FILTER3, patchedSubscription.getTypeFilter3())
               .set(SUBSCRIPTIONS.SUBJECT_FILTER, patchedSubscription.getSubjectFilter())
               .set(SUBSCRIPTIONS.DELIVERY_METHODS, deliveryMethodsJson)
               .set(SUBSCRIPTIONS.NOTES, notesObj)
@@ -1081,57 +1090,57 @@ public class NotificationsDaoImpl implements NotificationsDao
     String eventType = event.getType();
     String eventSubject = event.getSubject();
 
-    // ------------------------- Build and execute SQL ----------------------------
-    Connection conn = null;
-    try
-    {
-      // Get a database connection.
-      conn = getConnection();
-      DSLContext db = DSL.using(conn);
-
-      Result<SubscriptionsRecord> results;
-
-      // TODO: no, no, no. We have an event and looking for subscriptions, not other way around
-      // Build up the WHERE clause.
-      // WHERE tenant = '<tenantId>'
-      //       AND type_filter LIKE '<typeFilter>'
-      //       AND (subject_filter IS NULL OR subject_filter LIKE '<subjectFilter>')
-      Condition whereCondition = SUBSCRIPTIONS.TENANT.eq(tenantId);
-      String searchStr = ".like." + eventType;
-
-      whereCondition = addSearchCondStrToWhere(whereCondition, searchStr, "AND");
-      whereCondition.
-
-      // If subject filter is set then must match subject
-      if (!StringUtils.isBlank(eventSubject))
-      {
-        // TODO best way to add subject_filter IS NULL ????
-        searchStr = "subject_filter.eq." + eventSubject;
-        whereCondition = addSearchCondStrToWhere(whereCondition, searchStr, "AND");
-      }
-
-
-      results = db.selectFrom(SUBSCRIPTIONS).where(whereCondition).fetch();
-//              .where(SUBSCRIPTIONS.TENANT.eq(tenantId), SUBSCRIPTIONS.TYPE_FILTER.eq(eventType))
-//              .fetch();
-
-      if (results.isEmpty()) return retList;
-
-      for (Record r : results) { Subscription s = getSubscriptionFromRecord(r); retList.add(s); }
-
-      // Close out and commit
-      LibUtils.closeAndCommitDB(conn, null, null);
-    }
-    catch (Exception e)
-    {
-      // Rollback transaction and throw an exception
-      LibUtils.rollbackDB(conn, e,"DB_QUERY_ERROR", "subscriptions", e.getMessage());
-    }
-    finally
-    {
-      // Always return the connection back to the connection pool.
-      LibUtils.finalCloseDB(conn);
-    }
+//    // ------------------------- Build and execute SQL ----------------------------
+//    Connection conn = null;
+//    try
+//    {
+//      // Get a database connection.
+//      conn = getConnection();
+//      DSLContext db = DSL.using(conn);
+//
+//      Result<SubscriptionsRecord> results;
+//
+//      // TODO: no, no, no. We have an event and looking for subscriptions, not other way around
+//      // Build up the WHERE clause.
+//      // WHERE tenant = '<tenantId>'
+//      //       AND type_filter LIKE '<typeFilter>'
+//      //       AND (subject_filter IS NULL OR subject_filter LIKE '<subjectFilter>')
+//      Condition whereCondition = SUBSCRIPTIONS.TENANT.eq(tenantId);
+//      String searchStr = ".like." + eventType;
+//
+//      whereCondition = addSearchCondStrToWhere(whereCondition, searchStr, "AND");
+//      whereCondition.
+//
+//      // If subject filter is set then must match subject
+//      if (!StringUtils.isBlank(eventSubject))
+//      {
+//        // TODO best way to add subject_filter IS NULL ????
+//        searchStr = "subject_filter.eq." + eventSubject;
+//        whereCondition = addSearchCondStrToWhere(whereCondition, searchStr, "AND");
+//      }
+//
+//
+//      results = db.selectFrom(SUBSCRIPTIONS).where(whereCondition).fetch();
+////              .where(SUBSCRIPTIONS.TENANT.eq(tenantId), SUBSCRIPTIONS.TYPE_FILTER.eq(eventType))
+////              .fetch();
+//
+//      if (results.isEmpty()) return retList;
+//
+//      for (Record r : results) { Subscription s = getSubscriptionFromRecord(r); retList.add(s); }
+//
+//      // Close out and commit
+//      LibUtils.closeAndCommitDB(conn, null, null);
+//    }
+//    catch (Exception e)
+//    {
+//      // Rollback transaction and throw an exception
+//      LibUtils.rollbackDB(conn, e,"DB_QUERY_ERROR", "subscriptions", e.getMessage());
+//    }
+//    finally
+//    {
+//      // Always return the connection back to the connection pool.
+//      LibUtils.finalCloseDB(conn);
+//    }
     return retList;
   }
 

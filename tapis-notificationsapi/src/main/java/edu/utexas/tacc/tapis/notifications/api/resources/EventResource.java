@@ -141,6 +141,14 @@ public class EventResource
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
 
+    // Validate the event type
+    if (!Event.isValidType(req.type))
+    {
+      msg = ApiUtils.getMsgAuth("NTFAPI_EVENT_TYPE_ERR", rUser, req.source, req.type, req.subject, req.time);
+      _log.error(msg);
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+    }
+
     // Extract the source from the request making sure it is a URI
     URI source;
     try

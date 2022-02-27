@@ -22,7 +22,7 @@ import org.jooq.Identity;
 import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row15;
+import org.jooq.Row18;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -87,12 +87,27 @@ public class Subscriptions extends TableImpl<SubscriptionsRecord> {
     /**
      * The column <code>tapis_ntf.subscriptions.type_filter</code>.
      */
-    public final TableField<SubscriptionsRecord, String> TYPE_FILTER = createField(DSL.name("type_filter"), SQLDataType.CLOB.nullable(false), this, "");
+    public final TableField<SubscriptionsRecord, String> TYPE_FILTER = createField(DSL.name("type_filter"), SQLDataType.CLOB.nullable(false).defaultValue(DSL.field("'*.*.*'::text", SQLDataType.CLOB)), this, "");
+
+    /**
+     * The column <code>tapis_ntf.subscriptions.type_filter1</code>.
+     */
+    public final TableField<SubscriptionsRecord, String> TYPE_FILTER1 = createField(DSL.name("type_filter1"), SQLDataType.CLOB.nullable(false).defaultValue(DSL.field("'*'::text", SQLDataType.CLOB)), this, "");
+
+    /**
+     * The column <code>tapis_ntf.subscriptions.type_filter2</code>.
+     */
+    public final TableField<SubscriptionsRecord, String> TYPE_FILTER2 = createField(DSL.name("type_filter2"), SQLDataType.CLOB.nullable(false).defaultValue(DSL.field("'*'::text", SQLDataType.CLOB)), this, "");
+
+    /**
+     * The column <code>tapis_ntf.subscriptions.type_filter3</code>.
+     */
+    public final TableField<SubscriptionsRecord, String> TYPE_FILTER3 = createField(DSL.name("type_filter3"), SQLDataType.CLOB.nullable(false).defaultValue(DSL.field("'*'::text", SQLDataType.CLOB)), this, "");
 
     /**
      * The column <code>tapis_ntf.subscriptions.subject_filter</code>.
      */
-    public final TableField<SubscriptionsRecord, String> SUBJECT_FILTER = createField(DSL.name("subject_filter"), SQLDataType.CLOB, this, "");
+    public final TableField<SubscriptionsRecord, String> SUBJECT_FILTER = createField(DSL.name("subject_filter"), SQLDataType.CLOB.nullable(false).defaultValue(DSL.field("'*'::text", SQLDataType.CLOB)), this, "");
 
     /**
      * The column <code>tapis_ntf.subscriptions.delivery_methods</code>.
@@ -214,11 +229,11 @@ public class Subscriptions extends TableImpl<SubscriptionsRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row15 type methods
+    // Row18 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row15<Integer, String, String, String, String, Boolean, String, String, JsonElement, Integer, JsonElement, java.util.UUID, LocalDateTime, LocalDateTime, LocalDateTime> fieldsRow() {
-        return (Row15) super.fieldsRow();
+    public Row18<Integer, String, String, String, String, Boolean, String, String, String, String, String, JsonElement, Integer, JsonElement, java.util.UUID, LocalDateTime, LocalDateTime, LocalDateTime> fieldsRow() {
+        return (Row18) super.fieldsRow();
     }
 }

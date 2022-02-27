@@ -6,6 +6,7 @@ import edu.utexas.tacc.tapis.notifications.model.DeliveryMethod;
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.DEFAULT_OWNER;
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.DEFAULT_ENABLED;
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.DEFAULT_NOTES;
+import static edu.utexas.tacc.tapis.notifications.model.Subscription.DEFAULT_SUBJECT_FILTER;
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.DEFAULT_TTL;
 
 /*
@@ -18,7 +19,7 @@ public final class ReqPostSubscription
   public String owner = DEFAULT_OWNER;
   public boolean enabled = DEFAULT_ENABLED;
   public String typeFilter;
-  public String subjectFilter;
+  public String subjectFilter = DEFAULT_SUBJECT_FILTER;
   public List<DeliveryMethod> deliveryMethods;
   public int ttl = DEFAULT_TTL;
   public Object notes = DEFAULT_NOTES;

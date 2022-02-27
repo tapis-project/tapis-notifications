@@ -54,15 +54,16 @@ public class NotificationsDaoTest
   }
 
   @AfterSuite
-  public void teardown() throws Exception {
+  public void teardown() throws Exception
+  {
     System.out.println("Executing AfterSuite teardown for " + NotificationsDaoTest.class.getSimpleName());
     //Remove all objects created by tests
-    for (int i = 0; i < numSubscriptions; i++)
-    {
-      dao.deleteSubscription(tenantName, subscriptions[i].getId());
-    }
-    Assert.assertFalse(dao.checkForSubscription(tenantName, subscriptions[0].getId()),
-                       "Subscription not deleted. Subscription id: " + subscriptions[0].getId());
+//    for (int i = 0; i < numSubscriptions; i++)
+//    {
+//      dao.deleteSubscription(tenantName, subscriptions[i].getId());
+//    }
+//    Assert.assertFalse(dao.checkForSubscription(tenantName, subscriptions[0].getId()),
+//                       "Subscription not deleted. Subscription id: " + subscriptions[0].getId());
   }
 
 
@@ -93,6 +94,9 @@ public class NotificationsDaoTest
     Assert.assertEquals(tmpSub.getDescription(), sub0.getDescription());
     Assert.assertEquals(tmpSub.getOwner(), sub0.getOwner());
     Assert.assertEquals(tmpSub.getTypeFilter(), sub0.getTypeFilter());
+    Assert.assertEquals(tmpSub.getTypeFilter1(), sub0.getTypeFilter1());
+    Assert.assertEquals(tmpSub.getTypeFilter2(), sub0.getTypeFilter2());
+    Assert.assertEquals(tmpSub.getTypeFilter3(), sub0.getTypeFilter3());
     Assert.assertEquals(tmpSub.getSubjectFilter(), sub0.getSubjectFilter());
     Assert.assertEquals(tmpSub.getTtl(), sub0.getTtl());
     Assert.assertNull(tmpSub.getExpiry());

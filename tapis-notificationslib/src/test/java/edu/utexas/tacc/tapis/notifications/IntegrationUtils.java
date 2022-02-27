@@ -51,8 +51,14 @@ public final class IntegrationUtils
   public static final String subIdPrefix = "TestSub";
   public static final String description1 = "Subscription description 1";
   public static final String description2 = "Subscription description 2";
-  public static final String typeFilter1 = "tapis.jobs.job.complete";
-  public static final String typeFilter2 = "tapis.systems.system.create";
+  public static final String typeFilter1 = "jobs.job.complete";
+  public static final String typeFilter1_1 = "jobs";
+  public static final String typeFilter1_2 = "job";
+  public static final String typeFilter1_3 = "complete";
+  public static final String typeFilter2 = "systems.system.create";
+  public static final String typeFilter2_1 = "systems";
+  public static final String typeFilter2_2 = "system";
+  public static final String typeFilter2_3 = "create";
   public static final String subjectFilter1 = "subject_filter_1";
   public static final String subjectFilter2 = "subject_filter_2";
   public static final String webhookUrlA1 = "https://my.fake.webhook/urlA1";
@@ -116,7 +122,7 @@ public final class IntegrationUtils
     catch (URISyntaxException e) { eventSource = null; e.printStackTrace(); }
     eventSource1 = eventSource;
   }
-  public static final String eventType1 = "tapis.jobs.job.complete";
+  public static final String eventType1 = "jobs.job.complete";
   public static final String eventSubject1 = "640ad5a8-1a6e-4189-a334-c4c7226fb9ba-007";
   public static final String seriesId1 = "111a2228-1a6e-4189-a334-c4c722666666-007";
 

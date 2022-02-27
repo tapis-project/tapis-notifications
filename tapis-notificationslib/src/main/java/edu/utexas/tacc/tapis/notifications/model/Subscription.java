@@ -9,8 +9,10 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 /*
  * Tapis Subscription
@@ -38,10 +40,16 @@ public final class Subscription
 
   public static final String PERMISSION_WILDCARD = "*";
 
+  // Valid pattern for type filter, must be 3 sections separated by a '.'
+  // Each section may contain a series of lower case letters or a '*'
+  private static final Pattern SUBSCR_TYPE_FILTER_PATTERN =
+          Pattern.compile("^[a-z]\\*+\\.[a-z]\\*+\\.[a-z]\\*+$");
+
   // Default values
   public static final String[] EMPTY_STR_ARRAY = new String[0];
   public static final String DEFAULT_OWNER = APIUSERID_VAR;
   public static final boolean DEFAULT_ENABLED = true;
+  public static final String DEFAULT_SUBJECT_FILTER = "*";
   private static final String EMPTY_JSON_OBJ = "{}";
   public static final JsonElement DEFAULT_DELIVERY_METHODS = TapisGsonUtils.getGson().fromJson("[]", JsonElement.class);
   public static final int DEFAULT_TTL = 7*24*60; // One week in minutes
@@ -95,6 +103,9 @@ public final class Subscription
   private String owner;
   private boolean enabled;
   private String typeFilter;
+  private String typeFilter1;
+  private String typeFilter2;
+  private String typeFilter3;
   private String subjectFilter;
   private List<DeliveryMethod> deliveryMethods;
   private int ttl;
@@ -111,9 +122,11 @@ public final class Subscription
   /**
    * Constructor using only required attributes.
    */
-  public Subscription(String typeFilter1, List<DeliveryMethod> dmList1)
+  public Subscription(String tf, List<DeliveryMethod> dmList1)
   {
-    typeFilter = typeFilter1;
+    typeFilter = tf;
+    setTypeFilterFields(tf);
+    subjectFilter = DEFAULT_SUBJECT_FILTER;
     deliveryMethods = dmList1;
   }
 
@@ -132,6 +145,7 @@ public final class Subscription
     owner = s.getOwner();
     enabled = s.isEnabled();
     typeFilter = s.getTypeFilter();
+    setTypeFilterFields(s.getTypeFilter());
     subjectFilter = s.getSubjectFilter();
     deliveryMethods = s.getDeliveryMethods();
     ttl = s.getTtl();
@@ -147,7 +161,7 @@ public final class Subscription
    * Also useful for testing
    */
   public Subscription(int seqId1, String tenant1, String id1, String description1, String owner1, boolean enabled1,
-                      String typeFilter1, String subjectFilter1, List<DeliveryMethod> dmList1, int ttl1, Object notes1,
+                      String tf, String subjectFilter1, List<DeliveryMethod> dmList1, int ttl1, Object notes1,
                       UUID uuid1, Instant expiry1, Instant created1, Instant updated1)
   {
     seqId = seqId1;
@@ -156,8 +170,9 @@ public final class Subscription
     description = description1;
     owner = owner1;
     enabled = enabled1;
-    typeFilter = typeFilter1;
-    subjectFilter = subjectFilter1;
+    typeFilter = tf;
+    setTypeFilterFields(tf);
+    subjectFilter = (subjectFilter1 == null) ? "*" : subjectFilter1;
     deliveryMethods = (dmList1 == null) ? null : new ArrayList<>(dmList1);
     ttl = ttl1;
     notes = notes1;
@@ -181,6 +196,7 @@ public final class Subscription
     owner = s.getOwner();
     enabled = s.isEnabled();
     typeFilter = s.getTypeFilter();
+    setTypeFilterFields(s.getTypeFilter());
     subjectFilter = s.getSubjectFilter();
     deliveryMethods = s.getDeliveryMethods();
     ttl = s.getTtl();
@@ -210,6 +226,7 @@ public final class Subscription
    */
   public void setDefaults()
   {
+    if (StringUtils.isBlank(subjectFilter)) setSubjectFilter(DEFAULT_SUBJECT_FILTER);
     if (StringUtils.isBlank(owner)) setOwner(DEFAULT_OWNER);
     if (notes == null) setNotes(DEFAULT_NOTES);
   }
@@ -366,6 +383,10 @@ public final class Subscription
   public String getTypeFilter() { return typeFilter; }
   public void setTypeFilter(String s) { typeFilter = s;  }
 
+  public String getTypeFilter1() { return typeFilter1; }
+  public String getTypeFilter2() { return typeFilter2; }
+  public String getTypeFilter3() { return typeFilter3; }
+
   public String getSubjectFilter() { return subjectFilter; }
   public void setSubjectFilter(String s) { subjectFilter = s;  }
 
@@ -395,4 +416,27 @@ public final class Subscription
 
   @Schema(type = "string")
   public Instant getUpdated() { return updated; }
+
+  /*
+   * Check if string is a valid Subscription type filter
+   */
+  public static boolean isValidTypeFilter(String tf1)
+  {
+    if (StringUtils.isBlank(tf1)) return false;
+    return SUBSCR_TYPE_FILTER_PATTERN.matcher(tf1).matches();
+  }
+
+  /* ********************************************************************** */
+  /*                      Private methods                                   */
+  /* ********************************************************************** */
+  /*
+   * Split the typeFilter into 3 separate fields and set the object properties.
+   */
+  private void setTypeFilterFields(String tf1)
+  {
+    String[] tmpArr = tf1.split("\\.");
+    typeFilter1 = tmpArr[0];
+    typeFilter2 = tmpArr[1];
+    typeFilter3 = tmpArr[2];
+  }
 }

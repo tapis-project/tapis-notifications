@@ -1,11 +1,12 @@
 package edu.utexas.tacc.tapis.notifications.model;
 
 
-import edu.utexas.tacc.tapis.shared.utils.TapisUtils;
+
+import org.apache.commons.lang3.StringUtils;
 
 import java.net.URI;
-import java.time.OffsetDateTime;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 /*
  * Notification event in the Tapis ecosystem.
@@ -32,6 +33,10 @@ public final class Event
   /* ********************************************************************** */
   public static final String SPECVERSION = "1.0";
 
+  // Valid pattern for event type, must be 3 sections separated by a '.'
+  // Each section must contain a series of lower case letters and may not be empty
+  private static final Pattern EVENT_TYPE_PATTERN = Pattern.compile("^[a-z]+\\.[a-z]+\\.[a-z]+$");
+
   /* ********************************************************************** */
   /*                                 Fields                                 */
   /* ********************************************************************** */
@@ -44,6 +49,9 @@ public final class Event
   private final String seriesId; // Optional Id for grouping events from same source.
   private final String time; // Timestamp of when the occurrence happened. RFC 3339 (ISO 8601)
   private final UUID uuid;
+  private String type1; // Field 1 of type (service name)
+  private String type2; // Field 2 of type (resource type)
+  private String type3; // Field 3 of type ( action or state)
 //  private final String datacontenttype; // Content type of data value. RFC 2046. E.g. application/xml, text/xml, etc.
 //  private final Object data; // Data associated with the event.
 //  private final String data_base64; // If data is binary it must be base64 encoded.
@@ -51,15 +59,16 @@ public final class Event
   /* ********************************************************************** */
   /*                           Constructors                                 */
   /* ********************************************************************** */
-  public Event(String tenantId1, URI source1, String type1, String subject1, String seriesId1, String time1, UUID uuid1)
+  public Event(String tenantId1, URI source1, String t1, String subject1, String seriesId1, String time1, UUID uuid1)
   {
     tenantId = tenantId1;
     source = source1;
-    type = type1;
+    type = t1;
     subject = subject1;
     seriesId = seriesId1;
     time = time1;
     uuid = uuid1;
+    setTypeFields(t1);
 //    datacontenttype = null;
 //    data = null;
 //    data_base64 = null;
@@ -76,14 +85,40 @@ public final class Event
   public String getSeriesId() { return seriesId; }
   public String getTime() { return time; }
   public UUID getUuid() { return uuid; }
+  public String getType1() { return type1; }
+  public String getType2() { return type2; }
+  public String getType3() { return type3; }
 //  public String getDatacontenttype() { return datacontenttype; }
 //  public Object getData() { return data; }
 //  public String getData_base64() { return data_base64; }
+
+  /*
+   * Check if string is a valid Event type
+   */
+  public static boolean isValidType(String t1)
+  {
+    if (StringUtils.isBlank(t1)) return false;
+    return EVENT_TYPE_PATTERN.matcher(t1).matches();
+  }
 
   @Override
   public String toString()
   {
     String msg = "Source: %s Type: %s Subject: %s SeriesId: %s Time: %s UUID: %s";
     return msg.formatted(source, type, subject, seriesId, time, uuid);
+  }
+
+  /* ********************************************************************** */
+  /*                      Private methods                                   */
+  /* ********************************************************************** */
+  /*
+   * Split the type into 3 separate fields and set the object properties.
+   */
+  private void setTypeFields(String t1)
+  {
+    String[] tmpArr = t1.split("\\.");
+    type1 = tmpArr[0];
+    type2 = tmpArr[1];
+    type3 = tmpArr[2];
   }
 }
