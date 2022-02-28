@@ -58,12 +58,12 @@ public class NotificationsDaoTest
   {
     System.out.println("Executing AfterSuite teardown for " + NotificationsDaoTest.class.getSimpleName());
     //Remove all objects created by tests
-//    for (int i = 0; i < numSubscriptions; i++)
-//    {
-//      dao.deleteSubscription(tenantName, subscriptions[i].getId());
-//    }
-//    Assert.assertFalse(dao.checkForSubscription(tenantName, subscriptions[0].getId()),
-//                       "Subscription not deleted. Subscription id: " + subscriptions[0].getId());
+    for (int i = 0; i < numSubscriptions; i++)
+    {
+      dao.deleteSubscription(tenantName, subscriptions[i].getId());
+    }
+    Assert.assertFalse(dao.checkForSubscription(tenantName, subscriptions[0].getId()),
+                       "Subscription not deleted. Subscription id: " + subscriptions[0].getId());
   }
 
 

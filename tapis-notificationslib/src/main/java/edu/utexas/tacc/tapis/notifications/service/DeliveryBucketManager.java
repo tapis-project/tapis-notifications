@@ -311,7 +311,6 @@ public final class DeliveryBucketManager implements Callable<String>
    */
   private List<Subscription> getMatchingSubscriptions(Event event) throws TapisException
   {
-    // TODO - for now, get all subscriptions
     log.info("Getting matching subscriptions for an event. Bucket number: {}", bucketNum);
     return dao.getSubscriptionsForEvent(event);
   }

@@ -1087,60 +1087,52 @@ public class NotificationsDaoImpl implements NotificationsDao
     }
 
     String tenantId = event.getTenantId();
-    String eventType = event.getType();
-    String eventSubject = event.getSubject();
 
-//    // ------------------------- Build and execute SQL ----------------------------
-//    Connection conn = null;
-//    try
-//    {
-//      // Get a database connection.
-//      conn = getConnection();
-//      DSLContext db = DSL.using(conn);
-//
-//      Result<SubscriptionsRecord> results;
-//
-//      // TODO: no, no, no. We have an event and looking for subscriptions, not other way around
-//      // Build up the WHERE clause.
-//      // WHERE tenant = '<tenantId>'
-//      //       AND type_filter LIKE '<typeFilter>'
-//      //       AND (subject_filter IS NULL OR subject_filter LIKE '<subjectFilter>')
-//      Condition whereCondition = SUBSCRIPTIONS.TENANT.eq(tenantId);
-//      String searchStr = ".like." + eventType;
-//
-//      whereCondition = addSearchCondStrToWhere(whereCondition, searchStr, "AND");
-//      whereCondition.
-//
-//      // If subject filter is set then must match subject
-//      if (!StringUtils.isBlank(eventSubject))
-//      {
-//        // TODO best way to add subject_filter IS NULL ????
-//        searchStr = "subject_filter.eq." + eventSubject;
-//        whereCondition = addSearchCondStrToWhere(whereCondition, searchStr, "AND");
-//      }
-//
-//
-//      results = db.selectFrom(SUBSCRIPTIONS).where(whereCondition).fetch();
-////              .where(SUBSCRIPTIONS.TENANT.eq(tenantId), SUBSCRIPTIONS.TYPE_FILTER.eq(eventType))
-////              .fetch();
-//
-//      if (results.isEmpty()) return retList;
-//
-//      for (Record r : results) { Subscription s = getSubscriptionFromRecord(r); retList.add(s); }
-//
-//      // Close out and commit
-//      LibUtils.closeAndCommitDB(conn, null, null);
-//    }
-//    catch (Exception e)
-//    {
-//      // Rollback transaction and throw an exception
-//      LibUtils.rollbackDB(conn, e,"DB_QUERY_ERROR", "subscriptions", e.getMessage());
-//    }
-//    finally
-//    {
-//      // Always return the connection back to the connection pool.
-//      LibUtils.finalCloseDB(conn);
-//    }
+    // ------------------------- Build and execute SQL ----------------------------
+    Connection conn = null;
+    try
+    {
+      // Get a database connection.
+      conn = getConnection();
+      DSLContext db = DSL.using(conn);
+
+      Result<SubscriptionsRecord> results;
+
+      // Build up the WHERE clause.
+      // WHERE tenant = '<tenantId>'
+      //    AND (type_filter1 = '<typeFilter1>' OR type_filter1 = '*')
+      //    AND (type_filter2 = '<typeFilter2>' OR type_filter2 = '*')
+      //    AND (type_filter3 = '<typeFilter3>' OR type_filter3 = '*')
+      //    AND (subject_filter = '<subjectFilter>' OR subject_filter = '*')
+      Condition whereCondition = SUBSCRIPTIONS.TENANT.eq(tenantId);
+      Condition tmpCond = SUBSCRIPTIONS.TYPE_FILTER1.eq(event.getType1()).or(SUBSCRIPTIONS.TYPE_FILTER1.eq("*"));
+      whereCondition = whereCondition.and(tmpCond);
+      tmpCond = SUBSCRIPTIONS.TYPE_FILTER2.eq(event.getType2()).or(SUBSCRIPTIONS.TYPE_FILTER2.eq("*"));
+      whereCondition = whereCondition.and(tmpCond);
+      tmpCond = SUBSCRIPTIONS.TYPE_FILTER3.eq(event.getType3()).or(SUBSCRIPTIONS.TYPE_FILTER3.eq("*"));
+      whereCondition = whereCondition.and(tmpCond);
+      tmpCond = SUBSCRIPTIONS.SUBJECT_FILTER.eq(event.getSubject()).or(SUBSCRIPTIONS.SUBJECT_FILTER.eq("*"));
+      whereCondition = whereCondition.and(tmpCond);
+
+      results = db.selectFrom(SUBSCRIPTIONS).where(whereCondition).fetch();
+
+      if (results.isEmpty()) return retList;
+
+      for (Record r : results) { Subscription s = getSubscriptionFromRecord(r); retList.add(s); }
+
+      // Close out and commit
+      LibUtils.closeAndCommitDB(conn, null, null);
+    }
+    catch (Exception e)
+    {
+      // Rollback transaction and throw an exception
+      LibUtils.rollbackDB(conn, e,"DB_QUERY_ERROR", "subscriptions", e.getMessage());
+    }
+    finally
+    {
+      // Always return the connection back to the connection pool.
+      LibUtils.finalCloseDB(conn);
+    }
     return retList;
   }
 

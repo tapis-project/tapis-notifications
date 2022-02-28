@@ -124,8 +124,7 @@ public final class Subscription
    */
   public Subscription(String tf, List<DeliveryMethod> dmList1)
   {
-    typeFilter = tf;
-    setTypeFilterFields(tf);
+    setTypeFilter(tf);
     subjectFilter = DEFAULT_SUBJECT_FILTER;
     deliveryMethods = dmList1;
   }
@@ -144,8 +143,7 @@ public final class Subscription
     description = s.getDescription();
     owner = s.getOwner();
     enabled = s.isEnabled();
-    typeFilter = s.getTypeFilter();
-    setTypeFilterFields(s.getTypeFilter());
+    setTypeFilter(s.getTypeFilter());
     subjectFilter = s.getSubjectFilter();
     deliveryMethods = s.getDeliveryMethods();
     ttl = s.getTtl();
@@ -170,8 +168,7 @@ public final class Subscription
     description = description1;
     owner = owner1;
     enabled = enabled1;
-    typeFilter = tf;
-    setTypeFilterFields(tf);
+    setTypeFilter(tf);
     subjectFilter = (subjectFilter1 == null) ? "*" : subjectFilter1;
     deliveryMethods = (dmList1 == null) ? null : new ArrayList<>(dmList1);
     ttl = ttl1;
@@ -195,8 +192,7 @@ public final class Subscription
     description = s.getDescription();
     owner = s.getOwner();
     enabled = s.isEnabled();
-    typeFilter = s.getTypeFilter();
-    setTypeFilterFields(s.getTypeFilter());
+    setTypeFilter(s.getTypeFilter());
     subjectFilter = s.getSubjectFilter();
     deliveryMethods = s.getDeliveryMethods();
     ttl = s.getTtl();
@@ -372,23 +368,31 @@ public final class Subscription
   public String getId() { return id; }
 
   public String getDescription() { return description; }
-  public void setDescription(String d) { description = d;  }
+  public void setDescription(String d) { description = d; }
 
   public String getOwner() { return owner; }
-  public void setOwner(String s) { owner = s;  }
+  public void setOwner(String s) { owner = s; }
 
   public boolean isEnabled() { return enabled; }
-  public void setEnabled(boolean b) { enabled = b;   }
+  public void setEnabled(boolean b) { enabled = b; }
 
   public String getTypeFilter() { return typeFilter; }
-  public void setTypeFilter(String s) { typeFilter = s;  }
+  public void setTypeFilter(String s)
+  {
+    typeFilter = s;
+    // Split the typeFilter into 3 separate fields and set the object properties.
+    String[] tmpArr = s.split("\\.");
+    typeFilter1 = tmpArr[0];
+    typeFilter2 = tmpArr[1];
+    typeFilter3 = tmpArr[2];
+  }
 
   public String getTypeFilter1() { return typeFilter1; }
   public String getTypeFilter2() { return typeFilter2; }
   public String getTypeFilter3() { return typeFilter3; }
 
   public String getSubjectFilter() { return subjectFilter; }
-  public void setSubjectFilter(String s) { subjectFilter = s;  }
+  public void setSubjectFilter(String s) { subjectFilter = s; }
 
   public List<DeliveryMethod> getDeliveryMethods()
   {
@@ -400,13 +404,13 @@ public final class Subscription
   }
 
   public int getTtl() { return ttl; }
-  public void setTtl(int i) { ttl = i;  }
+  public void setTtl(int i) { ttl = i; }
 
   public Object getNotes() { return notes; }
-  public void setNotes(Object n) { notes = n;  }
+  public void setNotes(Object n) { notes = n; }
 
   public UUID getUuid() { return uuid; }
-  public void setUuid(UUID u) { uuid = u;  }
+  public void setUuid(UUID u) { uuid = u; }
 
   @Schema(type = "string")
   public Instant getExpiry() { return expiry; }
@@ -429,14 +433,5 @@ public final class Subscription
   /* ********************************************************************** */
   /*                      Private methods                                   */
   /* ********************************************************************** */
-  /*
-   * Split the typeFilter into 3 separate fields and set the object properties.
-   */
-  private void setTypeFilterFields(String tf1)
-  {
-    String[] tmpArr = tf1.split("\\.");
-    typeFilter1 = tmpArr[0];
-    typeFilter2 = tmpArr[1];
-    typeFilter3 = tmpArr[2];
-  }
+
 }
