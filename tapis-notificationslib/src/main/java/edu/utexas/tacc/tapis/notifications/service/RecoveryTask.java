@@ -55,7 +55,7 @@ public final class RecoveryTask implements Callable<String>
   public String call()
   {
     log.info("**** Starting notification delivery recovery for bucket number: {}", bucketNum);
-    Thread.currentThread().setName("ThreadRecovery-bucket-"+ bucketNum);
+    Thread.currentThread().setName("Recovery-bucket-"+ bucketNum);
     log.info("ThreadId: {} ThreadName: {}", Thread.currentThread().getId(), Thread.currentThread().getName());
     // TODO
     try

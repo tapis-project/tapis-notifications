@@ -182,6 +182,7 @@ public class NotificationsServiceTest
     System.out.println("Found item: " + tmpSub.getId());
     Subscription sub1 = new Subscription(sub0, tenantName, subId);
     checkCommonSubscriptionAttrs(sub1, tmpSub);
+    svcImpl.deleteSubscription(rUser1, tmpSub.getId());
   }
 
   // Test update using PUT

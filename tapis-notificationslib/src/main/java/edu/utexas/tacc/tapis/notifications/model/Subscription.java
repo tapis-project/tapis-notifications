@@ -41,9 +41,10 @@ public final class Subscription
   public static final String PERMISSION_WILDCARD = "*";
 
   // Valid pattern for type filter, must be 3 sections separated by a '.'
-  // Each section may contain a series of lower case letters or a '*'
+  // Each section must contain a series of lower case letters or a '*'
+  // ^([a-z]+|\*)\.([a-z]+|\*)\.([a-z]+|\*)$
   private static final Pattern SUBSCR_TYPE_FILTER_PATTERN =
-          Pattern.compile("^[a-z]\\*+\\.[a-z]\\*+\\.[a-z]\\*+$");
+          Pattern.compile("^([a-z]+|\\*)\\.([a-z]+|\\*)\\.([a-z]+|\\*)$");
 
   // Default values
   public static final String[] EMPTY_STR_ARRAY = new String[0];
