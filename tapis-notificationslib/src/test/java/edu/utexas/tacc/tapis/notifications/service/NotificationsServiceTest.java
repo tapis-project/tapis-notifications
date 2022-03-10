@@ -182,6 +182,7 @@ public class NotificationsServiceTest
     System.out.println("Found item: " + tmpSub.getId());
     Subscription sub1 = new Subscription(sub0, tenantName, subId);
     checkCommonSubscriptionAttrs(sub1, tmpSub);
+    svcImpl.deleteSubscription(rUser1, tmpSub.getId());
   }
 
   // Test update using PUT
@@ -552,6 +553,9 @@ public class NotificationsServiceTest
     Assert.assertEquals(fetchedSub.getId(), origSub.getId());
     Assert.assertEquals(fetchedSub.getDescription(), origSub.getDescription());
     Assert.assertEquals(fetchedSub.getTypeFilter(), origSub.getTypeFilter());
+    Assert.assertEquals(fetchedSub.getTypeFilter1(), origSub.getTypeFilter1());
+    Assert.assertEquals(fetchedSub.getTypeFilter2(), origSub.getTypeFilter2());
+    Assert.assertEquals(fetchedSub.getTypeFilter3(), origSub.getTypeFilter3());
     Assert.assertEquals(fetchedSub.getSubjectFilter(), origSub.getSubjectFilter());
     Assert.assertEquals(fetchedSub.getTtl(), origSub.getTtl());
     Assert.assertEquals(fetchedSub.getOwner(), origSub.getOwner());

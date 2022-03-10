@@ -62,6 +62,8 @@ public interface NotificationsDao
   List<Subscription> getSubscriptions(String tenant, List<String> searchList, ASTNode searchAST, Set<String> subIDs, int limit,
                     List<OrderBy> orderByList, int skip, String startAfter) throws TapisException;
 
+  List<Subscription> getSubscriptionsForEvent(Event event) throws TapisException;
+
   Set<String> getSubscriptionIDsByOwner(String tenant, String owner) throws TapisException;
 
   Set<String> getSubscriptionIDs(String tenant) throws TapisException;

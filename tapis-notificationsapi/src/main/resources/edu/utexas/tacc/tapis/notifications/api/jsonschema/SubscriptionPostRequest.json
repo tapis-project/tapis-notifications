@@ -11,7 +11,7 @@
     "description": { "type": ["string", "null"], "maxLength": 2048 },
     "owner": { "$ref": "resource:///edu/utexas/tacc/tapis/notifications/api/jsonschema/Definitions.json#/UserName" },
     "enabled": { "type": "boolean", "default": true },
-    "typeFilter": { "type": "string" },
+    "typeFilter": { "type": "string", "minLength": 5},
     "subjectFilter": { "type": ["string", "null"] },
     "deliveryMethods": { "$ref": "resource:///edu/utexas/tacc/tapis/notifications/api/jsonschema/Definitions.json#/DeliveryMethodList" },
     "ttl": { "type":  "integer" },

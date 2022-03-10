@@ -66,18 +66,26 @@ public class DispatchApplication
     DispatchService dispatchService = locator.getService(DispatchService.class);
 
     // Call the main service init method. Setup DB, message broker, executor services, etc
+    System.out.println("Starting initService");
     dispatchService.initService(siteAdminTenantId, RuntimeParameters.getInstance());
+    System.out.println("Finished initService");
 
+    System.out.println("Registering shutdownHook");
     // Add a shutdown hook so we can gracefully stop
     Thread shudownHook = new DispatchShutdown(dispatchService);
     Runtime.getRuntime().addShutdownHook(shudownHook);
+    System.out.println("Registered shutdownHook");
 
     // Start background process to clean up expired subscriptions.
+    System.out.println("Starting subscription reaper");
     dispatchService.startReaper();
+    System.out.println("Started subscription reaper");
 
     // Start message broker consumer and bucket managers.
     // This is the main loop to process events while the service is running.
+    System.out.println("Starting main loop for processEvents");
     dispatchService.processEvents();
+    System.out.println("Finished main loop for processEvents");
   }
 
   /*

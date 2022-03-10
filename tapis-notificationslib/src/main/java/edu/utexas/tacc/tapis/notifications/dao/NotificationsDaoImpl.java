@@ -209,6 +209,9 @@ public class NotificationsDaoImpl implements NotificationsDao
               .set(SUBSCRIPTIONS.OWNER, owner)
               .set(SUBSCRIPTIONS.ENABLED, subscr.isEnabled())
               .set(SUBSCRIPTIONS.TYPE_FILTER, subscr.getTypeFilter())
+              .set(SUBSCRIPTIONS.TYPE_FILTER1, subscr.getTypeFilter1())
+              .set(SUBSCRIPTIONS.TYPE_FILTER2, subscr.getTypeFilter2())
+              .set(SUBSCRIPTIONS.TYPE_FILTER3, subscr.getTypeFilter3())
               .set(SUBSCRIPTIONS.SUBJECT_FILTER, subscr.getSubjectFilter())
               .set(SUBSCRIPTIONS.DELIVERY_METHODS, deliveryMethodsJson)
               .set(SUBSCRIPTIONS.TTL, subscr.getTtl())
@@ -300,6 +303,9 @@ public class NotificationsDaoImpl implements NotificationsDao
       var result = db.update(SUBSCRIPTIONS)
               .set(SUBSCRIPTIONS.DESCRIPTION, putSubscr.getDescription())
               .set(SUBSCRIPTIONS.TYPE_FILTER, putSubscr.getTypeFilter())
+              .set(SUBSCRIPTIONS.TYPE_FILTER1, putSubscr.getTypeFilter1())
+              .set(SUBSCRIPTIONS.TYPE_FILTER2 , putSubscr.getTypeFilter2())
+              .set(SUBSCRIPTIONS.TYPE_FILTER3, putSubscr.getTypeFilter3())
               .set(SUBSCRIPTIONS.SUBJECT_FILTER, putSubscr.getSubjectFilter())
               .set(SUBSCRIPTIONS.DELIVERY_METHODS, deliveryMethodsJson)
               .set(SUBSCRIPTIONS.NOTES, notesObj)
@@ -379,6 +385,9 @@ public class NotificationsDaoImpl implements NotificationsDao
       var result = db.update(SUBSCRIPTIONS)
               .set(SUBSCRIPTIONS.DESCRIPTION, patchedSubscription.getDescription())
               .set(SUBSCRIPTIONS.TYPE_FILTER, patchedSubscription.getTypeFilter())
+              .set(SUBSCRIPTIONS.TYPE_FILTER1, patchedSubscription.getTypeFilter1())
+              .set(SUBSCRIPTIONS.TYPE_FILTER2, patchedSubscription.getTypeFilter2())
+              .set(SUBSCRIPTIONS.TYPE_FILTER3, patchedSubscription.getTypeFilter3())
               .set(SUBSCRIPTIONS.SUBJECT_FILTER, patchedSubscription.getSubjectFilter())
               .set(SUBSCRIPTIONS.DELIVERY_METHODS, deliveryMethodsJson)
               .set(SUBSCRIPTIONS.NOTES, notesObj)
@@ -1037,6 +1046,77 @@ public class NotificationsDaoImpl implements NotificationsDao
       }
 
       if (results == null || results.isEmpty()) return retList;
+
+      for (Record r : results) { Subscription s = getSubscriptionFromRecord(r); retList.add(s); }
+
+      // Close out and commit
+      LibUtils.closeAndCommitDB(conn, null, null);
+    }
+    catch (Exception e)
+    {
+      // Rollback transaction and throw an exception
+      LibUtils.rollbackDB(conn, e,"DB_QUERY_ERROR", "subscriptions", e.getMessage());
+    }
+    finally
+    {
+      // Always return the connection back to the connection pool.
+      LibUtils.finalCloseDB(conn);
+    }
+    return retList;
+  }
+
+  /**
+   * getSubscriptionsForEvent
+   * Retrieve all Subscriptions matching an event.
+   * Event must be non-null and have tenantId and type filled in.
+   * If no subscriptions match or the event is null then return an empty list
+   * @param event - Event to match
+   * @return - list of Subscription objects
+   * @throws TapisException - on error
+   */
+  @Override
+  public List<Subscription> getSubscriptionsForEvent(Event event) throws TapisException
+  {
+    // The result list should always be non-null.
+    List<Subscription> retList = new ArrayList<>();
+
+    // If event is null or any attributes required for matching are missing return an empty list.
+    if (event == null || StringUtils.isBlank(event.getTenantId()) || StringUtils.isBlank(event.getType()))
+    {
+      return retList;
+    }
+
+    String tenantId = event.getTenantId();
+
+    // ------------------------- Build and execute SQL ----------------------------
+    Connection conn = null;
+    try
+    {
+      // Get a database connection.
+      conn = getConnection();
+      DSLContext db = DSL.using(conn);
+
+      Result<SubscriptionsRecord> results;
+
+      // Build up the WHERE clause.
+      // WHERE tenant = '<tenantId>'
+      //    AND (type_filter1 = '<typeFilter1>' OR type_filter1 = '*')
+      //    AND (type_filter2 = '<typeFilter2>' OR type_filter2 = '*')
+      //    AND (type_filter3 = '<typeFilter3>' OR type_filter3 = '*')
+      //    AND (subject_filter = '<subjectFilter>' OR subject_filter = '*')
+      Condition whereCondition = SUBSCRIPTIONS.TENANT.eq(tenantId);
+      Condition tmpCond = SUBSCRIPTIONS.TYPE_FILTER1.eq(event.getType1()).or(SUBSCRIPTIONS.TYPE_FILTER1.eq("*"));
+      whereCondition = whereCondition.and(tmpCond);
+      tmpCond = SUBSCRIPTIONS.TYPE_FILTER2.eq(event.getType2()).or(SUBSCRIPTIONS.TYPE_FILTER2.eq("*"));
+      whereCondition = whereCondition.and(tmpCond);
+      tmpCond = SUBSCRIPTIONS.TYPE_FILTER3.eq(event.getType3()).or(SUBSCRIPTIONS.TYPE_FILTER3.eq("*"));
+      whereCondition = whereCondition.and(tmpCond);
+      tmpCond = SUBSCRIPTIONS.SUBJECT_FILTER.eq(event.getSubject()).or(SUBSCRIPTIONS.SUBJECT_FILTER.eq("*"));
+      whereCondition = whereCondition.and(tmpCond);
+
+      results = db.selectFrom(SUBSCRIPTIONS).where(whereCondition).fetch();
+
+      if (results.isEmpty()) return retList;
 
       for (Record r : results) { Subscription s = getSubscriptionFromRecord(r); retList.add(s); }
 

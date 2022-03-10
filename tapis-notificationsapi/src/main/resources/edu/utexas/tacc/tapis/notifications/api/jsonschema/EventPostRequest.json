@@ -8,7 +8,7 @@
   "additionalProperties": false,
   "properties": {
     "source": { "type": "string", "format": "uri", "minLength": 1 },
-    "type": { "type": "string" },
+    "type": { "type": "string", "minLength": 5 },
     "subject": { "type": ["string", "null"] },
     "seriesId": { "type": ["string", "null"] },
     "time": { "type":  "string", "format": "date-time" }

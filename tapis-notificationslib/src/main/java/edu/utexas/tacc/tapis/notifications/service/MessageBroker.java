@@ -113,6 +113,7 @@ public final class MessageBroker
   /*
    * Create singleton instance of this class if necessary.
    * This method must be called before getInstance()
+   * This called by main Application and Dispatcher
    */
   public synchronized static void init(RuntimeParameters parms) throws TapisRuntimeException
   {
@@ -179,6 +180,8 @@ public final class MessageBroker
 
   /**
    * Place an event on the main event queue
+   * This is called by NotificationsService.
+   *
    * @param rUser - ResourceRequestUser containing tenant, user and request info
    * @param event - Event to queue up
    * @throws IOException - on error
@@ -200,6 +203,8 @@ public final class MessageBroker
   /**
    * Read a message from the main event queue.
    * If autoAck is true then message is removed from the queue.
+   * This is called by NotificationsService (for testing)
+   *
    * @throws TapisException - on error
    */
   public Event readEvent(boolean autoAck) throws TapisException
@@ -226,6 +231,7 @@ public final class MessageBroker
 
   /**
    * Acknowledge a message so that is removed from the main event queue.
+   * This is called by DeliveryBucketManager.
    *
    * @param deliveryTag - deliveryTag provide my message broker
    * @throws IOException - on error
@@ -239,6 +245,8 @@ public final class MessageBroker
   /**
    * Create and start the consumer that handles events delivered to the main queue.
    * Return the consumer tag
+   * This is called by Dispatcher in order to start receiving events.
+   *
    * @param deliveryQueues - in-memory queues used to pass events to bucket manager threads
    * @throws IOException - on error
    * @return consumer tag

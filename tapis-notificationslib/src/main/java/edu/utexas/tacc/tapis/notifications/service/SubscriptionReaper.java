@@ -47,7 +47,7 @@ public final class SubscriptionReaper implements Callable<String>
   public String call()
   {
     log.info("**** Starting Subscription Reaper");
-    Thread.currentThread().setName("ThreadSubscriptionReaper");
+    Thread.currentThread().setName("SubscriptionReaper");
     log.info("ThreadId: {} ThreadName: {}", Thread.currentThread().getId(), Thread.currentThread().getName());
     try
     {
