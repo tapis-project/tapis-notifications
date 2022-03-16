@@ -6,6 +6,7 @@ package edu.utexas.tacc.tapis.notifications.service;
 //import com.rabbitmq.client.Delivery;
 import com.rabbitmq.client.DeliverCallback;
 import edu.utexas.tacc.tapis.notifications.model.Event;
+import edu.utexas.tacc.tapis.notifications.model.TestSequenceResults;
 import org.jvnet.hk2.annotations.Contract;
 //import reactor.core.publisher.Flux;
 //import reactor.core.publisher.Mono;
@@ -100,4 +101,12 @@ public interface NotificationsService
   void postEvent(ResourceRequestUser rUser, Event event) throws IOException;
 //
 //  Event readEvent(ResourceRequestUser rUser) throws TapisException;
+
+
+  // -----------------------------------------------------------------------
+  // ------------------------- Test Sequence -------------------------------
+  // -----------------------------------------------------------------------
+  Subscription beginTestSequence(ResourceRequestUser rUser, String subscriptionTTL);
+
+  TestSequenceResults getTestSequenceResults(ResourceRequestUser rUser, String subscriptionId);
 }

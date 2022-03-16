@@ -623,7 +623,7 @@ public class SubscriptionResource
   /**
    * Update TTL for a subscription
    * @param subscriptionId - name of the subscription
-   * @param ttl - new value for TTL
+   * @param ttl - new value for TTL.
    * @param securityContext - user identity
    * @return - response with change count as the result
    */
