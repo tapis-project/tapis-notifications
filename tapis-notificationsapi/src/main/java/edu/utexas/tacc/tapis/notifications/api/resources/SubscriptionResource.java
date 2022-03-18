@@ -7,7 +7,6 @@ import edu.utexas.tacc.tapis.notifications.api.requests.ReqPutSubscription;
 import edu.utexas.tacc.tapis.notifications.api.responses.RespSubscription;
 import edu.utexas.tacc.tapis.notifications.api.responses.RespSubscriptions;
 import edu.utexas.tacc.tapis.notifications.api.utils.ApiUtils;
-import edu.utexas.tacc.tapis.notifications.model.Event;
 import edu.utexas.tacc.tapis.notifications.model.PatchSubscription;
 import edu.utexas.tacc.tapis.notifications.model.Subscription;
 import edu.utexas.tacc.tapis.notifications.service.NotificationsService;
@@ -99,7 +98,7 @@ public class SubscriptionResource
   private static final String CREATE_ERR = "NTFAPI_SUBSCR_CREATE_ERROR";
   private static final String SELECT_ERR = "NTFAPI_SELECT_ERROR";
   private static final String LIB_UNAUTH = "NTFLIB_UNAUTH";
-  private static final String API_UNAUTH = "NTFAPI_SUBCSR_UNAUTH";
+  private static final String API_UNAUTH = "NTFAPI_SUBSCR_UNAUTH";
   private static final String TAPIS_FOUND = "TAPIS_FOUND";
   private static final String NOT_FOUND = "NTFAPI_NOT_FOUND";
   private static final String UPDATED = "NTFAPI_SUBSCR_UPDATED";

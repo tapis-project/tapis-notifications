@@ -4,9 +4,8 @@ package edu.utexas.tacc.tapis.notifications.service;
 //import com.rabbitmq.client.AMQP;
 //import com.rabbitmq.client.ConnectionFactory;
 //import com.rabbitmq.client.Delivery;
-import com.rabbitmq.client.DeliverCallback;
 import edu.utexas.tacc.tapis.notifications.model.Event;
-import edu.utexas.tacc.tapis.notifications.model.TestSequenceResults;
+import edu.utexas.tacc.tapis.notifications.model.TestSequence;
 import org.jvnet.hk2.annotations.Contract;
 //import reactor.core.publisher.Flux;
 //import reactor.core.publisher.Mono;
@@ -33,6 +32,7 @@ import edu.utexas.tacc.tapis.notifications.model.Subscription;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.List;
 
 /*
@@ -106,7 +106,13 @@ public interface NotificationsService
   // -----------------------------------------------------------------------
   // ------------------------- Test Sequence -------------------------------
   // -----------------------------------------------------------------------
-  Subscription beginTestSequence(ResourceRequestUser rUser, String subscriptionTTL);
+  String beginTestSequence(ResourceRequestUser rUser, String baseServiceUrl, String subscriptionTTL)
+          throws TapisException, IOException, URISyntaxException, IllegalStateException, IllegalArgumentException;
 
-  TestSequenceResults getTestSequenceResults(ResourceRequestUser rUser, String subscriptionId);
+  void recordTestEvent(ResourceRequestUser rUser, String subscriptionId, Event event);
+
+  TestSequence getTestSequence(ResourceRequestUser rUser, String subscriptionId);
+
+  int deleteTestSequence(ResourceRequestUser rUser, String subscriptionId)
+          throws TapisException, TapisClientException;
 }

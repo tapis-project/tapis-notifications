@@ -8,6 +8,7 @@ import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.FlywaySchemaHistory;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.Notifications;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.NotificationsLastEvent;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.NotificationsRecovery;
+import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.NotificationsTests;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.SubscriptionUpdates;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.Subscriptions;
 
@@ -54,6 +55,11 @@ public class TapisNtf extends SchemaImpl {
     public final NotificationsRecovery NOTIFICATIONS_RECOVERY = NotificationsRecovery.NOTIFICATIONS_RECOVERY;
 
     /**
+     * The table <code>tapis_ntf.notifications_tests</code>.
+     */
+    public final NotificationsTests NOTIFICATIONS_TESTS = NotificationsTests.NOTIFICATIONS_TESTS;
+
+    /**
      * The table <code>tapis_ntf.subscription_updates</code>.
      */
     public final SubscriptionUpdates SUBSCRIPTION_UPDATES = SubscriptionUpdates.SUBSCRIPTION_UPDATES;
@@ -81,6 +87,7 @@ public class TapisNtf extends SchemaImpl {
         return Arrays.<Sequence<?>>asList(
             Sequences.NOTIFICATIONS_RECOVERY_SEQ_ID_SEQ,
             Sequences.NOTIFICATIONS_SEQ_ID_SEQ,
+            Sequences.NOTIFICATIONS_TESTS_SEQ_ID_SEQ,
             Sequences.SUBSCRIPTION_UPDATES_SEQ_ID_SEQ,
             Sequences.SUBSCRIPTIONS_SEQ_ID_SEQ);
     }
@@ -92,6 +99,7 @@ public class TapisNtf extends SchemaImpl {
             Notifications.NOTIFICATIONS,
             NotificationsLastEvent.NOTIFICATIONS_LAST_EVENT,
             NotificationsRecovery.NOTIFICATIONS_RECOVERY,
+            NotificationsTests.NOTIFICATIONS_TESTS,
             SubscriptionUpdates.SUBSCRIPTION_UPDATES,
             Subscriptions.SUBSCRIPTIONS);
     }

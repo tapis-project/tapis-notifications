@@ -18,6 +18,7 @@ import javax.sql.DataSource;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.NotificationsTestsRecord;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,11 +50,13 @@ import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisDBConnectionExce
 import edu.utexas.tacc.tapis.shareddb.datasource.TapisDataSource;
 
 import static edu.utexas.tacc.tapis.notifications.gen.jooq.Tables.NOTIFICATIONS_LAST_EVENT;
+import static edu.utexas.tacc.tapis.notifications.gen.jooq.Tables.NOTIFICATIONS_TESTS;
 import static edu.utexas.tacc.tapis.shared.threadlocal.OrderBy.DEFAULT_ORDERBY_DIRECTION;
 
 import edu.utexas.tacc.tapis.notifications.model.Notification;
 import edu.utexas.tacc.tapis.notifications.model.Subscription;
 import edu.utexas.tacc.tapis.notifications.model.Subscription.SubscriptionOperation;
+import edu.utexas.tacc.tapis.notifications.model.TestSequence;
 import edu.utexas.tacc.tapis.notifications.utils.LibUtils;
 import edu.utexas.tacc.tapis.notifications.model.DeliveryMethod;
 import edu.utexas.tacc.tapis.notifications.model.Event;
@@ -1196,7 +1199,7 @@ public class NotificationsDaoImpl implements NotificationsDao
     catch (Exception e)
     {
       // Rollback transaction and throw an exception
-      LibUtils.rollbackDB(conn, e,"DB_INSERT_FAILURE", "subscriptions");
+      LibUtils.rollbackDB(conn, e,"DB_INSERT_FAILURE", "subscription_updates");
     }
     finally
     {
@@ -1372,6 +1375,138 @@ public class NotificationsDaoImpl implements NotificationsDao
       LibUtils.finalCloseDB(conn);
     }
     return result;
+  }
+
+  // -----------------------------------------------------------------------
+  // ------------------------- Test Sequences ------------------------------
+  // -----------------------------------------------------------------------
+
+  /**
+   * Create a test sequence record
+   *
+   * @return true if created, false if subscription does not exist
+   * @throws IllegalStateException - if resource already exists
+   * @throws TapisException - on error
+   */
+  @Override
+  public boolean createTestSequence(ResourceRequestUser rUser, String subscrId)
+          throws TapisException, IllegalStateException
+  {
+    String opName = "createTestSequence";
+    // ------------------------- Check Input -------------------------
+    if (rUser == null) LibUtils.logAndThrowNullParmException(opName, "resourceRequestUser");
+    if (StringUtils.isBlank(subscrId)) LibUtils.logAndThrowNullParmException(opName, "subscriptionId");
+
+    String tenantId = rUser.getOboTenantId();
+    String apiUser = rUser.getOboUserId();
+    Subscription subscription = getSubscription(tenantId, subscrId);
+    if (subscription == null) return false;
+
+    // ------------------------- Call SQL ----------------------------
+    Connection conn = null;
+    try
+    {
+      // Get a database connection.
+      conn = getConnection();
+      DSLContext db = DSL.using(conn);
+
+      // Check to see if resource exists. If yes then throw IllegalStateException
+      boolean doesExist = checkForTestSequence(db, tenantId, subscrId);
+      if (doesExist)
+        throw new IllegalStateException(LibUtils.getMsgAuth("NTFLIB_TEST_EXISTS", rUser, subscrId));
+
+      // Start with an empty list of events
+      JsonElement eventsJson = TestSequence.EMPTY_EVENTS;
+      Record record = db.insertInto(NOTIFICATIONS_TESTS)
+              .set(NOTIFICATIONS_TESTS.SUBSCR_SEQ_ID, subscription.getSeqId())
+              .set(NOTIFICATIONS_TESTS.TENANT, tenantId)
+              .set(NOTIFICATIONS_TESTS.SUBSCR_ID, subscrId)
+              .set(NOTIFICATIONS_TESTS.OWNER, apiUser)
+              .set(NOTIFICATIONS_TESTS.EVENTS, eventsJson)
+              .returningResult(NOTIFICATIONS_TESTS.SEQ_ID)
+              .fetchOne();
+      // If record is null or sequence id is invalid it is an error
+      if (record == null || record.getValue(NOTIFICATIONS_TESTS.SEQ_ID) < 1)
+      {
+        throw new TapisException(LibUtils.getMsgAuth("NTFLIB_DB_NULL_RESULT", rUser, subscrId, opName));
+      }
+
+      // Close out and commit
+      LibUtils.closeAndCommitDB(conn, null, null);
+    }
+    catch (Exception e)
+    {
+      // Rollback transaction and throw an exception
+      LibUtils.rollbackDB(conn, e,"DB_INSERT_FAILURE", "notifications_tests");
+    }
+    finally
+    {
+      // Always return the connection back to the connection pool.
+      LibUtils.finalCloseDB(conn);
+    }
+    return true;
+  }
+
+  /**
+   * Add an event to a test sequence record
+   *
+   * @return true if added, false if subscription does not exist
+   * @throws IllegalStateException - if resource does not already exist
+   * @throws TapisException - on error
+   */
+  @Override
+  public boolean addTestSequenceEvent(ResourceRequestUser rUser, String subscrId, Event event)
+          throws TapisException, IllegalStateException
+  {
+    String opName = "addTestSequenceEvent";
+    // ------------------------- Check Input -------------------------
+    if (rUser == null) LibUtils.logAndThrowNullParmException(opName, "resourceRequestUser");
+    if (StringUtils.isBlank(subscrId)) LibUtils.logAndThrowNullParmException(opName, "subscriptionId");
+    if (event == null) LibUtils.logAndThrowNullParmException(opName, "event");
+
+    String tenantId = rUser.getOboTenantId();
+    String apiUser = rUser.getOboUserId();
+    Subscription subscription = getSubscription(tenantId, subscrId);
+    if (subscription == null) return false;
+
+    // ------------------------- Call SQL ----------------------------
+    Connection conn = null;
+    try
+    {
+      // Get a database connection.
+      conn = getConnection();
+      DSLContext db = DSL.using(conn);
+
+      // Get the existing test sequence if it exists. If not found throw an exception
+      TestSequence testSequence = getTestSequence(db, tenantId, subscrId);
+      if (testSequence == null)
+        throw new IllegalStateException(LibUtils.getMsgAuth("NTFLIB_TEST_NOT_FOUND", rUser, opName, subscrId));
+
+      // Figure out the eventsJson for the update
+      JsonElement eventsJson = TestSequence.EMPTY_EVENTS;
+      var newEvents = testSequence.getReceivedEvents();
+      newEvents.add(event);
+      eventsJson = TapisGsonUtils.getGson().toJsonTree(newEvents);
+
+      db.update(NOTIFICATIONS_TESTS)
+           .set(NOTIFICATIONS_TESTS.EVENTS, eventsJson)
+           .set(NOTIFICATIONS_TESTS.UPDATED, TapisUtils.getUTCTimeNow())
+           .where(NOTIFICATIONS_TESTS.TENANT.eq(tenantId),NOTIFICATIONS_TESTS.SUBSCR_ID.eq(subscrId));
+
+      // Close out and commit
+      LibUtils.closeAndCommitDB(conn, null, null);
+    }
+    catch (Exception e)
+    {
+      // Rollback transaction and throw an exception
+      LibUtils.rollbackDB(conn, e,"DB_INSERT_FAILURE", "notifications_tests");
+    }
+    finally
+    {
+      // Always return the connection back to the connection pool.
+      LibUtils.finalCloseDB(conn);
+    }
+    return true;
   }
 
   /* ********************************************************************** */
@@ -1795,14 +1930,13 @@ public class NotificationsDaoImpl implements NotificationsDao
     }
   }
 
-  /**
+  /*
    * Given a record from a select, create a subscription object
-   *
    */
   private static Subscription getSubscriptionFromRecord(Record r)
   {
     Subscription subscription;
-    int subSeqId = r.get(SUBSCRIPTIONS.SEQ_ID);
+    int seqId = r.get(SUBSCRIPTIONS.SEQ_ID);
 
     // Convert LocalDateTime to Instant. Note that although "Local" is in the type, timestamps from the DB are in UTC.
     LocalDateTime ldt = r.get(SUBSCRIPTIONS.EXPIRY);
@@ -1813,7 +1947,7 @@ public class NotificationsDaoImpl implements NotificationsDao
     JsonElement deliveryMethodsJson = r.get(SUBSCRIPTIONS.DELIVERY_METHODS);
     List<DeliveryMethod> deliveryMethods =
             Arrays.asList(TapisGsonUtils.getGson().fromJson(deliveryMethodsJson, DeliveryMethod[].class));
-    subscription = new Subscription(subSeqId, r.get(SUBSCRIPTIONS.TENANT), r.get(SUBSCRIPTIONS.ID),
+    subscription = new Subscription(seqId, r.get(SUBSCRIPTIONS.TENANT), r.get(SUBSCRIPTIONS.ID),
             r.get(SUBSCRIPTIONS.DESCRIPTION), r.get(SUBSCRIPTIONS.OWNER), r.get(SUBSCRIPTIONS.ENABLED),
             r.get(SUBSCRIPTIONS.TYPE_FILTER), r.get(SUBSCRIPTIONS.SUBJECT_FILTER), deliveryMethods,
             r.get(SUBSCRIPTIONS.TTL), r.get(SUBSCRIPTIONS.NOTES), r.get(SUBSCRIPTIONS.UUID), expiry, created, updated);
@@ -1854,5 +1988,56 @@ public class NotificationsDaoImpl implements NotificationsDao
     ntf = new Notification(r.get(NOTIFICATIONS.SEQ_ID), r.get(NOTIFICATIONS.SUBSCR_SEQ_ID), r.get(NOTIFICATIONS.TENANT),
                            r.get(NOTIFICATIONS.BUCKET_NUMBER), r.get(NOTIFICATIONS.EVENT_UUID), event, dm, created);
     return ntf;
+  }
+
+  /**
+   * Given an sql connection check to see if specified TestSequence exists
+   * @param db - jooq context
+   * @param tenantId - name of tenant
+   * @param subscrId -  Id of the subscription (NOT the sequence Id)
+   * @return - true if test sequence exists, else false
+   */
+  private static boolean checkForTestSequence(DSLContext db, String tenantId, String subscrId)
+  {
+    return db.fetchExists(NOTIFICATIONS_TESTS,NOTIFICATIONS_TESTS.TENANT.eq(tenantId),
+                          NOTIFICATIONS_TESTS.SUBSCR_ID.eq(subscrId));
+  }
+
+  /**
+   * Given an sql connection retrieve the test sequence.
+   * return null if not found.
+   * @param db - jooq context
+   * @param tenantId - name of tenant
+   * @param subscrId -  Id of the subscription (NOT the sequence Id)
+   * @return - TestSequence or null if not found
+   */
+  private static TestSequence getTestSequence(DSLContext db, String tenantId, String subscrId)
+  {
+    TestSequence testSequence;
+    NotificationsTestsRecord r;
+    r = db.selectFrom(NOTIFICATIONS_TESTS).where(NOTIFICATIONS_TESTS.TENANT.eq(tenantId),
+                                                 NOTIFICATIONS_TESTS.SUBSCR_ID.eq(subscrId)).fetchOne();
+    if (r == null) return null;
+    else testSequence = getTestSequenceFromRecord(r);
+
+    return testSequence;
+  }
+
+  /*
+   * Given a record from a select, create a test sequence object
+   */
+  private static TestSequence getTestSequenceFromRecord(Record r)
+  {
+    TestSequence testSequence;
+    int seqId = r.get(NOTIFICATIONS_TESTS.SEQ_ID);
+    // Convert LocalDateTime to Instant. Note that although "Local" is in the type, timestamps from the DB are in UTC.
+    Instant created = r.get(NOTIFICATIONS_TESTS.CREATED).toInstant(ZoneOffset.UTC);
+    Instant updated = r.get(NOTIFICATIONS_TESTS.UPDATED).toInstant(ZoneOffset.UTC);
+
+    JsonElement eventsJson = r.get(NOTIFICATIONS_TESTS.EVENTS);
+    List<Event> events = Arrays.asList(TapisGsonUtils.getGson().fromJson(eventsJson, Event[].class));
+    testSequence = new TestSequence(seqId, r.get(NOTIFICATIONS_TESTS.TENANT), r.get(NOTIFICATIONS_TESTS.OWNER),
+                                    r.get(NOTIFICATIONS_TESTS.SUBSCR_ID), events, created, updated);
+    return testSequence;
   }
 }

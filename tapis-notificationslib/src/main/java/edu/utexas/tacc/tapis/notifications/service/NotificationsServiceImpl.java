@@ -1,8 +1,12 @@
 package edu.utexas.tacc.tapis.notifications.service;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -13,6 +17,7 @@ import javax.inject.Inject;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 
+import edu.utexas.tacc.tapis.notifications.model.TestSequence;
 import org.apache.commons.lang3.StringUtils;
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
@@ -34,6 +39,7 @@ import edu.utexas.tacc.tapis.sharedapi.security.ResourceRequestUser;
 
 
 import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
+import edu.utexas.tacc.tapis.notifications.model.DeliveryMethod;
 import edu.utexas.tacc.tapis.notifications.model.Event;
 import edu.utexas.tacc.tapis.notifications.dao.NotificationsDao;
 import edu.utexas.tacc.tapis.notifications.model.PatchSubscription;
@@ -58,6 +64,12 @@ public class NotificationsServiceImpl implements NotificationsService
 
   // Logging
   private static final Logger log = LoggerFactory.getLogger(NotificationsServiceImpl.class);
+
+  // Default test subscription TTL is 60 minutes
+  public static final int DEFAULT_TEST_TTL = 60;
+
+  public static final String TEST_SUBSCR_TYPE_FILTER = "notifications.test.*";
+  public static final String TEST_EVENT_TYPE = "notifications.test.begin";
 
   private static final Set<Permission> ALL_PERMS = new HashSet<>(Set.of(Permission.READ, Permission.MODIFY));
   private static final Set<Permission> READMODIFY_PERMS = new HashSet<>(Set.of(Permission.READ, Permission.MODIFY));
@@ -879,7 +891,8 @@ public class NotificationsServiceImpl implements NotificationsService
    * @throws NotAuthorizedException - unauthorized
    */
   @Override
-  public String getSubscriptionOwner(ResourceRequestUser rUser, String subId) throws TapisException, NotAuthorizedException, TapisClientException
+  public String getSubscriptionOwner(ResourceRequestUser rUser, String subId)
+          throws TapisException, TapisClientException, NotAuthorizedException
   {
     SubscriptionOperation op = SubscriptionOperation.read;
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
@@ -923,6 +936,156 @@ public class NotificationsServiceImpl implements NotificationsService
   {
     return MessageBroker.getInstance().readEvent(autoAck);
   }
+
+  // -----------------------------------------------------------------------
+  // ------------------------- Test Sequences ------------------------------
+  // -----------------------------------------------------------------------
+  /**
+   * Start a test sequence by creating a subscription and publishing an event
+   * Subscription id will be created as a UUID.
+   * If baseServiceUrl is https://dev.tapis.io then
+   *   event source will be https://dev.tapis.io/v3/notifications
+   *   delivery callback will have the form https://dev.tapis.io/v3/notifications/640ad5a8-1a6e-4189-a334-c4c7226fb9ba
+   *
+   * @param rUser - ResourceRequestUser containing tenant, user and request info
+   * @param baseServiceUrl - Base URL for service. Used for callback and event source.
+   * @param ttl - optional TTL for the auto-generated subscription
+   * @return subscription Id
+   * @throws TapisException - for Tapis related exceptions
+   * @throws IllegalStateException - subscription exists OR subscription in invalid state
+   * @throws IllegalArgumentException - invalid parameter passed in
+   */
+  @Override
+  public String beginTestSequence(ResourceRequestUser rUser, String baseServiceUrl, String ttl)
+          throws TapisException, IOException, URISyntaxException, IllegalStateException, IllegalArgumentException
+  {
+    if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
+    String tenantId = rUser.getOboTenantId();
+    String owner = rUser.getOboUserId();
+
+    // Use uuid as the subscription Id
+    String subscrId = UUID.randomUUID().toString();
+    log.trace(LibUtils.getMsgAuth("NTFLIB_CREATE_TRACE", rUser, subscrId));
+
+    // Determine the subscription TTL
+    int subscrTTL = DEFAULT_TEST_TTL;
+    if (StringUtils.isBlank(ttl))
+    {
+      // If TTL provided is not an integer then throw an exception
+      try { subscrTTL = Integer.parseInt(ttl); }
+      catch (NumberFormatException e)
+      {
+        throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_TEST_TTL_NOTINT", rUser, ttl));
+      }
+    }
+
+    // Build the callback delivery method
+    String callbackStr = String.format("%s/%s", baseServiceUrl, subscrId);
+    DeliveryMethod dm = new DeliveryMethod(DeliveryMethod.DeliveryType.WEBHOOK, callbackStr);
+    var dmList = Collections.singletonList(dm);
+
+    // Set other test subscription properties
+    String typeFilter = TEST_SUBSCR_TYPE_FILTER;
+    String subjFilter = subscrId;
+
+    // Create the subscription
+    // NOTE: Might be able to call the svc method createSubscription() but creating here avoids some overhead.
+    //   For example, the auth check is not needed and could potentially cause problems.
+    Subscription sub1 = new Subscription(-1, tenantId, subscrId, null, owner, true, typeFilter, subjFilter, dmList,
+                                         subscrTTL, null, null, null, null, null);
+    // Check if subscription already exists. Unlikely since it is a UUID
+    if (dao.checkForSubscription(tenantId, subscrId))
+    {
+      throw new IllegalStateException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_EXISTS", rUser, subscrId));
+    }
+
+    // Set defaults, resolve variables and check constraints.
+    sub1.setDefaults();
+    sub1.resolveVariables(rUser.getOboUserId());
+    validateSubscription(rUser, sub1);
+
+    // Construct Json string representing the Subscription about to be created
+    Subscription scrubbedSubscription = new Subscription(sub1);
+    String createJsonStr = TapisGsonUtils.getGson().toJson(scrubbedSubscription);
+
+    // Compute the expiry time from now
+    Instant expiry = Subscription.computeExpiryFromNow(sub1.getTtl());
+
+    // Persist the subscription
+    // NOTE: no need to rollback since only one DB transaction
+    // If publishing event fails let user cleanup using delete since this is for a test
+    dao.createSubscription(rUser, sub1, expiry, createJsonStr, null);
+
+    // Persist the initial test sequence record
+    dao.createTestSequence(rUser, subscrId);
+
+    // Create and publish an event
+    URI eventSource = new URI(baseServiceUrl);
+    Event event = new Event(tenantId, eventSource, TEST_EVENT_TYPE, subscrId, null,
+                            OffsetDateTime.now().toString(), UUID.randomUUID());
+    MessageBroker.getInstance().publishEvent(rUser, event);
+
+    return subscrId;
+  }
+
+  /**
+   * Record an event received as part of a test sequence.
+   *
+   * @param rUser - ResourceRequestUser containing tenant, user and request info
+   * @param subscriptionId - UUID of the subscription associated with the test sequence.
+   * @param event - event received
+   */
+  @Override
+  public void recordTestEvent(ResourceRequestUser rUser, String subscriptionId, Event event)
+  {
+
+  }
+
+  /**
+   * Retrieve events for a test sequence
+   *
+   * @param rUser - ResourceRequestUser containing tenant, user and request info
+   * @param subscriptionId - UUID of the subscription associated with the test sequence.
+   */
+  @Override
+  public TestSequence getTestSequence(ResourceRequestUser rUser, String subscriptionId)
+  {
+    return null;
+  }
+
+  /**
+   * Delete events and subscription associated with a test sequence
+   * Provided subscription must have been created using the beginTestSequence endpoint.
+   *
+   * @param rUser - ResourceRequestUser containing tenant, user and request info
+   * @param subscriptionId - UUID of the subscription associated with the test sequence.
+   * @return Number of items updated
+   *
+   * @throws TapisException - for Tapis related exceptions
+   * @throws IllegalArgumentException - invalid parameter passed in
+   * @throws NotAuthorizedException - unauthorized
+   */
+  @Override
+  public int deleteTestSequence(ResourceRequestUser rUser, String subscriptionId)
+          throws TapisException, TapisClientException
+  {
+    SubscriptionOperation op = SubscriptionOperation.delete;
+    if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
+    if (StringUtils.isBlank(subscriptionId)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_NULL_INPUT", rUser));
+
+    // If subscription does not exist then 0 changes
+    if (!dao.checkForSubscription(rUser.getOboTenantId(), subscriptionId)) return 0;
+
+    // ------------------------- Check service level authorization -------------------------
+    checkAuth(rUser, op, subscriptionId, null, null, null);
+
+    // TODO Check that subscription exists in the notifications_test table.
+    // If not it is an error
+    ???
+    // Delete the subscription, the cascade should delete all events, so we are done
+    return dao.deleteSubscription(rUser.getOboTenantId(), subscriptionId);
+  }
+
 
   // ************************************************************************
   // **************************  Private Methods  ***************************

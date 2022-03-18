@@ -8,12 +8,14 @@ import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.FlywaySchemaHistory;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.Notifications;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.NotificationsLastEvent;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.NotificationsRecovery;
+import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.NotificationsTests;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.SubscriptionUpdates;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.Subscriptions;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.FlywaySchemaHistoryRecord;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.NotificationsLastEventRecord;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.NotificationsRecord;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.NotificationsRecoveryRecord;
+import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.NotificationsTestsRecord;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.SubscriptionUpdatesRecord;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.SubscriptionsRecord;
 
@@ -39,6 +41,7 @@ public class Keys {
     public static final UniqueKey<NotificationsRecord> NOTIFICATIONS_PKEY = Internal.createUniqueKey(Notifications.NOTIFICATIONS, DSL.name("notifications_pkey"), new TableField[] { Notifications.NOTIFICATIONS.SEQ_ID }, true);
     public static final UniqueKey<NotificationsLastEventRecord> NOTIFICATIONS_LAST_EVENT_PKEY = Internal.createUniqueKey(NotificationsLastEvent.NOTIFICATIONS_LAST_EVENT, DSL.name("notifications_last_event_pkey"), new TableField[] { NotificationsLastEvent.NOTIFICATIONS_LAST_EVENT.BUCKET_NUMBER }, true);
     public static final UniqueKey<NotificationsRecoveryRecord> NOTIFICATIONS_RECOVERY_PKEY = Internal.createUniqueKey(NotificationsRecovery.NOTIFICATIONS_RECOVERY, DSL.name("notifications_recovery_pkey"), new TableField[] { NotificationsRecovery.NOTIFICATIONS_RECOVERY.SEQ_ID }, true);
+    public static final UniqueKey<NotificationsTestsRecord> NOTIFICATIONS_TESTS_PKEY = Internal.createUniqueKey(NotificationsTests.NOTIFICATIONS_TESTS, DSL.name("notifications_tests_pkey"), new TableField[] { NotificationsTests.NOTIFICATIONS_TESTS.SEQ_ID }, true);
     public static final UniqueKey<SubscriptionUpdatesRecord> SUBSCRIPTION_UPDATES_PKEY = Internal.createUniqueKey(SubscriptionUpdates.SUBSCRIPTION_UPDATES, DSL.name("subscription_updates_pkey"), new TableField[] { SubscriptionUpdates.SUBSCRIPTION_UPDATES.SEQ_ID }, true);
     public static final UniqueKey<SubscriptionsRecord> SUBSCRIPTIONS_PKEY = Internal.createUniqueKey(Subscriptions.SUBSCRIPTIONS, DSL.name("subscriptions_pkey"), new TableField[] { Subscriptions.SUBSCRIPTIONS.SEQ_ID }, true);
     public static final UniqueKey<SubscriptionsRecord> SUBSCRIPTIONS_TENANT_ID_KEY = Internal.createUniqueKey(Subscriptions.SUBSCRIPTIONS, DSL.name("subscriptions_tenant_id_key"), new TableField[] { Subscriptions.SUBSCRIPTIONS.TENANT, Subscriptions.SUBSCRIPTIONS.ID }, true);
@@ -49,5 +52,6 @@ public class Keys {
 
     public static final ForeignKey<NotificationsRecord, SubscriptionsRecord> NOTIFICATIONS__NOTIFICATIONS_SUBSCR_SEQ_ID_FKEY = Internal.createForeignKey(Notifications.NOTIFICATIONS, DSL.name("notifications_subscr_seq_id_fkey"), new TableField[] { Notifications.NOTIFICATIONS.SUBSCR_SEQ_ID }, Keys.SUBSCRIPTIONS_PKEY, new TableField[] { Subscriptions.SUBSCRIPTIONS.SEQ_ID }, true);
     public static final ForeignKey<NotificationsRecoveryRecord, SubscriptionsRecord> NOTIFICATIONS_RECOVERY__NOTIFICATIONS_RECOVERY_SUBSCR_SEQ_ID_FKEY = Internal.createForeignKey(NotificationsRecovery.NOTIFICATIONS_RECOVERY, DSL.name("notifications_recovery_subscr_seq_id_fkey"), new TableField[] { NotificationsRecovery.NOTIFICATIONS_RECOVERY.SUBSCR_SEQ_ID }, Keys.SUBSCRIPTIONS_PKEY, new TableField[] { Subscriptions.SUBSCRIPTIONS.SEQ_ID }, true);
+    public static final ForeignKey<NotificationsTestsRecord, SubscriptionsRecord> NOTIFICATIONS_TESTS__NOTIFICATIONS_TESTS_SUBSCR_SEQ_ID_FKEY = Internal.createForeignKey(NotificationsTests.NOTIFICATIONS_TESTS, DSL.name("notifications_tests_subscr_seq_id_fkey"), new TableField[] { NotificationsTests.NOTIFICATIONS_TESTS.SUBSCR_SEQ_ID }, Keys.SUBSCRIPTIONS_PKEY, new TableField[] { Subscriptions.SUBSCRIPTIONS.SEQ_ID }, true);
     public static final ForeignKey<SubscriptionUpdatesRecord, SubscriptionsRecord> SUBSCRIPTION_UPDATES__SUBSCRIPTION_UPDATES_SUBSCRIPTION_SEQ_ID_FKEY = Internal.createForeignKey(SubscriptionUpdates.SUBSCRIPTION_UPDATES, DSL.name("subscription_updates_subscription_seq_id_fkey"), new TableField[] { SubscriptionUpdates.SUBSCRIPTION_UPDATES.SUBSCRIPTION_SEQ_ID }, Keys.SUBSCRIPTIONS_PKEY, new TableField[] { Subscriptions.SUBSCRIPTIONS.SEQ_ID }, true);
 }

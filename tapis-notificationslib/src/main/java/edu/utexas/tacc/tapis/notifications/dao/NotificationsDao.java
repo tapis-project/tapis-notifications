@@ -85,4 +85,11 @@ public interface NotificationsDao
 
 //  int deleteNotification(Notification notification) throws TapisException;
 
+  // -----------------------------------------------------------------------
+  // --------------------- Test Sequences ----------------------------------
+  // -----------------------------------------------------------------------
+  boolean createTestSequence(ResourceRequestUser rUser, String subscrId)
+          throws TapisException, IllegalStateException;
+  boolean addTestSequenceEvent(ResourceRequestUser rUser, String subscrId, Event event)
+          throws TapisException, IllegalStateException;
 }
