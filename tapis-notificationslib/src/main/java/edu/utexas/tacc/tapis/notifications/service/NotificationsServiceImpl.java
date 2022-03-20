@@ -17,7 +17,6 @@ import javax.inject.Inject;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 
-import edu.utexas.tacc.tapis.notifications.model.TestSequence;
 import org.apache.commons.lang3.StringUtils;
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
@@ -39,13 +38,14 @@ import edu.utexas.tacc.tapis.sharedapi.security.ResourceRequestUser;
 
 
 import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
+import edu.utexas.tacc.tapis.notifications.dao.NotificationsDao;
 import edu.utexas.tacc.tapis.notifications.model.DeliveryMethod;
 import edu.utexas.tacc.tapis.notifications.model.Event;
-import edu.utexas.tacc.tapis.notifications.dao.NotificationsDao;
 import edu.utexas.tacc.tapis.notifications.model.PatchSubscription;
 import edu.utexas.tacc.tapis.notifications.model.Subscription;
 import edu.utexas.tacc.tapis.notifications.model.Subscription.Permission;
 import edu.utexas.tacc.tapis.notifications.model.Subscription.SubscriptionOperation;
+import edu.utexas.tacc.tapis.notifications.model.TestSequence;
 import edu.utexas.tacc.tapis.notifications.utils.LibUtils;
 
 import static edu.utexas.tacc.tapis.shared.TapisConstants.NOTIFICATIONS_SERVICE;
@@ -425,9 +425,6 @@ public class NotificationsServiceImpl implements NotificationsService
 
     // ------------------------- Check service level authorization -------------------------
     checkAuth(rUser, op, subId, null, null, null);
-
-    // Remove SK artifacts
-// TODO/TBD    removeSKArtifacts(resourceTenantId, subId);
 
     // Delete the subscription
     return dao.deleteSubscription(rUser.getOboTenantId(), subId);
@@ -971,7 +968,7 @@ public class NotificationsServiceImpl implements NotificationsService
     int subscrTTL = DEFAULT_TEST_TTL;
     if (StringUtils.isBlank(ttl))
     {
-      // If TTL provided is not an integer then throw an exception
+      // If TTL provided is not an integer then it is an error
       try { subscrTTL = Integer.parseInt(ttl); }
       catch (NumberFormatException e)
       {
@@ -993,7 +990,7 @@ public class NotificationsServiceImpl implements NotificationsService
     //   For example, the auth check is not needed and could potentially cause problems.
     Subscription sub1 = new Subscription(-1, tenantId, subscrId, null, owner, true, typeFilter, subjFilter, dmList,
                                          subscrTTL, null, null, null, null, null);
-    // Check if subscription already exists. Unlikely since it is a UUID
+    // If subscription already exists it is an error. Unlikely since it is a UUID
     if (dao.checkForSubscription(tenantId, subscrId))
     {
       throw new IllegalStateException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_EXISTS", rUser, subscrId));
@@ -1021,36 +1018,41 @@ public class NotificationsServiceImpl implements NotificationsService
 
     // Create and publish an event
     URI eventSource = new URI(baseServiceUrl);
-    Event event = new Event(tenantId, eventSource, TEST_EVENT_TYPE, subscrId, null,
-                            OffsetDateTime.now().toString(), UUID.randomUUID());
+    String eventType = TEST_EVENT_TYPE;
+    String eventSubject = subscrId;
+    String eventSeries = null;
+    String eventTime = OffsetDateTime.now().toString();
+    UUID eventUUID = UUID.randomUUID();
+    Event event = new Event(tenantId, eventSource, eventType, eventSubject, eventSeries, eventTime, eventUUID);
     MessageBroker.getInstance().publishEvent(rUser, event);
 
     return subscrId;
   }
 
   /**
-   * Record an event received as part of a test sequence.
-   *
-   * @param rUser - ResourceRequestUser containing tenant, user and request info
-   * @param subscriptionId - UUID of the subscription associated with the test sequence.
-   * @param event - event received
-   */
-  @Override
-  public void recordTestEvent(ResourceRequestUser rUser, String subscriptionId, Event event)
-  {
-
-  }
-
-  /**
-   * Retrieve events for a test sequence
+   * Retrieve a test sequence
    *
    * @param rUser - ResourceRequestUser containing tenant, user and request info
    * @param subscriptionId - UUID of the subscription associated with the test sequence.
    */
   @Override
   public TestSequence getTestSequence(ResourceRequestUser rUser, String subscriptionId)
+          throws TapisException, TapisClientException
   {
-    return null;
+    SubscriptionOperation op = SubscriptionOperation.read;
+    if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
+    if (StringUtils.isBlank(subscriptionId)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_NULL_INPUT", rUser));
+    // Extract various names for convenience
+    String resourceTenantId = rUser.getOboTenantId();
+
+    // We need owner to check auth and if sub not there cannot find owner, so if sub does not exist then return null
+    if (!dao.checkForSubscription(resourceTenantId, subscriptionId)) return null;
+
+    // ------------------------- Check service level authorization -------------------------
+    checkAuth(rUser, op, subscriptionId, null, null, null);
+
+    TestSequence result = dao.getTestSequence(resourceTenantId, subscriptionId);
+    return result;
   }
 
   /**
@@ -1067,7 +1069,7 @@ public class NotificationsServiceImpl implements NotificationsService
    */
   @Override
   public int deleteTestSequence(ResourceRequestUser rUser, String subscriptionId)
-          throws TapisException, TapisClientException
+          throws TapisException, TapisClientException, NotAuthorizedException
   {
     SubscriptionOperation op = SubscriptionOperation.delete;
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
@@ -1079,11 +1081,30 @@ public class NotificationsServiceImpl implements NotificationsService
     // ------------------------- Check service level authorization -------------------------
     checkAuth(rUser, op, subscriptionId, null, null, null);
 
-    // TODO Check that subscription exists in the notifications_test table.
+    // Check that subscription exists in the notifications_test table.
     // If not it is an error
-    ???
+    if (!dao.checkForTestSequence(rUser.getOboTenantId(), subscriptionId))
+    {
+      throw new TapisException(LibUtils.getMsgAuth("NTFLIB_TEST_DEL_NOT_SEQ", rUser, subscriptionId));
+    }
     // Delete the subscription, the cascade should delete all events, so we are done
     return dao.deleteSubscription(rUser.getOboTenantId(), subscriptionId);
+  }
+
+  /**
+   * Record an event received as part of a test sequence.
+   *
+   * @param rUser - ResourceRequestUser containing tenant, user and request info
+   * @param subscriptionId - UUID of the subscription associated with the test sequence.
+   * @param event - event received
+   * @throws IllegalStateException - if test sequence does not exist
+   * @throws TapisException - on error
+   */
+  @Override
+  public void recordTestEvent(ResourceRequestUser rUser, String subscriptionId, Event event)
+          throws TapisException, IllegalStateException
+  {
+    dao.addTestSequenceEvent(rUser, subscriptionId, event);
   }
 
 

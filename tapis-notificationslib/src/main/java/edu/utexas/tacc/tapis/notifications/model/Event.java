@@ -59,16 +59,16 @@ public final class Event
   /* ********************************************************************** */
   /*                           Constructors                                 */
   /* ********************************************************************** */
-  public Event(String tenantId1, URI source1, String t1, String subject1, String seriesId1, String time1, UUID uuid1)
+  public Event(String tenantId1, URI source1, String type1, String subject1, String seriesId1, String time1, UUID uuid1)
   {
     tenantId = tenantId1;
     source = source1;
-    type = t1;
+    type = type1;
     subject = subject1;
     seriesId = seriesId1;
     time = time1;
     uuid = uuid1;
-    setTypeFields(t1);
+    setTypeFields(type1);
 //    datacontenttype = null;
 //    data = null;
 //    data_base64 = null;

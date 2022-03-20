@@ -246,13 +246,6 @@ public class TestSequenceResource
       _log.warn(msg);
       return Response.status(Status.UNAUTHORIZED).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
-//TODO/TBD    catch (IllegalArgumentException e)
-//    {
-//      // IllegalArgumentException indicates somehow a bad argument made it this far
-//      msg = ApiUtils.getMsgAuth("SYSAPI_PRF_DEL_ERROR"?, rUser, name, opName, e.getMessage());
-//      _log.error(msg);
-//      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
-//    }
     catch (Exception e)
     {
       msg = ApiUtils.getMsgAuth("NTFAPI_TEST_ERR", rUser, opName, subscriptionId, e.getMessage());
@@ -271,10 +264,10 @@ public class TestSequenceResource
 
   /**
    * Receive an event as a callback and record it as a test result.
-   * Provided subscription must have been created using the beginTestSequence endpoint.
+   * Provided subscription must be associated with a test sequence.
    * @param payloadStream - request body
    * @param securityContext - user identity
-   * @return response containing reference to created object
+   * @return basic response
    */
   @POST
   @Path("callback/{subscriptionId}")
@@ -361,10 +354,17 @@ public class TestSequenceResource
     Event event = new Event(rUser.getOboTenantId(), source, req.type, req.subject, req.seriesId, req.time,
                             UUID.randomUUID());
 
-    // ---------------------------- Make service call to post the event -------------------------------
+    // ---------------------------- Make service call to record the event -------------------------------
     try
     {
       notificationsService.recordTestEvent(rUser, subscriptionId, event);
+    }
+    catch (IllegalStateException e)
+    {
+      // IllegalStateException means test sequence not found
+      msg = ApiUtils.getMsgAuth("NTFAPI_TEST_RECORD_NO_TEST", rUser, subscriptionId, event.getType());
+      _log.warn(msg);
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
     catch (Exception e)
     {

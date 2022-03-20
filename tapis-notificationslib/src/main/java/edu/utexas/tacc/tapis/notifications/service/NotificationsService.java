@@ -109,10 +109,12 @@ public interface NotificationsService
   String beginTestSequence(ResourceRequestUser rUser, String baseServiceUrl, String subscriptionTTL)
           throws TapisException, IOException, URISyntaxException, IllegalStateException, IllegalArgumentException;
 
-  void recordTestEvent(ResourceRequestUser rUser, String subscriptionId, Event event);
-
-  TestSequence getTestSequence(ResourceRequestUser rUser, String subscriptionId);
+  TestSequence getTestSequence(ResourceRequestUser rUser, String subscriptionId)
+          throws TapisException, TapisClientException;
 
   int deleteTestSequence(ResourceRequestUser rUser, String subscriptionId)
-          throws TapisException, TapisClientException;
+          throws TapisException, TapisClientException, NotAuthorizedException;
+
+  void recordTestEvent(ResourceRequestUser rUser, String subscriptionId, Event event)
+          throws TapisException, IllegalStateException;
 }

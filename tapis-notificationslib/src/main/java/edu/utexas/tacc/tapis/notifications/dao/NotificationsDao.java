@@ -4,6 +4,7 @@ import edu.utexas.tacc.tapis.notifications.model.Event;
 import edu.utexas.tacc.tapis.notifications.model.Notification;
 import edu.utexas.tacc.tapis.notifications.model.Subscription;
 import edu.utexas.tacc.tapis.notifications.model.Subscription.SubscriptionOperation;
+import edu.utexas.tacc.tapis.notifications.model.TestSequence;
 import edu.utexas.tacc.tapis.search.parser.ASTNode;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.shared.threadlocal.OrderBy;
@@ -90,6 +91,11 @@ public interface NotificationsDao
   // -----------------------------------------------------------------------
   boolean createTestSequence(ResourceRequestUser rUser, String subscrId)
           throws TapisException, IllegalStateException;
-  boolean addTestSequenceEvent(ResourceRequestUser rUser, String subscrId, Event event)
+
+  TestSequence getTestSequence(String tenantId, String subscriptionId) throws TapisException;
+
+  void addTestSequenceEvent(ResourceRequestUser rUser, String subscrId, Event event)
           throws TapisException, IllegalStateException;
+
+  boolean checkForTestSequence(String tenantId, String subscriptionId) throws TapisException;
 }
