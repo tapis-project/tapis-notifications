@@ -42,7 +42,8 @@ public final class Event
   /* ********************************************************************** */
 
   private static final String specversion = SPECVERSION;
-  private final String tenantId;
+  private final String tenantId; // Tenant associated with the event
+  private final String user; // User or service associated with the event
   private final URI source; // Context in which event happened. Required
   private final String type; // Type of event related to originating occurrence. Required
   private final String subject; // Subject of event in context of event producer.
@@ -59,9 +60,11 @@ public final class Event
   /* ********************************************************************** */
   /*                           Constructors                                 */
   /* ********************************************************************** */
-  public Event(String tenantId1, URI source1, String type1, String subject1, String seriesId1, String time1, UUID uuid1)
+  public Event(String tenantId1, String user1, URI source1, String type1, String subject1, String seriesId1,
+               String time1, UUID uuid1)
   {
     tenantId = tenantId1;
+    user = user1;
     source = source1;
     type = type1;
     subject = subject1;
@@ -79,6 +82,7 @@ public final class Event
   /* ********************************************************************** */
   public String getSpecversion() { return specversion; }
   public String getTenantId() { return tenantId; }
+  public String getUser() { return user; }
   public URI getSource() { return source; }
   public String getType() { return type; }
   public String getSubject() { return subject; }

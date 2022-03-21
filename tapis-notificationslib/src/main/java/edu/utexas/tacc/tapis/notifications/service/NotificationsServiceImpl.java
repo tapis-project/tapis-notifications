@@ -1023,7 +1023,7 @@ public class NotificationsServiceImpl implements NotificationsService
     String eventSeries = null;
     String eventTime = OffsetDateTime.now().toString();
     UUID eventUUID = UUID.randomUUID();
-    Event event = new Event(tenantId, eventSource, eventType, eventSubject, eventSeries, eventTime, eventUUID);
+    Event event = new Event(tenantId, owner, eventSource, eventType, eventSubject, eventSeries, eventTime, eventUUID);
     MessageBroker.getInstance().publishEvent(rUser, event);
 
     return subscrId;
@@ -1094,17 +1094,18 @@ public class NotificationsServiceImpl implements NotificationsService
   /**
    * Record an event received as part of a test sequence.
    *
-   * @param rUser - ResourceRequestUser containing tenant, user and request info
+   * @param tenant - tenant associated with event
+   * @param user - user who published the event
    * @param subscriptionId - UUID of the subscription associated with the test sequence.
    * @param event - event received
    * @throws IllegalStateException - if test sequence does not exist
    * @throws TapisException - on error
    */
   @Override
-  public void recordTestEvent(ResourceRequestUser rUser, String subscriptionId, Event event)
+  public void recordTestEvent(String tenant, String user, String subscriptionId, Event event)
           throws TapisException, IllegalStateException
   {
-    dao.addTestSequenceEvent(rUser, subscriptionId, event);
+    dao.addTestSequenceEvent(tenant, user, subscriptionId, event);
   }
 
 

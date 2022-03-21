@@ -278,19 +278,6 @@ public class TestSequenceResource
                                   InputStream payloadStream, @Context SecurityContext securityContext)
   {
     String opName = "recordTestEvent";
-    // ------------------------- Retrieve and validate thread context -------------------------
-    TapisThreadContext threadContext = TapisThreadLocal.tapisThreadContext.get();
-    // Check that we have all we need from the context, the jwtTenantId and jwtUserId
-    // Utility method returns null if all OK and appropriate error response if there was a problem.
-    Response resp = ApiUtils.checkContext(threadContext, PRETTY);
-    if (resp != null) return resp;
-
-    // Create a user that collects together tenant, user and request information needed by the service call
-    ResourceRequestUser rUser = new ResourceRequestUser((AuthenticatedUser) securityContext.getUserPrincipal());
-
-    // Trace this request.
-    if (_log.isTraceEnabled()) ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString());
-
     // ------------------------- Extract and validate payload -------------------------
     // Read the payload into a string.
     String rawJson;
@@ -324,15 +311,26 @@ public class TestSequenceResource
     // If req is null that is an unrecoverable error
     if (req == null)
     {
-      msg = ApiUtils.getMsgAuth("NTFAPI_EVENT_POST_REQ_NULL", rUser);
+      msg = ApiUtils.getMsg("NTFAPI_TEST_CB_REQ_NULL", subscriptionId);
       _log.error(msg);
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
 
+    // Now that we have a valid request we can set the tenant and user associated with the event
+    String tenant = req.tenant;
+    String user = req.user;
+
+    // Tenant and user should both have values
+    if (StringUtils.isBlank(tenant) || StringUtils.isBlank(user))
+    {
+      msg = ApiUtils.getMsg("NTFAPI_TEST_USR_ERR", tenant, user, req.source, req.type, req.subject, req.time, subscriptionId);
+      _log.error(msg);
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+    }
     // Validate the event type
     if (!Event.isValidType(req.type))
     {
-      msg = ApiUtils.getMsgAuth("NTFAPI_EVENT_TYPE_ERR", rUser, req.source, req.type, req.subject, req.time);
+      msg = ApiUtils.getMsg("NTFAPI_TEST_EVENT_TYPE_ERR", tenant, user, req.source, req.type, req.subject, req.time, subscriptionId);
       _log.error(msg);
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
@@ -345,31 +343,30 @@ public class TestSequenceResource
     }
     catch (URISyntaxException e)
     {
-      msg = ApiUtils.getMsgAuth("NTFAPI_EVENT_SOURCE_ERR", rUser, req.source, req.type, req.subject, req.time, e.getMessage());
+      msg = ApiUtils.getMsg("NTFAPI_TEST_EVENT_SOURCE_ERR", tenant, user, req.source, req.type, req.subject, req.time, subscriptionId, e.getMessage());
       _log.error(msg);
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
 
     // Create an Event from the request
-    Event event = new Event(rUser.getOboTenantId(), source, req.type, req.subject, req.seriesId, req.time,
-                            UUID.randomUUID());
+    Event event = new Event(tenant, user, source, req.type, req.subject, req.seriesId, req.time, UUID.randomUUID());
 
     // ---------------------------- Make service call to record the event -------------------------------
     try
     {
-      notificationsService.recordTestEvent(rUser, subscriptionId, event);
+      notificationsService.recordTestEvent(tenant, user, subscriptionId, event);
     }
     catch (IllegalStateException e)
     {
       // IllegalStateException means test sequence not found
-      msg = ApiUtils.getMsgAuth("NTFAPI_TEST_RECORD_NO_TEST", rUser, subscriptionId, event.getType());
+      msg = ApiUtils.getMsg("NTFAPI_TEST_RECORD_NO_TEST", tenant, user, subscriptionId, event.getType());
       _log.warn(msg);
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
     catch (Exception e)
     {
-      msg = ApiUtils.getMsgAuth("NTFAPI_EVENT_POST_ERR", rUser, req.source, req.type, req.subject, req.seriesId,
-              req.time, e.getMessage());
+      msg = ApiUtils.getMsg("NTFAPI_TEST_CB_ERR", tenant, user, req.source, req.type, req.subject, req.seriesId,
+              req.time, subscriptionId, e.getMessage());
       _log.error(msg);
       return Response.status(Status.INTERNAL_SERVER_ERROR).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
@@ -377,7 +374,7 @@ public class TestSequenceResource
     // ---------------------------- Success -------------------------------
     // Success means the object was created.
     RespBasic resp1 = new RespBasic();
-    msg = ApiUtils.getMsgAuth("NTFAPI_TEST_RECORD", rUser, subscriptionId, event.getType());
+    msg = ApiUtils.getMsg("NTFAPI_TEST_RECORD", tenant, user, subscriptionId, event.getType());
     return Response.status(Status.OK).entity(TapisRestUtils.createSuccessResponse(msg, PRETTY, resp1)).build();
   }
 

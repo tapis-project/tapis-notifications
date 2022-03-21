@@ -481,7 +481,7 @@ public class NotificationsServiceTest
   public void testPostEventAndLeave() throws Exception
   {
     OffsetDateTime eventTime = OffsetDateTime.now();
-    Event event = new Event(tenantName, eventSource1, eventType1, eventSubject1, seriesId1, eventTime.toString(),
+    Event event = new Event(tenantName, testUser1, eventSource1, eventType1, eventSubject1, seriesId1, eventTime.toString(),
             UUID.randomUUID());
     System.out.println("Placing event on queue. Event: " + event);
     // Put an event on the queue as a message
@@ -496,7 +496,7 @@ public class NotificationsServiceTest
   public void testPostReadEvent() throws Exception
   {
     OffsetDateTime eventTime = OffsetDateTime.now();
-    Event event = new Event(tenantName, eventSource1, eventType1, eventSubject1, seriesId1, eventTime.toString(),
+    Event event = new Event(tenantName, testUser1, eventSource1, eventType1, eventSubject1, seriesId1, eventTime.toString(),
                             UUID.randomUUID());
     System.out.println("Placing event on queue. Event: " + event);
     // Put an event on the queue as a message

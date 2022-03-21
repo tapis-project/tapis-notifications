@@ -163,8 +163,8 @@ public class EventResource
     }
 
     // Create an Event from the request
-    Event event = new Event(rUser.getOboTenantId(), source, req.type, req.subject, req.seriesId, req.time,
-                            UUID.randomUUID());
+    Event event = new Event(rUser.getOboTenantId(), rUser.getOboUserId(), source, req.type, req.subject, req.seriesId,
+                            req.time, UUID.randomUUID());
 
     // ---------------------------- Make service call to post the event -------------------------------
     try

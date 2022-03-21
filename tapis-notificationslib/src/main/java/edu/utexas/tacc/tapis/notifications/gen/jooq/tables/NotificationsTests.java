@@ -80,7 +80,7 @@ public class NotificationsTests extends TableImpl<NotificationsTestsRecord> {
     /**
      * The column <code>tapis_ntf.notifications_tests.events</code>.
      */
-    public final TableField<NotificationsTestsRecord, JsonElement> EVENTS = createField(DSL.name("events"), SQLDataType.JSONB, this, "", new JSONBToJsonElementBinding());
+    public final TableField<NotificationsTestsRecord, JsonElement> EVENTS = createField(DSL.name("events"), SQLDataType.JSONB.nullable(false), this, "", new JSONBToJsonElementBinding());
 
     /**
      * The column <code>tapis_ntf.notifications_tests.created</code>.

@@ -94,7 +94,7 @@ public interface NotificationsDao
 
   TestSequence getTestSequence(String tenantId, String subscriptionId) throws TapisException;
 
-  void addTestSequenceEvent(ResourceRequestUser rUser, String subscrId, Event event)
+  void addTestSequenceEvent(String tenant, String user, String subscrId, Event event)
           throws TapisException, IllegalStateException;
 
   boolean checkForTestSequence(String tenantId, String subscriptionId) throws TapisException;

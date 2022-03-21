@@ -1271,7 +1271,7 @@ public class NotificationsDaoImpl implements NotificationsDao
       db.update(NOTIFICATIONS_LAST_EVENT)
               .set(NOTIFICATIONS_LAST_EVENT.EVENT_UUID, event.getUuid())
               .set(NOTIFICATIONS_LAST_EVENT.BUCKET_NUMBER, bucketNum)
-              .where(NOTIFICATIONS_LAST_EVENT.BUCKET_NUMBER.eq(bucketNum));
+              .where(NOTIFICATIONS_LAST_EVENT.BUCKET_NUMBER.eq(bucketNum)).execute();
 
       // Close out and commit
       LibUtils.closeAndCommitDB(conn, null, null);
@@ -1492,15 +1492,15 @@ public class NotificationsDaoImpl implements NotificationsDao
    * @throws TapisException - on error
    */
   @Override
-  public void addTestSequenceEvent(ResourceRequestUser rUser, String subscrId, Event event)
+  public void addTestSequenceEvent(String tenantId, String user, String subscrId, Event event)
           throws TapisException, IllegalStateException
   {
     String opName = "addTestSequenceEvent";
     // ------------------------- Check Input -------------------------
-    if (rUser == null) LibUtils.logAndThrowNullParmException(opName, "resourceRequestUser");
+    if (StringUtils.isBlank(tenantId)) LibUtils.logAndThrowNullParmException(opName, "tenant");
+    if (StringUtils.isBlank(user)) LibUtils.logAndThrowNullParmException(opName, "user");
     if (StringUtils.isBlank(subscrId)) LibUtils.logAndThrowNullParmException(opName, "subscriptionId");
     if (event == null) LibUtils.logAndThrowNullParmException(opName, "event");
-    String tenantId = rUser.getOboTenantId();
     // ------------------------- Call SQL ----------------------------
     Connection conn = null;
     try
@@ -1511,7 +1511,7 @@ public class NotificationsDaoImpl implements NotificationsDao
       // Get test sequence. If not found throw an exception
       TestSequence testSequence = getTestSequence(db, tenantId, subscrId);
       if (testSequence == null)
-        throw new IllegalStateException(LibUtils.getMsgAuth("NTFLIB_TEST_NOT_FOUND", rUser, opName, subscrId));
+        throw new IllegalStateException(LibUtils.getMsg("NTFLIB_TEST_NOT_FOUND", tenantId, user, opName, subscrId));
       // Figure out the eventsJson for the update
       JsonElement eventsJson;
       var newEvents = testSequence.getReceivedEvents();
@@ -1519,9 +1519,9 @@ public class NotificationsDaoImpl implements NotificationsDao
       eventsJson = TapisGsonUtils.getGson().toJsonTree(newEvents);
       // Make the update
       db.update(NOTIFICATIONS_TESTS)
-           .set(NOTIFICATIONS_TESTS.EVENTS, eventsJson)
-           .set(NOTIFICATIONS_TESTS.UPDATED, TapisUtils.getUTCTimeNow())
-           .where(NOTIFICATIONS_TESTS.TENANT.eq(tenantId),NOTIFICATIONS_TESTS.SUBSCR_ID.eq(subscrId));
+              .set(NOTIFICATIONS_TESTS.EVENTS, eventsJson)
+              .set(NOTIFICATIONS_TESTS.UPDATED, TapisUtils.getUTCTimeNow())
+              .where(NOTIFICATIONS_TESTS.TENANT.eq(tenantId),NOTIFICATIONS_TESTS.SUBSCR_ID.eq(subscrId)).execute();
       // Close out and commit
       LibUtils.closeAndCommitDB(conn, null, null);
     }

@@ -115,6 +115,6 @@ public interface NotificationsService
   int deleteTestSequence(ResourceRequestUser rUser, String subscriptionId)
           throws TapisException, TapisClientException, NotAuthorizedException;
 
-  void recordTestEvent(ResourceRequestUser rUser, String subscriptionId, Event event)
+  void recordTestEvent(String tenant, String user, String subscriptionId, Event event)
           throws TapisException, IllegalStateException;
 }
