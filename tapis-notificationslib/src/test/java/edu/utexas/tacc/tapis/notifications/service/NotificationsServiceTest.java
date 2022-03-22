@@ -525,7 +525,7 @@ public class NotificationsServiceTest
     Event tmpEvent = svcImpl.readEvent(autoAck);
     System.out.println("Read event from queue. Event: " + tmpEvent);
     Assert.assertNotNull(tmpEvent);
-    Assert.assertEquals(event.getTenantId(), tmpEvent.getTenantId());
+    Assert.assertEquals(event.getTenant(), tmpEvent.getTenant());
     Assert.assertEquals(event.getSource(), tmpEvent.getSource());
     Assert.assertEquals(event.getType(), tmpEvent.getType());
     Assert.assertEquals(event.getSubject(), tmpEvent.getSubject());

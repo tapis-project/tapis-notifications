@@ -182,7 +182,6 @@ public final class DeliveryBucketManager implements Callable<String>
     // TODO Clean up messages and sleeps
     // TODO/TBD: refactor into separate calls to private methods
 
-    log.info("Bucket {} Processing event. DeliveryTag: {} Event: {}", bucketNum, delivery.getDeliveryTag(), event);
     if (log.isTraceEnabled())
     {
       log.trace("Bucket {} Processing event. DeliveryTag: {} Event: {}", bucketNum, delivery.getDeliveryTag(), event);
@@ -213,8 +212,6 @@ public final class DeliveryBucketManager implements Callable<String>
     MessageBroker.getInstance().ackMsg(delivery.getDeliveryTag());
 
     // Deliver notifications using an ExecutorService.
-    log.info("Bucket {} Number of notifications found: {} for event: {}", bucketNum, notifications.size(), event.getUuid());
-    try { log.info("Sleep 2 seconds"); Thread.sleep(2000); } catch (InterruptedException e) {}
     for (Notification notification : notifications)
     {
       log.info("Bucket {} Delivering notification for event: {} deliveryMethod: {}", bucketNum, event.getUuid(), notification.getDeliveryMethod());
@@ -326,7 +323,7 @@ public final class DeliveryBucketManager implements Callable<String>
     var notifList = new ArrayList<Notification>();
     if (event == null || subscriptions == null || subscriptions.isEmpty()) return notifList;
 
-    String tenant = event.getTenantId();
+    String tenant = event.getTenant();
     UUID eventUuid = event.getUuid();
 
     // For each deliveryMethod in a Subscription
@@ -339,7 +336,7 @@ public final class DeliveryBucketManager implements Callable<String>
         notifList.add(new Notification(-1, s.getSeqId(), tenant, bucketNum, eventUuid, event, dm, null));
       }
     }
-    dao.persistNotificationsForEvent(event.getTenantId(), event, bucketNum, notifList);
+    dao.persistNotificationsForEvent(event.getTenant(), event, bucketNum, notifList);
     return notifList;
   }
 }

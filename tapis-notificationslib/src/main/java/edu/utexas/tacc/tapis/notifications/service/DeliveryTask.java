@@ -1,5 +1,12 @@
 package edu.utexas.tacc.tapis.notifications.service;
 
+import okhttp3.Call;
+import okhttp3.MediaType;
+import okhttp3.OkHttp;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -9,6 +16,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
+import java.net.http.HttpRequest.BodyPublisher;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
@@ -168,16 +176,24 @@ public final class DeliveryTask implements Callable<Notification>
    */
   private boolean deliverByWebhook() throws URISyntaxException, IOException, InterruptedException
   {
-    // Post to the delivery address which should be a URL
-    URI uri = new URI(deliveryMethod.getDeliveryAddress());
-    // Request body is the event as json
-    BodyPublishers.ofString(notification.getEvent().toJsonString());
-    // TODO/TBD: timeout is 10 seconds
-    Duration timeout = Duration.of(10, ChronoUnit.SECONDS);
-    HttpRequest request = HttpRequest.newBuilder().uri(uri).header("Content-Type", "application/json")
-                                                  .timeout(timeout).build();
-    HttpResponse<String> response = httpClient.send(request, BodyHandlers.ofString());
-    if (response.statusCode() == Status.OK.getStatusCode()) return true;
+//    // Post to the delivery address which should be a URL
+//    URI uri = new URI(deliveryMethod.getDeliveryAddress());
+//    // Request body is the event as json
+    String eventJsonStr = notification.getEvent().toJsonString();
+//    HttpRequest.BodyPublisher bodyPublisher = BodyPublishers.ofString(eventJsonStr);
+//    // TODO/TBD: timeout is 10 seconds
+//    Duration timeout = Duration.of(10, ChronoUnit.SECONDS);
+//    HttpRequest request = HttpRequest.newBuilder().uri(uri).header("Content-Type", "application/json")
+//                                                  .POST(bodyPublisher).timeout(timeout).build();
+//    HttpResponse<String> response = httpClient.send(request, BodyHandlers.ofString());
+//    if (response.statusCode() == Status.OK.getStatusCode()) return true;
+
+    OkHttpClient client = new OkHttpClient();
+    RequestBody body = RequestBody.create(MediaType.parse("application/json"), eventJsonStr);
+    Request request = new Request.Builder().url(deliveryMethod.getDeliveryAddress()).post(body).build();
+    Call call = client.newCall(request);
+    Response response = call.execute();
+    if (response.code() == Status.OK.getStatusCode()) return true;
     return false;
   }
   /*

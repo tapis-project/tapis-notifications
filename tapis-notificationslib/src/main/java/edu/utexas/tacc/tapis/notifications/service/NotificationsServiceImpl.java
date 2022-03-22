@@ -957,8 +957,8 @@ public class NotificationsServiceImpl implements NotificationsService
           throws TapisException, IOException, URISyntaxException, IllegalStateException, IllegalArgumentException
   {
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
-    String tenantId = rUser.getOboTenantId();
-    String owner = rUser.getOboUserId();
+    String tenant = rUser.getOboTenantId();
+    String user = rUser.getOboUserId();
 
     // Use uuid as the subscription Id
     String subscrId = UUID.randomUUID().toString();
@@ -977,7 +977,8 @@ public class NotificationsServiceImpl implements NotificationsService
     }
 
     // Build the callback delivery method
-    String callbackStr = String.format("%s/%s", baseServiceUrl, subscrId);
+    // Example https://dev.develop.tapis.io/v3/notifications/test/callback/<subscriptionId>
+    String callbackStr = String.format("%s/test/callback/%s", baseServiceUrl, subscrId);
     DeliveryMethod dm = new DeliveryMethod(DeliveryMethod.DeliveryType.WEBHOOK, callbackStr);
     var dmList = Collections.singletonList(dm);
 
@@ -988,10 +989,10 @@ public class NotificationsServiceImpl implements NotificationsService
     // Create the subscription
     // NOTE: Might be able to call the svc method createSubscription() but creating here avoids some overhead.
     //   For example, the auth check is not needed and could potentially cause problems.
-    Subscription sub1 = new Subscription(-1, tenantId, subscrId, null, owner, true, typeFilter, subjFilter, dmList,
+    Subscription sub1 = new Subscription(-1, tenant, subscrId, null, user, true, typeFilter, subjFilter, dmList,
                                          subscrTTL, null, null, null, null, null);
     // If subscription already exists it is an error. Unlikely since it is a UUID
-    if (dao.checkForSubscription(tenantId, subscrId))
+    if (dao.checkForSubscription(tenant, subscrId))
     {
       throw new IllegalStateException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_EXISTS", rUser, subscrId));
     }
@@ -1023,7 +1024,7 @@ public class NotificationsServiceImpl implements NotificationsService
     String eventSeries = null;
     String eventTime = OffsetDateTime.now().toString();
     UUID eventUUID = UUID.randomUUID();
-    Event event = new Event(tenantId, owner, eventSource, eventType, eventSubject, eventSeries, eventTime, eventUUID);
+    Event event = new Event(tenant, user, eventSource, eventType, eventSubject, eventSeries, eventTime, eventUUID);
     MessageBroker.getInstance().publishEvent(rUser, event);
 
     return subscrId;

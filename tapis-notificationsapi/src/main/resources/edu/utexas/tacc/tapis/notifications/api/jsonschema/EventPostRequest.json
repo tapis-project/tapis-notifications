@@ -14,6 +14,9 @@
     "time": { "type":  "string", "format": "date-time" },
     "user": { "$ref": "resource:///edu/utexas/tacc/tapis/notifications/api/jsonschema/Definitions.json#/UserName" },
     "tenant": { "type":  "string" },
+    "type1": { "type":  "string" },
+    "type2": { "type":  "string" },
+    "type3": { "type":  "string" },
     "uuid": { "type":  "string" }
   }
 }
