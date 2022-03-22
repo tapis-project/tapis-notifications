@@ -22,7 +22,6 @@ import edu.utexas.tacc.tapis.notifications.utils.LibUtils;
 import edu.utexas.tacc.tapis.notifications.model.Delivery;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 
-
 /*
  * Notifications Dispatch Service.
  *   The dispatch service handles processing of notification events
@@ -39,15 +38,16 @@ public class DispatchService
   // Logging
   private static final Logger log = LoggerFactory.getLogger(DispatchService.class);
 
+  // When shutting down background processes give them 5 seconds to finish
   private static final int SHUTDOWN_TIMEOUT_MS = 5000;
 
   // Number of buckets for grouping events for processing
+  // Use a prime number since this should improve hash performance
   // Leave hard-coded, changing would cause trouble for re-starts and recovery
   //  - would need to quiesce and clean out queue.
   //  - e.g., reducing number could lead to orphan entries
   //          increasing number could lead to events moving from one bucket to another which would break recovery
-//  public static final int NUM_BUCKETS = 23;
-  public static final int NUM_BUCKETS = 2;
+  public static final int NUM_BUCKETS = 23;
 
   // Default number of workers per bucket for handling notification delivery. Can be changed via runtime parameter.
   public static final int DEFAULT_NUM_DELIVERY_WORKERS = 5;

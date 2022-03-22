@@ -1,25 +1,12 @@
 package edu.utexas.tacc.tapis.notifications.service;
 
 
-//import com.rabbitmq.client.AMQP;
-//import com.rabbitmq.client.ConnectionFactory;
-//import com.rabbitmq.client.Delivery;
-import edu.utexas.tacc.tapis.notifications.model.Event;
-import edu.utexas.tacc.tapis.notifications.model.TestSequence;
+import javax.ws.rs.NotAuthorizedException;
+import javax.ws.rs.NotFoundException;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.List;
 import org.jvnet.hk2.annotations.Contract;
-//import reactor.core.publisher.Flux;
-//import reactor.core.publisher.Mono;
-//import reactor.core.scheduler.Schedulers;
-//import reactor.rabbitmq.AcknowledgableDelivery;
-//import reactor.rabbitmq.ConsumeOptions;
-//import reactor.rabbitmq.OutboundMessage;
-//import reactor.rabbitmq.OutboundMessageResult;
-//import reactor.rabbitmq.QueueSpecification;
-//import reactor.rabbitmq.RabbitFlux;
-//import reactor.rabbitmq.Receiver;
-//import reactor.rabbitmq.ReceiverOptions;
-//import reactor.rabbitmq.Sender;
-//import reactor.rabbitmq.SenderOptions;
 
 import edu.utexas.tacc.tapis.client.shared.exceptions.TapisClientException;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
@@ -27,13 +14,8 @@ import edu.utexas.tacc.tapis.shared.threadlocal.OrderBy;
 import edu.utexas.tacc.tapis.sharedapi.security.ResourceRequestUser;
 import edu.utexas.tacc.tapis.notifications.model.PatchSubscription;
 import edu.utexas.tacc.tapis.notifications.model.Subscription;
-//import edu.utexas.tacc.tapis.notifications.model.Subscription.Permission;
-
-import javax.ws.rs.NotAuthorizedException;
-import javax.ws.rs.NotFoundException;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.List;
+import edu.utexas.tacc.tapis.notifications.model.Event;
+import edu.utexas.tacc.tapis.notifications.model.TestSequence;
 
 /*
  * Interface for Subscriptions Service
