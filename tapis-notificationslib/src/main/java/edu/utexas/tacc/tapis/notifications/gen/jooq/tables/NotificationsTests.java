@@ -20,7 +20,7 @@ import org.jooq.ForeignKey;
 import org.jooq.Identity;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row8;
+import org.jooq.Row9;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -76,6 +76,11 @@ public class NotificationsTests extends TableImpl<NotificationsTestsRecord> {
      * The column <code>tapis_ntf.notifications_tests.owner</code>.
      */
     public final TableField<NotificationsTestsRecord, String> OWNER = createField(DSL.name("owner"), SQLDataType.CLOB.nullable(false), this, "");
+
+    /**
+     * The column <code>tapis_ntf.notifications_tests.event_count</code>.
+     */
+    public final TableField<NotificationsTestsRecord, Integer> EVENT_COUNT = createField(DSL.name("event_count"), SQLDataType.INTEGER.nullable(false).defaultValue(DSL.field("0", SQLDataType.INTEGER)), this, "");
 
     /**
      * The column <code>tapis_ntf.notifications_tests.events</code>.
@@ -186,11 +191,11 @@ public class NotificationsTests extends TableImpl<NotificationsTestsRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row8 type methods
+    // Row9 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row8<Integer, Integer, String, String, String, JsonElement, LocalDateTime, LocalDateTime> fieldsRow() {
-        return (Row8) super.fieldsRow();
+    public Row9<Integer, Integer, String, String, String, Integer, JsonElement, LocalDateTime, LocalDateTime> fieldsRow() {
+        return (Row9) super.fieldsRow();
     }
 }

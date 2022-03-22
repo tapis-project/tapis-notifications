@@ -143,6 +143,7 @@ CREATE TABLE notifications_tests
     tenant TEXT NOT NULL,
     subscr_id TEXT NOT NULL,
     owner  TEXT NOT NULL,
+    event_count INTEGER NOT NULL DEFAULT 0,
     events JSONB NOT NULL,
     created TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),
     updated TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc')

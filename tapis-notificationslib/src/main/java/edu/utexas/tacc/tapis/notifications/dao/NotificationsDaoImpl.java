@@ -450,7 +450,8 @@ public class NotificationsDaoImpl implements NotificationsDao
       db.update(SUBSCRIPTIONS)
               .set(SUBSCRIPTIONS.ENABLED, enabled)
               .set(SUBSCRIPTIONS.UPDATED, TapisUtils.getUTCTimeNow())
-              .where(SUBSCRIPTIONS.TENANT.eq(tenantId),SUBSCRIPTIONS.ID.eq(id)).execute();
+              .where(SUBSCRIPTIONS.TENANT.eq(tenantId),SUBSCRIPTIONS.ID.eq(id))
+              .execute();
       // Persist update record
       String updateJsonStr = "{\"enabled\":" +  enabled + "}";
       addUpdate(db, rUser, tenantId, id, INVALID_SEQ_ID, subscriptionOp, updateJsonStr , null,
@@ -493,7 +494,8 @@ public class NotificationsDaoImpl implements NotificationsDao
       db.update(SUBSCRIPTIONS)
               .set(SUBSCRIPTIONS.OWNER, newOwnerName)
               .set(SUBSCRIPTIONS.UPDATED, TapisUtils.getUTCTimeNow())
-              .where(SUBSCRIPTIONS.TENANT.eq(tenantId),SUBSCRIPTIONS.ID.eq(id)).execute();
+              .where(SUBSCRIPTIONS.TENANT.eq(tenantId),SUBSCRIPTIONS.ID.eq(id))
+              .execute();
       // Persist update record
       String updateJsonStr = TapisGsonUtils.getGson().toJson(newOwnerName);
       addUpdate(db, rUser, tenantId, id, INVALID_SEQ_ID, SubscriptionOperation.changeOwner, updateJsonStr , null,
@@ -539,7 +541,8 @@ public class NotificationsDaoImpl implements NotificationsDao
               .set(SUBSCRIPTIONS.TTL, newTTL)
               .set(SUBSCRIPTIONS.EXPIRY, expiry)
               .set(SUBSCRIPTIONS.UPDATED, TapisUtils.getUTCTimeNow())
-              .where(SUBSCRIPTIONS.TENANT.eq(tenantId),SUBSCRIPTIONS.ID.eq(id)).execute();
+              .where(SUBSCRIPTIONS.TENANT.eq(tenantId),SUBSCRIPTIONS.ID.eq(id))
+              .execute();
       // Persist update record
       String updateJsonStr = "{\"ttl\":" +  newTTL + ", \"expiry\":\"" + expiry + "\"}";
       addUpdate(db, rUser, tenantId, id, INVALID_SEQ_ID, SubscriptionOperation.updateTTL, updateJsonStr , null,
@@ -1271,7 +1274,8 @@ public class NotificationsDaoImpl implements NotificationsDao
       db.update(NOTIFICATIONS_LAST_EVENT)
               .set(NOTIFICATIONS_LAST_EVENT.EVENT_UUID, event.getUuid())
               .set(NOTIFICATIONS_LAST_EVENT.BUCKET_NUMBER, bucketNum)
-              .where(NOTIFICATIONS_LAST_EVENT.BUCKET_NUMBER.eq(bucketNum)).execute();
+              .where(NOTIFICATIONS_LAST_EVENT.BUCKET_NUMBER.eq(bucketNum))
+              .execute();
 
       // Close out and commit
       LibUtils.closeAndCommitDB(conn, null, null);
@@ -1422,6 +1426,7 @@ public class NotificationsDaoImpl implements NotificationsDao
               .set(NOTIFICATIONS_TESTS.TENANT, tenantId)
               .set(NOTIFICATIONS_TESTS.SUBSCR_ID, subscrId)
               .set(NOTIFICATIONS_TESTS.OWNER, apiUser)
+              .set(NOTIFICATIONS_TESTS.EVENT_COUNT, 0)
               .set(NOTIFICATIONS_TESTS.EVENTS, eventsJson)
               .returningResult(NOTIFICATIONS_TESTS.SEQ_ID)
               .fetchOne();
@@ -1519,9 +1524,11 @@ public class NotificationsDaoImpl implements NotificationsDao
       eventsJson = TapisGsonUtils.getGson().toJsonTree(newEvents);
       // Make the update
       db.update(NOTIFICATIONS_TESTS)
+              .set(NOTIFICATIONS_TESTS.EVENT_COUNT, newEvents.size())
               .set(NOTIFICATIONS_TESTS.EVENTS, eventsJson)
               .set(NOTIFICATIONS_TESTS.UPDATED, TapisUtils.getUTCTimeNow())
-              .where(NOTIFICATIONS_TESTS.TENANT.eq(tenantId),NOTIFICATIONS_TESTS.SUBSCR_ID.eq(subscrId)).execute();
+              .where(NOTIFICATIONS_TESTS.TENANT.eq(tenantId),NOTIFICATIONS_TESTS.SUBSCR_ID.eq(subscrId))
+              .execute();
       // Close out and commit
       LibUtils.closeAndCommitDB(conn, null, null);
     }
@@ -2103,7 +2110,8 @@ public class NotificationsDaoImpl implements NotificationsDao
     JsonElement eventsJson = r.get(NOTIFICATIONS_TESTS.EVENTS);
     List<Event> events = Arrays.asList(TapisGsonUtils.getGson().fromJson(eventsJson, Event[].class));
     testSequence = new TestSequence(seqId, r.get(NOTIFICATIONS_TESTS.TENANT), r.get(NOTIFICATIONS_TESTS.OWNER),
-                                    r.get(NOTIFICATIONS_TESTS.SUBSCR_ID), events, created, updated);
+                                    r.get(NOTIFICATIONS_TESTS.SUBSCR_ID), r.get(NOTIFICATIONS_TESTS.EVENT_COUNT),
+                                    events, created, updated);
     return testSequence;
   }
 }

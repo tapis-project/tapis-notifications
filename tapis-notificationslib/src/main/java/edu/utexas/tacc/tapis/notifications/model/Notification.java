@@ -18,9 +18,9 @@ import java.util.UUID;
  */
 public final class Notification
 {
-  private int seqId;           // Unique database sequence number
-  private String tenant;
-  private UUID eventUuid;
+  private final int seqId;     // Unique database sequence number
+  private final String tenant;
+  private final UUID eventUuid;
 
   // What and how to deliver the notification to the recipient
   private final Event event; // The event being delivered
@@ -31,16 +31,6 @@ public final class Notification
   private final int bucketNum; // Bucket/DeliverWorker to which it has been assigned
   private final Instant created; // UTC time for when record was created
 
-//  public Notification(Event event1, DeliveryMethod deliveryMethod1, Subscription subscription1, int bucketNum1,
-//                      Instant created1)
-//  {
-//    event = event1;
-//    deliveryMethod = deliveryMethod1;
-//    subscription = subscription1;
-//    bucketNum = bucketNum1;
-//    created = created1;
-//  }
-//
   /**
    * Constructor for jOOQ with input parameter matching order of columns in DB
    * Also useful for testing

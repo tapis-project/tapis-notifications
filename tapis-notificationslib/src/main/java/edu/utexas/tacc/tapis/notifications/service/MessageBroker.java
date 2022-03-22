@@ -41,7 +41,7 @@ import static edu.utexas.tacc.tapis.notifications.service.DispatchService.NUM_BU
 
 /*
  * Singleton class to provide message broker services:
- *  - initialize create connections and channels.
+ *  - initialize connections and channels.
  *  - initialize exchanges and queues.
  *  - publish an event to a queue
  *  - read an event from a queue
@@ -156,6 +156,7 @@ public final class MessageBroker
    */
   public void shutDown(int timeoutMs)
   {
+    log.info(LibUtils.getMsg("NTFLIB_MSGBRKR_CONN_CLOSE", timeoutMs));
     // Close channel
     if (mbChannel != null)
     {
@@ -400,11 +401,12 @@ public final class MessageBroker
   /*
    * Compute a bucket number from 0 to NUM_BUCKETS-1
    *   based on hash of event source, subject and seriesId
+   * NOTE that we clear the top 4 bits of the hash so we always have a positive integer
    */
   private static int computeBucketNumber(Event event)
   {
     Object[] hashObjects = {event.getSource(), event.getSubject(), event.getSeriesId()};
-    int hash = Arrays.hashCode(hashObjects);
+    int hash = (Arrays.hashCode(hashObjects) & 0xfffffff);
     return hash % NUM_BUCKETS;
   }
 }
