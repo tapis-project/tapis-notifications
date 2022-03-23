@@ -250,7 +250,7 @@ public final class DeliveryBucketManager implements Callable<String>
       if (deliveryMethods == null || deliveryMethods.isEmpty()) continue;
       for (DeliveryMethod dm : deliveryMethods)
       {
-        notifList.add(new Notification(-1, s.getSeqId(), tenant, bucketNum, eventUuid, event, dm, null));
+        notifList.add(new Notification(null, s.getSeqId(), tenant, bucketNum, eventUuid, event, dm, null));
       }
     }
     dao.persistNotificationsForEvent(event.getTenant(), event, bucketNum, notifList);
@@ -267,7 +267,7 @@ public final class DeliveryBucketManager implements Callable<String>
     for (Notification notification : notifications)
     {
       log.debug(LibUtils.getMsg("NTFLIB_DSP_BUCKET_DLVRY1", bucketNum, event.getUuid(), notification.getDeliveryMethod()));
-      Future<Notification> future = deliveryTaskExecService.submit(new DeliveryTask(dao, notification));
+      Future<Notification> future = deliveryTaskExecService.submit(new DeliveryTask(dao, event.getTenant(), notification));
       deliveryTaskFutures.add(future);
       deliveryTaskReturns.put(future, null);
     }

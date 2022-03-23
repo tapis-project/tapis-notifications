@@ -5,7 +5,6 @@ package edu.utexas.tacc.tapis.notifications.gen.jooq;
 
 
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.FlywaySchemaHistory;
-import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.Subscriptions;
 
 import org.jooq.Index;
 import org.jooq.OrderField;
@@ -24,5 +23,4 @@ public class Indexes {
     // -------------------------------------------------------------------------
 
     public static final Index FLYWAY_SCHEMA_HISTORY_S_IDX = Internal.createIndex(DSL.name("flyway_schema_history_s_idx"), FlywaySchemaHistory.FLYWAY_SCHEMA_HISTORY, new OrderField[] { FlywaySchemaHistory.FLYWAY_SCHEMA_HISTORY.SUCCESS }, false);
-    public static final Index SUBSCRIPTIONS_TENANT_ID_IDX = Internal.createIndex(DSL.name("subscriptions_tenant_id_idx"), Subscriptions.SUBSCRIPTIONS, new OrderField[] { Subscriptions.SUBSCRIPTIONS.TENANT, Subscriptions.SUBSCRIPTIONS.ID }, false);
 }

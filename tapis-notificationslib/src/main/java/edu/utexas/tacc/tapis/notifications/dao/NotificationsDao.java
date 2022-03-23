@@ -84,7 +84,7 @@ public interface NotificationsDao
 
 //  boolean createNotification(Notification notification) throws TapisException;
 
-//  int deleteNotification(Notification notification) throws TapisException;
+  int deleteNotification(String tenant, Notification notification) throws TapisException;
 
   // -----------------------------------------------------------------------
   // --------------------- Test Sequences ----------------------------------

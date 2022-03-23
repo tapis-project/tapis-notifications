@@ -16,16 +16,6 @@ import org.jooq.impl.SQLDataType;
 public class Sequences {
 
     /**
-     * The sequence <code>tapis_ntf.notifications_recovery_seq_id_seq</code>
-     */
-    public static final Sequence<Integer> NOTIFICATIONS_RECOVERY_SEQ_ID_SEQ = Internal.createSequence("notifications_recovery_seq_id_seq", TapisNtf.TAPIS_NTF, SQLDataType.INTEGER.nullable(false), null, null, null, null, false, null);
-
-    /**
-     * The sequence <code>tapis_ntf.notifications_seq_id_seq</code>
-     */
-    public static final Sequence<Integer> NOTIFICATIONS_SEQ_ID_SEQ = Internal.createSequence("notifications_seq_id_seq", TapisNtf.TAPIS_NTF, SQLDataType.INTEGER.nullable(false), null, null, null, null, false, null);
-
-    /**
      * The sequence <code>tapis_ntf.notifications_tests_seq_id_seq</code>
      */
     public static final Sequence<Integer> NOTIFICATIONS_TESTS_SEQ_ID_SEQ = Internal.createSequence("notifications_tests_seq_id_seq", TapisNtf.TAPIS_NTF, SQLDataType.INTEGER.nullable(false), null, null, null, null, false, null);

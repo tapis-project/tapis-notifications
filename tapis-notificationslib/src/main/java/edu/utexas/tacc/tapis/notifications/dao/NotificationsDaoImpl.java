@@ -591,7 +591,6 @@ public class NotificationsDaoImpl implements NotificationsDao
     return 1;
   }
 
-
   /**
    * checkForSubscription
    * @param id - subscription name
@@ -1246,12 +1245,13 @@ public class NotificationsDaoImpl implements NotificationsDao
 
       // Create template for inserts
       BatchBindStep batch = db.batch(db.insertInto(NOTIFICATIONS,
+              NOTIFICATIONS.UUID,
               NOTIFICATIONS.SUBSCR_SEQ_ID,
               NOTIFICATIONS.TENANT,
               NOTIFICATIONS.BUCKET_NUMBER,
               NOTIFICATIONS.EVENT_UUID,
               NOTIFICATIONS.EVENT,
-              NOTIFICATIONS.DELIVERY_METHOD).values((Integer) null, null, null, null, null, null));
+              NOTIFICATIONS.DELIVERY_METHOD).values((UUID) null, null, null, null, null, null, null));
 
       // Put together all the records we will be inserting.
       for (Notification n : notifications)
@@ -1261,8 +1261,7 @@ public class NotificationsDaoImpl implements NotificationsDao
         JsonElement deliveryMethodJson = EMPTY_JSON_ELEM;
         if (dm != null) deliveryMethodJson = TapisGsonUtils.getGson().toJsonTree(dm);
 
-        int subSeqId = n.getSubscrSeqId();
-        batch.bind(subSeqId, tenant, bucketNum, eventUUID, eventJson, deliveryMethodJson);
+        batch.bind(n.getUuid(), n.getSubscrSeqId(), tenant, bucketNum, eventUUID, eventJson, deliveryMethodJson);
       }
 
       // Now execute the final batch statement
@@ -1294,14 +1293,14 @@ public class NotificationsDaoImpl implements NotificationsDao
   /**
    * Retrieve all Notifications associated with an Event and bucket
    *
-   * @param tenantId - tenant name
+   * @param tenant - tenant name
    * @param event - Event associated with the notifications
    * @param bucketNum - Bucket associated with the notifications
    * @return - list of Notification objects
    * @throws TapisException - on error
    */
   @Override
-  public List<Notification> getNotificationsForEvent(String tenantId, Event event, int bucketNum)
+  public List<Notification> getNotificationsForEvent(String tenant, Event event, int bucketNum)
           throws TapisException
   {
     // The result list should always be non-null.
@@ -1316,7 +1315,7 @@ public class NotificationsDaoImpl implements NotificationsDao
       DSLContext db = DSL.using(conn);
 
       Result<NotificationsRecord> results = db.selectFrom(NOTIFICATIONS)
-                       .where(NOTIFICATIONS.TENANT.eq(tenantId),
+                       .where(NOTIFICATIONS.TENANT.eq(tenant),
                               NOTIFICATIONS.BUCKET_NUMBER.eq(bucketNum),
                               NOTIFICATIONS.EVENT_UUID.eq(event.getUuid())).fetch();
 
@@ -1379,7 +1378,42 @@ public class NotificationsDaoImpl implements NotificationsDao
     return result;
   }
 
-  // -----------------------------------------------------------------------
+  /**
+   * Delete a notification
+   */
+  @Override
+  public int deleteNotification(String tenant, Notification notification) throws TapisException
+  {
+    String opName = "deleteNotification";
+    // ------------------------- Check Input -------------------------
+    if (StringUtils.isBlank(tenant)) LibUtils.logAndThrowNullParmException(opName, "tenant");
+    if (notification == null) LibUtils.logAndThrowNullParmException(opName, "notification");
+
+    // ------------------------- Call SQL ----------------------------
+    Connection conn = null;
+    try
+    {
+      conn = getConnection();
+      DSLContext db = DSL.using(conn);
+      // TODO/TBD how to delete the single notification? below is probably not unique and here we do not have seq_id
+      //    not unique, might have multiple delivery methods for same (tenant, event, bucket, subscr)
+      db.deleteFrom(NOTIFICATIONS)
+               .where(NOTIFICATIONS.TENANT.eq(tenant), NOTIFICATIONS.UUID.eq(notification.getUuid()))
+              .execute();
+      LibUtils.closeAndCommitDB(conn, null, null);
+    }
+    catch (Exception e)
+    {
+      LibUtils.rollbackDB(conn, e,"DB_DELETE_FAILURE", "subscriptions");
+    }
+    finally
+    {
+      LibUtils.finalCloseDB(conn);
+    }
+    return 1;
+  }
+
+// -----------------------------------------------------------------------
   // ------------------------- Test Sequences ------------------------------
   // -----------------------------------------------------------------------
 
@@ -2056,7 +2090,7 @@ public class NotificationsDaoImpl implements NotificationsDao
     JsonElement dmJson = r.get(NOTIFICATIONS.DELIVERY_METHOD);
     DeliveryMethod dm = TapisGsonUtils.getGson().fromJson(dmJson, DeliveryMethod.class);
 
-    ntf = new Notification(r.get(NOTIFICATIONS.SEQ_ID), r.get(NOTIFICATIONS.SUBSCR_SEQ_ID), r.get(NOTIFICATIONS.TENANT),
+    ntf = new Notification(r.get(NOTIFICATIONS.UUID), r.get(NOTIFICATIONS.SUBSCR_SEQ_ID), r.get(NOTIFICATIONS.TENANT),
                            r.get(NOTIFICATIONS.BUCKET_NUMBER), r.get(NOTIFICATIONS.EVENT_UUID), event, dm, created);
     return ntf;
   }

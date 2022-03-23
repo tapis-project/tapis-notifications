@@ -199,7 +199,7 @@ public final class IntegrationUtils
       String suffix = key + "_" + iStr;
       String dmAddress = suffix + ".fake.person@example.com";
       DeliveryMethod dm = new DeliveryMethod(DeliveryType.EMAIL, dmAddress);
-      Notification ntf = new Notification(-1, subSeqId, tenantName, bucketNum1, eventUuid, event1, dm, createdNull);
+      Notification ntf = new Notification(null, subSeqId, tenantName, bucketNum1, eventUuid, event1, dm, createdNull);
       notifications.add(ntf);
     }
     return notifications;

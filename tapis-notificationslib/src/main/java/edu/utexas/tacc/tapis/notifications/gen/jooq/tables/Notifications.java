@@ -14,11 +14,9 @@ import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.Notifications
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
-import org.jooq.Identity;
 import org.jooq.Name;
 import org.jooq.Record;
 import org.jooq.Row8;
@@ -54,9 +52,9 @@ public class Notifications extends TableImpl<NotificationsRecord> {
     }
 
     /**
-     * The column <code>tapis_ntf.notifications.seq_id</code>.
+     * The column <code>tapis_ntf.notifications.uuid</code>.
      */
-    public final TableField<NotificationsRecord, Integer> SEQ_ID = createField(DSL.name("seq_id"), SQLDataType.INTEGER.nullable(false).identity(true), this, "");
+    public final TableField<NotificationsRecord, java.util.UUID> UUID = createField(DSL.name("uuid"), SQLDataType.UUID.nullable(false), this, "");
 
     /**
      * The column <code>tapis_ntf.notifications.subscr_seq_id</code>.
@@ -76,7 +74,7 @@ public class Notifications extends TableImpl<NotificationsRecord> {
     /**
      * The column <code>tapis_ntf.notifications.event_uuid</code>.
      */
-    public final TableField<NotificationsRecord, UUID> EVENT_UUID = createField(DSL.name("event_uuid"), SQLDataType.UUID.nullable(false), this, "");
+    public final TableField<NotificationsRecord, java.util.UUID> EVENT_UUID = createField(DSL.name("event_uuid"), SQLDataType.UUID.nullable(false), this, "");
 
     /**
      * The column <code>tapis_ntf.notifications.event</code>.
@@ -129,11 +127,6 @@ public class Notifications extends TableImpl<NotificationsRecord> {
     @Override
     public Schema getSchema() {
         return TapisNtf.TAPIS_NTF;
-    }
-
-    @Override
-    public Identity<NotificationsRecord, Integer> getIdentity() {
-        return (Identity<NotificationsRecord, Integer>) super.getIdentity();
     }
 
     @Override
@@ -191,7 +184,7 @@ public class Notifications extends TableImpl<NotificationsRecord> {
     // -------------------------------------------------------------------------
 
     @Override
-    public Row8<Integer, Integer, String, Integer, UUID, JsonElement, JsonElement, LocalDateTime> fieldsRow() {
+    public Row8<java.util.UUID, Integer, String, Integer, java.util.UUID, JsonElement, JsonElement, LocalDateTime> fieldsRow() {
         return (Row8) super.fieldsRow();
     }
 }

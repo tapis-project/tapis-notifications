@@ -1,8 +1,9 @@
 package edu.utexas.tacc.tapis.notifications.service;
 
+import edu.utexas.tacc.tapis.notifications.utils.LibUtils;
+import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import okhttp3.Call;
 import okhttp3.MediaType;
-import okhttp3.OkHttp;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -10,18 +11,8 @@ import okhttp3.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpRequest.BodyPublisher;
-import java.net.http.HttpRequest.BodyPublishers;
-import java.net.http.HttpResponse;
-import java.net.http.HttpResponse.BodyHandlers;
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.concurrent.Callable;
 import javax.ws.rs.core.Response.Status;
 
@@ -49,12 +40,9 @@ public final class DeliveryTask implements Callable<Notification>
   /*                                 Fields                                 */
   /* ********************************************************************** */
 
-  // Use HK2 to inject singletons TODO/TBD: can we inject it this way?
-  @Inject
   private NotificationsDao dao;
 
-  private final HttpClient httpClient = HttpClient.newHttpClient();
-
+  private final String tenant;
   private final Notification notification; // The notification to be processed
   private final int bucketNum; // Bucket that generated the notification
   private final DeliveryMethod deliveryMethod;
@@ -63,9 +51,10 @@ public final class DeliveryTask implements Callable<Notification>
   /*                             Constructors                               */
   /* ********************************************************************** */
 
-  DeliveryTask(NotificationsDao dao1, Notification n1)
+  DeliveryTask(NotificationsDao dao1, String tenant1, Notification n1)
   {
     dao = dao1;
+    tenant = tenant1;
     notification = n1;
     bucketNum = n1.getBucketNum();
     deliveryMethod = n1.getDeliveryMethod();
@@ -79,14 +68,14 @@ public final class DeliveryTask implements Callable<Notification>
    * Main method for thread.start
    */
   @Override
-  public Notification call()
+  public Notification call() throws TapisException
   {
-    log.info("**** Starting Delivery task");
-    Thread.currentThread().setName("ThreadDelivery-bucket-"+ bucketNum + "-deliveryAddr-" + deliveryMethod.getDeliveryAddress());
-    log.info("ThreadId: {} ThreadName: {}", Thread.currentThread().getId(), Thread.currentThread().getName());
+    Thread.currentThread().setName("ThreadDelivery-bucket-"+ bucketNum + "-method-" + deliveryMethod);
+    log.debug(LibUtils.getMsg("NTFLIB_DSP_DLVRY_START", bucketNum, Thread.currentThread().getId(), Thread.currentThread().getName()));
+
 
     boolean delivered = false;
-    log.info("**** Delivery task first attempt");
+    log.debug(LibUtils.getMsg("NTFLIB_DSP_DLVRY_1", bucketNum, deliveryMethod));
     try
     {
       delivered = deliverNotification();
@@ -102,16 +91,16 @@ public final class DeliveryTask implements Callable<Notification>
       // First attempt succeeded
       // TODO: What if we crash before removing notification?
       //       and what if dao call throws exception?
-//      dao.deleteNotification(notification);
+//      dao.deleteNotification(tenant, notification);
       return notification;
     }
 
     // Pause and then try one more time
-    try {log.info("Sleep 15 seconds"); Thread.sleep(15000); } catch (InterruptedException e) {}
-    log.info("**** First delivery attempt failed. Delivery task second attempt");
+    try {log.debug("Sleep 15 seconds"); Thread.sleep(15000); } catch (InterruptedException e) {}
+    log.debug(LibUtils.getMsg("NTFLIB_DSP_DLVRY_2", bucketNum, deliveryMethod));
     try
     {
-      deliverNotification();
+      delivered = deliverNotification();
     }
     catch (Exception e)
     {
@@ -119,12 +108,15 @@ public final class DeliveryTask implements Callable<Notification>
       log.warn("Second delivery attempt failed. Caught exception: " + e.getMessage(), e);
       return null;
     }
-
-    // Second attempt succeeded
-    // TODO: What if we crash before removing notification?
-    //       and what if dao call throws exception? return false? re-throw?
-//      dao.deleteNotification(notification);
-    return notification;
+    if (delivered)
+    {
+      // Second attempt succeeded
+      // TODO: What if we crash before removing notification?
+      //       and what if dao call throws exception?
+//      dao.deleteNotification(tenant, notification);
+      return notification;
+    }
+    return null;
   }
 
   /* ********************************************************************** */

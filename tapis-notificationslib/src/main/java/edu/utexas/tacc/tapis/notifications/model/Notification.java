@@ -5,6 +5,7 @@ import java.util.UUID;
 
 /*
  * A Notification is a notice to a subscriber that an event has occurred.
+ * Each persisted notification has a UUID that is used as the primary key in the DB.
  *
  * When an event is received it can result in 0 or more notifications since there may be 0 or more matching
  *   subscriptions and each subscription has 1 or more delivery methods.
@@ -18,7 +19,7 @@ import java.util.UUID;
  */
 public final class Notification
 {
-  private final int seqId;     // Unique database sequence number
+  private final UUID uuid; // Used as primary key in DB
   private final String tenant;
   private final UUID eventUuid;
 
@@ -33,12 +34,13 @@ public final class Notification
 
   /**
    * Constructor for jOOQ with input parameter matching order of columns in DB
-   * Also useful for testing
+   * Also useful for testing.
+   * If uuid provided is null then a uuid is generated.
    */
-  public Notification(int seqId1, int subscrSeqId1, String tenant1, int bucketNum1, UUID eventUuid1, Event event1,
+  public Notification(UUID uuid1, int subscrSeqId1, String tenant1, int bucketNum1, UUID eventUuid1, Event event1,
                       DeliveryMethod deliveryMethod1, Instant created1)
   {
-    seqId = seqId1;
+    uuid = (uuid1 != null) ? uuid1 : UUID.randomUUID();
     subscrSeqId = subscrSeqId1;
     tenant = tenant1;
     bucketNum = bucketNum1;
@@ -52,12 +54,13 @@ public final class Notification
   public DeliveryMethod getDeliveryMethod() { return deliveryMethod; }
   public int getSubscrSeqId() { return subscrSeqId; }
   public int getBucketNum() { return bucketNum; }
+  public UUID getUuid() { return uuid; }
   public Instant getCreated() { return created; }
 
   @Override
   public String toString()
   {
-    String msg = "SeqId: %d%nSubscrSeqId: %d%nTenant: %s%nbucketNum: %d%neventUuid: %s%nEvent %s%nDeliveryMethod: %s%nCreated: %s";
-    return msg.formatted(seqId, subscrSeqId, tenant, bucketNum, eventUuid, event, deliveryMethod, created);
+    String msg = "UUID: %s%nSubscrSeqId: %d%nTenant: %s%nbucketNum: %d%neventUuid: %s%nEvent %s%nDeliveryMethod: %s%nCreated: %s";
+    return msg.formatted(uuid, subscrSeqId, tenant, bucketNum, eventUuid, event, deliveryMethod, created);
   }
 }
