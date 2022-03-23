@@ -18,6 +18,8 @@ import javax.sql.DataSource;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.NotificationsLastEvent;
+import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.NotificationsLastEventRecord;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1222,7 +1224,7 @@ public class NotificationsDaoImpl implements NotificationsDao
    * @throws TapisException - on error
    */
   @Override
-  public boolean persistNotificationsForEvent(String tenant, Event event, int bucketNum, List<Notification> notifications)
+  public boolean persistNotificationsUpdateLastEvent(String tenant, Event event, int bucketNum, List<Notification> notifications)
           throws TapisException
   {
     String opName = "persistNotificationsForEvent";
@@ -1267,11 +1269,9 @@ public class NotificationsDaoImpl implements NotificationsDao
       // Now execute the final batch statement
       batch.execute();
 
-      // Update the last_event table
-      db.update(NOTIFICATIONS_LAST_EVENT)
-              .set(NOTIFICATIONS_LAST_EVENT.EVENT_UUID, event.getUuid())
-              .set(NOTIFICATIONS_LAST_EVENT.BUCKET_NUMBER, bucketNum)
-              .where(NOTIFICATIONS_LAST_EVENT.BUCKET_NUMBER.eq(bucketNum))
+      // Update/create row in last_event table
+      db.insertInto(NOTIFICATIONS_LAST_EVENT).values(bucketNum, eventUUID).onDuplicateKeyUpdate()
+              .set(NOTIFICATIONS_LAST_EVENT.EVENT_UUID, eventUUID)
               .execute();
 
       // Close out and commit
@@ -1379,6 +1379,47 @@ public class NotificationsDaoImpl implements NotificationsDao
   }
 
   /**
+   * getNotification
+   * @param tenantId tenant
+   * @param uuid - uuid of notification
+   * @return object if found, null if not found
+   * @throws TapisException - on error
+   */
+  @Override
+  public Notification getNotification(String tenantId, UUID uuid) throws TapisException
+  {
+    // Initialize result.
+    Notification result = null;
+
+    // ------------------------- Call SQL ----------------------------
+    Connection conn = null;
+    try
+    {
+      // Get a database connection.
+      conn = getConnection();
+      DSLContext db = DSL.using(conn);
+      NotificationsRecord r;
+      r = db.selectFrom(NOTIFICATIONS).where(NOTIFICATIONS.TENANT.eq(tenantId),NOTIFICATIONS.UUID.eq(uuid)).fetchOne();
+      if (r == null) return null;
+      else result = getNotificationFromRecord(r);
+
+      // Close out and commit
+      LibUtils.closeAndCommitDB(conn, null, null);
+    }
+    catch (Exception e)
+    {
+      // Rollback transaction and throw an exception
+      LibUtils.rollbackDB(conn, e,"NTFLIB_DB_SELECT_ERROR", "Notification", tenantId, uuid, e.getMessage());
+    }
+    finally
+    {
+      // Always return the connection back to the connection pool.
+      LibUtils.finalCloseDB(conn);
+    }
+    return result;
+  }
+
+  /**
    * Delete a notification
    */
   @Override
@@ -1395,11 +1436,9 @@ public class NotificationsDaoImpl implements NotificationsDao
     {
       conn = getConnection();
       DSLContext db = DSL.using(conn);
-      // TODO/TBD how to delete the single notification? below is probably not unique and here we do not have seq_id
-      //    not unique, might have multiple delivery methods for same (tenant, event, bucket, subscr)
       db.deleteFrom(NOTIFICATIONS)
-               .where(NOTIFICATIONS.TENANT.eq(tenant), NOTIFICATIONS.UUID.eq(notification.getUuid()))
-              .execute();
+            .where(NOTIFICATIONS.TENANT.eq(tenant), NOTIFICATIONS.UUID.eq(notification.getUuid()))
+            .execute();
       LibUtils.closeAndCommitDB(conn, null, null);
     }
     catch (Exception e)
@@ -1413,7 +1452,47 @@ public class NotificationsDaoImpl implements NotificationsDao
     return 1;
   }
 
-// -----------------------------------------------------------------------
+  /**
+   * Get UUID for last event processed by the bucket mananger
+   * @param bucketNum - bucket manager
+   * @return uuid
+   * @throws TapisException on error
+   */
+  public UUID getLastEventUUID(int bucketNum) throws TapisException
+  {
+    // Initialize result.
+    UUID result = null;
+
+    // ------------------------- Call SQL ----------------------------
+    Connection conn = null;
+    try
+    {
+      // Get a database connection.
+      conn = getConnection();
+      DSLContext db = DSL.using(conn);
+      NotificationsLastEventRecord r;
+      r = db.selectFrom(NOTIFICATIONS_LAST_EVENT).where(NOTIFICATIONS_LAST_EVENT.BUCKET_NUMBER.eq(bucketNum)).fetchOne();
+      if (r == null) return null;
+
+      result = r.get(NOTIFICATIONS_LAST_EVENT.EVENT_UUID);
+
+      // Close out and commit
+      LibUtils.closeAndCommitDB(conn, null, null);
+    }
+    catch (Exception e)
+    {
+      // Rollback transaction and throw an exception
+      LibUtils.rollbackDB(conn, e,"NTFLIB_DB_SELECT_ERROR", "Notifications_Last_Event", "N/A", result, e.getMessage());
+    }
+    finally
+    {
+      // Always return the connection back to the connection pool.
+      LibUtils.finalCloseDB(conn);
+    }
+    return result;
+  }
+
+  // -----------------------------------------------------------------------
   // ------------------------- Test Sequences ------------------------------
   // -----------------------------------------------------------------------
 

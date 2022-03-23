@@ -75,16 +75,18 @@ public interface NotificationsDao
   // -------------------- Notifications ------------------------------------
   // -----------------------------------------------------------------------
 
-  boolean persistNotificationsForEvent(String tenant, Event event, int bucketNum, List<Notification> notifications)
+  boolean persistNotificationsUpdateLastEvent(String tenant, Event event, int bucketNum, List<Notification> notifications)
           throws TapisException;
 
   List<Notification> getNotificationsForEvent(String tenant, Event event, int bucketNum) throws TapisException;
 
-  boolean checkForLastEvent(UUID eventUuid, int bucketNum) throws TapisException;
-
-//  boolean createNotification(Notification notification) throws TapisException;
+  Notification getNotification(String tenant, UUID uuid) throws TapisException;
 
   int deleteNotification(String tenant, Notification notification) throws TapisException;
+
+  UUID getLastEventUUID(int bucketNum) throws TapisException;
+
+  boolean checkForLastEvent(UUID eventUuid, int bucketNum) throws TapisException;
 
   // -----------------------------------------------------------------------
   // --------------------- Test Sequences ----------------------------------

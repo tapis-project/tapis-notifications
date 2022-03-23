@@ -117,7 +117,7 @@ public final class DeliveryBucketManager implements Callable<String>
     try
     {
       // RECOVERY Blocking call to get first event
-      // First event it may be a duplicate so handle it as a special case.
+      // First event may be a duplicate so handle it as a special case.
       // For first event received check for a duplicate. If already processed then simply ack it, else process it.
       delivery = deliveryBucketQueue.take();
       if (dao.checkForLastEvent(delivery.getEvent().getUuid(), bucketNum))
@@ -253,7 +253,7 @@ public final class DeliveryBucketManager implements Callable<String>
         notifList.add(new Notification(null, s.getSeqId(), tenant, bucketNum, eventUuid, event, dm, null));
       }
     }
-    dao.persistNotificationsForEvent(event.getTenant(), event, bucketNum, notifList);
+    dao.persistNotificationsUpdateLastEvent(event.getTenant(), event, bucketNum, notifList);
     log.debug(LibUtils.getMsg("NTFLIB_DSP_BUCKET_GEN_N2", bucketNum, event.getUuid(), notifList.size()));
     return notifList;
   }

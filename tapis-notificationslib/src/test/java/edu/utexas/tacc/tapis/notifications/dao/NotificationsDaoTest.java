@@ -7,6 +7,7 @@ import edu.utexas.tacc.tapis.shared.threadlocal.TapisThreadContext;
 import edu.utexas.tacc.tapis.sharedapi.security.AuthenticatedUser;
 import edu.utexas.tacc.tapis.sharedapi.security.ResourceRequestUser;
 import edu.utexas.tacc.tapis.notifications.IntegrationUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
@@ -19,6 +20,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.UUID;
 
 import edu.utexas.tacc.tapis.notifications.model.Subscription;
 
@@ -265,7 +267,7 @@ public class NotificationsDaoTest
 
   // Test create for a batch of notifications
   @Test
-  public void testPersistNotifications() throws Exception
+  public void testPersistNotificationsUpdateLastEvent() throws Exception
   {
     // Create a Subscription to be referenced by notifications
     Subscription sub0 = subscriptions[8];
@@ -278,7 +280,7 @@ public class NotificationsDaoTest
     var notifications = IntegrationUtils.makeNotifications(numNotifications, testKey, tmpSub.getSeqId());
 
     // Persist test notifications
-    boolean b = dao.persistNotificationsForEvent(tenantName, event1, bucketNum1, notifications);
+    boolean b = dao.persistNotificationsUpdateLastEvent(tenantName, event1, bucketNum1, notifications);
     Assert.assertTrue(b);
 
     // Check that they were persisted.
@@ -294,5 +296,29 @@ public class NotificationsDaoTest
       Assert.assertEquals(n.getDeliveryMethod().getDeliveryType(), dType);
       Assert.assertNotNull(n.getCreated());
     }
+
+    // Check that we can fetch one.
+    Notification ntf = tmpNotifications.get(0);
+    Notification tmpNtf = dao.getNotification(tenantName, ntf.getUuid());
+    Assert.assertNotNull(tmpNtf, "Notification not found");
+    Assert.assertEquals(tmpNtf.getBucketNum(), bucketNum1);
+    Assert.assertEquals(tmpNtf.getEvent().getUuid(), event1.getUuid());
+    Assert.assertEquals(tmpNtf.getSubscrSeqId(), tmpSub.getSeqId());
+    Assert.assertNotNull(tmpNtf.getDeliveryMethod());
+    Assert.assertFalse(StringUtils.isBlank(tmpNtf.getDeliveryMethod().getDeliveryAddress()));
+    Assert.assertNotNull(tmpNtf.getDeliveryMethod().getDeliveryType());
+    Assert.assertNotNull(tmpNtf.getCreated());
+
+    // Check that we can delete one.
+    ntf = tmpNotifications.get(0);
+    dao.deleteNotification(tenantName, ntf);
+    tmpNtf = dao.getNotification(tenantName, ntf.getUuid());
+    Assert.assertNull(tmpNtf, "Notification not deleted");
+
+    // Check that notifications_last_event table was updated.
+    UUID u = dao.getLastEventUUID(bucketNum1);
+    Assert.assertNotNull(u, "Last event not found");
+    Assert.assertEquals(u, event1.getUuid());
+
   }
 }
