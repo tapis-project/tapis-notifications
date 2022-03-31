@@ -1,6 +1,8 @@
 package edu.utexas.tacc.tapis.notifications.service;
 
 import java.io.IOException;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,6 +19,7 @@ import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
 import edu.utexas.tacc.tapis.notifications.model.DeliveryMethod;
 import edu.utexas.tacc.tapis.notifications.utils.LibUtils;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
+import edu.utexas.tacc.tapis.shared.utils.TapisUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -250,7 +253,8 @@ public final class DeliveryBucketManager implements Callable<String>
       if (deliveryMethods == null || deliveryMethods.isEmpty()) continue;
       for (DeliveryMethod dm : deliveryMethods)
       {
-        notifList.add(new Notification(null, s.getSeqId(), tenant, s.getId(), bucketNum, eventUuid, event, dm, null));
+        Instant created = TapisUtils.getUTCTimeNow().toInstant(ZoneOffset.UTC);
+        notifList.add(new Notification(null, s.getSeqId(), tenant, s.getId(), bucketNum, eventUuid, event, dm, created));
       }
     }
     dao.persistNotificationsUpdateLastEvent(event.getTenant(), event, bucketNum, notifList);

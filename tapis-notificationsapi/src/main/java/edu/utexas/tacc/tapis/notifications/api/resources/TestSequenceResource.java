@@ -3,6 +3,7 @@ package edu.utexas.tacc.tapis.notifications.api.resources;
 import com.google.gson.JsonSyntaxException;
 import edu.utexas.tacc.tapis.notifications.api.requests.ReqPostNotification;
 import edu.utexas.tacc.tapis.notifications.model.Notification;
+import edu.utexas.tacc.tapis.shared.utils.TapisUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.grizzly.http.server.Request;
@@ -30,6 +31,8 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 import edu.utexas.tacc.tapis.notifications.api.responses.RespTestSequence;
@@ -344,6 +347,29 @@ public class TestSequenceResource
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
 
+    String notifUuidStr = req.uuid;
+    String notifCreatedStr = req.created;
+
+    // Make sure the notification UUID in the request is valid
+    UUID notifUuid;
+    try { notifUuid = UUID.fromString(notifUuidStr); }
+    catch (Exception e)
+    {
+      msg = ApiUtils.getMsg("NTFAPI_TEST_NOTIF_UUID_ERR", subscriptionId, notifUuidStr, e.getMessage());
+      _log.error(msg);
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+    }
+
+    // Make sure the notification created timestamp is valid
+    Instant notifCreated;
+    try { notifCreated = TapisUtils.getUTCTimeFromString(notifCreatedStr).toInstant(ZoneOffset.UTC); }
+    catch (Exception e)
+    {
+      msg = ApiUtils.getMsg("NTFAPI_TEST_NOTIF_UUID_ERR", subscriptionId, notifUuidStr, e.getMessage());
+      _log.error(msg);
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+    }
+
     // Now that we have a valid request we can set the tenant and user associated with the event
     String tenant = req.event.tenant;
     String user = req.event.user;
@@ -352,7 +378,7 @@ public class TestSequenceResource
     String type = req.event.type;
     String seriesId = req.event.seriesId;
     String time = req.event.time;
-    String uuidStr = req.event.uuid;
+    String eventUuidStr = req.event.uuid;
 
     // Tenant and user should both have values
     if (StringUtils.isBlank(tenant) || StringUtils.isBlank(user))
@@ -369,12 +395,9 @@ public class TestSequenceResource
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
 
-    // Extract the source from the request making sure it is a URI
+    // Extract the event source from the request making sure it is a URI
     URI source;
-    try
-    {
-      source = new URI(sourceStr);
-    }
+    try { source = new URI(sourceStr); }
     catch (URISyntaxException e)
     {
       msg = ApiUtils.getMsg("NTFAPI_TEST_EVENT_SOURCE_ERR", tenant, user, sourceStr, type, subject, time, subscriptionId, e.getMessage());
@@ -382,24 +405,21 @@ public class TestSequenceResource
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
 
-    // Extract the UUID the request making sure it is a UUID
-    UUID uuid;
-    try
-    {
-      uuid = UUID.fromString(uuidStr);
-    }
+    // Extract the event UUID from the request making sure it is a UUID
+    UUID eventUuid;
+    try { eventUuid = UUID.fromString(eventUuidStr); }
     catch (Exception e)
     {
-      msg = ApiUtils.getMsg("NTFAPI_TEST_EVENT_UUID_ERR", tenant, user, sourceStr, type, subject, time, subscriptionId,
-                            uuidStr, e.getMessage());
+      msg = ApiUtils.getMsg("NTFAPI_TEST_EVENT_UUID_ERR", subscriptionId, eventUuidStr, e.getMessage());
       _log.error(msg);
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
 
     // Create an Event from the request
-    Event event = new Event(tenant, user, source, type, subject, seriesId, time, uuid);
+    Event event = new Event(tenant, user, source, type, subject, seriesId, time, eventUuid);
     // Create a notification from the request
-    Notification notification = new Notification(null, -1, tenant, subscriptionId, -1, uuid, event, req.deliveryMethod, null);
+    Notification notification = new Notification(notifUuid, -1, tenant, subscriptionId, -1, eventUuid, event,
+                                                 req.deliveryMethod, notifCreated);
 
     // ---------------------------- Make service call to record the event -------------------------------
     try

@@ -12,6 +12,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.concurrent.Callable;
 import javax.ws.rs.core.Response.Status;
 
+import edu.utexas.tacc.tapis.shared.utils.TapisGsonUtils;
 import okhttp3.Call;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -181,8 +182,8 @@ public final class DeliveryTask implements Callable<Notification>
    */
   private boolean deliverByWebhook() throws URISyntaxException, IOException, InterruptedException
   {
-    // Request body is the event as json
-    String eventJsonStr = notification.getEvent().toJsonString();
+    // Request body is the notification as json
+    String notifJsonStr = TapisGsonUtils.getGson().toJson(notification);
 
 //    //??????????????????
 //    // test GET - works
@@ -212,7 +213,7 @@ public final class DeliveryTask implements Callable<Notification>
 //    if (response.statusCode() == Status.OK.getStatusCode()) return true;
 
     OkHttpClient client = new OkHttpClient();
-    RequestBody body = RequestBody.create(eventJsonStr, MediaType.parse("application/json"));
+    RequestBody body = RequestBody.create(notifJsonStr, MediaType.parse("application/json"));
     Request.Builder requestBuilder = new Request.Builder().url(deliveryMethod.getDeliveryAddress()).post(body);
     Request request = requestBuilder.addHeader("User-Agent", "Tapis/%s".formatted(TapisConstants.API_VERSION)).build();
     Call call = client.newCall(request);

@@ -49,9 +49,10 @@ public final class Event
   private final String seriesId; // Optional Id for grouping events from same source.
   private final String time; // Timestamp of when the occurrence happened. RFC 3339 (ISO 8601)
   private final UUID uuid;
-  private String type1; // Field 1 of type (service name)
-  private String type2; // Field 2 of type (resource type)
-  private String type3; // Field 3 of type ( action or state)
+  // Mark as transient so Gson will not include it.
+  private transient String type1; // Field 1 of type (service name)
+  private transient String type2; // Field 2 of type (resource type)
+  private transient String type3; // Field 3 of type ( action or state)
 //  private final String datacontenttype; // Content type of data value. RFC 2046. E.g. application/xml, text/xml, etc.
 //  private final Object data; // Data associated with the event.
 //  private final String data_base64; // If data is binary it must be base64 encoded.
@@ -102,11 +103,6 @@ public final class Event
   {
     if (StringUtils.isBlank(t1)) return false;
     return EVENT_TYPE_PATTERN.matcher(t1).matches();
-  }
-
-  public String toJsonString()
-  {
-    return TapisGsonUtils.getGson().toJson(this);
   }
 
   @Override

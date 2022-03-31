@@ -5,7 +5,6 @@
 
   "type": "object",
   "required": [ "source", "type", "time" ],
-  "additionalProperties": false,
   "properties": {
     "source": { "type": "string", "format": "uri", "minLength": 1 },
     "type": { "type": "string", "minLength": 5 },

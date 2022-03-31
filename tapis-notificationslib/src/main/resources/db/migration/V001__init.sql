@@ -91,6 +91,7 @@ ALTER TABLE subscription_updates OWNER TO tapis_ntf;
 
 -- Notifications table
 -- In-flight notifications. A notification represents an event being delivered to a subscriber
+-- Note that event_uuid is needed to find all notifications associated with a specific event.
 CREATE TABLE notifications
 (
     uuid UUID PRIMARY KEY,

@@ -1253,7 +1253,8 @@ public class NotificationsDaoImpl implements NotificationsDao
               NOTIFICATIONS.BUCKET_NUMBER,
               NOTIFICATIONS.EVENT_UUID,
               NOTIFICATIONS.EVENT,
-              NOTIFICATIONS.DELIVERY_METHOD).values((UUID) null, null, null, null, null, null, null, null));
+              NOTIFICATIONS.CREATED,
+              NOTIFICATIONS.DELIVERY_METHOD).values((UUID) null, null, null, null, null, null, null, null, null));
 
       // Put together all the records we will be inserting.
       for (Notification n : notifications)
@@ -1263,8 +1264,9 @@ public class NotificationsDaoImpl implements NotificationsDao
         JsonElement deliveryMethodJson = EMPTY_JSON_ELEM;
         if (dm != null) deliveryMethodJson = TapisGsonUtils.getGson().toJsonTree(dm);
 
-        batch.bind(n.getUuid(), n.getSubscrSeqId(), tenant, n.getSubscrId(), bucketNum, eventUUID, eventJson,
-                   deliveryMethodJson);
+        // TODO/TBD do we need to convert from Instant to LocalDateTime
+        batch.bind(n.getUuid(), n.getSubscrSeqId(), tenant, n.getSubscriptionId(), bucketNum, eventUUID, eventJson,
+                   n.getCreated(), deliveryMethodJson);
       }
 
       // Now execute the final batch statement

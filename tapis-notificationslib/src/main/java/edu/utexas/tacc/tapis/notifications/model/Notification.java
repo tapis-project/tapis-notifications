@@ -1,6 +1,9 @@
 package edu.utexas.tacc.tapis.notifications.model;
 
+import edu.utexas.tacc.tapis.shared.utils.TapisUtils;
+
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 /*
@@ -21,8 +24,8 @@ public final class Notification
 {
   private final UUID uuid; // Used as primary key in DB
   private final String tenant;
-  private final String subscrId;
-  private final UUID eventUuid;
+  private final String subscriptionId;
+  private final UUID eventUuid; // Needed to find all notifications associated with a specific event.
 
   // What and how to deliver the notification to the recipient
   private final Event event; // The event being delivered
@@ -30,8 +33,9 @@ public final class Notification
   private final Instant created; // UTC time for when record was created
 
   // Attributes used to track in-flight notifications while delivery attempt is in progress.
-  private final int subscrSeqId; // Subscription associated with the notification.
-  private final int bucketNum; // Bucket/DeliverWorker to which it has been assigned
+  // Mark seqId and bucketNum as transient so Gson will not include it.
+  private transient final int subscrSeqId; // Subscription associated with the notification.
+  private transient final int bucketNum; // Bucket/DeliverWorker to which it has been assigned
 
   /**
    * Constructor for jOOQ with input parameter matching order of columns in DB
@@ -44,16 +48,16 @@ public final class Notification
     uuid = (uuid1 != null) ? uuid1 : UUID.randomUUID();
     subscrSeqId = subscrSeqId1;
     tenant = tenant1;
-    subscrId = subscrId1;
+    subscriptionId = subscrId1;
     bucketNum = bucketNum1;
     eventUuid = eventUuid1;
     event = event1;
     deliveryMethod = deliveryMethod1;
-    created = created1;
+    created = (created1 != null) ? created1 : TapisUtils.getUTCTimeNow().toInstant(ZoneOffset.UTC);
   }
 
   public String getTenant() { return tenant; }
-  public String getSubscrId() { return subscrId; }
+  public String getSubscriptionId() { return subscriptionId; }
   public Event getEvent() { return event; }
   public DeliveryMethod getDeliveryMethod() { return deliveryMethod; }
   public int getSubscrSeqId() { return subscrSeqId; }

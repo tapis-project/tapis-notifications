@@ -10,7 +10,7 @@ import java.util.UUID;
  */
 public final class ReqPostNotification
 {
-  public UUID uuid;
+  public String uuid;
   public String tenant;
   public String subscriptionId;
   public DeliveryMethod deliveryMethod;
