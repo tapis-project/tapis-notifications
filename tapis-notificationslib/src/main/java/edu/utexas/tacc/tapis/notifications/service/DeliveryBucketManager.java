@@ -1,6 +1,8 @@
 package edu.utexas.tacc.tapis.notifications.service;
 
 import java.io.IOException;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,7 +17,9 @@ import java.util.concurrent.Future;
 
 import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
 import edu.utexas.tacc.tapis.notifications.model.DeliveryMethod;
+import edu.utexas.tacc.tapis.notifications.utils.LibUtils;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
+import edu.utexas.tacc.tapis.shared.utils.TapisUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,11 +82,11 @@ public final class DeliveryBucketManager implements Callable<String>
     // Check for invalid parameters.
     if (deliveryBucketQueue1 == null)
     {
-      throw new IllegalArgumentException("deliveryBucketQueue was null for bucketNum: " + bucketNum1);
+      throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_DSP_BUCKETMGR_NULL",bucketNum1));
     }
     if (dao1 == null)
     {
-      throw new IllegalArgumentException("NotificationsDao was null for bucketNum: " + bucketNum1);
+      throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_DSP_BUCKETMGR_DAO_NULL", bucketNum1));
     }
     dao = dao1;
     bucketNum = bucketNum1;
@@ -102,9 +106,8 @@ public final class DeliveryBucketManager implements Callable<String>
   @Override
   public String call()
   {
-    log.info("**** Starting Delivery Bucket Manager for bucket: {}", bucketNum);
     Thread.currentThread().setName("Bucket-"+ bucketNum);
-    log.info("ThreadId: {} ThreadName: {}", Thread.currentThread().getId(), Thread.currentThread().getName());
+    log.info(LibUtils.getMsg("NTFLIB_DSP_BUCKET_START", bucketNum, Thread.currentThread().getId(), Thread.currentThread().getName()));
 
     // RECOVERY Start a thread to work on notifications associated with this bucket that are in recovery.
     startRecoveryTask();
@@ -117,11 +120,12 @@ public final class DeliveryBucketManager implements Callable<String>
     try
     {
       // RECOVERY Blocking call to get first event
+      // First event may be a duplicate so handle it as a special case.
       // For first event received check for a duplicate. If already processed then simply ack it, else process it.
       delivery = deliveryBucketQueue.take();
       if (dao.checkForLastEvent(delivery.getEvent().getUuid(), bucketNum))
       {
-        log.warn("Acking duplicate event {}", delivery.getEvent().getUuid());
+        log.warn(LibUtils.getMsg("NTFLIB_DSP_BUCKET_ACK_DUP", bucketNum, delivery.getEvent().getUuid()));
         MessageBroker.getInstance().ackMsg(delivery.getDeliveryTag());
       }
       else
@@ -139,24 +143,22 @@ public final class DeliveryBucketManager implements Callable<String>
     }
     catch (InterruptedException e)
     {
-      log.info("**** Delivery Bucket Manager interrupted. Bucket: {}", bucketNum);
+      log.info(LibUtils.getMsg("NTFLIB_DSP_BUCKET_INTRPT", bucketNum));
     }
     catch (IOException e)
     {
-      // TODO
-      log.warn("Caught IOException for bucket manager. Bucket: {} Exception: {}", bucketNum, e.getMessage());
+      log.warn(LibUtils.getMsg("NTFLIB_DSP_BUCKET_ERR1", bucketNum, e.getMessage()), e);
     }
     catch (TapisException e)
     {
-      // TODO
-      log.warn("Caught TapisException for bucket manager. Bucket: {} Exception: {}", bucketNum, e.getMessage());
+      log.warn(LibUtils.getMsg("NTFLIB_DSP_BUCKET_ERR2", bucketNum, e.getMessage()), e);
     }
     finally
     {
       stopRecoveryTask();
     }
 
-    log.info("Delivery Bucket Manager shutdown for bucket: {}", bucketNum);
+    log.info(LibUtils.getMsg("NTFLIB_DSP_BUCKET_STOP", bucketNum, Thread.currentThread().getId(), Thread.currentThread().getName()));
     return "shutdown";
   }
 
@@ -178,54 +180,104 @@ public final class DeliveryBucketManager implements Callable<String>
   {
     Event event = delivery.getEvent();
 
-    // TODO Clean up messages and sleeps
-    // TODO/TBD: refactor into separate calls to private methods
+//    try { log.info("Sleep 2 seconds"); Thread.sleep(2000); } catch (InterruptedException e) {}
 
-    log.info("Processing event. Bucket: {} DeliveryTag: {} Event: {}", bucketNum, delivery.getDeliveryTag(), event);
-    if (log.isTraceEnabled())
-    {
-      log.trace("Processing event. Bucket: {} DeliveryTag: {} Event: {}", bucketNum, delivery.getDeliveryTag(), event);
-    }
-    try { log.info("Sleep 2 seconds"); Thread.sleep(2000); } catch (InterruptedException e) {}
+    log.debug(LibUtils.getMsg("NTFLIB_DSP_BUCKET_EVENT", bucketNum, delivery.getDeliveryTag(), event));
 
     // Find matching subscriptions
-    log.info("Checking for subscriptions. Bucket: {} eventUUID: {}", bucketNum, event.getUuid());
-    try { log.info("Sleep 2 seconds"); Thread.sleep(2000); } catch (InterruptedException e) {}
-    List<Subscription> matchingSubscriptions = getMatchingSubscriptions(event);
-
-    log.info("Number of subscriptions found: {} eventUUID: {} ", matchingSubscriptions.size(), event.getUuid());
-    try { log.info("Sleep 2 seconds"); Thread.sleep(2000); } catch (InterruptedException e) {}
+    List<Subscription> matchingSubscriptions = dao.getSubscriptionsForEvent(event);
+    log.debug(LibUtils.getMsg("NTFLIB_DSP_BUCKET_SUBS", bucketNum, event.getUuid(), matchingSubscriptions.size()));
 
     // Generate and persist notifications based on subscriptions, update last_event table.
-    log.info("Creating and persisting notifications. Bucket: {} Event: {}", bucketNum, event.getUuid());
     List<Notification> notifications = createAndPersistNotifications(event, matchingSubscriptions);
-
-    log.info("Number of notifications generated. Bucket: {} Number: {} eventUUID: {} ", bucketNum, notifications.size(), event.getUuid());
-    try { log.info("Sleep 2 seconds"); Thread.sleep(2000); } catch (InterruptedException e) {}
 
     // RECOVERY NOTE: If we crash here, notifications will have been persisted but the event will not have been
     //    ack'd off the message queue. Hence, the check above in the call() method for a duplicate event.
 
     // All notifications for the event have been persisted, remove message from message broker queue
-    log.info("Acking event {}", event.getUuid());
-    try { log.info("Sleep 2 seconds"); Thread.sleep(2000); } catch (InterruptedException e) {}
+    log.debug(LibUtils.getMsg("NTFLIB_DSP_BUCKET_ACK_EVENT", bucketNum, event.getUuid()));
     MessageBroker.getInstance().ackMsg(delivery.getDeliveryTag());
 
-    // Deliver notifications using an ExecutorService.
-    log.info("Number of notifications found: {} for event: {}", notifications.size(), event.getUuid());
-    try { log.info("Sleep 2 seconds"); Thread.sleep(2000); } catch (InterruptedException e) {}
+    // Deliver notifications using an ExecutorService. Wait for delivery tasks to complete.
+    deliverNotifications(event, notifications);
+  }
+
+  /*
+   *  Check for and process an interrupted delivery
+   *  An abnormal shutdown may have left us in the middle of a delivery
+   *  TODO
+   */
+  private void proccessInterruptedDeliveries()
+  {
+    // TODO
+    log.info("TODO Bucket {}  Checking for interrupted deliveries.", bucketNum);
+  }
+
+  /*
+   * Start the thread for processing notifications in recovery
+   */
+  private void startRecoveryTask()
+  {
+    log.info(LibUtils.getMsg("NTFLIB_DSP_BUCKET_RCVRY_START", bucketNum));
+    recoveryTaskFuture = recoveryExecService.submit(new RecoveryTask(bucketNum, dao));
+  }
+
+  /*
+   * Stop the thread for processing notifications in recovery
+   */
+  public void stopRecoveryTask()
+  {
+    log.info(LibUtils.getMsg("NTFLIB_DSP_BUCKET_RCVRY_STOP", bucketNum));
+    if (recoveryTaskFuture != null)  recoveryTaskFuture.cancel(mayInterruptIfRunning);
+  }
+
+  /*
+   * Create and persist notifications given an event and a list of matching subscriptions
+   * Also update the last_event table as part of the transaction.
+   */
+  private List<Notification> createAndPersistNotifications(Event event, List<Subscription> subscriptions)
+          throws TapisException
+  {
+    var notifList = new ArrayList<Notification>();
+    if (event == null || subscriptions == null || subscriptions.isEmpty()) return notifList;
+
+    log.debug(LibUtils.getMsg("NTFLIB_DSP_BUCKET_GEN_N1", bucketNum, event.getUuid()));
+
+    String tenant = event.getTenant();
+    UUID eventUuid = event.getUuid();
+
+    // For each deliveryMethod in a Subscription
+    for (Subscription s : subscriptions)
+    {
+      var deliveryMethods = s.getDeliveryMethods();
+      if (deliveryMethods == null || deliveryMethods.isEmpty()) continue;
+      for (DeliveryMethod dm : deliveryMethods)
+      {
+        Instant created = TapisUtils.getUTCTimeNow().toInstant(ZoneOffset.UTC);
+        notifList.add(new Notification(null, s.getSeqId(), tenant, s.getId(), bucketNum, eventUuid, event, dm, created));
+      }
+    }
+    dao.persistNotificationsUpdateLastEvent(event.getTenant(), event, bucketNum, notifList);
+    log.debug(LibUtils.getMsg("NTFLIB_DSP_BUCKET_GEN_N2", bucketNum, event.getUuid(), notifList.size()));
+    return notifList;
+  }
+
+  /*
+   * Deliver notifications using an ExecutorService.
+   * Wait for all delivery tasks to complete.
+   */
+  private void deliverNotifications(Event event, List<Notification> notifications)
+  {
     for (Notification notification : notifications)
     {
-      log.info("Delivering notification for event: {} deliveryMethod: {}", event.getUuid(), notification.getDeliveryMethod());
-      try { log.info("Sleep 2 seconds"); Thread.sleep(2000); } catch (InterruptedException e) {}
-      Future<Notification> future = deliveryTaskExecService.submit(new DeliveryTask(dao, notification));
+      log.debug(LibUtils.getMsg("NTFLIB_DSP_BUCKET_DLVRY1", bucketNum, event.getUuid(), notification.getDeliveryMethod()));
+      Future<Notification> future = deliveryTaskExecService.submit(new DeliveryTask(dao, event.getTenant(), notification));
       deliveryTaskFutures.add(future);
       deliveryTaskReturns.put(future, null);
     }
 
     // Wait for all tasks to finish
-    log.info("Waiting for queued notifications to finish. Number queued: {}", deliveryTaskFutures.size());
-    // TODO/TBD: Refactor into private method
+    log.debug(LibUtils.getMsg("NTFLIB_DSP_BUCKET_DLVRY2", bucketNum, event.getUuid(), deliveryTaskFutures.size()));
     // Loop indefinitely waiting for tasks to finish
     boolean notDone = true;
     while (notDone)
@@ -251,95 +303,23 @@ public final class DeliveryBucketManager implements Callable<String>
             try
             {
               Notification ret = f.get();
-              log.info("Bucket {}. A DeliveryTask is done. Return value: {}", bucketNum, ret.getDeliveryMethod().getDeliveryAddress());
+              log.debug(LibUtils.getMsg("NTFLIB_DSP_BUCKET_DLVRY3", bucketNum, event.getUuid(), ret.getDeliveryMethod()));
               deliveryTaskReturns.put(f, ret);
             }
             catch (InterruptedException e)
             {
-              log.error("Caught InterruptedException while trying to capture return value. Bucket: {}. Exception: {}", bucketNum, e);
+              log.warn(LibUtils.getMsg("NTFLIB_DSP_BUCKET_DLVRY_ERR1", bucketNum, event.getUuid(), e.getMessage()), e);
             }
             catch (ExecutionException e)
             {
-              log.error("Caught ExecutionException while trying to capture return value. Bucket: {}. Exception: {}", bucketNum, e);
+              log.warn(LibUtils.getMsg("NTFLIB_DSP_BUCKET_DLVRY_ERR2", bucketNum, event.getUuid(), e.getMessage()), e);
             }
           }
         }
       }
-      // Pause briefly
-      try
-      {
-        log.info("Sleep 1 second while waiting on delivery tasks. Bucket: {}", bucketNum);
-        Thread.sleep(1000);
-      }
-      catch (InterruptedException e) {}
     }
 
     // Clear out futures
     deliveryTaskFutures.clear();
-  }
-
-  /*
-   * TODO Check for and process an interrupted delivery
-   *  An abnormal shutdown may have left us in the middle of a delivery
-   */
-  private void proccessInterruptedDeliveries()
-  {
-    // TODO
-    log.info("TODO Checking for interrupted deliveries. Bucket number: {}", bucketNum);
-  }
-
-  /*
-   * Start the thread for processing notifications in recovery
-   */
-  private void startRecoveryTask()
-  {
-    log.info("Starting Recovery task for bucket number: {}", bucketNum);
-    recoveryTaskFuture = recoveryExecService.submit(new RecoveryTask(bucketNum, dao));
-  }
-
-  /*
-   * Stop the thread for processing notifications in recovery
-   */
-  public void stopRecoveryTask()
-  {
-    log.info("Stopping Recovery task for bucket number: {}", bucketNum);
-    if (recoveryTaskFuture != null)  recoveryTaskFuture.cancel(mayInterruptIfRunning);
-  }
-
-  /*
-   * Get subscriptions matching the event
-   */
-  private List<Subscription> getMatchingSubscriptions(Event event) throws TapisException
-  {
-    log.info("Getting matching subscriptions for an event. Bucket number: {}", bucketNum);
-    return dao.getSubscriptionsForEvent(event);
-  }
-
-  /*
-   * Create and persist notifications given an event and a list of matching subscriptions
-   * Also update the last_event table as part of the transaction.
-   */
-  private List<Notification> createAndPersistNotifications(Event event, List<Subscription> subscriptions)
-          throws TapisException
-  {
-    log.info("Generating notifications. Bucket number: {}", bucketNum);
-    var notifList = new ArrayList<Notification>();
-    if (event == null || subscriptions == null || subscriptions.isEmpty()) return notifList;
-
-    String tenant = event.getTenantId();
-    UUID eventUuid = event.getUuid();
-
-    // For each deliveryMethod in a Subscription
-    for (Subscription s : subscriptions)
-    {
-      var deliveryMethods = s.getDeliveryMethods();
-      if (deliveryMethods == null || deliveryMethods.isEmpty()) continue;
-      for (DeliveryMethod dm : deliveryMethods)
-      {
-        notifList.add(new Notification(-1, s.getSeqId(), tenant, bucketNum, eventUuid, event, dm, null));
-      }
-    }
-    dao.persistNotificationsForEvent(event.getTenantId(), event, bucketNum, notifList);
-    return notifList;
   }
 }

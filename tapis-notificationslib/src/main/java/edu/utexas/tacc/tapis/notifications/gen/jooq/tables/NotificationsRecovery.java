@@ -14,11 +14,9 @@ import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.Notifications
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
-import org.jooq.Identity;
 import org.jooq.JSONB;
 import org.jooq.Name;
 import org.jooq.Record;
@@ -55,9 +53,9 @@ public class NotificationsRecovery extends TableImpl<NotificationsRecoveryRecord
     }
 
     /**
-     * The column <code>tapis_ntf.notifications_recovery.seq_id</code>.
+     * The column <code>tapis_ntf.notifications_recovery.uuid</code>.
      */
-    public final TableField<NotificationsRecoveryRecord, Integer> SEQ_ID = createField(DSL.name("seq_id"), SQLDataType.INTEGER.nullable(false).identity(true), this, "");
+    public final TableField<NotificationsRecoveryRecord, java.util.UUID> UUID = createField(DSL.name("uuid"), SQLDataType.UUID.nullable(false), this, "");
 
     /**
      * The column <code>tapis_ntf.notifications_recovery.subscr_seq_id</code>.
@@ -77,7 +75,7 @@ public class NotificationsRecovery extends TableImpl<NotificationsRecoveryRecord
     /**
      * The column <code>tapis_ntf.notifications_recovery.event_uuid</code>.
      */
-    public final TableField<NotificationsRecoveryRecord, UUID> EVENT_UUID = createField(DSL.name("event_uuid"), SQLDataType.UUID.nullable(false), this, "");
+    public final TableField<NotificationsRecoveryRecord, java.util.UUID> EVENT_UUID = createField(DSL.name("event_uuid"), SQLDataType.UUID.nullable(false), this, "");
 
     /**
      * The column <code>tapis_ntf.notifications_recovery.event</code>.
@@ -153,11 +151,6 @@ public class NotificationsRecovery extends TableImpl<NotificationsRecoveryRecord
     }
 
     @Override
-    public Identity<NotificationsRecoveryRecord, Integer> getIdentity() {
-        return (Identity<NotificationsRecoveryRecord, Integer>) super.getIdentity();
-    }
-
-    @Override
     public UniqueKey<NotificationsRecoveryRecord> getPrimaryKey() {
         return Keys.NOTIFICATIONS_RECOVERY_PKEY;
     }
@@ -212,7 +205,7 @@ public class NotificationsRecovery extends TableImpl<NotificationsRecoveryRecord
     // -------------------------------------------------------------------------
 
     @Override
-    public Row12<Integer, Integer, String, Integer, UUID, JSONB, JsonElement, Integer, LocalDateTime, LocalDateTime, LocalDateTime, LocalDateTime> fieldsRow() {
+    public Row12<java.util.UUID, Integer, String, Integer, java.util.UUID, JSONB, JsonElement, Integer, LocalDateTime, LocalDateTime, LocalDateTime, LocalDateTime> fieldsRow() {
         return (Row12) super.fieldsRow();
     }
 }

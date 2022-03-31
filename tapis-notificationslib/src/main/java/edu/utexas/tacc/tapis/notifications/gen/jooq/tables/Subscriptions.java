@@ -7,7 +7,6 @@ package edu.utexas.tacc.tapis.notifications.gen.jooq.tables;
 import com.google.gson.JsonElement;
 
 import edu.utexas.tacc.tapis.notifications.dao.JSONBToJsonElementBinding;
-import edu.utexas.tacc.tapis.notifications.gen.jooq.Indexes;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.Keys;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.TapisNtf;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.SubscriptionsRecord;
@@ -19,7 +18,6 @@ import java.util.List;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Identity;
-import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
 import org.jooq.Row18;
@@ -180,11 +178,6 @@ public class Subscriptions extends TableImpl<SubscriptionsRecord> {
     @Override
     public Schema getSchema() {
         return TapisNtf.TAPIS_NTF;
-    }
-
-    @Override
-    public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.SUBSCRIPTIONS_TENANT_ID_IDX);
     }
 
     @Override

@@ -5,12 +5,14 @@
 
   "type": "object",
   "required": [ "source", "type", "time" ],
-  "additionalProperties": false,
   "properties": {
     "source": { "type": "string", "format": "uri", "minLength": 1 },
     "type": { "type": "string", "minLength": 5 },
     "subject": { "type": ["string", "null"] },
     "seriesId": { "type": ["string", "null"] },
-    "time": { "type":  "string", "format": "date-time" }
+    "time": { "type":  "string", "format": "date-time" },
+    "user": { "$ref": "resource:///edu/utexas/tacc/tapis/notifications/api/jsonschema/Definitions.json#/UserName" },
+    "tenant": { "type":  "string" },
+    "uuid": { "type":  "string" }
   }
 }

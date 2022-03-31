@@ -110,8 +110,6 @@
     <dependency>
       <groupId>com.rabbitmq</groupId>
       <artifactId>amqp-client</artifactId>
-<!-- TODO Update tapis-bom -->
-      <version>5.14.2</version>
     </dependency>
   </dependencies>
 
@@ -245,7 +243,7 @@
                     <userType>com.google.gson.JsonElement</userType>
                     <binding>edu.utexas.tacc.tapis.notifications.dao.JSONBToJsonElementBinding</binding>
                     <!-- Match only certain columns, no need to filter on type -->
-                    <includeExpression>(subscriptions\.delivery_methods|subscriptions\.notes|subscription_updates\.upd_json|notifications\.event|notifications\.delivery_method|notifications_recovery\.delivery_method)</includeExpression>
+                    <includeExpression>(subscriptions\.delivery_methods|subscriptions\.notes|subscription_updates\.upd_json|notifications\.event|notifications\.delivery_method|notifications_recovery\.delivery_method|notifications_tests\.notifications)</includeExpression>
                     <includeTypes>.*</includeTypes>
                   </forcedType>
                   <!-- ****************************************** -->
@@ -275,12 +273,12 @@
 <!--                    <includeExpression>notification_mechanisms\.mechanism</includeExpression>-->
 <!--                    <includeTypes>.*</includeTypes>-->
 <!--                  </forcedType>-->
-                    <forcedType>
-                        <userType>edu.utexas.tacc.tapis.notifications.model.Subscription.SubscriptionOperation</userType>
-                        <enumConverter>true</enumConverter>
-                        <includeExpression>subscription_updates\.operation</includeExpression>
-                        <includeTypes>.*</includeTypes>
-                    </forcedType>
+                  <forcedType>
+                    <userType>edu.utexas.tacc.tapis.notifications.model.Subscription.SubscriptionOperation</userType>
+                    <enumConverter>true</enumConverter>
+                    <includeExpression>subscription_updates\.operation</includeExpression>
+                    <includeTypes>.*</includeTypes>
+                  </forcedType>
                 </forcedTypes>
               </database>
             </generator>

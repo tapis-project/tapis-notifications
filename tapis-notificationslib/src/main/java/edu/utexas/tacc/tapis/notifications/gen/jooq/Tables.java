@@ -8,6 +8,7 @@ import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.FlywaySchemaHistory;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.Notifications;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.NotificationsLastEvent;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.NotificationsRecovery;
+import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.NotificationsTests;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.SubscriptionUpdates;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.Subscriptions;
 
@@ -37,6 +38,11 @@ public class Tables {
      * The table <code>tapis_ntf.notifications_recovery</code>.
      */
     public static final NotificationsRecovery NOTIFICATIONS_RECOVERY = NotificationsRecovery.NOTIFICATIONS_RECOVERY;
+
+    /**
+     * The table <code>tapis_ntf.notifications_tests</code>.
+     */
+    public static final NotificationsTests NOTIFICATIONS_TESTS = NotificationsTests.NOTIFICATIONS_TESTS;
 
     /**
      * The table <code>tapis_ntf.subscription_updates</code>.

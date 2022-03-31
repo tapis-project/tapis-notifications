@@ -1,44 +1,5 @@
 package edu.utexas.tacc.tapis.notifications.api.resources;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonSyntaxException;
-import edu.utexas.tacc.tapis.notifications.api.requests.ReqPostSubscription;
-import edu.utexas.tacc.tapis.notifications.api.requests.ReqPutSubscription;
-import edu.utexas.tacc.tapis.notifications.api.responses.RespSubscription;
-import edu.utexas.tacc.tapis.notifications.api.responses.RespSubscriptions;
-import edu.utexas.tacc.tapis.notifications.api.utils.ApiUtils;
-import edu.utexas.tacc.tapis.notifications.model.Event;
-import edu.utexas.tacc.tapis.notifications.model.PatchSubscription;
-import edu.utexas.tacc.tapis.notifications.model.Subscription;
-import edu.utexas.tacc.tapis.notifications.service.NotificationsService;
-
-import edu.utexas.tacc.tapis.search.SearchUtils;
-import edu.utexas.tacc.tapis.shared.TapisConstants;
-import edu.utexas.tacc.tapis.shared.exceptions.TapisJSONException;
-import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
-import edu.utexas.tacc.tapis.shared.schema.JsonValidator;
-import edu.utexas.tacc.tapis.shared.schema.JsonValidatorSpec;
-import edu.utexas.tacc.tapis.shared.threadlocal.OrderBy;
-import edu.utexas.tacc.tapis.shared.threadlocal.SearchParameters;
-import edu.utexas.tacc.tapis.shared.threadlocal.TapisThreadContext;
-import edu.utexas.tacc.tapis.shared.threadlocal.TapisThreadLocal;
-import edu.utexas.tacc.tapis.shared.utils.TapisGsonUtils;
-import edu.utexas.tacc.tapis.sharedapi.responses.RespAbstract;
-import edu.utexas.tacc.tapis.sharedapi.responses.RespBoolean;
-import edu.utexas.tacc.tapis.sharedapi.responses.RespChangeCount;
-import edu.utexas.tacc.tapis.sharedapi.responses.RespResourceUrl;
-import edu.utexas.tacc.tapis.sharedapi.responses.results.ResultBoolean;
-import edu.utexas.tacc.tapis.sharedapi.responses.results.ResultChangeCount;
-import edu.utexas.tacc.tapis.sharedapi.responses.results.ResultResourceUrl;
-import edu.utexas.tacc.tapis.sharedapi.security.AuthenticatedUser;
-import edu.utexas.tacc.tapis.sharedapi.security.ResourceRequestUser;
-import edu.utexas.tacc.tapis.sharedapi.utils.TapisRestUtils;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.glassfish.grizzly.http.server.Request;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import javax.inject.Inject;
 import javax.servlet.ServletContext;
 import javax.ws.rs.Consumes;
@@ -65,6 +26,43 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.glassfish.grizzly.http.server.Request;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import edu.utexas.tacc.tapis.search.SearchUtils;
+import edu.utexas.tacc.tapis.shared.TapisConstants;
+import edu.utexas.tacc.tapis.shared.exceptions.TapisJSONException;
+import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
+import edu.utexas.tacc.tapis.shared.schema.JsonValidator;
+import edu.utexas.tacc.tapis.shared.schema.JsonValidatorSpec;
+import edu.utexas.tacc.tapis.shared.threadlocal.OrderBy;
+import edu.utexas.tacc.tapis.shared.threadlocal.SearchParameters;
+import edu.utexas.tacc.tapis.shared.threadlocal.TapisThreadContext;
+import edu.utexas.tacc.tapis.shared.threadlocal.TapisThreadLocal;
+import edu.utexas.tacc.tapis.shared.utils.TapisGsonUtils;
+import edu.utexas.tacc.tapis.sharedapi.responses.RespAbstract;
+import edu.utexas.tacc.tapis.sharedapi.responses.RespBoolean;
+import edu.utexas.tacc.tapis.sharedapi.responses.RespChangeCount;
+import edu.utexas.tacc.tapis.sharedapi.responses.RespResourceUrl;
+import edu.utexas.tacc.tapis.sharedapi.responses.results.ResultBoolean;
+import edu.utexas.tacc.tapis.sharedapi.responses.results.ResultChangeCount;
+import edu.utexas.tacc.tapis.sharedapi.responses.results.ResultResourceUrl;
+import edu.utexas.tacc.tapis.sharedapi.security.AuthenticatedUser;
+import edu.utexas.tacc.tapis.sharedapi.security.ResourceRequestUser;
+import edu.utexas.tacc.tapis.sharedapi.utils.TapisRestUtils;
+import edu.utexas.tacc.tapis.notifications.api.requests.ReqPostSubscription;
+import edu.utexas.tacc.tapis.notifications.api.requests.ReqPutSubscription;
+import edu.utexas.tacc.tapis.notifications.api.responses.RespSubscription;
+import edu.utexas.tacc.tapis.notifications.api.responses.RespSubscriptions;
+import edu.utexas.tacc.tapis.notifications.api.utils.ApiUtils;
+import edu.utexas.tacc.tapis.notifications.model.PatchSubscription;
+import edu.utexas.tacc.tapis.notifications.model.Subscription;
+import edu.utexas.tacc.tapis.notifications.service.NotificationsService;
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.ID_FIELD;
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.OWNER_FIELD;
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.TYPE_FILTER_FIELD;
@@ -99,7 +97,7 @@ public class SubscriptionResource
   private static final String CREATE_ERR = "NTFAPI_SUBSCR_CREATE_ERROR";
   private static final String SELECT_ERR = "NTFAPI_SELECT_ERROR";
   private static final String LIB_UNAUTH = "NTFLIB_UNAUTH";
-  private static final String API_UNAUTH = "NTFAPI_SUBCSR_UNAUTH";
+  private static final String API_UNAUTH = "NTFAPI_SUBSCR_UNAUTH";
   private static final String TAPIS_FOUND = "TAPIS_FOUND";
   private static final String NOT_FOUND = "NTFAPI_NOT_FOUND";
   private static final String UPDATED = "NTFAPI_SUBSCR_UPDATED";
@@ -623,7 +621,7 @@ public class SubscriptionResource
   /**
    * Update TTL for a subscription
    * @param subscriptionId - name of the subscription
-   * @param ttl - new value for TTL
+   * @param ttl - new value for TTL.
    * @param securityContext - user identity
    * @return - response with change count as the result
    */

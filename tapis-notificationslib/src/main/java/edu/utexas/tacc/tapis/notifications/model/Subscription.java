@@ -9,7 +9,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -262,6 +261,79 @@ public final class Subscription
   }
 
   // ************************************************************************
+  // *********************** Accessors **************************************
+  // ************************************************************************
+
+  public int getSeqId() { return seqId; }
+
+  public String getTenant() { return tenant; }
+
+  public String getId() { return id; }
+
+  public String getDescription() { return description; }
+  public void setDescription(String d) { description = d; }
+
+  public String getOwner() { return owner; }
+  public void setOwner(String s) { owner = s; }
+
+  public boolean isEnabled() { return enabled; }
+  public void setEnabled(boolean b) { enabled = b; }
+
+  public String getTypeFilter() { return typeFilter; }
+  public void setTypeFilter(String s)
+  {
+    typeFilter = s;
+    // Split the typeFilter into 3 separate fields and set the object properties.
+    String[] tmpArr = s.split("\\.");
+    typeFilter1 = tmpArr[0];
+    typeFilter2 = tmpArr[1];
+    typeFilter3 = tmpArr[2];
+  }
+
+  public String getTypeFilter1() { return typeFilter1; }
+  public String getTypeFilter2() { return typeFilter2; }
+  public String getTypeFilter3() { return typeFilter3; }
+
+  public String getSubjectFilter() { return subjectFilter; }
+  public void setSubjectFilter(String s) { subjectFilter = s; }
+
+  public List<DeliveryMethod> getDeliveryMethods()
+  {
+    return (deliveryMethods == null) ? null : new ArrayList<>(deliveryMethods);
+  }
+  public void setDeliveryMethods(List<DeliveryMethod> dmList1)
+  {
+    deliveryMethods = (dmList1 == null) ? null : new ArrayList<>(dmList1);
+  }
+
+  public int getTtl() { return ttl; }
+  public void setTtl(int i) { ttl = i; }
+
+  public Object getNotes() { return notes; }
+  public void setNotes(Object n) { notes = n; }
+
+  public UUID getUuid() { return uuid; }
+  public void setUuid(UUID u) { uuid = u; }
+
+  @Schema(type = "string")
+  public Instant getExpiry() { return expiry; }
+
+  @Schema(type = "string")
+  public Instant getCreated() { return created; }
+
+  @Schema(type = "string")
+  public Instant getUpdated() { return updated; }
+
+  /*
+   * Check if string is a valid Subscription type filter
+   */
+  public static boolean isValidTypeFilter(String tf1)
+  {
+    if (StringUtils.isBlank(tf1)) return false;
+    return SUBSCR_TYPE_FILTER_PATTERN.matcher(tf1).matches();
+  }
+
+  // ************************************************************************
   // ******************** Private methods ***********************************
   // ************************************************************************
 
@@ -357,82 +429,4 @@ public final class Subscription
    * Must start alphabetic and contain only alphanumeric and 4 special characters: - . _ ~
    */
   private boolean isValidId(String id) { return id.matches(PATTERN_VALID_ID); }
-
-  // ************************************************************************
-  // *********************** Accessors **************************************
-  // ************************************************************************
-
-  public int getSeqId() { return seqId; }
-
-  public String getTenant() { return tenant; }
-
-  public String getId() { return id; }
-
-  public String getDescription() { return description; }
-  public void setDescription(String d) { description = d; }
-
-  public String getOwner() { return owner; }
-  public void setOwner(String s) { owner = s; }
-
-  public boolean isEnabled() { return enabled; }
-  public void setEnabled(boolean b) { enabled = b; }
-
-  public String getTypeFilter() { return typeFilter; }
-  public void setTypeFilter(String s)
-  {
-    typeFilter = s;
-    // Split the typeFilter into 3 separate fields and set the object properties.
-    String[] tmpArr = s.split("\\.");
-    typeFilter1 = tmpArr[0];
-    typeFilter2 = tmpArr[1];
-    typeFilter3 = tmpArr[2];
-  }
-
-  public String getTypeFilter1() { return typeFilter1; }
-  public String getTypeFilter2() { return typeFilter2; }
-  public String getTypeFilter3() { return typeFilter3; }
-
-  public String getSubjectFilter() { return subjectFilter; }
-  public void setSubjectFilter(String s) { subjectFilter = s; }
-
-  public List<DeliveryMethod> getDeliveryMethods()
-  {
-    return (deliveryMethods == null) ? null : new ArrayList<>(deliveryMethods);
-  }
-  public void setDeliveryMethods(List<DeliveryMethod> dmList1)
-  {
-    deliveryMethods = (dmList1 == null) ? null : new ArrayList<>(dmList1);
-  }
-
-  public int getTtl() { return ttl; }
-  public void setTtl(int i) { ttl = i; }
-
-  public Object getNotes() { return notes; }
-  public void setNotes(Object n) { notes = n; }
-
-  public UUID getUuid() { return uuid; }
-  public void setUuid(UUID u) { uuid = u; }
-
-  @Schema(type = "string")
-  public Instant getExpiry() { return expiry; }
-
-  @Schema(type = "string")
-  public Instant getCreated() { return created; }
-
-  @Schema(type = "string")
-  public Instant getUpdated() { return updated; }
-
-  /*
-   * Check if string is a valid Subscription type filter
-   */
-  public static boolean isValidTypeFilter(String tf1)
-  {
-    if (StringUtils.isBlank(tf1)) return false;
-    return SUBSCR_TYPE_FILTER_PATTERN.matcher(tf1).matches();
-  }
-
-  /* ********************************************************************** */
-  /*                      Private methods                                   */
-  /* ********************************************************************** */
-
 }

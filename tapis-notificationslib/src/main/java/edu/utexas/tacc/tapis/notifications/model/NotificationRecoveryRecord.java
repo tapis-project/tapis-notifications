@@ -17,8 +17,8 @@ public final class NotificationRecoveryRecord
   private final int recoveryAttemptNum;
   private final Instant lastRecoveryAttempt;
   private final Instant recoveryExpiry;
-  private Instant created; // UTC time for when record was created
-  private Instant updated; // UTC time for when record was last updated
+  private final Instant created; // UTC time for when record was created
+  private final Instant updated; // UTC time for when record was last updated
 
   public NotificationRecoveryRecord(Notification notification1, int recoveryAttemptNum1, Instant lastRecoveryAttempt1,
                                     Instant recoveryExpiry1, Instant created1, Instant updated1)

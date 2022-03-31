@@ -4,6 +4,7 @@ import edu.utexas.tacc.tapis.notifications.model.Event;
 import edu.utexas.tacc.tapis.notifications.model.Notification;
 import edu.utexas.tacc.tapis.notifications.model.Subscription;
 import edu.utexas.tacc.tapis.notifications.model.Subscription.SubscriptionOperation;
+import edu.utexas.tacc.tapis.notifications.model.TestSequence;
 import edu.utexas.tacc.tapis.search.parser.ASTNode;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.shared.threadlocal.OrderBy;
@@ -74,15 +75,29 @@ public interface NotificationsDao
   // -------------------- Notifications ------------------------------------
   // -----------------------------------------------------------------------
 
-  boolean persistNotificationsForEvent(String tenant, Event event, int bucketNum, List<Notification> notifications)
+  boolean persistNotificationsUpdateLastEvent(String tenant, Event event, int bucketNum, List<Notification> notifications)
           throws TapisException;
 
   List<Notification> getNotificationsForEvent(String tenant, Event event, int bucketNum) throws TapisException;
 
+  Notification getNotification(String tenant, UUID uuid) throws TapisException;
+
+  int deleteNotification(String tenant, Notification notification) throws TapisException;
+
+  UUID getLastEventUUID(int bucketNum) throws TapisException;
+
   boolean checkForLastEvent(UUID eventUuid, int bucketNum) throws TapisException;
 
-//  boolean createNotification(Notification notification) throws TapisException;
+  // -----------------------------------------------------------------------
+  // --------------------- Test Sequences ----------------------------------
+  // -----------------------------------------------------------------------
+  boolean createTestSequence(ResourceRequestUser rUser, String subscrId)
+          throws TapisException, IllegalStateException;
 
-//  int deleteNotification(Notification notification) throws TapisException;
+  TestSequence getTestSequence(String tenantId, String subscriptionId) throws TapisException;
 
+  void addTestSequenceNotification(String tenant, String user, String subscrId, Notification notification)
+          throws TapisException, IllegalStateException;
+
+  boolean checkForTestSequence(String tenantId, String subscriptionId) throws TapisException;
 }

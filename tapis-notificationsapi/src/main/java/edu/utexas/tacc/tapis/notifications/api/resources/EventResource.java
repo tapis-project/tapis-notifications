@@ -53,14 +53,14 @@ public class EventResource
   private static final Logger _log = LoggerFactory.getLogger(EventResource.class);
 
   // Json schema resource files.
-  private static final String FILE_EVENT_POST_REQUEST = "/edu/utexas/tacc/tapis/notifications/api/jsonschema/EventPostRequest.json";
+  public static final String FILE_EVENT_POST_REQUEST = "/edu/utexas/tacc/tapis/notifications/api/jsonschema/EventPostRequest.json";
 
   // Message keys
-  private static final String INVALID_JSON_INPUT = "NET_INVALID_JSON_INPUT";
-  private static final String JSON_VALIDATION_ERR = "TAPIS_JSON_VALIDATION_ERROR";
+  public static final String INVALID_JSON_INPUT = "NET_INVALID_JSON_INPUT";
+  public static final String JSON_VALIDATION_ERR = "TAPIS_JSON_VALIDATION_ERROR";
 
   // Always return a nicely formatted response
-  private static final boolean PRETTY = true;
+  public static final boolean PRETTY = true;
 
   // ************************************************************************
   // *********************** Fields *****************************************
@@ -163,8 +163,8 @@ public class EventResource
     }
 
     // Create an Event from the request
-    Event event = new Event(rUser.getOboTenantId(), source, req.type, req.subject, req.seriesId, req.time,
-                            UUID.randomUUID());
+    Event event = new Event(rUser.getOboTenantId(), rUser.getOboUserId(), source, req.type, req.subject, req.seriesId,
+                            req.time, UUID.randomUUID());
 
     // ---------------------------- Make service call to post the event -------------------------------
     try

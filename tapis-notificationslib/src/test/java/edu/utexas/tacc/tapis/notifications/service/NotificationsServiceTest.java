@@ -57,7 +57,7 @@ public class NotificationsServiceTest
   // Test data
   private static final String testKey = "Svc";
   // Special case IDs that have caused problems.
-  private static final String specialId1 = testKey + subIdPrefix + "-subscr";
+  private static final String specialId1 = testKey + subscrIdPrefix + "-subscr";
   private static final String filesSvcName = "files";
   private static final String adminUser = "testadmin";
   private static final String siteId = "tacc";
@@ -481,7 +481,7 @@ public class NotificationsServiceTest
   public void testPostEventAndLeave() throws Exception
   {
     OffsetDateTime eventTime = OffsetDateTime.now();
-    Event event = new Event(tenantName, eventSource1, eventType1, eventSubject1, seriesId1, eventTime.toString(),
+    Event event = new Event(tenantName, testUser1, eventSource1, eventType1, eventSubject1, seriesId1, eventTime.toString(),
             UUID.randomUUID());
     System.out.println("Placing event on queue. Event: " + event);
     // Put an event on the queue as a message
@@ -496,7 +496,7 @@ public class NotificationsServiceTest
   public void testPostReadEvent() throws Exception
   {
     OffsetDateTime eventTime = OffsetDateTime.now();
-    Event event = new Event(tenantName, eventSource1, eventType1, eventSubject1, seriesId1, eventTime.toString(),
+    Event event = new Event(tenantName, testUser1, eventSource1, eventType1, eventSubject1, seriesId1, eventTime.toString(),
                             UUID.randomUUID());
     System.out.println("Placing event on queue. Event: " + event);
     // Put an event on the queue as a message
@@ -525,7 +525,7 @@ public class NotificationsServiceTest
     Event tmpEvent = svcImpl.readEvent(autoAck);
     System.out.println("Read event from queue. Event: " + tmpEvent);
     Assert.assertNotNull(tmpEvent);
-    Assert.assertEquals(event.getTenantId(), tmpEvent.getTenantId());
+    Assert.assertEquals(event.getTenant(), tmpEvent.getTenant());
     Assert.assertEquals(event.getSource(), tmpEvent.getSource());
     Assert.assertEquals(event.getType(), tmpEvent.getType());
     Assert.assertEquals(event.getSubject(), tmpEvent.getSubject());

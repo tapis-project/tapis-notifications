@@ -22,7 +22,6 @@ import edu.utexas.tacc.tapis.notifications.utils.LibUtils;
 import edu.utexas.tacc.tapis.notifications.model.Delivery;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 
-
 /*
  * Notifications Dispatch Service.
  *   The dispatch service handles processing of notification events
@@ -39,16 +38,18 @@ public class DispatchService
   // Logging
   private static final Logger log = LoggerFactory.getLogger(DispatchService.class);
 
+  // When shutting down background processes give them 5 seconds to finish
   private static final int SHUTDOWN_TIMEOUT_MS = 5000;
 
   // Number of buckets for grouping events for processing
+  // Use a prime number since this should improve hash performance
   // Leave hard-coded, changing would cause trouble for re-starts and recovery
   //  - would need to quiesce and clean out queue.
   //  - e.g., reducing number could lead to orphan entries
-  //          and increasing number could lead to events moving from one bucket to another which wouldbreak recovery
-  // TODO: Change to 23
-  public static final int NUM_BUCKETS = 1;
-  // Number of workers per bucket for handling notification delivery
+  //          increasing number could lead to events moving from one bucket to another which would break recovery
+  public static final int NUM_BUCKETS = 23;
+
+  // Default number of workers per bucket for handling notification delivery. Can be changed via runtime parameter.
   public static final int DEFAULT_NUM_DELIVERY_WORKERS = 5;
 
   // Allow interrupt when shutting down executor services.
@@ -106,14 +107,12 @@ public class DispatchService
     siteAdminTenantId = siteAdminTenantId1;
 
     // Make sure DB is present and updated to the latest version using flyway
-    System.out.println("Start migrateDB");
+    log.info(LibUtils.getMsg("NTFLIB_DSP_MIGRATE_DB"));
     dao.migrateDB();
-    System.out.println("Finish migrateDB");
 
     // Initialize the singleton instance of the message broker manager
-    System.out.println("Init MessageBroker");
+    log.info(LibUtils.getMsg("NTFLIB_DSP_INIT_MSGBRKR"));
     MessageBroker.init(runParms);
-    System.out.println("Finished init of MessageBroker");
 
     // Create in-memory queues and callables for multi-threaded processing of events
     for (int i = 0; i < NUM_BUCKETS; i++)
@@ -145,7 +144,7 @@ public class DispatchService
    */
   public void startReaper()
   {
-    log.info("Starting Subscription Reaper");
+    log.info(LibUtils.getMsg("NTFLIB_DSP_START_REAPER"));
     reaperTaskFuture = reaperExecService.submit(new SubscriptionReaper(dao));
   }
 
@@ -154,7 +153,7 @@ public class DispatchService
    */
   public void stopReaper()
   {
-    log.info("Stopping Subscription Reaper");
+    log.info(LibUtils.getMsg("NTFLIB_DSP_STOP_REAPER"));
     if (reaperTaskFuture != null) reaperTaskFuture.cancel(mayInterruptIfRunning);
   }
 
@@ -163,10 +162,7 @@ public class DispatchService
    */
   public void shutDown()
   {
-    log.info(LibUtils.getMsg("NTFLIB_MSGBRKR_CONN_CLOSE", SHUTDOWN_TIMEOUT_MS));
     MessageBroker.getInstance().shutDown(SHUTDOWN_TIMEOUT_MS);
-    log.info("Sleep 5 seconds before final shutdown of executors");
-    try { log.info("Sleep 5 seconds"); Thread.sleep(5000); } catch (InterruptedException e) {}
     // Force shutdown of executor services
     shutdownExecutors(SHUTDOWN_TIMEOUT_MS);
   }
@@ -181,7 +177,7 @@ public class DispatchService
   private void shutdownExecutors(int shutdownTimeout)
   {
     // Make sure reaper is shut down.
-    log.info("Waiting for Subscription Reaper shutdown. Timeout in ms: " + shutdownTimeout);
+    log.info(LibUtils.getMsg("NTFLIB_DSP_SHUT_REAPER", shutdownTimeout));
     // Stop the service from accepting any new tasks.
     reaperExecService.shutdown();
     try
@@ -197,7 +193,7 @@ public class DispatchService
     }
 
     // Make sure bucket managers are shut down.
-    log.info("Waiting for shutdown of bucket managers. Timeout in ms: " + shutdownTimeout);
+    log.info(LibUtils.getMsg("NTFLIB_DSP_SHUT_BUCKETS", shutdownTimeout));
     // Stop the service from accepting any new tasks.
     bucketManagerExecService.shutdown();
     try

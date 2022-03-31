@@ -1,5 +1,17 @@
 package edu.utexas.tacc.tapis.notifications.api;
 
+import java.net.URI;
+import javax.ws.rs.ApplicationPath;
+
+import org.apache.commons.lang3.StringUtils;
+import org.glassfish.hk2.api.ServiceLocator;
+import org.glassfish.hk2.utilities.binding.AbstractBinder;
+import org.glassfish.grizzly.http.server.HttpServer;
+import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
+import org.glassfish.jersey.internal.inject.InjectionManager;
+import org.glassfish.jersey.server.ApplicationHandler;
+import org.glassfish.jersey.server.ResourceConfig;
+
 import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
 import edu.utexas.tacc.tapis.notifications.dao.NotificationsDao;
 import edu.utexas.tacc.tapis.notifications.dao.NotificationsDaoImpl;
@@ -16,18 +28,6 @@ import edu.utexas.tacc.tapis.sharedapi.jaxrs.filters.JWTValidateRequestFilter;
 import edu.utexas.tacc.tapis.sharedapi.providers.ObjectMapperContextResolver;
 import edu.utexas.tacc.tapis.sharedapi.providers.TapisExceptionMapper;
 import edu.utexas.tacc.tapis.sharedapi.providers.ValidationExceptionMapper;
-
-import org.apache.commons.lang3.StringUtils;
-import org.glassfish.hk2.api.ServiceLocator;
-import org.glassfish.hk2.utilities.binding.AbstractBinder;
-import org.glassfish.grizzly.http.server.HttpServer;
-import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
-import org.glassfish.jersey.internal.inject.InjectionManager;
-import org.glassfish.jersey.server.ApplicationHandler;
-import org.glassfish.jersey.server.ResourceConfig;
-
-import java.net.URI;
-import javax.ws.rs.ApplicationPath;
 
 /*
  * Main startup class for the web application. Uses Jersey and Grizzly frameworks.
@@ -147,9 +147,40 @@ public class NotificationsApplication extends ResourceConfig
     NotificationsServiceImpl svcImpl = locator.getService(NotificationsServiceImpl.class);
 
     // Call the main service init method. Setup service context, DB and message broker.
+    System.out.println("Initializing service");
     svcImpl.initService(siteAdminTenantId, RuntimeParameters.getInstance());
+
+    System.out.println("Registering shutdownHook");
+    // Add a shutdown hook so we can gracefully stop
+    Thread shudownHook = new NotificationsApplication.ServiceShutdown(svcImpl);
+    Runtime.getRuntime().addShutdownHook(shudownHook);
+
+    System.out.println("Starting http server");
     // Create and start the server
     final HttpServer server = GrizzlyHttpServerFactory.createHttpServer(baseUri, config, false);
     server.start();
+  }
+
+  /*
+   *
+   * Private class used to gracefully shut down the application
+   *
+   */
+  private static class ServiceShutdown extends Thread
+  {
+    private final NotificationsService svc;
+
+    ServiceShutdown(NotificationsService svc1)
+    {
+      svc = svc1;
+    }
+
+    @Override
+    public void run()
+    {
+      System.out.printf("**** Stopping Notifications Service. Version: %s ****%n", TapisUtils.getTapisFullVersion());
+      // Perform any remaining shutdown steps
+//      svc.shutDown();
+    }
   }
 }

@@ -1,7 +1,5 @@
 package edu.utexas.tacc.tapis.notifications.model;
 
-
-
 import org.apache.commons.lang3.StringUtils;
 
 import java.net.URI;
@@ -42,16 +40,18 @@ public final class Event
   /* ********************************************************************** */
 
   private static final String specversion = SPECVERSION;
-  private final String tenantId;
+  private final String tenant; // Tenant associated with the event
+  private final String user; // User or service associated with the event
   private final URI source; // Context in which event happened. Required
   private final String type; // Type of event related to originating occurrence. Required
   private final String subject; // Subject of event in context of event producer.
   private final String seriesId; // Optional Id for grouping events from same source.
   private final String time; // Timestamp of when the occurrence happened. RFC 3339 (ISO 8601)
   private final UUID uuid;
-  private String type1; // Field 1 of type (service name)
-  private String type2; // Field 2 of type (resource type)
-  private String type3; // Field 3 of type ( action or state)
+  // Mark as transient so Gson will not include it.
+  private transient String type1; // Field 1 of type (service name)
+  private transient String type2; // Field 2 of type (resource type)
+  private transient String type3; // Field 3 of type ( action or state)
 //  private final String datacontenttype; // Content type of data value. RFC 2046. E.g. application/xml, text/xml, etc.
 //  private final Object data; // Data associated with the event.
 //  private final String data_base64; // If data is binary it must be base64 encoded.
@@ -59,16 +59,18 @@ public final class Event
   /* ********************************************************************** */
   /*                           Constructors                                 */
   /* ********************************************************************** */
-  public Event(String tenantId1, URI source1, String t1, String subject1, String seriesId1, String time1, UUID uuid1)
+  public Event(String tenant1, String user1, URI source1, String type1, String subject1, String seriesId1,
+               String time1, UUID uuid1)
   {
-    tenantId = tenantId1;
+    tenant = tenant1;
+    user = user1;
     source = source1;
-    type = t1;
+    type = type1;
     subject = subject1;
     seriesId = seriesId1;
     time = time1;
     uuid = uuid1;
-    setTypeFields(t1);
+    setTypeFields();
 //    datacontenttype = null;
 //    data = null;
 //    data_base64 = null;
@@ -78,7 +80,8 @@ public final class Event
   /*                               Accessors                                */
   /* ********************************************************************** */
   public String getSpecversion() { return specversion; }
-  public String getTenantId() { return tenantId; }
+  public String getTenant() { return tenant; }
+  public String getUser() { return user; }
   public URI getSource() { return source; }
   public String getType() { return type; }
   public String getSubject() { return subject; }
@@ -108,17 +111,20 @@ public final class Event
     return msg.formatted(source, type, subject, seriesId, time, uuid);
   }
 
-  /* ********************************************************************** */
-  /*                      Private methods                                   */
-  /* ********************************************************************** */
   /*
    * Split the type into 3 separate fields and set the object properties.
    */
-  private void setTypeFields(String t1)
+  public void setTypeFields()
   {
-    String[] tmpArr = t1.split("\\.");
+    if (!isValidType(type)) return;
+    String[] tmpArr = type.split("\\.");
     type1 = tmpArr[0];
     type2 = tmpArr[1];
     type3 = tmpArr[2];
   }
+
+  /* ********************************************************************** */
+  /*                      Private methods                                   */
+  /* ********************************************************************** */
+
 }

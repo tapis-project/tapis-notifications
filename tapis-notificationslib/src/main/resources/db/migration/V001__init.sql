@@ -56,14 +56,13 @@ CREATE TABLE subscriptions
     delivery_methods JSONB NOT NULL,
     ttl INTEGER NOT NULL DEFAULT -1,
     notes JSONB NOT NULL,
-    uuid  uuid NOT NULL,
+    uuid  UUID NOT NULL,
     expiry  TIMESTAMP WITHOUT TIME ZONE,
     created TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),
     updated TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),
     UNIQUE (tenant,id)
 );
 ALTER TABLE subscriptions OWNER TO tapis_ntf;
-CREATE INDEX subscriptions_tenant_id_idx ON subscriptions (tenant, id);
 COMMENT ON COLUMN subscriptions.seq_id IS 'Subscription sequence id';
 COMMENT ON COLUMN subscriptions.tenant IS 'Tenant name associated with the subscription';
 COMMENT ON COLUMN subscriptions.id IS 'Unique name for the subscription';
@@ -85,22 +84,24 @@ CREATE TABLE subscription_updates
     operation TEXT NOT NULL,
     upd_json JSONB NOT NULL,
     upd_text TEXT,
-    uuid uuid NOT NULL,
+    uuid UUID NOT NULL,
     created TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc')
 );
 ALTER TABLE subscription_updates OWNER TO tapis_ntf;
 
 -- Notifications table
 -- In-flight notifications. A notification represents an event being delivered to a subscriber
+-- Note that event_uuid is needed to find all notifications associated with a specific event.
 CREATE TABLE notifications
 (
-    seq_id SERIAL PRIMARY KEY,
+    uuid UUID PRIMARY KEY,
     subscr_seq_id INTEGER REFERENCES subscriptions(seq_id) ON DELETE CASCADE,
     tenant TEXT NOT NULL,
-    bucket_number INTEGER NOT NULL DEFAULT 0,
-    event_uuid uuid NOT NULL,
-    event JSONB NOT NULL,
+    subscr_id TEXT NOT NULL,
     delivery_method JSONB NOT NULL,
+    event_uuid UUID NOT NULL,
+    event JSONB NOT NULL,
+    bucket_number INTEGER NOT NULL DEFAULT 0,
     created TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc')
 );
 ALTER TABLE notifications OWNER TO tapis_ntf;
@@ -109,11 +110,11 @@ ALTER TABLE notifications OWNER TO tapis_ntf;
 -- In-flight notifications that have failed and are in recovery.
 CREATE TABLE notifications_recovery
 (
-    seq_id SERIAL PRIMARY KEY,
+    uuid UUID PRIMARY KEY,
     subscr_seq_id INTEGER REFERENCES subscriptions(seq_id) ON DELETE CASCADE,
     tenant TEXT NOT NULL,
     bucket_number INTEGER NOT NULL DEFAULT 0,
-    event_uuid uuid NOT NULL,
+    event_uuid UUID NOT NULL,
     event JSONB NOT NULL,
     delivery_method JSONB NOT NULL,
     recovery_attempt INTEGER NOT NULL DEFAULT 0,
@@ -130,6 +131,23 @@ ALTER TABLE notifications_recovery OWNER TO tapis_ntf;
 CREATE TABLE notifications_last_event
 (
     bucket_number int PRIMARY KEY,
-    event_uuid uuid NOT NULL
+    event_uuid UUID NOT NULL
 );
 ALTER TABLE notifications_last_event OWNER TO tapis_ntf;
+
+-- Notifications test sequences
+-- For recording of notifications received as part of a test sequence
+CREATE TABLE notifications_tests
+(
+    seq_id SERIAL PRIMARY KEY,
+    subscr_seq_id INTEGER REFERENCES subscriptions(seq_id) ON DELETE CASCADE,
+    tenant TEXT NOT NULL,
+    subscr_id TEXT NOT NULL,
+    owner  TEXT NOT NULL,
+    notification_count INTEGER NOT NULL DEFAULT 0,
+    notifications JSONB NOT NULL,
+    created TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),
+    updated TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc')
+);
+ALTER TABLE notifications_tests OWNER TO tapis_ntf;
+

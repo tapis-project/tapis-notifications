@@ -30,7 +30,6 @@ import edu.utexas.tacc.tapis.notifications.api.utils.ApiUtils;
 import edu.utexas.tacc.tapis.notifications.service.NotificationsServiceImpl;
 import edu.utexas.tacc.tapis.notifications.utils.LibUtils;
 
-
 /* Tapis Notifications general resource endpoints including healthcheck and readycheck
  *
  *  NOTE: For OpenAPI spec please see file NotificationsAPI.yaml located in repo openapi-notifications

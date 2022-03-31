@@ -63,35 +63,8 @@ public final class SubscriptionReaper implements Callable<String>
     return "shutdown";
   }
 
-
-  /* ********************************************************************** */
-  /*                             Accessors                                  */
-  /* ********************************************************************** */
-
-//  public int getBucketNum() { return bucketNum; }
-
   /* ********************************************************************** */
   /*                             Private Methods                            */
   /* ********************************************************************** */
 
-//  private void processDelivery(Delivery delivery) throws IOException
-//  {
-//    // TODO Check to see if we have already processed this event
-//    log.info("Checking for duplicate event {}", delivery.getEvent().getUuid());
-//    // TODO Find matching subscriptions
-//    log.info("Checking for subscriptions {}", delivery.getEvent().getUuid());
-//    // TODO Create notifications from subscriptions
-//    log.info("Creating notifications {}", delivery.getEvent().getUuid());
-//    // TODO Persist notifications to DB
-//    log.info("Persisting notifications to DB {}", delivery.getEvent().getUuid());
-//
-//    // All notifications for the event have been persisted, remove message from message broker queue
-//    log.info("Acking event {}", delivery.getEvent().getUuid());
-//    MessageBroker.getInstance().ackMsg(delivery.getDeliveryTag());
-//
-//    // TODO Deliver notifications (threadpool?)
-//    log.info("Delivering notifications {}", delivery.getEvent().getUuid());
-//    // TODO Remove notifications from DB (handled by workers in threadpool?)
-//    log.info("Removing notifications from DB {}", delivery.getEvent().getUuid());
-//  }
 }

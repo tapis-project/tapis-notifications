@@ -1,39 +1,37 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+  <modelVersion>4.0.0</modelVersion>
 
-    <!-- Main BOM file defines organization, licenses, developers, repositories,
-         shared properties, dependency management, plugin management  -->
-    <parent>
-      <groupId>edu.utexas.tacc.tapis</groupId>
-      <artifactId>tapis-bom</artifactId>
-      <version>[2.0,3.0)</version>
-      <!-- Set empty relative path to avoid maven warning and-->
-      <!--   ensure parent is found in local repository if that-->
-      <!--   is the only place it exists.-->
-      <relativePath/>
-    </parent>
+  <!-- Main BOM file defines organization, licenses, developers, repositories, shared properties,
+       dependency management, plugin management  -->
+  <parent>
+    <groupId>edu.utexas.tacc.tapis</groupId>
+    <artifactId>tapis-bom</artifactId>
+    <version>[2.0,3.0)</version>
+    <!-- Set empty relative path to avoid maven warning and ensure parent is found in local repository if that -->
+    <!-- is the only place it exists.-->
+    <relativePath/>
+  </parent>
+  <artifactId>notifications</artifactId>
+  <version>0.0.1</version>
+  <packaging>pom</packaging>
 
-    <artifactId>notifications</artifactId>
-    <version>0.0.1</version>
-    <packaging>pom</packaging>
+  <name>TACC Tapis Notifications Parent POM</name>
+  <description>Parent POM file for TAPIS Notifications service</description>
 
-    <name>TACC Tapis Notifications Parent POM</name>
-    <description>Parent POM file for TAPIS Notifications service</description>
+  <scm>
+    <connection>scm:git:https://github.com/tapis-project/tapis-notifications.git</connection>
+    <url>https://github.com/tapis-project/tapis-notifications</url>
+  </scm>
 
-    <scm>
-        <connection>scm:git:https://github.com/tapis-project/tapis-notifications.git</connection>
-        <url>https://github.com/tapis-project/tapis-notifications</url>
-    </scm>
-
-    <properties>
-      <!-- Most properties set in parent tapis-bom   -->
-      <!-- Properties can be overridden here         -->
-      <!-- Individual projects may want to override. -->
-      <!-- Skip integration tests by default -->
-      <!-- Use mvn verify -DskipIntegrationTests=false to run integration tests -->
-      <skipIntegrationTests>true</skipIntegrationTests>
-    </properties>
+  <properties>
+    <!-- Most properties set in parent tapis-bom   -->
+    <!-- Properties can be overridden here         -->
+    <!-- Individual projects may want to override. -->
+    <!-- Skip integration tests by default -->
+    <!-- Use mvn verify -DskipIntegrationTests=false to run integration tests -->
+    <skipIntegrationTests>true</skipIntegrationTests>
+  </properties>
 
   <build>
     <plugins>
@@ -48,13 +46,8 @@
 
     <resources>
       <!-- Write the project version number to the specified file. -->
-      <!-- Setting the targetPath puts the file into the jar at the -->
-      <!-- specified root-relative directory. The the modified -->
-      <!-- tapis.version file is always copied to the target/classes -->
-      <!-- directory. Do the same for other data that we want to -->
-      <!-- capture. A jar and war file will contain these files -->
-      <!-- as long as the templated files are in the configured -->
-      <!-- directory in the child project. -->
+      <!-- Setting the targetPath puts the file into the jar at the specified root-relative directory. -->
+      <!-- The modified tapis.version file is always copied to the target/classes directory. -->
       <resource>
         <directory>src/main/resources</directory>
         <targetPath>.</targetPath>
@@ -67,10 +60,8 @@
         </includes>
       </resource>
 
-      <!-- For some reason, we have to tell maven, surefire or testng -->
-      <!-- that all main/resources need to be copied to some target -->
-      <!-- directory. We also have to tell them to NOT undo filtering -->
-      <!-- for the files that we explicitly filter above. Good stuff. -->
+      <!-- For some reason we have to tell maven, surefire or testng that all main/resources need to be copied. -->
+      <!-- We also have to tell them to NOT undo filtering for the files that we explicitly filter above. -->
       <resource>
         <directory>src/main/resources</directory>
         <filtering>false</filtering>

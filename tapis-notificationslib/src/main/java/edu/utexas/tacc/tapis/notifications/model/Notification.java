@@ -1,10 +1,14 @@
 package edu.utexas.tacc.tapis.notifications.model;
 
+import edu.utexas.tacc.tapis.shared.utils.TapisUtils;
+
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 /*
  * A Notification is a notice to a subscriber that an event has occurred.
+ * Each persisted notification has a UUID that is used as the primary key in the DB.
  *
  * When an event is received it can result in 0 or more notifications since there may be 0 or more matching
  *   subscriptions and each subscription has 1 or more delivery methods.
@@ -18,56 +22,54 @@ import java.util.UUID;
  */
 public final class Notification
 {
-  private int seqId;           // Unique database sequence number
-  private String tenant;
-  private UUID eventUuid;
+  private final UUID uuid; // Used as primary key in DB
+  private final String tenant;
+  private final String subscriptionId;
+  private final UUID eventUuid; // Needed to find all notifications associated with a specific event.
 
   // What and how to deliver the notification to the recipient
   private final Event event; // The event being delivered
   private final DeliveryMethod deliveryMethod; // How and where it is to be delivered
-
-  // Attributes used to track in-flight notifications while delivery attempt is in progress.
-  private final int subscrSeqId; // Subscription associated with the notification.
-  private final int bucketNum; // Bucket/DeliverWorker to which it has been assigned
   private final Instant created; // UTC time for when record was created
 
-//  public Notification(Event event1, DeliveryMethod deliveryMethod1, Subscription subscription1, int bucketNum1,
-//                      Instant created1)
-//  {
-//    event = event1;
-//    deliveryMethod = deliveryMethod1;
-//    subscription = subscription1;
-//    bucketNum = bucketNum1;
-//    created = created1;
-//  }
-//
+  // Attributes used to track in-flight notifications while delivery attempt is in progress.
+  // Mark seqId and bucketNum as transient so Gson will not include it.
+  private transient final int subscrSeqId; // Subscription associated with the notification.
+  private transient final int bucketNum; // Bucket/DeliverWorker to which it has been assigned
+
   /**
    * Constructor for jOOQ with input parameter matching order of columns in DB
-   * Also useful for testing
+   * Also useful for testing.
+   * If uuid provided is null then a uuid is generated.
+   * If created is null then the current system time is used.
    */
-  public Notification(int seqId1, int subscrSeqId1, String tenant1, int bucketNum1, UUID eventUuid1, Event event1,
-                      DeliveryMethod deliveryMethod1, Instant created1)
+  public Notification(UUID uuid1, int subscrSeqId1, String tenant1, String subscrId1, int bucketNum1, UUID eventUuid1,
+                      Event event1, DeliveryMethod deliveryMethod1, Instant created1)
   {
-    seqId = seqId1;
+    uuid = (uuid1 != null) ? uuid1 : UUID.randomUUID();
     subscrSeqId = subscrSeqId1;
     tenant = tenant1;
+    subscriptionId = subscrId1;
     bucketNum = bucketNum1;
     eventUuid = eventUuid1;
     event = event1;
     deliveryMethod = deliveryMethod1;
-    created = created1;
+    created = (created1 != null) ? created1 : TapisUtils.getUTCTimeNow().toInstant(ZoneOffset.UTC);
   }
 
+  public String getTenant() { return tenant; }
+  public String getSubscriptionId() { return subscriptionId; }
   public Event getEvent() { return event; }
   public DeliveryMethod getDeliveryMethod() { return deliveryMethod; }
   public int getSubscrSeqId() { return subscrSeqId; }
   public int getBucketNum() { return bucketNum; }
+  public UUID getUuid() { return uuid; }
   public Instant getCreated() { return created; }
 
   @Override
   public String toString()
   {
-    String msg = "SeqId: %d%nSubscrSeqId: %d%nTenant: %s%nbucketNum: %d%neventUuid: %s%nEvent %s%nDeliveryMethod: %s%nCreated: %s";
-    return msg.formatted(seqId, subscrSeqId, tenant, bucketNum, eventUuid, event, deliveryMethod, created);
+    String msg = "UUID: %s%nSubscrSeqId: %d%nTenant: %s%nbucketNum: %d%neventUuid: %s%nEvent %s%nDeliveryMethod: %s%nCreated: %s";
+    return msg.formatted(uuid, subscrSeqId, tenant, bucketNum, eventUuid, event, deliveryMethod, created);
   }
 }
