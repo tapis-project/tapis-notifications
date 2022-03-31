@@ -110,8 +110,6 @@
     <dependency>
       <groupId>com.rabbitmq</groupId>
       <artifactId>amqp-client</artifactId>
-<!-- TODO Update tapis-bom -->
-      <version>5.14.2</version>
     </dependency>
   </dependencies>
 
@@ -275,12 +273,12 @@
 <!--                    <includeExpression>notification_mechanisms\.mechanism</includeExpression>-->
 <!--                    <includeTypes>.*</includeTypes>-->
 <!--                  </forcedType>-->
-                    <forcedType>
-                        <userType>edu.utexas.tacc.tapis.notifications.model.Subscription.SubscriptionOperation</userType>
-                        <enumConverter>true</enumConverter>
-                        <includeExpression>subscription_updates\.operation</includeExpression>
-                        <includeTypes>.*</includeTypes>
-                    </forcedType>
+                  <forcedType>
+                    <userType>edu.utexas.tacc.tapis.notifications.model.Subscription.SubscriptionOperation</userType>
+                    <enumConverter>true</enumConverter>
+                    <includeExpression>subscription_updates\.operation</includeExpression>
+                    <includeTypes>.*</includeTypes>
+                  </forcedType>
                 </forcedTypes>
               </database>
             </generator>

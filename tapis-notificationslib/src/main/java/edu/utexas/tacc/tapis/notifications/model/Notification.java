@@ -41,6 +41,7 @@ public final class Notification
    * Constructor for jOOQ with input parameter matching order of columns in DB
    * Also useful for testing.
    * If uuid provided is null then a uuid is generated.
+   * If created is null then the current system time is used.
    */
   public Notification(UUID uuid1, int subscrSeqId1, String tenant1, String subscrId1, int bucketNum1, UUID eventUuid1,
                       Event event1, DeliveryMethod deliveryMethod1, Instant created1)

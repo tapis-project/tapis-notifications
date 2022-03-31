@@ -99,10 +99,8 @@ public class NotificationsServiceImpl implements NotificationsService
   // Use HK2 to inject singletons
   @Inject
   private NotificationsDao dao;
-
   @Inject
   private ServiceClients serviceClients;
-
   @Inject
   private ServiceContext serviceContext;
 
@@ -851,34 +849,6 @@ public class NotificationsServiceImpl implements NotificationsService
     return dao.getSubscriptions(rUser.getOboTenantId(), null, searchAST, allowedIDs, limit, orderByList, skip, startAfter);
   }
 
-//  /**
-//   * Get list of all subscription IDs that an rUser is authorized to view
-//   * TODO/TBD: Use Perms model as with Apps/Systems ore return all resources owned by the user.
-//   * @param rUser - ResourceRequestUser containing tenant, user and request info
-//   * @return - set of subscription IDs
-//   * @throws TapisException - for Tapis related exceptions
-//   */
-//  @Override
-//  public Set<String> getAllowedSubscriptionIDs(ResourceRequestUser rUser) throws TapisException, TapisClientException
-//  {
-//    return prvtGetAllowedSubscriptionIDs(rUser);
-//// TODO/TBD    SubscriptionOperation op = SubscriptionOperation.read;
-////    if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
-////    // Get all subscription names
-////    Set<String> subIds = dao.getSubscriptionIDs(rUser.getOboTenantId());
-////    var allowedNames = new HashSet<String>();
-////    // Filter based on user authorization
-////    for (String name: subIds)
-////    {
-////      try {
-////        checkAuth(rUser, op, name, null, null, null);
-////        allowedNames.add(name);
-////      }
-////      catch (NotAuthorizedException | TapisClientException e) { }
-////    }
-////    return allowedNames;
-//  }
-
   /**
    * Get subscription owner
    * @param rUser - ResourceRequestUser containing tenant, user and request info
@@ -928,7 +898,6 @@ public class NotificationsServiceImpl implements NotificationsService
    * @throws TapisException - on error
    *
    */
-//  @Override
   public Event readEvent(boolean autoAck) throws TapisException
   {
     return MessageBroker.getInstance().readEvent(autoAck);
@@ -1108,7 +1077,6 @@ public class NotificationsServiceImpl implements NotificationsService
   {
     dao.addTestSequenceNotification(tenant, user, subscriptionId, notification);
   }
-
 
   // ************************************************************************
   // **************************  Private Methods  ***************************

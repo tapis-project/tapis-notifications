@@ -5,7 +5,7 @@ import org.glassfish.hk2.api.Factory;
 
 /**
  * HK2 Factory class providing a ServiceClients singleton instance for the service.
- * Binding happens in NotifcationsApplication.java
+ * Binding happens in NotificationsApplication.java
  */
 public class ServiceClientsFactory implements Factory<ServiceClients>
 {

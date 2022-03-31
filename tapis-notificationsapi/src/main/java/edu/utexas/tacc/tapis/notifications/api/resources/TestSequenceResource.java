@@ -1,9 +1,6 @@
 package edu.utexas.tacc.tapis.notifications.api.resources;
 
 import com.google.gson.JsonSyntaxException;
-import edu.utexas.tacc.tapis.notifications.api.requests.ReqPostNotification;
-import edu.utexas.tacc.tapis.notifications.model.Notification;
-import edu.utexas.tacc.tapis.shared.utils.TapisUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.grizzly.http.server.Request;
@@ -35,11 +32,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.UUID;
 
-import edu.utexas.tacc.tapis.notifications.api.responses.RespTestSequence;
-import edu.utexas.tacc.tapis.notifications.api.utils.ApiUtils;
-import edu.utexas.tacc.tapis.notifications.model.Event;
-import edu.utexas.tacc.tapis.notifications.model.TestSequence;
-import edu.utexas.tacc.tapis.notifications.service.NotificationsService;
+import edu.utexas.tacc.tapis.shared.utils.TapisUtils;
 import edu.utexas.tacc.tapis.shared.TapisConstants;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisJSONException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
@@ -57,6 +50,13 @@ import edu.utexas.tacc.tapis.sharedapi.responses.results.ResultResourceUrl;
 import edu.utexas.tacc.tapis.sharedapi.security.AuthenticatedUser;
 import edu.utexas.tacc.tapis.sharedapi.security.ResourceRequestUser;
 import edu.utexas.tacc.tapis.sharedapi.utils.TapisRestUtils;
+import edu.utexas.tacc.tapis.notifications.api.requests.ReqPostNotification;
+import edu.utexas.tacc.tapis.notifications.model.Notification;
+import edu.utexas.tacc.tapis.notifications.api.responses.RespTestSequence;
+import edu.utexas.tacc.tapis.notifications.api.utils.ApiUtils;
+import edu.utexas.tacc.tapis.notifications.model.Event;
+import edu.utexas.tacc.tapis.notifications.model.TestSequence;
+import edu.utexas.tacc.tapis.notifications.service.NotificationsService;
 import static edu.utexas.tacc.tapis.notifications.api.resources.EventResource.INVALID_JSON_INPUT;
 import static edu.utexas.tacc.tapis.notifications.api.resources.EventResource.JSON_VALIDATION_ERR;
 import static edu.utexas.tacc.tapis.notifications.api.resources.EventResource.PRETTY;
@@ -303,8 +303,7 @@ public class TestSequenceResource
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
 
-    // TODO
-    if (_log.isTraceEnabled()) _log.trace("TODO - REMOVE_ME - rawJson: " + rawJson);
+    if (_log.isTraceEnabled()) _log.trace("{} - rawJson: {}", opName, rawJson);
 
     // Create validator specification and validate the json against the schema
     JsonValidatorSpec spec = new JsonValidatorSpec(rawJson, FILE_NOTIF_POST_REQUEST);

@@ -160,6 +160,7 @@ public class NotificationsApplication extends ResourceConfig
     final HttpServer server = GrizzlyHttpServerFactory.createHttpServer(baseUri, config, false);
     server.start();
   }
+
   /*
    *
    * Private class used to gracefully shut down the application

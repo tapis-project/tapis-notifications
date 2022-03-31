@@ -1,6 +1,5 @@
 package edu.utexas.tacc.tapis.notifications.model;
 
-import edu.utexas.tacc.tapis.shared.utils.TapisGsonUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.net.URI;
@@ -112,14 +111,10 @@ public final class Event
     return msg.formatted(source, type, subject, seriesId, time, uuid);
   }
 
-  /* ********************************************************************** */
-  /*                      Private methods                                   */
-  /* ********************************************************************** */
-
   /*
    * Split the type into 3 separate fields and set the object properties.
    */
-  private void setTypeFields()
+  public void setTypeFields()
   {
     if (!isValidType(type)) return;
     String[] tmpArr = type.split("\\.");
@@ -127,4 +122,9 @@ public final class Event
     type2 = tmpArr[1];
     type3 = tmpArr[2];
   }
+
+  /* ********************************************************************** */
+  /*                      Private methods                                   */
+  /* ********************************************************************** */
+
 }

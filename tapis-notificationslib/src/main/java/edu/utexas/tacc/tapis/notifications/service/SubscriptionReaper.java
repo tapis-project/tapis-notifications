@@ -63,7 +63,6 @@ public final class SubscriptionReaper implements Callable<String>
     return "shutdown";
   }
 
-
   /* ********************************************************************** */
   /*                             Private Methods                            */
   /* ********************************************************************** */

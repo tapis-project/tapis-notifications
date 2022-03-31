@@ -1,20 +1,18 @@
 package edu.utexas.tacc.tapis.notifications.api.utils;
 
+import javax.ws.rs.core.Response;
+import java.text.MessageFormat;
+import java.util.Locale;
+import java.util.ResourceBundle;
+
 import com.google.gson.JsonElement;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import edu.utexas.tacc.tapis.shared.threadlocal.TapisThreadContext;
 import edu.utexas.tacc.tapis.sharedapi.security.ResourceRequestUser;
 import edu.utexas.tacc.tapis.sharedapi.utils.TapisRestUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.ws.rs.core.Response;
-import java.text.MessageFormat;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Locale;
-import java.util.ResourceBundle;
-import java.util.stream.Collectors;
 
 /*
    Utility class containing general use static methods.
@@ -158,25 +156,4 @@ public class ApiUtils
     String msg = ApiUtils.getMsgAuth("NTFAPI_TRACE_REQUEST", rUser, className, opName, reqUrl, argListStr);
     _log.trace(msg);
   }
-
-  // TODO/TBD needed?
-//  /**
-//   * Return String[] array of key=value given list of KeyValuePair
-//   */
-//  public static String[] getKeyValuesAsArray(List<KeyValuePair> kvList)
-//  {
-//    if (kvList == null) return null;
-//    if (kvList.size() == 0) return App.EMPTY_STR_ARRAY;
-//    return kvList.stream().map(KeyValuePair::toString).toArray(String[]::new);
-//  }
-//
-//  /**
-//   * Return list of KeyValuePair given String[] array of key=value
-//   */
-//  public static List<KeyValuePair> getKeyValuesAsList(String[] kvArray)
-//  {
-//    if (kvArray == null || kvArray.length == 0) return Collections.emptyList();
-//    List<KeyValuePair> kvList = Arrays.stream(kvArray).map(KeyValuePair::fromString).collect(Collectors.toList());
-//    return kvList;
-//  }
 }

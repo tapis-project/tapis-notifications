@@ -28,7 +28,8 @@ public final class TestSequence
   // ************************************************************************
   // *********************** Fields *****************************************
   // ************************************************************************
-  private final int seqId;
+  // Mark as transient so gson will not include it
+  private transient final int seqId;
   private final String tenant;
   private final String owner;
   private final String subscriptionId;
@@ -61,11 +62,6 @@ public final class TestSequence
   // ************************************************************************
   // *********************** Public methods *********************************
   // ************************************************************************
-
-  public void addReceivedNotification(Notification n)
-  {
-    receivedNotifications.add(n);
-  }
 
   // ************************************************************************
   // *********************** Accessors **************************************

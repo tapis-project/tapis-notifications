@@ -1090,6 +1090,9 @@ public class NotificationsDaoImpl implements NotificationsDao
       return retList;
     }
 
+    // Make sure the types are set
+    event.setTypeFields();
+
     String tenantId = event.getTenant();
 
     // ------------------------- Build and execute SQL ----------------------------
@@ -1264,7 +1267,6 @@ public class NotificationsDaoImpl implements NotificationsDao
         JsonElement deliveryMethodJson = EMPTY_JSON_ELEM;
         if (dm != null) deliveryMethodJson = TapisGsonUtils.getGson().toJsonTree(dm);
 
-        // TODO/TBD do we need to convert from Instant to LocalDateTime
         batch.bind(n.getUuid(), n.getSubscrSeqId(), tenant, n.getSubscriptionId(), bucketNum, eventUUID, eventJson,
                    n.getCreated(), deliveryMethodJson);
       }

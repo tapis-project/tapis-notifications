@@ -170,7 +170,7 @@ public final class DeliveryTask implements Callable<Notification>
   }
 
   /*
-   * TODO Send out the notification via Webhook
+   * Send out the notification via Webhook
    *
    * TODO:
    *   - Cache the client
