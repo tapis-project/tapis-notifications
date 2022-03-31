@@ -8,7 +8,6 @@ import edu.utexas.tacc.tapis.notifications.model.Notification;
 import edu.utexas.tacc.tapis.notifications.model.PatchSubscription;
 import edu.utexas.tacc.tapis.notifications.model.Subscription;
 import edu.utexas.tacc.tapis.notifications.model.DeliveryMethod.DeliveryType;
-import edu.utexas.tacc.tapis.notifications.service.DispatchService;
 import edu.utexas.tacc.tapis.search.parser.ASTNode;
 import edu.utexas.tacc.tapis.shared.threadlocal.OrderBy;
 import edu.utexas.tacc.tapis.shared.utils.TapisGsonUtils;
@@ -48,7 +47,7 @@ public final class IntegrationUtils
   public static final String testUser3 = "testuser3";
   public static final String testUser4 = "testuser4";
   public static final String apiUser = "testApiUser";
-  public static final String subIdPrefix = "TestSub";
+  public static final String subscrIdPrefix = "TestSub";
   public static final String description1 = "Subscription description 1";
   public static final String description2 = "Subscription description 2";
   public static final String typeFilter1 = "jobs.job.complete";
@@ -179,7 +178,7 @@ public final class IntegrationUtils
   public static String getSubscrName(String key, int idx)
   {
     String suffix = key + "_" + String.format("%03d", idx);
-    return subIdPrefix + "_" + suffix;
+    return subscrIdPrefix + "_" + suffix;
   }
 
   /**
@@ -189,7 +188,7 @@ public final class IntegrationUtils
    * @param n number of items to create
    * @return array of Notification objects
    */
-  public static List<Notification> makeNotifications(int n, String key, int subSeqId)
+  public static List<Notification> makeNotifications(int n, String key, int subscrSeqId, String subscrId)
   {
     List<Notification> notifications = new ArrayList<>();
     UUID eventUuid = event1.getUuid();
@@ -199,7 +198,8 @@ public final class IntegrationUtils
       String suffix = key + "_" + iStr;
       String dmAddress = suffix + ".fake.person@example.com";
       DeliveryMethod dm = new DeliveryMethod(DeliveryType.EMAIL, dmAddress);
-      Notification ntf = new Notification(null, subSeqId, tenantName, bucketNum1, eventUuid, event1, dm, createdNull);
+      Notification ntf = new Notification(null, subscrSeqId, tenantName, subscrId, bucketNum1, eventUuid, event1, dm,
+                                          createdNull);
       notifications.add(ntf);
     }
     return notifications;

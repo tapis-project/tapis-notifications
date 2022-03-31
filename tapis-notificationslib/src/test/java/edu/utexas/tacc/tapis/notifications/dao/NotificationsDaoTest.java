@@ -277,7 +277,7 @@ public class NotificationsDaoTest
     Assert.assertNotNull(tmpSub, "Failed to create subscription: " + sub0.getId());
 
     // Create test notifications
-    var notifications = IntegrationUtils.makeNotifications(numNotifications, testKey, tmpSub.getSeqId());
+    var notifications = IntegrationUtils.makeNotifications(numNotifications, testKey, tmpSub.getSeqId(), tmpSub.getId());
 
     // Persist test notifications
     boolean b = dao.persistNotificationsUpdateLastEvent(tenantName, event1, bucketNum1, notifications);

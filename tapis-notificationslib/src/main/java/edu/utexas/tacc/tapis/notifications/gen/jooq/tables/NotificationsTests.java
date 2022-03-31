@@ -78,14 +78,14 @@ public class NotificationsTests extends TableImpl<NotificationsTestsRecord> {
     public final TableField<NotificationsTestsRecord, String> OWNER = createField(DSL.name("owner"), SQLDataType.CLOB.nullable(false), this, "");
 
     /**
-     * The column <code>tapis_ntf.notifications_tests.event_count</code>.
+     * The column <code>tapis_ntf.notifications_tests.notification_count</code>.
      */
-    public final TableField<NotificationsTestsRecord, Integer> EVENT_COUNT = createField(DSL.name("event_count"), SQLDataType.INTEGER.nullable(false).defaultValue(DSL.field("0", SQLDataType.INTEGER)), this, "");
+    public final TableField<NotificationsTestsRecord, Integer> NOTIFICATION_COUNT = createField(DSL.name("notification_count"), SQLDataType.INTEGER.nullable(false).defaultValue(DSL.field("0", SQLDataType.INTEGER)), this, "");
 
     /**
-     * The column <code>tapis_ntf.notifications_tests.events</code>.
+     * The column <code>tapis_ntf.notifications_tests.notifications</code>.
      */
-    public final TableField<NotificationsTestsRecord, JsonElement> EVENTS = createField(DSL.name("events"), SQLDataType.JSONB.nullable(false), this, "", new JSONBToJsonElementBinding());
+    public final TableField<NotificationsTestsRecord, JsonElement> NOTIFICATIONS = createField(DSL.name("notifications"), SQLDataType.JSONB.nullable(false), this, "", new JSONBToJsonElementBinding());
 
     /**
      * The column <code>tapis_ntf.notifications_tests.created</code>.

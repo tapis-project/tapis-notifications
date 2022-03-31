@@ -1,6 +1,8 @@
 package edu.utexas.tacc.tapis.notifications.api.resources;
 
 import com.google.gson.JsonSyntaxException;
+import edu.utexas.tacc.tapis.notifications.api.requests.ReqPostNotification;
+import edu.utexas.tacc.tapis.notifications.model.Notification;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.grizzly.http.server.Request;
@@ -30,7 +32,6 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
-import edu.utexas.tacc.tapis.notifications.api.requests.ReqPostEvent;
 import edu.utexas.tacc.tapis.notifications.api.responses.RespTestSequence;
 import edu.utexas.tacc.tapis.notifications.api.utils.ApiUtils;
 import edu.utexas.tacc.tapis.notifications.model.Event;
@@ -53,7 +54,6 @@ import edu.utexas.tacc.tapis.sharedapi.responses.results.ResultResourceUrl;
 import edu.utexas.tacc.tapis.sharedapi.security.AuthenticatedUser;
 import edu.utexas.tacc.tapis.sharedapi.security.ResourceRequestUser;
 import edu.utexas.tacc.tapis.sharedapi.utils.TapisRestUtils;
-import static edu.utexas.tacc.tapis.notifications.api.resources.EventResource.FILE_EVENT_POST_REQUEST;
 import static edu.utexas.tacc.tapis.notifications.api.resources.EventResource.INVALID_JSON_INPUT;
 import static edu.utexas.tacc.tapis.notifications.api.resources.EventResource.JSON_VALIDATION_ERR;
 import static edu.utexas.tacc.tapis.notifications.api.resources.EventResource.PRETTY;
@@ -74,6 +74,9 @@ public class TestSequenceResource
 
   private static final String BASE_SVC_URI
           = String.format("/%s/%s",TapisConstants.API_VERSION, TapisConstants.SERVICE_NAME_NOTIFICATIONS);
+
+  // Json schema resource files.
+  public static final String FILE_NOTIF_POST_REQUEST="/edu/utexas/tacc/tapis/notifications/api/jsonschema/NotificationPostRequest.json";
 
   // ************************************************************************
   // *********************** Fields *****************************************
@@ -263,7 +266,7 @@ public class TestSequenceResource
   }
 
   /**
-   * Receive an event as a callback and record it as a test result.
+   * Receive a notification as a callback and record it as a test result.
    * Provided subscription must be associated with a test sequence.
    * @param payloadStream - request body
    * @param securityContext - user identity
@@ -274,10 +277,17 @@ public class TestSequenceResource
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   @PermitAll
-  public Response recordTestEvent(@PathParam("subscriptionId") String subscriptionId,
-                                  InputStream payloadStream, @Context SecurityContext securityContext)
+  public Response recordTestNotification(@PathParam("subscriptionId") String subscriptionId,
+                                         InputStream payloadStream, @Context SecurityContext securityContext)
   {
-    String opName = "recordTestEvent";
+    String opName = "recordTestNotification";
+    // Trace this request.
+    if (_log.isTraceEnabled())
+    {
+      String msg = ApiUtils.getMsg("NTFAPI_TRACE_REQUEST", "N/A", "N/A", "N/A", "N/A", className, opName,
+                                   _request.getRequestURL(), "subscriptionId="+subscriptionId);
+      _log.trace(msg);
+    }
     // ------------------------- Extract and validate payload -------------------------
     // Read the payload into a string.
     String rawJson;
@@ -289,8 +299,12 @@ public class TestSequenceResource
       _log.error(msg, e);
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
+
+    // TODO
+    if (_log.isTraceEnabled()) _log.trace("TODO - REMOVE_ME - rawJson: " + rawJson);
+
     // Create validator specification and validate the json against the schema
-    JsonValidatorSpec spec = new JsonValidatorSpec(rawJson, FILE_EVENT_POST_REQUEST);
+    JsonValidatorSpec spec = new JsonValidatorSpec(rawJson, FILE_NOTIF_POST_REQUEST);
     try { JsonValidator.validate(spec); }
     catch (TapisJSONException e)
     {
@@ -299,9 +313,9 @@ public class TestSequenceResource
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
 
-    ReqPostEvent req;
-    // ------------------------- Create an Event from the json and validate constraints -------------------------
-    try { req = TapisGsonUtils.getGson().fromJson(rawJson, ReqPostEvent.class); }
+    ReqPostNotification req;
+    // ------------------------- Create a notification from the json -------------------------
+    try { req = TapisGsonUtils.getGson().fromJson(rawJson, ReqPostNotification.class); }
     catch (JsonSyntaxException e)
     {
       msg = MsgUtils.getMsg(INVALID_JSON_INPUT, opName, e.getMessage());
@@ -315,22 +329,42 @@ public class TestSequenceResource
       _log.error(msg);
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
+    // If req.event is null that is an unrecoverable error
+    if (req.event == null)
+    {
+      msg = ApiUtils.getMsg("NTFAPI_TEST_EVENT_NULL", subscriptionId);
+      _log.error(msg);
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+    }
+    // If deliveryMethod is null that is an unrecoverable error
+    if (req.deliveryMethod == null)
+    {
+      msg = ApiUtils.getMsg("NTFAPI_TEST_DM_NULL", subscriptionId);
+      _log.error(msg);
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+    }
 
     // Now that we have a valid request we can set the tenant and user associated with the event
-    String tenant = req.tenant;
-    String user = req.user;
+    String tenant = req.event.tenant;
+    String user = req.event.user;
+    String sourceStr = req.event.source;
+    String subject = req.event.subject;
+    String type = req.event.type;
+    String seriesId = req.event.seriesId;
+    String time = req.event.time;
+    String uuidStr = req.event.uuid;
 
     // Tenant and user should both have values
     if (StringUtils.isBlank(tenant) || StringUtils.isBlank(user))
     {
-      msg = ApiUtils.getMsg("NTFAPI_TEST_USR_ERR", tenant, user, req.source, req.type, req.subject, req.time, subscriptionId);
+      msg = ApiUtils.getMsg("NTFAPI_TEST_USR_ERR", tenant, user, sourceStr, type, subject, time, subscriptionId);
       _log.error(msg);
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
     // Validate the event type
-    if (!Event.isValidType(req.type))
+    if (!Event.isValidType(type))
     {
-      msg = ApiUtils.getMsg("NTFAPI_TEST_EVENT_TYPE_ERR", tenant, user, req.source, req.type, req.subject, req.time, subscriptionId);
+      msg = ApiUtils.getMsg("NTFAPI_TEST_EVENT_TYPE_ERR", tenant, user, sourceStr, type, subject, time, subscriptionId);
       _log.error(msg);
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
@@ -339,22 +373,38 @@ public class TestSequenceResource
     URI source;
     try
     {
-      source = new URI(req.source);
+      source = new URI(sourceStr);
     }
     catch (URISyntaxException e)
     {
-      msg = ApiUtils.getMsg("NTFAPI_TEST_EVENT_SOURCE_ERR", tenant, user, req.source, req.type, req.subject, req.time, subscriptionId, e.getMessage());
+      msg = ApiUtils.getMsg("NTFAPI_TEST_EVENT_SOURCE_ERR", tenant, user, sourceStr, type, subject, time, subscriptionId, e.getMessage());
+      _log.error(msg);
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+    }
+
+    // Extract the UUID the request making sure it is a UUID
+    UUID uuid;
+    try
+    {
+      uuid = UUID.fromString(uuidStr);
+    }
+    catch (Exception e)
+    {
+      msg = ApiUtils.getMsg("NTFAPI_TEST_EVENT_UUID_ERR", tenant, user, sourceStr, type, subject, time, subscriptionId,
+                            uuidStr, e.getMessage());
       _log.error(msg);
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
 
     // Create an Event from the request
-    Event event = new Event(tenant, user, source, req.type, req.subject, req.seriesId, req.time, UUID.randomUUID());
+    Event event = new Event(tenant, user, source, type, subject, seriesId, time, uuid);
+    // Create a notification from the request
+    Notification notification = new Notification(null, -1, tenant, subscriptionId, -1, uuid, event, req.deliveryMethod, null);
 
     // ---------------------------- Make service call to record the event -------------------------------
     try
     {
-      notificationsService.recordTestEvent(tenant, user, subscriptionId, event);
+      notificationsService.recordTestNotification(tenant, user, subscriptionId, notification);
     }
     catch (IllegalStateException e)
     {
@@ -365,8 +415,8 @@ public class TestSequenceResource
     }
     catch (Exception e)
     {
-      msg = ApiUtils.getMsg("NTFAPI_TEST_CB_ERR", tenant, user, req.source, req.type, req.subject, req.seriesId,
-              req.time, subscriptionId, e.getMessage());
+      msg = ApiUtils.getMsg("NTFAPI_TEST_CB_ERR", tenant, user, sourceStr, type, subject, seriesId, time,
+                            subscriptionId, e.getMessage());
       _log.error(msg);
       return Response.status(Status.INTERNAL_SERVER_ERROR).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }

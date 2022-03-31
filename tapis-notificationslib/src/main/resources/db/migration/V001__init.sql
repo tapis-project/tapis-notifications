@@ -96,10 +96,11 @@ CREATE TABLE notifications
     uuid UUID PRIMARY KEY,
     subscr_seq_id INTEGER REFERENCES subscriptions(seq_id) ON DELETE CASCADE,
     tenant TEXT NOT NULL,
-    bucket_number INTEGER NOT NULL DEFAULT 0,
+    subscr_id TEXT NOT NULL,
+    delivery_method JSONB NOT NULL,
     event_uuid UUID NOT NULL,
     event JSONB NOT NULL,
-    delivery_method JSONB NOT NULL,
+    bucket_number INTEGER NOT NULL DEFAULT 0,
     created TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc')
 );
 ALTER TABLE notifications OWNER TO tapis_ntf;
@@ -134,7 +135,7 @@ CREATE TABLE notifications_last_event
 ALTER TABLE notifications_last_event OWNER TO tapis_ntf;
 
 -- Notifications test sequences
--- For recording of events received as part of a test sequence
+-- For recording of notifications received as part of a test sequence
 CREATE TABLE notifications_tests
 (
     seq_id SERIAL PRIMARY KEY,
@@ -142,8 +143,8 @@ CREATE TABLE notifications_tests
     tenant TEXT NOT NULL,
     subscr_id TEXT NOT NULL,
     owner  TEXT NOT NULL,
-    event_count INTEGER NOT NULL DEFAULT 0,
-    events JSONB NOT NULL,
+    notification_count INTEGER NOT NULL DEFAULT 0,
+    notifications JSONB NOT NULL,
     created TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),
     updated TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc')
 );

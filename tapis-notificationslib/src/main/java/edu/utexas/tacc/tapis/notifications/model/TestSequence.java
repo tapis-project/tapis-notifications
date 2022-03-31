@@ -32,8 +32,8 @@ public final class TestSequence
   private final String tenant;
   private final String owner;
   private final String subscriptionId;
-  private final int eventCount;
-  private final List<Event> receivedEvents;
+  private final int notificationCount;
+  private final List<Notification> receivedNotifications;
   private final Instant created; // UTC time for when record was created
   private final Instant updated; // UTC time for when record was last updated
 
@@ -45,15 +45,15 @@ public final class TestSequence
    * Constructor taking all attributes.
    * If receivedEvents is null an empty list will be created.
    */
-  public TestSequence(int seqId1, String tenant1, String owner1, String subscriptionId1, int eventCount1,
-                      List<Event> reList1, Instant created1, Instant updated1)
+  public TestSequence(int seqId1, String tenant1, String owner1, String subscriptionId1, int notifCount1,
+                      List<Notification> rnList1, Instant created1, Instant updated1)
   {
     seqId = seqId1;
     tenant = tenant1;
     owner = owner1;
     subscriptionId = subscriptionId1;
-    eventCount = eventCount1;
-    receivedEvents = (reList1 == null) ? new ArrayList<>() : new ArrayList<>(reList1);
+    notificationCount = notifCount1;
+    receivedNotifications = (rnList1 == null) ? new ArrayList<>() : new ArrayList<>(rnList1);
     created = created1;
     updated = updated1;
   }
@@ -62,9 +62,9 @@ public final class TestSequence
   // *********************** Public methods *********************************
   // ************************************************************************
 
-  public void addReceivedEvent(Event e)
+  public void addReceivedNotification(Notification n)
   {
-    receivedEvents.add(e);
+    receivedNotifications.add(n);
   }
 
   // ************************************************************************
@@ -75,8 +75,8 @@ public final class TestSequence
   public String getTenant() { return tenant; }
   public String getOwner() { return owner; }
   public String getSubscriptionId() { return subscriptionId; }
-  public int getEventCount() { return eventCount; }
-  public List<Event> getReceivedEvents() { return new ArrayList<>(receivedEvents); }
+  public int getNotificationCount() { return notificationCount; }
+  public List<Notification> getReceivedNotifications() { return new ArrayList<>(receivedNotifications); }
 
   @Schema(type = "string")
   public Instant getCreated() { return created; }

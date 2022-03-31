@@ -6,6 +6,8 @@ import javax.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
+
+import edu.utexas.tacc.tapis.notifications.model.Notification;
 import org.jvnet.hk2.annotations.Contract;
 
 import edu.utexas.tacc.tapis.client.shared.exceptions.TapisClientException;
@@ -97,6 +99,6 @@ public interface NotificationsService
   int deleteTestSequence(ResourceRequestUser rUser, String subscriptionId)
           throws TapisException, TapisClientException, NotAuthorizedException;
 
-  void recordTestEvent(String tenant, String user, String subscriptionId, Event event)
+  void recordTestNotification(String tenant, String user, String subscriptionId, Notification notification)
           throws TapisException, IllegalStateException;
 }

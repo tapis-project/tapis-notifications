@@ -17,6 +17,7 @@ import javax.inject.Inject;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 
+import edu.utexas.tacc.tapis.notifications.model.Notification;
 import org.apache.commons.lang3.StringUtils;
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
@@ -1092,20 +1093,20 @@ public class NotificationsServiceImpl implements NotificationsService
   }
 
   /**
-   * Record an event received as part of a test sequence.
+   * Record a notification received as part of a test sequence.
    *
    * @param tenant - tenant associated with event
    * @param user - user who published the event
    * @param subscriptionId - UUID of the subscription associated with the test sequence.
-   * @param event - event received
+   * @param notification - notification received
    * @throws IllegalStateException - if test sequence does not exist
    * @throws TapisException - on error
    */
   @Override
-  public void recordTestEvent(String tenant, String user, String subscriptionId, Event event)
+  public void recordTestNotification(String tenant, String user, String subscriptionId, Notification notification)
           throws TapisException, IllegalStateException
   {
-    dao.addTestSequenceEvent(tenant, user, subscriptionId, event);
+    dao.addTestSequenceNotification(tenant, user, subscriptionId, notification);
   }
 
 

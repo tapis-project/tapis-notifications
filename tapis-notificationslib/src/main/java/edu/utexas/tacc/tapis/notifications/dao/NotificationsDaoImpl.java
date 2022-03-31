@@ -18,7 +18,6 @@ import javax.sql.DataSource;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.NotificationsLastEvent;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.NotificationsLastEventRecord;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -1250,10 +1249,11 @@ public class NotificationsDaoImpl implements NotificationsDao
               NOTIFICATIONS.UUID,
               NOTIFICATIONS.SUBSCR_SEQ_ID,
               NOTIFICATIONS.TENANT,
+              NOTIFICATIONS.SUBSCR_ID,
               NOTIFICATIONS.BUCKET_NUMBER,
               NOTIFICATIONS.EVENT_UUID,
               NOTIFICATIONS.EVENT,
-              NOTIFICATIONS.DELIVERY_METHOD).values((UUID) null, null, null, null, null, null, null));
+              NOTIFICATIONS.DELIVERY_METHOD).values((UUID) null, null, null, null, null, null, null, null));
 
       // Put together all the records we will be inserting.
       for (Notification n : notifications)
@@ -1263,7 +1263,8 @@ public class NotificationsDaoImpl implements NotificationsDao
         JsonElement deliveryMethodJson = EMPTY_JSON_ELEM;
         if (dm != null) deliveryMethodJson = TapisGsonUtils.getGson().toJsonTree(dm);
 
-        batch.bind(n.getUuid(), n.getSubscrSeqId(), tenant, bucketNum, eventUUID, eventJson, deliveryMethodJson);
+        batch.bind(n.getUuid(), n.getSubscrSeqId(), tenant, n.getSubscrId(), bucketNum, eventUUID, eventJson,
+                   deliveryMethodJson);
       }
 
       // Now execute the final batch statement
@@ -1537,8 +1538,8 @@ public class NotificationsDaoImpl implements NotificationsDao
               .set(NOTIFICATIONS_TESTS.TENANT, tenantId)
               .set(NOTIFICATIONS_TESTS.SUBSCR_ID, subscrId)
               .set(NOTIFICATIONS_TESTS.OWNER, apiUser)
-              .set(NOTIFICATIONS_TESTS.EVENT_COUNT, 0)
-              .set(NOTIFICATIONS_TESTS.EVENTS, eventsJson)
+              .set(NOTIFICATIONS_TESTS.NOTIFICATION_COUNT, 0)
+              .set(NOTIFICATIONS_TESTS.NOTIFICATIONS, eventsJson)
               .returningResult(NOTIFICATIONS_TESTS.SEQ_ID)
               .fetchOne();
       // If record is null or sequence id is invalid it is an error
@@ -1608,15 +1609,15 @@ public class NotificationsDaoImpl implements NotificationsDao
    * @throws TapisException - on error
    */
   @Override
-  public void addTestSequenceEvent(String tenantId, String user, String subscrId, Event event)
+  public void addTestSequenceNotification(String tenantId, String user, String subscrId, Notification notification)
           throws TapisException, IllegalStateException
   {
-    String opName = "addTestSequenceEvent";
+    String opName = "addTestSequenceNotification";
     // ------------------------- Check Input -------------------------
     if (StringUtils.isBlank(tenantId)) LibUtils.logAndThrowNullParmException(opName, "tenant");
     if (StringUtils.isBlank(user)) LibUtils.logAndThrowNullParmException(opName, "user");
     if (StringUtils.isBlank(subscrId)) LibUtils.logAndThrowNullParmException(opName, "subscriptionId");
-    if (event == null) LibUtils.logAndThrowNullParmException(opName, "event");
+    if (notification == null) LibUtils.logAndThrowNullParmException(opName, "notification");
     // ------------------------- Call SQL ----------------------------
     Connection conn = null;
     try
@@ -1628,15 +1629,15 @@ public class NotificationsDaoImpl implements NotificationsDao
       TestSequence testSequence = getTestSequence(db, tenantId, subscrId);
       if (testSequence == null)
         throw new IllegalStateException(LibUtils.getMsg("NTFLIB_TEST_NOT_FOUND", tenantId, user, opName, subscrId));
-      // Figure out the eventsJson for the update
-      JsonElement eventsJson;
-      var newEvents = testSequence.getReceivedEvents();
-      newEvents.add(event);
-      eventsJson = TapisGsonUtils.getGson().toJsonTree(newEvents);
+      // Figure out the notificationsJson for the update
+      JsonElement notificationsJson;
+      var newNotifications = testSequence.getReceivedNotifications();
+      newNotifications.add(notification);
+      notificationsJson = TapisGsonUtils.getGson().toJsonTree(newNotifications);
       // Make the update
       db.update(NOTIFICATIONS_TESTS)
-              .set(NOTIFICATIONS_TESTS.EVENT_COUNT, newEvents.size())
-              .set(NOTIFICATIONS_TESTS.EVENTS, eventsJson)
+              .set(NOTIFICATIONS_TESTS.NOTIFICATION_COUNT, newNotifications.size())
+              .set(NOTIFICATIONS_TESTS.NOTIFICATIONS, notificationsJson)
               .set(NOTIFICATIONS_TESTS.UPDATED, TapisUtils.getUTCTimeNow())
               .where(NOTIFICATIONS_TESTS.TENANT.eq(tenantId),NOTIFICATIONS_TESTS.SUBSCR_ID.eq(subscrId))
               .execute();
@@ -2170,7 +2171,8 @@ public class NotificationsDaoImpl implements NotificationsDao
     DeliveryMethod dm = TapisGsonUtils.getGson().fromJson(dmJson, DeliveryMethod.class);
 
     ntf = new Notification(r.get(NOTIFICATIONS.UUID), r.get(NOTIFICATIONS.SUBSCR_SEQ_ID), r.get(NOTIFICATIONS.TENANT),
-                           r.get(NOTIFICATIONS.BUCKET_NUMBER), r.get(NOTIFICATIONS.EVENT_UUID), event, dm, created);
+                           r.get(NOTIFICATIONS.SUBSCR_ID), r.get(NOTIFICATIONS.BUCKET_NUMBER),
+                           r.get(NOTIFICATIONS.EVENT_UUID), event, dm, created);
     return ntf;
   }
 
@@ -2218,11 +2220,11 @@ public class NotificationsDaoImpl implements NotificationsDao
     Instant created = r.get(NOTIFICATIONS_TESTS.CREATED).toInstant(ZoneOffset.UTC);
     Instant updated = r.get(NOTIFICATIONS_TESTS.UPDATED).toInstant(ZoneOffset.UTC);
 
-    JsonElement eventsJson = r.get(NOTIFICATIONS_TESTS.EVENTS);
-    List<Event> events = Arrays.asList(TapisGsonUtils.getGson().fromJson(eventsJson, Event[].class));
+    JsonElement notificationsJson = r.get(NOTIFICATIONS_TESTS.NOTIFICATIONS);
+    List<Notification> notifications = Arrays.asList(TapisGsonUtils.getGson().fromJson(notificationsJson, Notification[].class));
     testSequence = new TestSequence(seqId, r.get(NOTIFICATIONS_TESTS.TENANT), r.get(NOTIFICATIONS_TESTS.OWNER),
-                                    r.get(NOTIFICATIONS_TESTS.SUBSCR_ID), r.get(NOTIFICATIONS_TESTS.EVENT_COUNT),
-                                    events, created, updated);
+                                    r.get(NOTIFICATIONS_TESTS.SUBSCR_ID), r.get(NOTIFICATIONS_TESTS.NOTIFICATION_COUNT),
+                                    notifications, created, updated);
     return testSequence;
   }
 }

@@ -57,7 +57,7 @@ public class NotificationsServiceTest
   // Test data
   private static final String testKey = "Svc";
   // Special case IDs that have caused problems.
-  private static final String specialId1 = testKey + subIdPrefix + "-subscr";
+  private static final String specialId1 = testKey + subscrIdPrefix + "-subscr";
   private static final String filesSvcName = "files";
   private static final String adminUser = "testadmin";
   private static final String siteId = "tacc";

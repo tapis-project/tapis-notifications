@@ -21,28 +21,30 @@ public final class Notification
 {
   private final UUID uuid; // Used as primary key in DB
   private final String tenant;
+  private final String subscrId;
   private final UUID eventUuid;
 
   // What and how to deliver the notification to the recipient
   private final Event event; // The event being delivered
   private final DeliveryMethod deliveryMethod; // How and where it is to be delivered
+  private final Instant created; // UTC time for when record was created
 
   // Attributes used to track in-flight notifications while delivery attempt is in progress.
   private final int subscrSeqId; // Subscription associated with the notification.
   private final int bucketNum; // Bucket/DeliverWorker to which it has been assigned
-  private final Instant created; // UTC time for when record was created
 
   /**
    * Constructor for jOOQ with input parameter matching order of columns in DB
    * Also useful for testing.
    * If uuid provided is null then a uuid is generated.
    */
-  public Notification(UUID uuid1, int subscrSeqId1, String tenant1, int bucketNum1, UUID eventUuid1, Event event1,
-                      DeliveryMethod deliveryMethod1, Instant created1)
+  public Notification(UUID uuid1, int subscrSeqId1, String tenant1, String subscrId1, int bucketNum1, UUID eventUuid1,
+                      Event event1, DeliveryMethod deliveryMethod1, Instant created1)
   {
     uuid = (uuid1 != null) ? uuid1 : UUID.randomUUID();
     subscrSeqId = subscrSeqId1;
     tenant = tenant1;
+    subscrId = subscrId1;
     bucketNum = bucketNum1;
     eventUuid = eventUuid1;
     event = event1;
@@ -50,6 +52,8 @@ public final class Notification
     created = created1;
   }
 
+  public String getTenant() { return tenant; }
+  public String getSubscrId() { return subscrId; }
   public Event getEvent() { return event; }
   public DeliveryMethod getDeliveryMethod() { return deliveryMethod; }
   public int getSubscrSeqId() { return subscrSeqId; }

@@ -96,30 +96,30 @@ public class NotificationsTestsRecord extends UpdatableRecordImpl<NotificationsT
     }
 
     /**
-     * Setter for <code>tapis_ntf.notifications_tests.event_count</code>.
+     * Setter for <code>tapis_ntf.notifications_tests.notification_count</code>.
      */
-    public void setEventCount(Integer value) {
+    public void setNotificationCount(Integer value) {
         set(5, value);
     }
 
     /**
-     * Getter for <code>tapis_ntf.notifications_tests.event_count</code>.
+     * Getter for <code>tapis_ntf.notifications_tests.notification_count</code>.
      */
-    public Integer getEventCount() {
+    public Integer getNotificationCount() {
         return (Integer) get(5);
     }
 
     /**
-     * Setter for <code>tapis_ntf.notifications_tests.events</code>.
+     * Setter for <code>tapis_ntf.notifications_tests.notifications</code>.
      */
-    public void setEvents(JsonElement value) {
+    public void setNotifications(JsonElement value) {
         set(6, value);
     }
 
     /**
-     * Getter for <code>tapis_ntf.notifications_tests.events</code>.
+     * Getter for <code>tapis_ntf.notifications_tests.notifications</code>.
      */
-    public JsonElement getEvents() {
+    public JsonElement getNotifications() {
         return (JsonElement) get(6);
     }
 
@@ -201,12 +201,12 @@ public class NotificationsTestsRecord extends UpdatableRecordImpl<NotificationsT
 
     @Override
     public Field<Integer> field6() {
-        return NotificationsTests.NOTIFICATIONS_TESTS.EVENT_COUNT;
+        return NotificationsTests.NOTIFICATIONS_TESTS.NOTIFICATION_COUNT;
     }
 
     @Override
     public Field<JsonElement> field7() {
-        return NotificationsTests.NOTIFICATIONS_TESTS.EVENTS;
+        return NotificationsTests.NOTIFICATIONS_TESTS.NOTIFICATIONS;
     }
 
     @Override
@@ -246,12 +246,12 @@ public class NotificationsTestsRecord extends UpdatableRecordImpl<NotificationsT
 
     @Override
     public Integer component6() {
-        return getEventCount();
+        return getNotificationCount();
     }
 
     @Override
     public JsonElement component7() {
-        return getEvents();
+        return getNotifications();
     }
 
     @Override
@@ -291,12 +291,12 @@ public class NotificationsTestsRecord extends UpdatableRecordImpl<NotificationsT
 
     @Override
     public Integer value6() {
-        return getEventCount();
+        return getNotificationCount();
     }
 
     @Override
     public JsonElement value7() {
-        return getEvents();
+        return getNotifications();
     }
 
     @Override
@@ -341,13 +341,13 @@ public class NotificationsTestsRecord extends UpdatableRecordImpl<NotificationsT
 
     @Override
     public NotificationsTestsRecord value6(Integer value) {
-        setEventCount(value);
+        setNotificationCount(value);
         return this;
     }
 
     @Override
     public NotificationsTestsRecord value7(JsonElement value) {
-        setEvents(value);
+        setNotifications(value);
         return this;
     }
 
@@ -391,7 +391,7 @@ public class NotificationsTestsRecord extends UpdatableRecordImpl<NotificationsT
     /**
      * Create a detached, initialised NotificationsTestsRecord
      */
-    public NotificationsTestsRecord(Integer seqId, Integer subscrSeqId, String tenant, String subscrId, String owner, Integer eventCount, JsonElement events, LocalDateTime created, LocalDateTime updated) {
+    public NotificationsTestsRecord(Integer seqId, Integer subscrSeqId, String tenant, String subscrId, String owner, Integer notificationCount, JsonElement notifications, LocalDateTime created, LocalDateTime updated) {
         super(NotificationsTests.NOTIFICATIONS_TESTS);
 
         setSeqId(seqId);
@@ -399,8 +399,8 @@ public class NotificationsTestsRecord extends UpdatableRecordImpl<NotificationsT
         setTenant(tenant);
         setSubscrId(subscrId);
         setOwner(owner);
-        setEventCount(eventCount);
-        setEvents(events);
+        setNotificationCount(notificationCount);
+        setNotifications(notifications);
         setCreated(created);
         setUpdated(updated);
     }

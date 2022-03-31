@@ -250,7 +250,7 @@ public final class DeliveryBucketManager implements Callable<String>
       if (deliveryMethods == null || deliveryMethods.isEmpty()) continue;
       for (DeliveryMethod dm : deliveryMethods)
       {
-        notifList.add(new Notification(null, s.getSeqId(), tenant, bucketNum, eventUuid, event, dm, null));
+        notifList.add(new Notification(null, s.getSeqId(), tenant, s.getId(), bucketNum, eventUuid, event, dm, null));
       }
     }
     dao.persistNotificationsUpdateLastEvent(event.getTenant(), event, bucketNum, notifList);

@@ -1,7 +1,17 @@
 package edu.utexas.tacc.tapis.notifications.service;
 
-import edu.utexas.tacc.tapis.notifications.utils.LibUtils;
-import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpRequest.BodyPublisher;
+import java.net.http.HttpResponse;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.util.concurrent.Callable;
+import javax.ws.rs.core.Response.Status;
+
 import okhttp3.Call;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -11,11 +21,9 @@ import okhttp3.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.concurrent.Callable;
-import javax.ws.rs.core.Response.Status;
-
+import edu.utexas.tacc.tapis.shared.TapisConstants;
+import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
+import edu.utexas.tacc.tapis.notifications.utils.LibUtils;
 import edu.utexas.tacc.tapis.notifications.dao.NotificationsDao;
 import edu.utexas.tacc.tapis.notifications.model.DeliveryMethod;
 import edu.utexas.tacc.tapis.notifications.model.Event;
@@ -41,6 +49,8 @@ public final class DeliveryTask implements Callable<Notification>
   /* ********************************************************************** */
 
   private NotificationsDao dao;
+
+  private final HttpClient httpClient = HttpClient.newHttpClient();
 
   private final String tenant;
   private final Notification notification; // The notification to be processed
@@ -164,25 +174,47 @@ public final class DeliveryTask implements Callable<Notification>
    * TODO:
    *   - Cache the client
    *   - set client timeout
+   *   - special handling for https?
+   *   - handle auth if provided?
+   *   - other headers?
    *
    */
   private boolean deliverByWebhook() throws URISyntaxException, IOException, InterruptedException
   {
+    // Request body is the event as json
+    String eventJsonStr = notification.getEvent().toJsonString();
+
+//    //??????????????????
+//    // test GET - works
+//    URI uri2 = new URI("http://localhost:8080/v3/notifications/healthcheck");
+//    // TODO/TBD: timeout is 10 seconds
+//    Duration timeout2 = Duration.of(10, ChronoUnit.SECONDS);
+//    HttpRequest request2 = HttpRequest.newBuilder().uri(uri2)
+//            .header("Accept", "application/json")
+//            .header("Content-Type", "application/json")
+//            .timeout(timeout2).build();
+//    HttpResponse<String> response2 = httpClient.send(request2, HttpResponse.BodyHandlers.ofString());
+//    // ?????????????????
+
+    // TODO/TBD: Get works but POST hangs? maybe grizzly issue?
 //    // Post to the delivery address which should be a URL
 //    URI uri = new URI(deliveryMethod.getDeliveryAddress());
-//    // Request body is the event as json
-    String eventJsonStr = notification.getEvent().toJsonString();
-//    HttpRequest.BodyPublisher bodyPublisher = BodyPublishers.ofString(eventJsonStr);
+//    BodyPublisher bodyPublisher = HttpRequest.BodyPublishers.ofString(eventJsonStr);
 //    // TODO/TBD: timeout is 10 seconds
-//    Duration timeout = Duration.of(10, ChronoUnit.SECONDS);
-//    HttpRequest request = HttpRequest.newBuilder().uri(uri).header("Content-Type", "application/json")
-//                                                  .POST(bodyPublisher).timeout(timeout).build();
-//    HttpResponse<String> response = httpClient.send(request, BodyHandlers.ofString());
+//    Duration timeout = Duration.of(30, ChronoUnit.SECONDS);
+//    HttpRequest request = HttpRequest.newBuilder().uri(uri)
+//            .header("Accept", "application/json")
+//            .header("Content-Type", "application/json")
+////            .method("POST", bodyPublisher).timeout(timeout).build();
+////            .POST(bodyPublisher).timeout(timeout).build();
+//            .POST(HttpRequest.BodyPublishers.noBody()).timeout(timeout).build();
+//    HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 //    if (response.statusCode() == Status.OK.getStatusCode()) return true;
 
     OkHttpClient client = new OkHttpClient();
-    RequestBody body = RequestBody.create(MediaType.parse("application/json"), eventJsonStr);
-    Request request = new Request.Builder().url(deliveryMethod.getDeliveryAddress()).post(body).build();
+    RequestBody body = RequestBody.create(eventJsonStr, MediaType.parse("application/json"));
+    Request.Builder requestBuilder = new Request.Builder().url(deliveryMethod.getDeliveryAddress()).post(body);
+    Request request = requestBuilder.addHeader("User-Agent", "Tapis/%s".formatted(TapisConstants.API_VERSION)).build();
     Call call = client.newCall(request);
     Response response = call.execute();
     if (response.code() == Status.OK.getStatusCode()) return true;
