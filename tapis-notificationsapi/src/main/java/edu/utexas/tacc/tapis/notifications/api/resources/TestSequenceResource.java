@@ -31,6 +31,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 import edu.utexas.tacc.tapis.shared.utils.TapisUtils;
 import edu.utexas.tacc.tapis.shared.TapisConstants;
@@ -77,6 +78,16 @@ public class TestSequenceResource
 
   private static final String BASE_SVC_URI
           = String.format("/%s/%s",TapisConstants.API_VERSION, TapisConstants.SERVICE_NAME_NOTIFICATIONS);
+
+  private static final String HTTP_SCHEME = "http://";
+  private static final String HTTPS_SCHEME = "https://";
+
+  // Pattern for determining if base url is from a Tapis k8s environment
+  //   http://dev.develop.tapis.io/v3/notifications or http://dev.tapis.io/v3/notifications
+  // TODO/TBD What about non-Tapis sites and associate sites?
+  // Start with "http://" then 0 or more characters then "/v3/notifications" then 0 or more characters
+  // ^http://.*tapis\.io/v3/notifications.*
+  private static final Pattern TAPIS_BASEURL_K8S_PATTERN = Pattern.compile("^http://.*tapis\\.io/v3/notifications.*");
 
   // Json schema resource files.
   public static final String FILE_NOTIF_POST_REQUEST="/edu/utexas/tacc/tapis/notifications/api/jsonschema/NotificationPostRequest.json";
@@ -129,8 +140,24 @@ public class TestSequenceResource
 
     // Determine the base service url for the request. This is needed for the callback and the event source.
     // URI should be /v3/notifications/begin and URL should have the form http://localhost:8080/v3/notifications/begin
+    // Note that when running in standard Tapis k8s environment the URL might look like this:
+    //   http://dev.develop.tapis.io/v3/notifications or http://dev.tapis.io/v3/notifications
+    // in which case we need to replace http: with https:
     String baseServiceUrl = StringUtils.removeEnd(_request.getRequestURL().toString(), _request.getRequestURI());
+    if (TAPIS_BASEURL_K8S_PATTERN.matcher(baseServiceUrl).matches())
+    {
+      // TODO remove trace
+      _log.trace("Adjusting baseURL. Before: " + baseServiceUrl);
+      baseServiceUrl = StringUtils.replace(baseServiceUrl, HTTP_SCHEME, HTTPS_SCHEME, 1);
+      _log.trace("Adjusting baseURL. After: " + baseServiceUrl);
+    }
     baseServiceUrl = baseServiceUrl + BASE_SVC_URI;
+
+    if (_log.isTraceEnabled())
+    {
+      String msg = ApiUtils.getMsgAuth("NTFAPI_TEST_BASEURL", rUser, baseServiceUrl);
+      _log.trace(msg);
+    }
 
     // ---------------------------- Make service call  -------------------------------
     String msg;
