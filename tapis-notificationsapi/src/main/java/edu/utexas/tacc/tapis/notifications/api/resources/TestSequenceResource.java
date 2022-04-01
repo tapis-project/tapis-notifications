@@ -83,10 +83,10 @@ public class TestSequenceResource
   private static final String HTTPS_SCHEME = "https://";
 
   // Pattern for determining if base url is from a Tapis k8s environment
-  //   http://dev.develop.tapis.io/v3/notifications or http://dev.tapis.io/v3/notifications
+  // e.g. http://dev.develop.tapis.io/v3/notifications or http://dev.tapis.io/v3/notifications
   // TODO/TBD What about non-Tapis sites and associate sites?
-  // Start with "http://" then 0 or more characters then "/v3/notifications" then 0 or more characters
-  // ^http://.*tapis\.io/v3/notifications.*
+  // Start with "http://" then 0 or more characters then ".tapis.io" then 0 or more characters
+  // ^http://.*\.tapis\.io.*
   private static final Pattern TAPIS_BASEURL_K8S_PATTERN = Pattern.compile("^http://.*\\.tapis\\.io.*");
 
   // Json schema resource files.
@@ -146,19 +146,12 @@ public class TestSequenceResource
     String baseServiceUrl = StringUtils.removeEnd(_request.getRequestURL().toString(), _request.getRequestURI());
     if (TAPIS_BASEURL_K8S_PATTERN.matcher(baseServiceUrl).matches())
     {
-      // TODO remove trace
-      _log.trace("Adjusting baseURL. Before: " + baseServiceUrl);
       baseServiceUrl = StringUtils.replace(baseServiceUrl, HTTP_SCHEME, HTTPS_SCHEME, 1);
-      _log.trace("Adjusting baseURL. After: " + baseServiceUrl);
     }
-    else { _log.trace("BaseURL not adjusted TODO remove me ********************************************************************");}
     baseServiceUrl = baseServiceUrl + BASE_SVC_URI;
 
-    if (_log.isTraceEnabled())
-    {
-      String msg = ApiUtils.getMsgAuth("NTFAPI_TEST_BASEURL", rUser, baseServiceUrl);
-      _log.trace(msg);
-    }
+    // Trace the final baseUrl
+    if (_log.isTraceEnabled()) { _log.trace(ApiUtils.getMsgAuth("NTFAPI_TEST_BASEURL", rUser, baseServiceUrl)); }
 
     // ---------------------------- Make service call  -------------------------------
     String msg;
