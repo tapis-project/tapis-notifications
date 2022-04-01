@@ -87,7 +87,7 @@ public class TestSequenceResource
   // TODO/TBD What about non-Tapis sites and associate sites?
   // Start with "http://" then 0 or more characters then "/v3/notifications" then 0 or more characters
   // ^http://.*tapis\.io/v3/notifications.*
-  private static final Pattern TAPIS_BASEURL_K8S_PATTERN = Pattern.compile("^http://.*tapis\\.io/v3/notifications.*");
+  private static final Pattern TAPIS_BASEURL_K8S_PATTERN = Pattern.compile("^http://.*\\.tapis\\.io.*");
 
   // Json schema resource files.
   public static final String FILE_NOTIF_POST_REQUEST="/edu/utexas/tacc/tapis/notifications/api/jsonschema/NotificationPostRequest.json";
@@ -151,6 +151,7 @@ public class TestSequenceResource
       baseServiceUrl = StringUtils.replace(baseServiceUrl, HTTP_SCHEME, HTTPS_SCHEME, 1);
       _log.trace("Adjusting baseURL. After: " + baseServiceUrl);
     }
+    else { _log.trace("BaseURL not adjusted TODO remove me ********************************************************************");}
     baseServiceUrl = baseServiceUrl + BASE_SVC_URI;
 
     if (_log.isTraceEnabled())
