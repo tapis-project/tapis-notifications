@@ -46,7 +46,7 @@ public interface NotificationsDao
   void updateSubscriptionTTL(ResourceRequestUser rUser, String tenantId, String id, int newTTL, Instant newExpiry)
           throws TapisException;
 
-  void addUpdateRecord(ResourceRequestUser rUser, String tenant, String id, SubscriptionOperation op,
+  void addUpdateRecord(ResourceRequestUser rUser, String id, SubscriptionOperation op,
                        String upd_json, String upd_text) throws TapisException;
 
   int deleteSubscription(String tenant, String id) throws TapisException;

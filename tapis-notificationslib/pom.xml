@@ -243,7 +243,7 @@
                     <userType>com.google.gson.JsonElement</userType>
                     <binding>edu.utexas.tacc.tapis.notifications.dao.JSONBToJsonElementBinding</binding>
                     <!-- Match only certain columns, no need to filter on type -->
-                    <includeExpression>(subscriptions\.delivery_methods|subscriptions\.notes|subscription_updates\.upd_json|notifications\.event|notifications\.delivery_method|notifications_recovery\.delivery_method|notifications_tests\.notifications)</includeExpression>
+                    <includeExpression>(subscriptions\.delivery_methods|subscriptions\.notes|subscription_updates\.description|notifications\.event|notifications\.delivery_method|notifications_recovery\.delivery_method|notifications_tests\.notifications)</includeExpression>
                     <includeTypes>.*</includeTypes>
                   </forcedType>
                   <!-- ****************************************** -->

@@ -569,7 +569,7 @@ public final class RuntimeParameters implements EmailClientParameters
     buf.append("\n======================");
     buf.append("\n------- Service Specific -------------------------------");
     buf.append("\ntapis.ntf.delivery.thread.pool.size: ").append(getNtfDeliveryThreadPoolSize());
-    buf.append("\ntapis.log.directory: ").append(isLocalTest());
+    buf.append("\ntapis.local.test: ").append(isLocalTest());
     buf.append("\n------- Logging -----------------------------------");
     buf.append("\ntapis.log.directory: ");
     buf.append(this.getLogDirectory());

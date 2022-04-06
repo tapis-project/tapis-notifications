@@ -21,7 +21,7 @@ import org.jooq.ForeignKey;
 import org.jooq.Identity;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row11;
+import org.jooq.Row12;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -65,9 +65,24 @@ public class SubscriptionUpdates extends TableImpl<SubscriptionUpdatesRecord> {
     public final TableField<SubscriptionUpdatesRecord, Integer> SUBSCRIPTION_SEQ_ID = createField(DSL.name("subscription_seq_id"), SQLDataType.INTEGER, this, "");
 
     /**
-     * The column <code>tapis_ntf.subscription_updates.subscription_tenant</code>.
+     * The column <code>tapis_ntf.subscription_updates.obo_tenant</code>.
      */
-    public final TableField<SubscriptionUpdatesRecord, String> SUBSCRIPTION_TENANT = createField(DSL.name("subscription_tenant"), SQLDataType.CLOB.nullable(false), this, "");
+    public final TableField<SubscriptionUpdatesRecord, String> OBO_TENANT = createField(DSL.name("obo_tenant"), SQLDataType.CLOB.nullable(false), this, "");
+
+    /**
+     * The column <code>tapis_ntf.subscription_updates.obo_user</code>.
+     */
+    public final TableField<SubscriptionUpdatesRecord, String> OBO_USER = createField(DSL.name("obo_user"), SQLDataType.CLOB.nullable(false), this, "");
+
+    /**
+     * The column <code>tapis_ntf.subscription_updates.api_tenant</code>.
+     */
+    public final TableField<SubscriptionUpdatesRecord, String> API_TENANT = createField(DSL.name("api_tenant"), SQLDataType.CLOB.nullable(false), this, "");
+
+    /**
+     * The column <code>tapis_ntf.subscription_updates.api_user</code>.
+     */
+    public final TableField<SubscriptionUpdatesRecord, String> API_USER = createField(DSL.name("api_user"), SQLDataType.CLOB.nullable(false), this, "");
 
     /**
      * The column <code>tapis_ntf.subscription_updates.subscription_id</code>.
@@ -75,29 +90,19 @@ public class SubscriptionUpdates extends TableImpl<SubscriptionUpdatesRecord> {
     public final TableField<SubscriptionUpdatesRecord, String> SUBSCRIPTION_ID = createField(DSL.name("subscription_id"), SQLDataType.CLOB.nullable(false), this, "");
 
     /**
-     * The column <code>tapis_ntf.subscription_updates.user_tenant</code>.
-     */
-    public final TableField<SubscriptionUpdatesRecord, String> USER_TENANT = createField(DSL.name("user_tenant"), SQLDataType.CLOB.nullable(false), this, "");
-
-    /**
-     * The column <code>tapis_ntf.subscription_updates.user_name</code>.
-     */
-    public final TableField<SubscriptionUpdatesRecord, String> USER_NAME = createField(DSL.name("user_name"), SQLDataType.CLOB.nullable(false), this, "");
-
-    /**
      * The column <code>tapis_ntf.subscription_updates.operation</code>.
      */
     public final TableField<SubscriptionUpdatesRecord, SubscriptionOperation> OPERATION = createField(DSL.name("operation"), SQLDataType.CLOB.nullable(false), this, "", new EnumConverter<String, SubscriptionOperation>(String.class, SubscriptionOperation.class));
 
     /**
-     * The column <code>tapis_ntf.subscription_updates.upd_json</code>.
+     * The column <code>tapis_ntf.subscription_updates.description</code>.
      */
-    public final TableField<SubscriptionUpdatesRecord, JsonElement> UPD_JSON = createField(DSL.name("upd_json"), SQLDataType.JSONB.nullable(false), this, "", new JSONBToJsonElementBinding());
+    public final TableField<SubscriptionUpdatesRecord, JsonElement> DESCRIPTION = createField(DSL.name("description"), SQLDataType.JSONB.nullable(false), this, "", new JSONBToJsonElementBinding());
 
     /**
-     * The column <code>tapis_ntf.subscription_updates.upd_text</code>.
+     * The column <code>tapis_ntf.subscription_updates.raw_data</code>.
      */
-    public final TableField<SubscriptionUpdatesRecord, String> UPD_TEXT = createField(DSL.name("upd_text"), SQLDataType.CLOB, this, "");
+    public final TableField<SubscriptionUpdatesRecord, String> RAW_DATA = createField(DSL.name("raw_data"), SQLDataType.CLOB, this, "");
 
     /**
      * The column <code>tapis_ntf.subscription_updates.uuid</code>.
@@ -203,11 +208,11 @@ public class SubscriptionUpdates extends TableImpl<SubscriptionUpdatesRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row11 type methods
+    // Row12 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row11<Integer, Integer, String, String, String, String, SubscriptionOperation, JsonElement, String, java.util.UUID, LocalDateTime> fieldsRow() {
-        return (Row11) super.fieldsRow();
+    public Row12<Integer, Integer, String, String, String, String, String, SubscriptionOperation, JsonElement, String, java.util.UUID, LocalDateTime> fieldsRow() {
+        return (Row12) super.fieldsRow();
     }
 }

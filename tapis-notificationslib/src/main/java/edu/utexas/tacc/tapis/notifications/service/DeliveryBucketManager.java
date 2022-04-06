@@ -119,7 +119,7 @@ public final class DeliveryBucketManager implements Callable<String>
     Delivery delivery;
     try
     {
-      // RECOVERY Blocking call to get first event
+      // RECOVERY Blocking call to get first event.
       // First event may be a duplicate so handle it as a special case.
       // For first event received check for a duplicate. If already processed then simply ack it, else process it.
       delivery = deliveryBucketQueue.take();
@@ -180,8 +180,6 @@ public final class DeliveryBucketManager implements Callable<String>
   {
     Event event = delivery.getEvent();
 
-//    try { log.info("Sleep 2 seconds"); Thread.sleep(2000); } catch (InterruptedException e) {}
-
     log.debug(LibUtils.getMsg("NTFLIB_DSP_BUCKET_EVENT", bucketNum, delivery.getDeliveryTag(), event));
 
     // Find matching subscriptions
@@ -210,7 +208,7 @@ public final class DeliveryBucketManager implements Callable<String>
   private void proccessInterruptedDeliveries()
   {
     // TODO
-    log.info("TODO Bucket {}  Checking for interrupted deliveries.", bucketNum);
+    log.debug(LibUtils.getMsg("NTFLIB_DSP_BUCKET_PROC_INT", bucketNum));
   }
 
   /*

@@ -166,14 +166,14 @@ public class NotificationsDaoImpl implements NotificationsDao
    */
   @Override
   public boolean createSubscription(ResourceRequestUser rUser, Subscription subscr, Instant expiryI,
-                                    String createJsonStr, String scrubbedText)
+                                    String changeDescription, String rawData)
           throws TapisException, IllegalStateException
   {
     String opName = "createSubscription";
     // ------------------------- Check Input -------------------------
     if (subscr == null) LibUtils.logAndThrowNullParmException(opName, "subscription");
     if (rUser == null) LibUtils.logAndThrowNullParmException(opName, "resourceRequestUser");
-    if (StringUtils.isBlank(createJsonStr)) LibUtils.logAndThrowNullParmException(opName, "createJson");
+    if (StringUtils.isBlank(changeDescription)) LibUtils.logAndThrowNullParmException(opName, "changeDescription");
     if (StringUtils.isBlank(subscr.getTenant())) LibUtils.logAndThrowNullParmException(opName, "tenant");
     if (StringUtils.isBlank(subscr.getId())) LibUtils.logAndThrowNullParmException(opName, "subscriptionId");
     
@@ -235,8 +235,7 @@ public class NotificationsDaoImpl implements NotificationsDao
       if (seqId < 1) return false;
 
       // Persist update record
-      addUpdate(db, rUser, subscr.getTenant(), subscr.getId(), seqId, SubscriptionOperation.create,
-                createJsonStr, scrubbedText, subscr.getUuid());
+      addUpdate(db, rUser, subscr.getId(), seqId, SubscriptionOperation.create, changeDescription, rawData, subscr.getUuid());
 
       // Close out and commit
       LibUtils.closeAndCommitDB(conn, null, null);
@@ -262,7 +261,7 @@ public class NotificationsDaoImpl implements NotificationsDao
    * @throws IllegalStateException - if resource already exists
    */
   @Override
-  public void putSubscription(ResourceRequestUser rUser, Subscription putSubscr, String updateJsonStr, String scrubbedText)
+  public void putSubscription(ResourceRequestUser rUser, Subscription putSubscr, String changeDescription, String rawData)
           throws TapisException, IllegalStateException
   {
     String opName = "putSubscription";
@@ -273,7 +272,7 @@ public class NotificationsDaoImpl implements NotificationsDao
     String tenantId = putSubscr.getTenant();
     String subscrId = putSubscr.getId();
     // Check required attributes have been provided
-    if (StringUtils.isBlank(updateJsonStr)) LibUtils.logAndThrowNullParmException(opName, "updateJson");
+    if (StringUtils.isBlank(changeDescription)) LibUtils.logAndThrowNullParmException(opName, "changeDescription");
     if (StringUtils.isBlank(tenantId)) LibUtils.logAndThrowNullParmException(opName, "tenantId");
     if (StringUtils.isBlank(subscrId)) LibUtils.logAndThrowNullParmException(opName, "subscriptionId");
     if (StringUtils.isBlank(putSubscr.getTypeFilter())) LibUtils.logAndThrowNullParmException(opName, "typeFilter");
@@ -325,8 +324,7 @@ public class NotificationsDaoImpl implements NotificationsDao
       int seqId = result.getValue(SUBSCRIPTIONS.SEQ_ID);
 
       // Persist update record
-      addUpdate(db, rUser, putSubscr.getTenant(), putSubscr.getId(), seqId, SubscriptionOperation.modify,
-              updateJsonStr, scrubbedText, uuid);
+      addUpdate(db, rUser, putSubscr.getId(), seqId, SubscriptionOperation.modify, changeDescription, rawData, uuid);
 
       // Close out and commit
       LibUtils.closeAndCommitDB(conn, null, null);
@@ -352,7 +350,7 @@ public class NotificationsDaoImpl implements NotificationsDao
    */
   @Override
   public void patchSubscription(ResourceRequestUser rUser, String subscriptionId, Subscription patchedSubscription,
-                          String updateJsonStr, String scrubbedText)
+                          String changeDescription, String rawData)
           throws TapisException, IllegalStateException {
     String opName = "patchSubscription";
     // ------------------------- Check Input -------------------------
@@ -360,7 +358,7 @@ public class NotificationsDaoImpl implements NotificationsDao
     if (rUser == null) LibUtils.logAndThrowNullParmException(opName, "resourceRequestUser");
     // Pull out some values for convenience
     String tenant = rUser.getOboTenantId();
-    if (StringUtils.isBlank(updateJsonStr)) LibUtils.logAndThrowNullParmException(opName, "updateJson");
+    if (StringUtils.isBlank(changeDescription)) LibUtils.logAndThrowNullParmException(opName, "changeDescription");
     if (StringUtils.isBlank(tenant)) LibUtils.logAndThrowNullParmException(opName, "tenant");
     if (StringUtils.isBlank(subscriptionId)) LibUtils.logAndThrowNullParmException(opName, "subscriptionId");
 
@@ -407,7 +405,7 @@ public class NotificationsDaoImpl implements NotificationsDao
       int seqId = result.getValue(SUBSCRIPTIONS.SEQ_ID);
 
       // Persist update record
-      addUpdate(db, rUser, tenant, subscriptionId, seqId, SubscriptionOperation.modify, updateJsonStr, scrubbedText,
+      addUpdate(db, rUser, subscriptionId, seqId, SubscriptionOperation.modify, changeDescription, rawData,
                 patchedSubscription.getUuid());
 
       // Close out and commit
@@ -452,9 +450,8 @@ public class NotificationsDaoImpl implements NotificationsDao
               .where(SUBSCRIPTIONS.TENANT.eq(tenantId),SUBSCRIPTIONS.ID.eq(id))
               .execute();
       // Persist update record
-      String updateJsonStr = "{\"enabled\":" +  enabled + "}";
-      addUpdate(db, rUser, tenantId, id, INVALID_SEQ_ID, subscriptionOp, updateJsonStr , null,
-                getUUIDUsingDb(db, tenantId, id));
+      String changeDescription = "{\"enabled\":" +  enabled + "}";
+      addUpdate(db, rUser, id, INVALID_SEQ_ID, subscriptionOp, changeDescription , null, getUUIDUsingDb(db, tenantId, id));
       // Close out and commit
       LibUtils.closeAndCommitDB(conn, null, null);
     }
@@ -496,8 +493,8 @@ public class NotificationsDaoImpl implements NotificationsDao
               .where(SUBSCRIPTIONS.TENANT.eq(tenantId),SUBSCRIPTIONS.ID.eq(id))
               .execute();
       // Persist update record
-      String updateJsonStr = TapisGsonUtils.getGson().toJson(newOwnerName);
-      addUpdate(db, rUser, tenantId, id, INVALID_SEQ_ID, SubscriptionOperation.changeOwner, updateJsonStr , null,
+      String changeDescription = TapisGsonUtils.getGson().toJson(newOwnerName);
+      addUpdate(db, rUser, id, INVALID_SEQ_ID, SubscriptionOperation.changeOwner, changeDescription , null,
                 getUUIDUsingDb(db, tenantId, id));
       // Close out and commit
       LibUtils.closeAndCommitDB(conn, null, null);
@@ -543,8 +540,8 @@ public class NotificationsDaoImpl implements NotificationsDao
               .where(SUBSCRIPTIONS.TENANT.eq(tenantId),SUBSCRIPTIONS.ID.eq(id))
               .execute();
       // Persist update record
-      String updateJsonStr = "{\"ttl\":" +  newTTL + ", \"expiry\":\"" + expiry + "\"}";
-      addUpdate(db, rUser, tenantId, id, INVALID_SEQ_ID, SubscriptionOperation.updateTTL, updateJsonStr , null,
+      String changeDescription = "{\"ttl\":" +  newTTL + ", \"expiry\":\"" + expiry + "\"}";
+      addUpdate(db, rUser, id, INVALID_SEQ_ID, SubscriptionOperation.updateTTL, changeDescription , null,
                 getUUIDUsingDb(db, tenantId, id));
       // Close out and commit
       LibUtils.closeAndCommitDB(conn, null, null);
@@ -1186,8 +1183,8 @@ public class NotificationsDaoImpl implements NotificationsDao
    *
    */
   @Override
-  public void addUpdateRecord(ResourceRequestUser rUser, String tenant, String id, SubscriptionOperation op,
-                              String upd_json, String upd_text) throws TapisException
+  public void addUpdateRecord(ResourceRequestUser rUser, String id, SubscriptionOperation op, String changeDescription, String rawData)
+          throws TapisException
   {
     // ------------------------- Call SQL ----------------------------
     Connection conn = null;
@@ -1196,7 +1193,7 @@ public class NotificationsDaoImpl implements NotificationsDao
       // Get a database connection.
       conn = getConnection();
       DSLContext db = DSL.using(conn);
-      addUpdate(db, rUser, tenant, id, INVALID_SEQ_ID, op, upd_json, upd_text, getUUIDUsingDb(db, tenant, id));
+      addUpdate(db, rUser, id, INVALID_SEQ_ID, op, changeDescription, rawData, getUUIDUsingDb(db, rUser.getOboTenantId(), id));
       // Close out and commit
       LibUtils.closeAndCommitDB(conn, null, null);
     }
@@ -1758,40 +1755,40 @@ public class NotificationsDaoImpl implements NotificationsDao
   }
 
   /**
-   * Given an sql connection and basic info add an update record
+   * Given an sql connection and basic info add a change history record
    * If seqId <= 0 then seqId is fetched.
    * NOTE: Both subscription tenant and user tenant are recorded. If a service makes an update on behalf of itself
    *       the tenants will differ.
    *
    * @param db - Database connection
    * @param rUser - ResourceRequestUser containing tenant, user and request info
-   * @param tenantId - Tenant of the subscription being updated
    * @param id - Id of the subscription being updated
    * @param seqId - Sequence Id of subscription being updated
    * @param op - Operation, such as create, modify, etc.
-   * @param upd_json - JSON representing the update - with secrets scrubbed
-   * @param upd_text - Text data supplied by client - secrets should be scrubbed
+   * @param changeDescription - JSON representing the update - with secrets scrubbed
+   * @param rawData - Text data supplied by client - secrets should be scrubbed
    */
-  private void addUpdate(DSLContext db, ResourceRequestUser rUser, String tenantId, String id, int seqId,
-                         SubscriptionOperation op, String upd_json, String upd_text, UUID uuid)
+  private void addUpdate(DSLContext db, ResourceRequestUser rUser, String id, int seqId,
+                         SubscriptionOperation op, String changeDescription, String rawData, UUID uuid)
   {
-    String updJsonStr = (StringUtils.isBlank(upd_json)) ? EMPTY_JSON : upd_json;
+    String updJsonStr = (StringUtils.isBlank(changeDescription)) ? EMPTY_JSON : changeDescription;
     if (seqId < 1)
     {
       seqId = db.selectFrom(SUBSCRIPTIONS)
-                .where(SUBSCRIPTIONS.TENANT.eq(tenantId),SUBSCRIPTIONS.ID.eq(id))
+                .where(SUBSCRIPTIONS.TENANT.eq(rUser.getOboTenantId()),SUBSCRIPTIONS.ID.eq(id))
                 .fetchOne(SUBSCRIPTIONS.SEQ_ID);
     }
     // Persist update record
     db.insertInto(SUBSCRIPTION_UPDATES)
             .set(SUBSCRIPTION_UPDATES.SUBSCRIPTION_SEQ_ID, seqId)
-            .set(SUBSCRIPTION_UPDATES.SUBSCRIPTION_TENANT, tenantId)
+            .set(SUBSCRIPTION_UPDATES.API_TENANT, rUser.getJwtTenantId())
+            .set(SUBSCRIPTION_UPDATES.API_USER, rUser.getJwtUserId())
+            .set(SUBSCRIPTION_UPDATES.OBO_TENANT, rUser.getOboTenantId())
+            .set(SUBSCRIPTION_UPDATES.OBO_USER, rUser.getOboUserId())
             .set(SUBSCRIPTION_UPDATES.SUBSCRIPTION_ID, id)
-            .set(SUBSCRIPTION_UPDATES.USER_TENANT, rUser.getOboTenantId())
-            .set(SUBSCRIPTION_UPDATES.USER_NAME, rUser.getOboUserId())
             .set(SUBSCRIPTION_UPDATES.OPERATION, op)
-            .set(SUBSCRIPTION_UPDATES.UPD_JSON, TapisGsonUtils.getGson().fromJson(updJsonStr, JsonElement.class))
-            .set(SUBSCRIPTION_UPDATES.UPD_TEXT, upd_text)
+            .set(SUBSCRIPTION_UPDATES.DESCRIPTION, TapisGsonUtils.getGson().fromJson(updJsonStr, JsonElement.class))
+            .set(SUBSCRIPTION_UPDATES.RAW_DATA, rawData)
             .set(SUBSCRIPTION_UPDATES.UUID, uuid)
             .execute();
   }

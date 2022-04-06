@@ -77,13 +77,14 @@ CREATE TABLE subscription_updates
 (
     seq_id SERIAL PRIMARY KEY,
     subscription_seq_id INTEGER REFERENCES subscriptions(seq_id) ON DELETE CASCADE,
-    subscription_tenant TEXT NOT NULL,
+    obo_tenant TEXT NOT NULL,
+    obo_user TEXT NOT NULL,
+    api_tenant TEXT NOT NULL,
+    api_user TEXT NOT NULL,
     subscription_id TEXT NOT NULL,
-    user_tenant TEXT NOT NULL,
-    user_name TEXT NOT NULL,
     operation TEXT NOT NULL,
-    upd_json JSONB NOT NULL,
-    upd_text TEXT,
+    description JSONB NOT NULL,
+    raw_data TEXT,
     uuid UUID NOT NULL,
     created TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc')
 );
