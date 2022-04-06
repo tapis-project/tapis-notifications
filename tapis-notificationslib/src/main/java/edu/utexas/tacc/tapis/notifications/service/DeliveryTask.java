@@ -17,6 +17,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,7 +70,7 @@ public final class DeliveryTask implements Callable<Notification>
     bucketNum = n1.getBucketNum();
     deliveryMethod = n1.getDeliveryMethod();
     // Body is the notification as json
-    notifJsonStr = TapisGsonUtils.getGson().toJson(notification);
+    notifJsonStr = TapisGsonUtils.getGson(true).toJson(notification);
   }
   
   /* ********************************************************************** */
@@ -234,7 +235,13 @@ public final class DeliveryTask implements Callable<Notification>
   private boolean deliverByEmail() throws IOException, InterruptedException
   {
     boolean delivered = true;
-    String mailSubj = LibUtils.getMsg("NTFLIB_DSP_DLVRY_MAIL_SUBJ");
+    String eventType = notification.getEvent().getType();
+    String eventSubj = notification.getEvent().getSubject();
+    String mailSubj;
+    if (StringUtils.isBlank(eventSubj))
+      mailSubj = LibUtils.getMsg("NTFLIB_DSP_DLVRY_MAIL_SUBJ1", TapisConstants.API_VERSION, eventType);
+    else
+      mailSubj = LibUtils.getMsg("NTFLIB_DSP_DLVRY_MAIL_SUBJ2", TapisConstants.API_VERSION, eventType, eventSubj);
     String mailBody = notifJsonStr;
     String sendToAddress = deliveryMethod.getDeliveryAddress();
     String sendToName = deliveryMethod.getDeliveryAddress();

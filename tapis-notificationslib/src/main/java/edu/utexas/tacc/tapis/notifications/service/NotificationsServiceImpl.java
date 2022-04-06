@@ -17,7 +17,12 @@ import javax.inject.Inject;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 
+import edu.utexas.tacc.tapis.notifications.client.NotificationsClient;
+import edu.utexas.tacc.tapis.notifications.client.gen.model.TapisSubscription;
 import edu.utexas.tacc.tapis.notifications.model.Notification;
+import edu.utexas.tacc.tapis.shared.threadlocal.TapisThreadContext;
+import edu.utexas.tacc.tapis.sharedapi.security.AuthenticatedUser;
+import edu.utexas.tacc.tapis.systems.client.SystemsClient;
 import org.apache.commons.lang3.StringUtils;
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
@@ -625,6 +630,51 @@ public class NotificationsServiceImpl implements NotificationsService
   }
 
   /**
+   * Check dispatcher service
+   * @return null if all OK else return an Exception
+   */
+  public Exception checkDispatcher()
+  {
+    Exception retValue = null;
+
+    // Create a client to talk to ourselves in order to kick off a TestSequence
+    NotificationsClient ntfClient;
+    String tenantName = siteAdminTenantId;
+    String userName = SERVICE_NAME;
+    // Create a ResourceRequestUser to match the client so we can make service calls as if they had been received by the client
+    AuthenticatedUser authUser = new AuthenticatedUser(SERVICE_NAME, siteAdminTenantId, TapisThreadContext.AccountType.service.name(),
+                                                       null, userName, tenantName, null, null, null);
+    ResourceRequestUser rUser = new ResourceRequestUser(authUser);
+    // Note we could call service beginSequence() directly, but we would have to duplicate code for computing baseUrl
+    // Although slower it is probably a better check to call ourselves via the client.
+    String subscrId = "N/A";
+    try
+    {
+      ntfClient = serviceClients.getClient(userName, tenantName, NotificationsClient.class);
+      // Must add Content-Type header
+      ntfClient.addDefaultHeader("Content-Type", "application/json");
+      // If running in local test mode then reset the base url so we can talk to ourselves locally
+      if (RuntimeParameters.getInstance().isLocalTest())
+      {
+        ntfClient.setBasePath("http://localhost:8080");
+      }
+      TapisSubscription subscription = ntfClient.beginTestSequence(DEFAULT_TEST_TTL);
+      subscrId = subscription.getId();
+      log.debug(LibUtils.getMsg("NTFLIB_DSP_CHECK_BEGIN", subscrId));
+      waitForTestSequenceStart(tenantName, subscrId);
+      dao.deleteSubscription(tenantName, subscrId);
+      log.debug(LibUtils.getMsg("NTFLIB_DSP_CHECK_END", subscrId));
+    }
+    catch (Exception e)
+    {
+      String msg = LibUtils.getMsg("NTFLIB_DSP_CHECK_ERR", subscrId, e.getMessage());
+      log.warn(msg);
+      retValue = new TapisException(msg, e);
+    }
+    return retValue;
+  }
+
+  /**
    * checkForSubscription
    * @param rUser - ResourceRequestUser containing tenant, user and request info
    * @param subId - Name of the subscription
@@ -922,7 +972,7 @@ public class NotificationsServiceImpl implements NotificationsService
    * @throws IllegalArgumentException - invalid parameter passed in
    */
   @Override
-  public String beginTestSequence(ResourceRequestUser rUser, String baseServiceUrl, String ttl)
+  public Subscription beginTestSequence(ResourceRequestUser rUser, String baseServiceUrl, String ttl)
           throws TapisException, IOException, URISyntaxException, IllegalStateException, IllegalArgumentException
   {
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
@@ -996,7 +1046,7 @@ public class NotificationsServiceImpl implements NotificationsService
     Event event = new Event(tenant, user, eventSource, eventType, eventSubject, eventSeries, eventTime, eventUUID);
     MessageBroker.getInstance().publishEvent(rUser, event);
 
-    return subscrId;
+    return dao.getSubscription(tenant, subscrId);
   }
 
   /**
@@ -1549,5 +1599,37 @@ public class NotificationsServiceImpl implements NotificationsService
     if (p.getTtl() != null) sub1.setTtl(p.getTtl());
     if (p.getNotes() != null) sub1.setNotes(p.getNotes());
     return sub1;
+  }
+
+  /**
+   * Wait for the TestSquence associated with the subscription Id to start.
+   * Check a few times and then give up by throwing a TapisException at the end
+   *
+   * @param subscrId Subscription Id
+   * @throws TapisException On error
+   */
+  private void waitForTestSequenceStart(String tenant, String subscrId) throws TapisException
+  {
+    // Try 4 times with a 10 second poll interval
+    int NUM_TEST_START_ATTEMPTS = 4;
+    int DSP_CHECK_START_POLL_MS = 5000;
+    try
+    {
+      // Give it a short time to work before first check
+      Thread.sleep(1000);
+      for (int i = 0; i < NUM_TEST_START_ATTEMPTS; i++)
+      {
+        log.debug(LibUtils.getMsg("NTFLIB_DSP_CHECK_POLL1", i + 1, subscrId));
+        TestSequence testSeq = dao.getTestSequence(tenant, subscrId);
+        log.debug(LibUtils.getMsg("NTFLIB_DSP_CHECK_POLL2", testSeq.getNotificationCount(), subscrId));
+        if (testSeq.getNotificationCount() > 0) return;
+        Thread.sleep(DSP_CHECK_START_POLL_MS);
+      }
+    }
+    catch (Exception e)
+    {
+      throw new TapisException(LibUtils.getMsg("NTFLIB_DSP_CHECK_FAIL2", NUM_TEST_START_ATTEMPTS, subscrId));
+    }
+    throw new TapisException(LibUtils.getMsg("NTFLIB_DSP_CHECK_FAIL", NUM_TEST_START_ATTEMPTS, subscrId));
   }
 }

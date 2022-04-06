@@ -124,8 +124,12 @@ public final class RuntimeParameters implements EmailClientParameters
 
     // TAPIS_NTF_DELIVERY_THREAD_POOL_SIZE
     private int ntfDeliveryThreadPoolSize = DispatchService.DEFAULT_NUM_DELIVERY_WORKERS;
-	
-	/* ********************************************************************** */
+
+  // TAPIS__LOCAL_TEST
+  // Indicates we are running the service in TEST mode on localhost
+  private boolean localTest = false;
+
+  /* ********************************************************************** */
 	/*                              Constructors                              */
 	/* ********************************************************************** */
 	/** This is where the work happens--either we can successfully create the
@@ -137,6 +141,9 @@ public final class RuntimeParameters implements EmailClientParameters
 	 */
 	private RuntimeParameters() throws TapisRuntimeException
 	{
+      // Get env map vor EnvVar2 settings
+      var envMap = System.getenv();
+
 	  // --------------------- Get Input Parameters ---------------------
 	  // Get the input parameter values from resource file and environment.
 	  TapisInput tapisInput = new TapisInput(TapisConstants.SERVICE_NAME_NOTIFICATIONS);
@@ -421,7 +428,7 @@ public final class RuntimeParameters implements EmailClientParameters
       }
 
       //  ntfDeliveryThreadPoolSize
-      parm = inputProperties.getProperty(EnvVar2.TAPIS_NTF_DELIVERY_THREAD_POOL_SIZE.getEnvName());
+      parm = envMap.get(EnvVar2.TAPIS_NTF_DELIVERY_THREAD_POOL_SIZE.name());
       int tps = DispatchService.DEFAULT_NUM_DELIVERY_WORKERS;
       // If parameter is set attempt to parse it as an integer
       if (!StringUtils.isBlank(parm))
@@ -434,6 +441,23 @@ public final class RuntimeParameters implements EmailClientParameters
         }
       }
       setNtfDeliveryThreadPoolSize(tps);
+
+      // Optional flag indicating we are running in local test mode
+      parm = envMap.get(EnvVar2.TAPIS_LOCAL_TEST.name());
+      if (StringUtils.isBlank(parm)) setLocalTest(false);
+      else {
+        try {
+          setLocalTest(Boolean.parseBoolean(parm));}
+        catch (Exception e) {
+          // Stop on bad input.
+          String msg = MsgUtils.getMsg("TAPIS_SERVICE_PARM_INITIALIZATION_FAILED",
+                  TapisConstants.SERVICE_NAME_NOTIFICATIONS,
+                  "localTestFlag",
+                  e.getMessage());
+          _log.error(msg, e);
+          throw new TapisRuntimeException(msg, e);
+        }
+      }
 
       // --------------------- Email Parameters -------------------------
     // Currently LOG or SMTP.
@@ -957,14 +981,15 @@ public final class RuntimeParameters implements EmailClientParameters
   public int getNtfDeliveryThreadPoolSize() { return ntfDeliveryThreadPoolSize; }
   private void setNtfDeliveryThreadPoolSize(int i) { ntfDeliveryThreadPoolSize = i; }
 
-    /*
-     * Env variables specific to this service
-     */
-    private enum EnvVar2
-    {
-      TAPIS_NTF_DELIVERY_THREAD_POOL_SIZE("tapis.ntf.delivery.thread.pool.size");
-      private final String _envName;
-      EnvVar2(String envName) { _envName = envName; }
-      public String getEnvName() { return this._envName; }
-  }
+  // property TAPIS_NTF_LOCAL_TEST_FLAG
+  // Indicates we are running the service in TEST mode on localhost
+  public boolean isLocalTest() { return localTest; }
+  private void setLocalTest(boolean b) { localTest = b; }
+
+  /*
+   * Env variables specific to this service
+   * Note they always use format of uppercase with underscores.
+   * Setting via properties file or using lowercase with dots not supported
+   */
+    private enum EnvVar2 {TAPIS_NTF_DELIVERY_THREAD_POOL_SIZE, TAPIS_LOCAL_TEST}
 }
