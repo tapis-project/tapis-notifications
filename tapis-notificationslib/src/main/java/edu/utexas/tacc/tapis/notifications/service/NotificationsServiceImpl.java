@@ -1610,7 +1610,7 @@ public class NotificationsServiceImpl implements NotificationsService
    */
   private void waitForTestSequenceStart(String tenant, String subscrId) throws TapisException
   {
-    // Try 4 times with a 10 second poll interval
+    // Try 4 times with a 5 second poll interval
     int NUM_TEST_START_ATTEMPTS = 4;
     int DSP_CHECK_START_POLL_MS = 5000;
     try

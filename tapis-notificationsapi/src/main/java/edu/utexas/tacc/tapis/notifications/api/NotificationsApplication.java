@@ -123,6 +123,8 @@ public class NotificationsApplication extends ResourceConfig
     // Log our existence.
     // Output version information on startup
     System.out.printf("**** Starting Notifications Service. Version: %s ****%n", TapisUtils.getTapisFullVersion());
+    // Log our config
+    System.out.println(RuntimeParameters.getInstance().getRuntimeParameters());
 
     // If TAPIS_SERVICE_PORT set in env then use it.
     // Useful for starting service locally on a busy system where 8080 may not be available.
