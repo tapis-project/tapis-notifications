@@ -36,6 +36,8 @@ public class DispatchApplication
     // Log our existence.
     // Output version information on startup
     System.out.printf("**** Starting Notifications Dispatch Service. Version: %s ****%n", TapisUtils.getTapisFullVersion());
+    // Log our config
+    System.out.println(RuntimeParameters.getInstance().getRuntimeParameters());
 
     // Get runtime parameters
     RuntimeParameters runParms = RuntimeParameters.getInstance();

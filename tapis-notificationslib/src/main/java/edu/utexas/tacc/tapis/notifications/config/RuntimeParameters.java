@@ -558,133 +558,135 @@ public final class RuntimeParameters implements EmailClientParameters
     if (!StringUtils.isBlank(parm)) setSupportEmail(parm);
   }
 	
-    /* ---------------------------------------------------------------------- */
-    /* getRuntimeInfo:                                                        */
-    /* ---------------------------------------------------------------------- */
-	/** Augment the buffer with printable text based mostly on the parameters
-	 * managed by this class but also OS and JVM information.  The intent is 
-	 * that the various job programs and utilities that rely on this class can
-	 * print their configuration parameters, including those from this class, 
-	 * when they start up.  
-	 * 
-	 * @param buf
-	 */
-	public void getRuntimeInfo(StringBuilder buf)
-	{
-		buf.append("\n------- Logging -----------------------------------");
-		buf.append("\ntapis.log.directory: ");
-		buf.append(this.getLogDirectory());
-		buf.append("\ntapis.log.file: ");
-		buf.append(this.getLogFile());
+  /*
+   * Return listing of runtime settings as well as some OS and JVM information.
+   */
+  public String getRuntimeParameters()
+  {
+    var buf = new StringBuilder();
+    buf.append("======================");
+    buf.append("\nRuntime Parameters");
+    buf.append("\n======================");
+    buf.append("\n------- Service Specific -------------------------------");
+    buf.append("\ntapis.ntf.delivery.thread.pool.size: ").append(getNtfDeliveryThreadPoolSize());
+    buf.append("\ntapis.log.directory: ").append(isLocalTest());
+    buf.append("\n------- Logging -----------------------------------");
+    buf.append("\ntapis.log.directory: ");
+    buf.append(this.getLogDirectory());
+    buf.append("\ntapis.log.file: ");
+    buf.append(this.getLogFile());
 
-		buf.append("\n------- Network -----------------------------------");
-		buf.append("\nHost Addresses: ");
-		buf.append(getNetworkAddresses());
+    buf.append("\n------- Network -----------------------------------");
+    buf.append("\nHost Addresses: ");
+    buf.append(getNetworkAddresses());
 
-		buf.append("\n------- DB Configuration --------------------------");
-		buf.append("\ntapis.db.jdbc.url: ");
-		buf.append(this.getJdbcURL());
-		buf.append("\ntapis.db.user: ");
-		buf.append(this.getDbUser());
-		buf.append("\ntapis.db.connection.pool.size: ");
-		buf.append(this.getDbConnectionPoolSize());
-		buf.append("\ntapis.db.meter.minutes: ");
-		buf.append(this.getDbMeterMinutes());
+    buf.append("\n------- DB Configuration --------------------------");
+    buf.append("\ntapis.db.jdbc.url: ");
+    buf.append(this.getJdbcURL());
+    buf.append("\ntapis.db.user: ");
+    buf.append(this.getDbUser());
+    buf.append("\ntapis.db.connection.pool.size: ");
+    buf.append(this.getDbConnectionPoolSize());
+    buf.append("\ntapis.db.meter.minutes: ");
+    buf.append(this.getDbMeterMinutes());
 
-      buf.append("\n------- Site Id --------------------------");
-      buf.append("\ntapis.site.id: ");
-      buf.append(siteId);
+    buf.append("\n------- Site Id --------------------------");
+    buf.append("\ntapis.site.id: ");
+    buf.append(siteId);
 
-        buf.append("\n------- Base Service URLs --------------------------");
-		buf.append("\ntapis.svc.tenants.url: ");
-		buf.append(tenantsSvcURL);
-		buf.append("\ntapis.svc.sk.url: ");
-		buf.append(skSvcURL);
+    buf.append("\n------- Base Service URLs --------------------------");
+    buf.append("\ntapis.svc.tenants.url: ");
+    buf.append(tenantsSvcURL);
+    buf.append("\ntapis.svc.sk.url: ");
+    buf.append(skSvcURL);
 
-      buf.append("\n------- RabbitMQ Configuration --------------------");
-      buf.append("\ntapis.queue.host: ");
-      buf.append(this.getQueueHost());
-      buf.append("\ntapis.queue.admin.user: ");
-      buf.append(this.getQueueAdminUser());
-      buf.append("\ntapis.queue.admin.port: ");
-      buf.append(this.getQueueAdminPort());
-      buf.append("\ntapis.queue.user: ");
-      buf.append(this.getQueueUser());
-      buf.append("\ntapis.queue.port: ");
-      buf.append(this.getQueuePort());
-      buf.append("\ntapis.queue.ssl.enable: ");
-      buf.append(this.isQueueSSLEnabled());
-      buf.append("\ntapis.queue.auto.recovery: ");
-      buf.append(this.isQueueAutoRecoveryEnabled());
+    buf.append("\n------- RabbitMQ Configuration --------------------");
+    buf.append("\ntapis.queue.host: ");
+    buf.append(this.getQueueHost());
+    buf.append("\ntapis.queue.admin.user: ");
+    buf.append(this.getQueueAdminUser());
+    buf.append("\ntapis.queue.admin.port: ");
+    buf.append(this.getQueueAdminPort());
+    buf.append("\ntapis.queue.user: ");
+    buf.append(this.getQueueUser());
+    buf.append("\ntapis.queue.port: ");
+    buf.append(this.getQueuePort());
+    buf.append("\ntapis.queue.ssl.enable: ");
+    buf.append(this.isQueueSSLEnabled());
+    buf.append("\ntapis.queue.auto.recovery: ");
+    buf.append(this.isQueueAutoRecoveryEnabled());
 
-        buf.append("\n------- Email Configuration -----------------------");
-		buf.append("\ntapis.mail.provider: ");
-		buf.append(this.getEmailProviderType().name());
-		buf.append("\ntapis.smtp.auth: ");
-		buf.append(this.isEmailAuth());
-		buf.append("\ntapis.smtp.host: ");
-		buf.append(this.getEmailHost());
-		buf.append("\ntapis.smtp.port: ");
-		buf.append(this.getEmailPort());
-		buf.append("\ntapis.smtp.user: ");
-		buf.append(this.getEmailUser());
-		buf.append("\ntapis.smtp.from.name: ");
-		buf.append(this.getEmailFromName());
-		buf.append("\ntapis.smtp.from.address: ");
-		buf.append(this.getEmailFromAddress());
+    buf.append("\n------- Email Configuration -----------------------");
+    buf.append("\ntapis.mail.provider: ");
+    buf.append(this.getEmailProviderType().name());
+    buf.append("\ntapis.smtp.auth: ");
+    buf.append(this.isEmailAuth());
+    buf.append("\ntapis.smtp.host: ");
+    buf.append(this.getEmailHost());
+    buf.append("\ntapis.smtp.port: ");
+    buf.append(this.getEmailPort());
+    buf.append("\ntapis.smtp.user: ");
+    buf.append(this.getEmailUser());
+    buf.append("\ntapis.smtp.from.name: ");
+    buf.append(this.getEmailFromName());
+    buf.append("\ntapis.smtp.from.address: ");
+    buf.append(this.getEmailFromAddress());
 
-		buf.append("\n------- Support Configuration ---------------------");
-		buf.append("\ntapis.support.name: ");
-		buf.append(this.getSupportName());
-		buf.append("\ntapis.support.email: ");
-		buf.append(this.getSupportEmail());
+    buf.append("\n------- Support Configuration ---------------------");
+    buf.append("\ntapis.support.name: ");
+    buf.append(this.getSupportName());
+    buf.append("\ntapis.support.email: ");
+    buf.append(this.getSupportEmail());
 
-		buf.append("\n------- EnvOnly Configuration ---------------------");
-		buf.append("\ntapis.envonly.log.security.info: ");
-		buf.append(RuntimeParameters.getLogSecurityInfo());
-		buf.append("\ntapis.envonly.allow.test.header.parms: ");
-		buf.append(this.isAllowTestHeaderParms());
-		buf.append("\ntapis.envonly.jwt.optional: ");
-		buf.append(TapisEnv.getBoolean(EnvVar.TAPIS_ENVONLY_JWT_OPTIONAL));
-		buf.append("\ntapis.envonly.skip.jwt.verify: ");
-		buf.append(TapisEnv.getBoolean(EnvVar.TAPIS_ENVONLY_SKIP_JWT_VERIFY));
+    buf.append("\n------- EnvOnly Configuration ---------------------");
+    buf.append("\ntapis.envonly.log.security.info: ");
+    buf.append(RuntimeParameters.getLogSecurityInfo());
+    buf.append("\ntapis.envonly.allow.test.header.parms: ");
+    buf.append(this.isAllowTestHeaderParms());
+    buf.append("\ntapis.envonly.jwt.optional: ");
+    buf.append(TapisEnv.getBoolean(EnvVar.TAPIS_ENVONLY_JWT_OPTIONAL));
+    buf.append("\ntapis.envonly.skip.jwt.verify: ");
+    buf.append(TapisEnv.getBoolean(EnvVar.TAPIS_ENVONLY_SKIP_JWT_VERIFY));
 
-		buf.append("\n------- Java Configuration ------------------------");
-		buf.append("\njava.version: ");
-		buf.append(System.getProperty("java.version"));
-		buf.append("\njava.vendor: ");
-		buf.append(System.getProperty("java.vendor"));
-		buf.append("\njava.vm.version: ");
-		buf.append(System.getProperty("java.vm.version"));
-		buf.append("\njava.vm.vendor: ");
-		buf.append(System.getProperty("java.vm.vendor"));
-		buf.append("\njava.vm.name: ");
-		buf.append(System.getProperty("java.vm.name"));
-		buf.append("\nos.name: ");
-		buf.append(System.getProperty("os.name"));
-		buf.append("\nos.arch: ");
-		buf.append(System.getProperty("os.arch"));
-		buf.append("\nos.version: ");
-		buf.append(System.getProperty("os.version"));
-		buf.append("\nuser.name: ");
-		buf.append(System.getProperty("user.name"));
-		buf.append("\nuser.home: ");
-		buf.append(System.getProperty("user.home"));
-		buf.append("\nuser.dir: ");
-		buf.append(System.getProperty("user.dir"));
+    buf.append("\n------- Java Configuration ------------------------");
+    buf.append("\njava.version: ");
+    buf.append(System.getProperty("java.version"));
+    buf.append("\njava.vendor: ");
+    buf.append(System.getProperty("java.vendor"));
+    buf.append("\njava.vm.version: ");
+    buf.append(System.getProperty("java.vm.version"));
+    buf.append("\njava.vm.vendor: ");
+    buf.append(System.getProperty("java.vm.vendor"));
+    buf.append("\njava.vm.name: ");
+    buf.append(System.getProperty("java.vm.name"));
+    buf.append("\nos.name: ");
+    buf.append(System.getProperty("os.name"));
+    buf.append("\nos.arch: ");
+    buf.append(System.getProperty("os.arch"));
+    buf.append("\nos.version: ");
+    buf.append(System.getProperty("os.version"));
+    buf.append("\nuser.name: ");
+    buf.append(System.getProperty("user.name"));
+    buf.append("\nuser.home: ");
+    buf.append(System.getProperty("user.home"));
+    buf.append("\nuser.dir: ");
+    buf.append(System.getProperty("user.dir"));
 
-		buf.append("\n------- JVM Runtime Values ------------------------");
-		NumberFormat formatter = NumberFormat.getIntegerInstance();
-		buf.append("\navailableProcessors: ");
-		buf.append(formatter.format(Runtime.getRuntime().availableProcessors()));
-		buf.append("\nmaxMemory: ");
-		buf.append(formatter.format(Runtime.getRuntime().maxMemory()));
-		buf.append("\ntotalMemory: ");
-		buf.append(formatter.format(Runtime.getRuntime().totalMemory()));
-		buf.append("\nfreeMemory: ");
-		buf.append(formatter.format(Runtime.getRuntime().freeMemory()));
-	}
-	
+    buf.append("\n------- JVM Runtime Values ------------------------");
+    NumberFormat formatter = NumberFormat.getIntegerInstance();
+    buf.append("\navailableProcessors: ");
+    buf.append(formatter.format(Runtime.getRuntime().availableProcessors()));
+    buf.append("\nmaxMemory: ");
+    buf.append(formatter.format(Runtime.getRuntime().maxMemory()));
+    buf.append("\ntotalMemory: ");
+    buf.append(formatter.format(Runtime.getRuntime().totalMemory()));
+    buf.append("\nfreeMemory: ");
+    buf.append(formatter.format(Runtime.getRuntime().freeMemory()));
+
+    buf.append("\n\n");
+    return buf.toString();
+  }
+
     /* ********************************************************************** */
     /*                            Private Methods                             */
     /* ********************************************************************** */
