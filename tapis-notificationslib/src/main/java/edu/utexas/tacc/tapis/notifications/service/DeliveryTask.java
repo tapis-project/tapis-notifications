@@ -1,17 +1,15 @@
 package edu.utexas.tacc.tapis.notifications.service;
 
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpRequest.BodyPublisher;
-import java.net.http.HttpResponse;
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.concurrent.Callable;
 import javax.ws.rs.core.Response.Status;
 
+import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
+import edu.utexas.tacc.tapis.shared.providers.email.EmailClient;
+import edu.utexas.tacc.tapis.shared.providers.email.EmailClientFactory;
+import edu.utexas.tacc.tapis.shared.utils.HTMLizer;
 import edu.utexas.tacc.tapis.shared.utils.TapisGsonUtils;
 import okhttp3.Call;
 import okhttp3.MediaType;
@@ -19,6 +17,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,6 +56,7 @@ public final class DeliveryTask implements Callable<Notification>
   private final Notification notification; // The notification to be processed
   private final int bucketNum; // Bucket that generated the notification
   private final DeliveryMethod deliveryMethod;
+  private final String notifJsonStr;
 
   /* ********************************************************************** */
   /*                             Constructors                               */
@@ -69,6 +69,8 @@ public final class DeliveryTask implements Callable<Notification>
     notification = n1;
     bucketNum = n1.getBucketNum();
     deliveryMethod = n1.getDeliveryMethod();
+    // Body is the notification as json
+    notifJsonStr = TapisGsonUtils.getGson(true).toJson(notification);
   }
   
   /* ********************************************************************** */
@@ -77,6 +79,7 @@ public final class DeliveryTask implements Callable<Notification>
 
   /*
    * Main method for thread.start
+   * Make 2 attempts to deliver the notification. Pause 15 seconds after first attempt.
    */
   @Override
   public Notification call() throws TapisException
@@ -86,7 +89,7 @@ public final class DeliveryTask implements Callable<Notification>
 
 
     boolean delivered = false;
-    log.debug(LibUtils.getMsg("NTFLIB_DSP_DLVRY_1", bucketNum, deliveryMethod));
+    log.debug(LibUtils.getMsg("NTFLIB_DSP_DLVRY_ATTEMPT", bucketNum, notification.getUuid(), 1, deliveryMethod));
     try
     {
       delivered = deliverNotification();
@@ -108,7 +111,7 @@ public final class DeliveryTask implements Callable<Notification>
 
     // Pause and then try one more time
     try {log.debug("Sleep 15 seconds"); Thread.sleep(15000); } catch (InterruptedException e) {}
-    log.debug(LibUtils.getMsg("NTFLIB_DSP_DLVRY_2", bucketNum, deliveryMethod));
+    log.debug(LibUtils.getMsg("NTFLIB_DSP_DLVRY_ATTEMPT", bucketNum, notification.getUuid(), 2, deliveryMethod));
     try
     {
       delivered = deliverNotification();
@@ -141,17 +144,14 @@ public final class DeliveryTask implements Callable<Notification>
   /* ********************************************************************** */
 
   /*
-   * TODO Send out the notification
+   * Send out the notification
    */
   private boolean deliverNotification()
   {
     Event event = notification.getEvent();
-    log.info("Processing notification for event. Source: {} Type: {} Subject: {} SeriesId: {} Time: {} UUID {}",
-             event.getSource(), event.getType(), event.getSubject(), event.getSeriesId(),
-             event.getTime(), event.getUuid());
-    log.info("Deliver notification. DeliveryType: {} DeliveryAddress: {}", deliveryMethod.getDeliveryType(),
-             deliveryMethod.getDeliveryAddress());
-
+    log.debug(LibUtils.getMsg("NTFLIB_DSP_DLVRY", bucketNum, notification.getUuid(), deliveryMethod.getDeliveryType(),
+                               deliveryMethod.getDeliveryAddress(), event.getSource(), event.getType(),
+                               event.getSubject(), event.getSeriesId(), event.getTime(), event.getUuid()));
     boolean deliveryStatus = false;
     try
     {
@@ -171,6 +171,7 @@ public final class DeliveryTask implements Callable<Notification>
 
   /*
    * Send out the notification via Webhook
+   * TODO: Handle exceptions
    *
    * TODO:
    *   - Cache the client
@@ -182,10 +183,9 @@ public final class DeliveryTask implements Callable<Notification>
    */
   private boolean deliverByWebhook() throws URISyntaxException, IOException, InterruptedException
   {
-    // Request body is the notification as json
-    String notifJsonStr = TapisGsonUtils.getGson().toJson(notification);
+    boolean delivered = true;
 
-//    //??????????????????
+    //    //??????????????????
 //    // test GET - works
 //    URI uri2 = new URI("http://localhost:8080/v3/notifications/healthcheck");
 //    // TODO/TBD: timeout is 10 seconds
@@ -218,15 +218,45 @@ public final class DeliveryTask implements Callable<Notification>
     Request request = requestBuilder.addHeader("User-Agent", "Tapis/%s".formatted(TapisConstants.API_VERSION)).build();
     Call call = client.newCall(request);
     Response response = call.execute();
-    if (response.code() == Status.OK.getStatusCode()) return true;
-    return false;
+    // If response status code is not 200 assume delivery failed.
+    if (response.code() != Status.OK.getStatusCode())
+    {
+      log.error(LibUtils.getMsg("NTFLIB_DSP_DLVRY_WH_FAIL_ERR", bucketNum, notification.getUuid(),
+                                deliveryMethod.getDeliveryType(), deliveryMethod.getDeliveryAddress(), response.code()));
+      delivered = false;
+    }
+    return delivered;
   }
+
   /*
-   * TODO Send out the notification via email
-   *
+   * Send out the notification via email
+   * TODO: Handle exceptions
    */
   private boolean deliverByEmail() throws IOException, InterruptedException
   {
-    return false;
+    boolean delivered = true;
+    String eventType = notification.getEvent().getType();
+    String eventSubj = notification.getEvent().getSubject();
+    String mailSubj;
+    if (StringUtils.isBlank(eventSubj))
+      mailSubj = LibUtils.getMsg("NTFLIB_DSP_DLVRY_MAIL_SUBJ1", TapisConstants.API_VERSION, eventType);
+    else
+      mailSubj = LibUtils.getMsg("NTFLIB_DSP_DLVRY_MAIL_SUBJ2", TapisConstants.API_VERSION, eventType, eventSubj);
+    String mailBody = notifJsonStr;
+    String sendToAddress = deliveryMethod.getDeliveryAddress();
+    String sendToName = deliveryMethod.getDeliveryAddress();
+    RuntimeParameters runtime = RuntimeParameters.getInstance();
+    try
+    {
+      EmailClient client = EmailClientFactory.getClient(runtime);
+      client.send(sendToName, sendToAddress, mailSubj, mailBody, HTMLizer.htmlize(mailBody));
+    }
+    catch (TapisException e)
+    {
+      log.error(LibUtils.getMsg("NTFLIB_DSP_DLVRY_EM_FAIL_ERR", bucketNum, notification.getUuid(),
+                                deliveryMethod.getDeliveryType(), deliveryMethod.getDeliveryAddress(), e.getMessage(), e));
+      delivered = false;
+    }
+    return delivered;
   }
 }

@@ -1,6 +1,8 @@
 package edu.utexas.tacc.tapis.notifications.api.resources;
 
 import com.google.gson.JsonSyntaxException;
+import edu.utexas.tacc.tapis.notifications.api.responses.RespSubscription;
+import edu.utexas.tacc.tapis.notifications.model.Subscription;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.grizzly.http.server.Request;
@@ -45,9 +47,7 @@ import edu.utexas.tacc.tapis.shared.utils.TapisGsonUtils;
 import edu.utexas.tacc.tapis.sharedapi.responses.RespAbstract;
 import edu.utexas.tacc.tapis.sharedapi.responses.RespBasic;
 import edu.utexas.tacc.tapis.sharedapi.responses.RespChangeCount;
-import edu.utexas.tacc.tapis.sharedapi.responses.RespResourceUrl;
 import edu.utexas.tacc.tapis.sharedapi.responses.results.ResultChangeCount;
-import edu.utexas.tacc.tapis.sharedapi.responses.results.ResultResourceUrl;
 import edu.utexas.tacc.tapis.sharedapi.security.AuthenticatedUser;
 import edu.utexas.tacc.tapis.sharedapi.security.ResourceRequestUser;
 import edu.utexas.tacc.tapis.sharedapi.utils.TapisRestUtils;
@@ -83,10 +83,10 @@ public class TestSequenceResource
   private static final String HTTPS_SCHEME = "https://";
 
   // Pattern for determining if base url is from a Tapis k8s environment
-  //   http://dev.develop.tapis.io/v3/notifications or http://dev.tapis.io/v3/notifications
+  // e.g. http://dev.develop.tapis.io/v3/notifications or http://dev.tapis.io/v3/notifications
   // TODO/TBD What about non-Tapis sites and associate sites?
-  // Start with "http://" then 0 or more characters then "/v3/notifications" then 0 or more characters
-  // ^http://.*tapis\.io/v3/notifications.*
+  // Start with "http://" then 0 or more characters then ".tapis.io" then 0 or more characters
+  // ^http://.*\.tapis\.io.*
   private static final Pattern TAPIS_BASEURL_K8S_PATTERN = Pattern.compile("^http://.*\\.tapis\\.io.*");
 
   // Json schema resource files.
@@ -146,40 +146,38 @@ public class TestSequenceResource
     String baseServiceUrl = StringUtils.removeEnd(_request.getRequestURL().toString(), _request.getRequestURI());
     if (TAPIS_BASEURL_K8S_PATTERN.matcher(baseServiceUrl).matches())
     {
-      // TODO remove trace
-      _log.trace("Adjusting baseURL. Before: " + baseServiceUrl);
       baseServiceUrl = StringUtils.replace(baseServiceUrl, HTTP_SCHEME, HTTPS_SCHEME, 1);
-      _log.trace("Adjusting baseURL. After: " + baseServiceUrl);
     }
-    else { _log.trace("BaseURL not adjusted TODO remove me ********************************************************************");}
     baseServiceUrl = baseServiceUrl + BASE_SVC_URI;
 
-    if (_log.isTraceEnabled())
-    {
-      String msg = ApiUtils.getMsgAuth("NTFAPI_TEST_BASEURL", rUser, baseServiceUrl);
-      _log.trace(msg);
-    }
+    // Trace the final baseUrl
+    if (_log.isTraceEnabled()) { _log.trace(ApiUtils.getMsgAuth("NTFAPI_TEST_BASEURL", rUser, baseServiceUrl)); }
 
     // ---------------------------- Make service call  -------------------------------
     String msg;
-    String testSubscriptionId;
+    Subscription subscription;
     try
     {
-      testSubscriptionId = notificationsService.beginTestSequence(rUser, baseServiceUrl, subscriptionTTL);
+      subscription = notificationsService.beginTestSequence(rUser, baseServiceUrl, subscriptionTTL);
     }
     catch (Exception e)
     {
-      msg = ApiUtils.getMsgAuth("NTFAPI_TEST_ERR", rUser, opName, "null", e.getMessage());
+      msg = ApiUtils.getMsgAuth("NTFAPI_TEST_ERR1", rUser, opName, "null", e.getMessage());
       _log.error(msg);
       return Response.status(Status.INTERNAL_SERVER_ERROR).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
 
-    // ---------------------------- Success ------------------------------- 
-    // Success means test sequence started. Return the url to the subscription.
-    ResultResourceUrl respUrl = new ResultResourceUrl();
-    respUrl.url = _request.getRequestURL().toString() + "/" + testSubscriptionId;
-    RespResourceUrl resp1 = new RespResourceUrl(respUrl);
-    msg = ApiUtils.getMsgAuth("NTFAPI_TEST_BEGIN", rUser, testSubscriptionId);
+    // Resource was not found.
+    if (subscription == null)
+    {
+      msg = ApiUtils.getMsgAuth("NTFAPI_TEST_ERR2", rUser, opName);
+      _log.warn(msg);
+      return Response.status(Status.NOT_FOUND).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+    }
+
+    // ---------------------------- Success -------------------------------
+    RespSubscription resp1 = new RespSubscription(subscription, null);
+    msg = ApiUtils.getMsgAuth("NTFAPI_TEST_BEGIN", rUser, subscription.getId());
     return createSuccessResponse(Status.CREATED, msg, resp1);
   }
 
@@ -282,7 +280,7 @@ public class TestSequenceResource
     }
     catch (Exception e)
     {
-      msg = ApiUtils.getMsgAuth("NTFAPI_TEST_ERR", rUser, opName, subscriptionId, e.getMessage());
+      msg = ApiUtils.getMsgAuth("NTFAPI_TEST_ERR1", rUser, opName, subscriptionId, e.getMessage());
       _log.error(msg, e);
       return Response.status(Status.INTERNAL_SERVER_ERROR).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }

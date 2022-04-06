@@ -57,6 +57,7 @@ public class NotificationsResource
   private static final CallSiteToggle checkJWTOK = new CallSiteToggle();
   private static final CallSiteToggle checkDBOK = new CallSiteToggle();
   private static final CallSiteToggle checkMQOK = new CallSiteToggle();
+  private static final CallSiteToggle checkDispatcherOK = new CallSiteToggle();
 
   // **************** Inject Services using HK2 ****************
   @Inject
@@ -210,26 +211,25 @@ public class NotificationsResource
       if (checkMQOK.toggleOn()) _log.info(ApiUtils.getMsg("NTFAPI_READYCHECK_MQ_ERRTOGGLE_CLEARED"));
     }
 
-//  TODO/TBD Check that the dispatcher is ready
-    // TODO: Set up special readyCheck queue that we can use to test out both MessageBroker and DispatchService.
-//    readyCheckException = checkDispatcher();
-//    if (readyCheckException != null)
-//    {
-//      RespBasic r = new RespBasic("Readiness Dispatcher check failed. Check number: " + checkNum);
-//      String msg = MsgUtils.getMsg("TAPIS_NOT_READY", "Notifications Service");
-//      // We failed so set the log limiter check.
-//      if (checkDispatcherOK.toggleOff())
-//      {
-//        _log.warn(msg, readyCheckException);
-//        _log.warn(ApiUtils.getMsg("NTFAPI_READYCHECK_DISP_ERRTOGGLE_SET"));
-//      }
-//      return Response.status(Status.SERVICE_UNAVAILABLE).entity(TapisRestUtils.createErrorResponse(msg, false, r)).build();
-//    }
-//    else
-//    {
-//      // We succeeded so clear the log limiter check.
-//      if (checkWorkerOK.toggleOn()) _log.info(ApiUtils.getMsg("NTFAPI_READYCHECK_WRKR_ERRTOGGLE_CLEARED"));
-//    }
+    //Check that the dispatcher is ready by executing a test via TestSequence support.
+    readyCheckException = checkDispatcher();
+    if (readyCheckException != null)
+    {
+      RespBasic r = new RespBasic("Readiness Dispatcher check failed. Check number: " + checkNum);
+      String msg = MsgUtils.getMsg("TAPIS_NOT_READY", "Notifications Service");
+      // We failed so set the log limiter check.
+      if (checkDispatcherOK.toggleOff())
+      {
+        _log.warn(msg, readyCheckException);
+        _log.warn(ApiUtils.getMsg("NTFAPI_READYCHECK_DSP_ERRTOGGLE_SET"));
+      }
+      return Response.status(Status.SERVICE_UNAVAILABLE).entity(TapisRestUtils.createErrorResponse(msg, false, r)).build();
+    }
+    else
+    {
+      // We succeeded so clear the log limiter check.
+      if (checkDispatcherOK.toggleOn()) _log.info(ApiUtils.getMsg("NTFAPI_READYCHECK_DSP_ERRTOGGLE_CLEARED"));
+    }
 
     // ---------------------------- Success -------------------------------
     // Create the response payload.
@@ -244,6 +244,23 @@ public class NotificationsResource
   /* **************************************************************************** */
   /*                                Private Methods                               */
   /* **************************************************************************** */
+
+  /**
+   * Retrieve the cached tenants map.
+   * @return null if OK, otherwise return an exception
+   */
+  private Exception checkTenants()
+  {
+    Exception result = null;
+    try
+    {
+      // Make sure the cached tenants map is not null or empty.
+      var tenantMap = TenantManager.getInstance().getTenants();
+      if (tenantMap == null || tenantMap.isEmpty()) result = new TapisClientException(LibUtils.getMsg("NTFLIB_CHECKTENANTS_EMPTY"));
+    }
+    catch (Exception e) { result = e; }
+    return result;
+  }
 
   /**
    * Verify that we have a valid service JWT.
@@ -295,18 +312,13 @@ public class NotificationsResource
   }
 
   /**
-   * Retrieve the cached tenants map.
+   * Check the Dispatcher service
    * @return null if OK, otherwise return an exception
    */
-  private Exception checkTenants()
+  private Exception checkDispatcher()
   {
-    Exception result = null;
-    try
-    {
-      // Make sure the cached tenants map is not null or empty.
-      var tenantMap = TenantManager.getInstance().getTenants();
-      if (tenantMap == null || tenantMap.isEmpty()) result = new TapisClientException(LibUtils.getMsg("NTFLIB_CHECKTENANTS_EMPTY"));
-    }
+    Exception result;
+    try { result = svcImpl.checkDispatcher(); }
     catch (Exception e) { result = e; }
     return result;
   }

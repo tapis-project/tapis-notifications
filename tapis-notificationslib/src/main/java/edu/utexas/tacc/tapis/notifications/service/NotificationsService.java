@@ -84,7 +84,7 @@ public interface NotificationsService
   // -----------------------------------------------------------------------
   // ------------------------- Test Sequence -------------------------------
   // -----------------------------------------------------------------------
-  String beginTestSequence(ResourceRequestUser rUser, String baseServiceUrl, String subscriptionTTL)
+  Subscription beginTestSequence(ResourceRequestUser rUser, String baseServiceUrl, String subscriptionTTL)
           throws TapisException, IOException, URISyntaxException, IllegalStateException, IllegalArgumentException;
 
   TestSequence getTestSequence(ResourceRequestUser rUser, String subscriptionId)
