@@ -1141,6 +1141,56 @@ public class NotificationsDaoImpl implements NotificationsDao
   }
 
   /**
+   * getExpiredSubscriptions
+   * Retrieve all Subscriptions passed their expiry.
+   * This is for all tenants
+   * If no subscriptions are found an empty list is returned
+   * @return - list of expired Subscriptions across all tenants
+   * @throws TapisException - on error
+   */
+  @Override
+  public List<Subscription> getExpiredSubscriptions() throws TapisException
+  {
+    // The result list should always be non-null.
+    List<Subscription> retList = new ArrayList<>();
+
+    // ------------------------- Build and execute SQL ----------------------------
+    Connection conn = null;
+    try
+    {
+      // Get a database connection.
+      conn = getConnection();
+      DSLContext db = DSL.using(conn);
+
+      Result<SubscriptionsRecord> results;
+
+      // Build up the WHERE clause.
+      // Look for where the expiry timestamp is before the current timestamp
+      LocalDateTime now = TapisUtils.getUTCTimeNow();
+      Condition whereCondition = SUBSCRIPTIONS.EXPIRY.lt(now);
+      results = db.selectFrom(SUBSCRIPTIONS).where(whereCondition).fetch();
+
+      if (results.isEmpty()) return retList;
+
+      for (Record r : results) { Subscription s = getSubscriptionFromRecord(r); retList.add(s); }
+
+      // Close out and commit
+      LibUtils.closeAndCommitDB(conn, null, null);
+    }
+    catch (Exception e)
+    {
+      // Rollback transaction and throw an exception
+      LibUtils.rollbackDB(conn, e,"DB_QUERY_ERROR", "subscriptions", e.getMessage());
+    }
+    finally
+    {
+      // Always return the connection back to the connection pool.
+      LibUtils.finalCloseDB(conn);
+    }
+    return retList;
+  }
+
+  /**
    * getSubscriptionOwner
    * @param tenantId - name of tenant
    * @param id - name of subscription

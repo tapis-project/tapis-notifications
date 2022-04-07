@@ -3,6 +3,7 @@ package edu.utexas.tacc.tapis.notifications.service;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.http.HttpClient;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import javax.ws.rs.core.Response.Status;
 
@@ -48,12 +49,13 @@ public final class DeliveryTask implements Callable<Notification>
   /*                                 Fields                                 */
   /* ********************************************************************** */
 
-  private NotificationsDao dao;
+  private final NotificationsDao dao;
 
   private final HttpClient httpClient = HttpClient.newHttpClient();
 
   private final String tenant;
   private final Notification notification; // The notification to be processed
+  private final UUID uuid;
   private final int bucketNum; // Bucket that generated the notification
   private final DeliveryMethod deliveryMethod;
   private final String notifJsonStr;
@@ -69,67 +71,47 @@ public final class DeliveryTask implements Callable<Notification>
     notification = n1;
     bucketNum = n1.getBucketNum();
     deliveryMethod = n1.getDeliveryMethod();
+    uuid = n1.getUuid();
     // Body is the notification as json
     notifJsonStr = TapisGsonUtils.getGson(true).toJson(notification);
   }
-  
+
   /* ********************************************************************** */
   /*                             Public Methods                             */
   /* ********************************************************************** */
 
   /*
    * Main method for thread.start
-   * Make 2 attempts to deliver the notification. Pause 15 seconds after first attempt.
+   * Make multiple attempts to deliver the notification. Pause after each attempt.
+   * Number of attempts and interval are based on runtime settings.
    */
   @Override
   public Notification call() throws TapisException
   {
-    Thread.currentThread().setName("ThreadDelivery-bucket-"+ bucketNum + "-method-" + deliveryMethod);
+    Thread.currentThread().setName("ThreadDelivery-bucket-" + bucketNum + "-method-" + deliveryMethod);
     log.debug(LibUtils.getMsg("NTFLIB_DSP_DLVRY_START", bucketNum, Thread.currentThread().getId(), Thread.currentThread().getName()));
 
-
-    boolean delivered = false;
-    log.debug(LibUtils.getMsg("NTFLIB_DSP_DLVRY_ATTEMPT", bucketNum, notification.getUuid(), 1, deliveryMethod));
-    try
+    // Get number of attempts and attempt interval from settings.
+    int numAttempts = RuntimeParameters.getInstance().getNtfDeliveryAttempts();
+    int deliveryAttemptInterval = RuntimeParameters.getInstance().getNtfDeliveryRetryInterval() * 1000;
+    for (int i = 1; i < numAttempts; i++)
     {
-      delivered = deliverNotification();
-    }
-    catch (Exception e)
-    {
-      // TODO
-      log.warn("First delivery attempt failed. Caught exception: " + e.getMessage(), e);
-    }
-
-    if (delivered)
-    {
-      // First attempt succeeded
-      // TODO: What if we crash before removing notification?
-      //       and what if dao call throws exception?
-//      dao.deleteNotification(tenant, notification);
-      return notification;
+      log.debug(LibUtils.getMsg("NTFLIB_DSP_DLVRY_ATTEMPT", bucketNum, uuid, i, deliveryMethod));
+      try
+      {
+        if (deliverNotification()) return notificationDelivered();
+        log.warn(LibUtils.getMsg("NTFLIB_DSP_DLVRY_FAIL1", bucketNum, uuid, i, deliveryMethod));
+      }
+      catch (Exception e)
+      {
+        log.warn(LibUtils.getMsg("NTFLIB_DSP_DLVRY_FAIL2", bucketNum, uuid, i, deliveryMethod, e.getMessage()), e);
+      }
+      // Pause for configured interval before trying again
+      try {log.debug("Sleep 15 seconds"); Thread.sleep(deliveryAttemptInterval); } catch (InterruptedException e) {}
     }
 
-    // Pause and then try one more time
-    try {log.debug("Sleep 15 seconds"); Thread.sleep(15000); } catch (InterruptedException e) {}
-    log.debug(LibUtils.getMsg("NTFLIB_DSP_DLVRY_ATTEMPT", bucketNum, notification.getUuid(), 2, deliveryMethod));
-    try
-    {
-      delivered = deliverNotification();
-    }
-    catch (Exception e)
-    {
-      // TODO
-      log.warn("Second delivery attempt failed. Caught exception: " + e.getMessage(), e);
-      return null;
-    }
-    if (delivered)
-    {
-      // Second attempt succeeded
-      // TODO: What if we crash before removing notification?
-      //       and what if dao call throws exception?
-//      dao.deleteNotification(tenant, notification);
-      return notification;
-    }
+    // We have failed to deliver. Add to recovery
+    addNotificationToRecovery();
     return null;
   }
 
@@ -137,7 +119,10 @@ public final class DeliveryTask implements Callable<Notification>
   /*                             Accessors                                  */
   /* ********************************************************************** */
 
-  public int getBucketNum() { return bucketNum; }
+  public int getBucketNum()
+  {
+    return bucketNum;
+  }
 
   /* ********************************************************************** */
   /*                             Private Methods                            */
@@ -150,8 +135,8 @@ public final class DeliveryTask implements Callable<Notification>
   {
     Event event = notification.getEvent();
     log.debug(LibUtils.getMsg("NTFLIB_DSP_DLVRY", bucketNum, notification.getUuid(), deliveryMethod.getDeliveryType(),
-                               deliveryMethod.getDeliveryAddress(), event.getSource(), event.getType(),
-                               event.getSubject(), event.getSeriesId(), event.getTime(), event.getUuid()));
+            deliveryMethod.getDeliveryAddress(), event.getSource(), event.getType(),
+            event.getSubject(), event.getSeriesId(), event.getTime(), event.getUuid()));
     boolean deliveryStatus = false;
     try
     {
@@ -160,8 +145,7 @@ public final class DeliveryTask implements Callable<Notification>
         case WEBHOOK -> deliveryStatus = deliverByWebhook();
         case EMAIL -> deliveryStatus = deliverByEmail();
       }
-    }
-    catch (IOException | URISyntaxException | InterruptedException e)
+    } catch (IOException | URISyntaxException | InterruptedException e)
     {
       // TODO
       log.warn("Caught exception during notification delivery: " + e.getMessage(), e);
@@ -222,7 +206,7 @@ public final class DeliveryTask implements Callable<Notification>
     if (response.code() != Status.OK.getStatusCode())
     {
       log.error(LibUtils.getMsg("NTFLIB_DSP_DLVRY_WH_FAIL_ERR", bucketNum, notification.getUuid(),
-                                deliveryMethod.getDeliveryType(), deliveryMethod.getDeliveryAddress(), response.code()));
+              deliveryMethod.getDeliveryType(), deliveryMethod.getDeliveryAddress(), response.code()));
       delivered = false;
     }
     return delivered;
@@ -250,13 +234,27 @@ public final class DeliveryTask implements Callable<Notification>
     {
       EmailClient client = EmailClientFactory.getClient(runtime);
       client.send(sendToName, sendToAddress, mailSubj, mailBody, HTMLizer.htmlize(mailBody));
-    }
-    catch (TapisException e)
+    } catch (TapisException e)
     {
       log.error(LibUtils.getMsg("NTFLIB_DSP_DLVRY_EM_FAIL_ERR", bucketNum, notification.getUuid(),
-                                deliveryMethod.getDeliveryType(), deliveryMethod.getDeliveryAddress(), e.getMessage(), e));
+              deliveryMethod.getDeliveryType(), deliveryMethod.getDeliveryAddress(), e.getMessage(), e));
       delivered = false;
     }
     return delivered;
+  }
+
+  /*
+   * Notification has been delivered
+   * TODO
+   */
+  private Notification notificationDelivered()
+  {
+    try { dao.deleteNotification(tenant, notification) }
+    catch (TapisException e)
+    {
+      log.warn();
+      return null;
+    }
+    return notification;
   }
 }

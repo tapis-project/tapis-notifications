@@ -71,6 +71,8 @@ public interface NotificationsDao
 
   String getSubscriptionOwner(String tenant, String id) throws TapisException;
 
+  List<Subscription> getExpiredSubscriptions() throws TapisException;
+
   // -----------------------------------------------------------------------
   // -------------------- Notifications ------------------------------------
   // -----------------------------------------------------------------------

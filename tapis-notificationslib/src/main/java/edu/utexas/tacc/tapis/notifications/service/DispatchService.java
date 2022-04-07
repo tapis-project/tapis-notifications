@@ -9,6 +9,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.jvnet.hk2.annotations.Service;
@@ -51,6 +52,12 @@ public class DispatchService
 
   // Default number of workers per bucket for handling notification delivery. Can be changed via runtime parameter.
   public static final int DEFAULT_NUM_DELIVERY_WORKERS = 5;
+  // Default interval in minutes to use when periodically running the subscription reaper. Can be changed via runtime parameter.
+  public static final int DEFAULT_SUBSCR_REAPER_INTERVAL = 3;
+
+  // Number of attempts during initial delivery and interval (in seconds) between each one
+  public static final int DEFAULT_DELIVERY_ATTEMPTS = 4;
+  public static final int DEFAULT_DELIVERY_RETRY_INTERVAL = 20;
 
   // Allow interrupt when shutting down executor services.
   private static final boolean mayInterruptIfRunning = true;
@@ -77,8 +84,8 @@ public class DispatchService
   private final ExecutorService bucketManagerExecService =  Executors.newFixedThreadPool(NUM_BUCKETS);
 
   // ExecutorService and future for subscription reaper
-  private final ExecutorService reaperExecService = Executors.newSingleThreadExecutor();
-  private Future<String> reaperTaskFuture;
+  private final ScheduledExecutorService reaperExecService = Executors.newSingleThreadScheduledExecutor();
+  private Future<?> reaperTaskFuture;
 
   // We must be running on a specific site and this will never change
   // These are initialized in method initService()
@@ -139,13 +146,17 @@ public class DispatchService
     bucketManagerExecService.invokeAll(bucketManagers);
   }
 
-  /*
+  /**
    * Start the reaper thread for cleaning up expired subscriptions
+   * The reaper is a ScheduledExecutorService that runs periodically using the value passed in as the period in minutes.
+   *
+   * @param intervalMinutes execution period in minutes
    */
-  public void startReaper()
+  public void startReaper(long intervalMinutes)
   {
-    log.info(LibUtils.getMsg("NTFLIB_DSP_START_REAPER"));
-    reaperTaskFuture = reaperExecService.submit(new SubscriptionReaper(dao));
+    log.info(LibUtils.getMsg("NTFLIB_DSP_REAPER_START"));
+    reaperTaskFuture = reaperExecService.scheduleAtFixedRate(() -> SubscriptionReaper.cleanup(dao),
+                                                             intervalMinutes, intervalMinutes, TimeUnit.MINUTES);
   }
 
   /*
@@ -153,7 +164,7 @@ public class DispatchService
    */
   public void stopReaper()
   {
-    log.info(LibUtils.getMsg("NTFLIB_DSP_STOP_REAPER"));
+    log.info(LibUtils.getMsg("NTFLIB_DSP_REAPER_STOP"));
     if (reaperTaskFuture != null) reaperTaskFuture.cancel(mayInterruptIfRunning);
   }
 
@@ -177,7 +188,7 @@ public class DispatchService
   private void shutdownExecutors(int shutdownTimeout)
   {
     // Make sure reaper is shut down.
-    log.info(LibUtils.getMsg("NTFLIB_DSP_SHUT_REAPER", shutdownTimeout));
+    log.info(LibUtils.getMsg("NTFLIB_DSP_REAPER_SHUT", shutdownTimeout));
     // Stop the service from accepting any new tasks.
     reaperExecService.shutdown();
     try

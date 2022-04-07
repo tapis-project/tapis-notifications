@@ -124,6 +124,12 @@ public final class RuntimeParameters implements EmailClientParameters
 
     // TAPIS_NTF_DELIVERY_THREAD_POOL_SIZE
     private int ntfDeliveryThreadPoolSize = DispatchService.DEFAULT_NUM_DELIVERY_WORKERS;
+    // TAPIS_NTF_SUBSCR_REAPER_INTERVAL (in minutes)
+    private int ntfSubscriptionReaperInterval = DispatchService.DEFAULT_SUBSCR_REAPER_INTERVAL;
+
+    // Number of attempts during initial delivery and interval (in seconds) between each one
+    private int ntfDeliveryAttempts = DispatchService.DEFAULT_DELIVERY_ATTEMPTS;
+    private int  ntfDeliveryRetryInterval = DispatchService.DEFAULT_DELIVERY_RETRY_INTERVAL;
 
   // TAPIS__LOCAL_TEST
   // Indicates we are running the service in TEST mode on localhost
@@ -429,18 +435,63 @@ public final class RuntimeParameters implements EmailClientParameters
 
       //  ntfDeliveryThreadPoolSize
       parm = envMap.get(EnvVar2.TAPIS_NTF_DELIVERY_THREAD_POOL_SIZE.name());
-      int tps = DispatchService.DEFAULT_NUM_DELIVERY_WORKERS;
+      int parmInt = DispatchService.DEFAULT_NUM_DELIVERY_WORKERS;
       // If parameter is set attempt to parse it as an integer
       if (!StringUtils.isBlank(parm))
       {
-        try { tps = Integer.parseInt(parm); }
+        try { parmInt = Integer.parseInt(parm); }
         catch (NumberFormatException e)
         {
           // Log a warning
-          _log.warn(LibUtils.getMsg("NTFLIB_NUM_WORKERS_PARSE_ERR", parm));
+          _log.warn(LibUtils.getMsg("NTFLIB_RUNTIME_NUM_PARSE_FAIL", EnvVar2.TAPIS_NTF_DELIVERY_THREAD_POOL_SIZE, parm));
         }
       }
-      setNtfDeliveryThreadPoolSize(tps);
+      setNtfDeliveryThreadPoolSize(parmInt);
+
+      //  ntfSubscriptionReaperInterval
+      parm = envMap.get(EnvVar2.TAPIS_NTF_SUBSCR_REAPER_INTERVAL.name());
+      parmInt = DispatchService.DEFAULT_SUBSCR_REAPER_INTERVAL;
+      // If parameter is set attempt to parse it as an integer
+      if (!StringUtils.isBlank(parm))
+      {
+        try { parmInt = Integer.parseInt(parm); }
+        catch (NumberFormatException e)
+        {
+          // Log a warning
+          _log.warn(LibUtils.getMsg("NTFLIB_RUNTIME_NUM_PARSE_FAIL", EnvVar2.TAPIS_NTF_SUBSCR_REAPER_INTERVAL, parm));
+        }
+      }
+      setNtfSubscriptionReaperInterval(parmInt);
+
+      //  ntfDeliveryAttempts
+      parm = envMap.get(EnvVar2.TAPIS_NTF_DELIVERY_ATTEMPTS.name());
+      parmInt = DispatchService.DEFAULT_DELIVERY_ATTEMPTS;
+      // If parameter is set attempt to parse it as an integer
+      if (!StringUtils.isBlank(parm))
+      {
+        try { parmInt = Integer.parseInt(parm); }
+        catch (NumberFormatException e)
+        {
+          // Log a warning
+          _log.warn(LibUtils.getMsg("NTFLIB_RUNTIME_NUM_PARSE_FAIL", EnvVar2.TAPIS_NTF_DELIVERY_ATTEMPTS, parm));
+        }
+      }
+      setNtfDeliveryAttempts(parmInt);
+
+      //  ntfDeliveryRetryInterval
+      parm = envMap.get(EnvVar2.TAPIS_NTF_DELIVERY_RETRY_INTERVAL.name());
+      parmInt = DispatchService.DEFAULT_DELIVERY_RETRY_INTERVAL;
+      // If parameter is set attempt to parse it as an integer
+      if (!StringUtils.isBlank(parm))
+      {
+        try { parmInt = Integer.parseInt(parm); }
+        catch (NumberFormatException e)
+        {
+          // Log a warning
+          _log.warn(LibUtils.getMsg("NTFLIB_RUNTIME_NUM_PARSE_FAIL", EnvVar2.TAPIS_NTF_DELIVERY_RETRY_INTERVAL, parm));
+        }
+      }
+      setNtfDeliveryRetryInterval(parmInt);
 
       // Optional flag indicating we are running in local test mode
       parm = envMap.get(EnvVar2.TAPIS_LOCAL_TEST.name());
@@ -569,6 +620,9 @@ public final class RuntimeParameters implements EmailClientParameters
     buf.append("\n======================");
     buf.append("\n------- Service Specific -------------------------------");
     buf.append("\ntapis.ntf.delivery.thread.pool.size: ").append(getNtfDeliveryThreadPoolSize());
+    buf.append("\ntapis.ntf.subscription.reaper.interval: ").append(getNtfSubscriptionReaperInterval());
+    buf.append("\ntapis.ntf.delivery.attempts: ").append(getNtfDeliveryAttempts());
+    buf.append("\ntapis.ntf.delivery.retry.interval: ").append(getNtfDeliveryRetryInterval());
     buf.append("\ntapis.local.test: ").append(isLocalTest());
     buf.append("\n------- Logging -----------------------------------");
     buf.append("\ntapis.log.directory: ");
@@ -982,6 +1036,15 @@ public final class RuntimeParameters implements EmailClientParameters
   // property TAPIS_NTF_DELIVERY_THREAD_POOL_SIZE
   public int getNtfDeliveryThreadPoolSize() { return ntfDeliveryThreadPoolSize; }
   private void setNtfDeliveryThreadPoolSize(int i) { ntfDeliveryThreadPoolSize = i; }
+  // property TAPIS_NTF_SUBSCR_REAPER_INTERVAL
+  public int getNtfSubscriptionReaperInterval() { return ntfSubscriptionReaperInterval; }
+  private void setNtfSubscriptionReaperInterval(int i) { ntfSubscriptionReaperInterval = i; }
+  // property TAPIS_NTF_DELIVERY_ATTEMPTS
+  public int getNtfDeliveryAttempts() { return ntfDeliveryAttempts; }
+  private void setNtfDeliveryAttempts(int i) { ntfDeliveryAttempts = i; }
+  // property TAPIS_NTF_DELIVERY_RETRY_INTERVAL
+  public int getNtfDeliveryRetryInterval() { return ntfDeliveryRetryInterval; }
+  private void setNtfDeliveryRetryInterval(int i) { ntfDeliveryRetryInterval = i; }
 
   // property TAPIS_NTF_LOCAL_TEST_FLAG
   // Indicates we are running the service in TEST mode on localhost
@@ -993,5 +1056,11 @@ public final class RuntimeParameters implements EmailClientParameters
    * Note they always use format of uppercase with underscores.
    * Setting via properties file or using lowercase with dots not supported
    */
-    private enum EnvVar2 {TAPIS_NTF_DELIVERY_THREAD_POOL_SIZE, TAPIS_LOCAL_TEST}
+  private enum EnvVar2
+  {
+    TAPIS_NTF_DELIVERY_THREAD_POOL_SIZE,
+    TAPIS_NTF_SUBSCR_REAPER_INTERVAL,
+    TAPIS_NTF_DELIVERY_ATTEMPTS,
+    TAPIS_NTF_DELIVERY_RETRY_INTERVAL,
+    TAPIS_LOCAL_TEST}
 }
