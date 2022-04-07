@@ -39,56 +39,56 @@ import edu.utexas.tacc.tapis.notifications.utils.LibUtils;
  */
 public final class RuntimeParameters implements EmailClientParameters
 {
-    /* ********************************************************************** */
-    /*                               Constants                                */
-    /* ********************************************************************** */
-    // Tracing.
-    private static final Logger _log = LoggerFactory.getLogger(RuntimeParameters.class);
-  
-    // Parameter defaults.
-    private static final int CONNECTION_POOL_SIZE = 10;
-  
-    // Maximum size of a instance name string.
-    private static final int MAX_INSTANCE_NAME_LEN = 26;
-  
-    // Default database metering interval in minutes.
-    private static final int DEFAULT_DB_METER_INTERVAL_MINUTES = 60 * 24;
-    
-    // Email defaults.
-    private static final String DEFAULT_EMAIL_PROVIDER = "LOG";
-    private static final int    DEFAULT_EMAIL_PORT = 25;
-    private static final String DEFAULT_EMAIL_FROM_NAME = "Tapis Notifications Service";
-    private static final String DEFAULT_EMAIL_FROM_ADDRESS = "no-reply@nowhere.com";
-    
-    // Support defaults.
-    private static final String DEFAULT_SUPPORT_NAME = "TACC";
-     
-    /* ********************************************************************** */
-    /*                                 Fields                                 */
-    /* ********************************************************************** */
-    // Singleton instance.
-    private static RuntimeParameters _instance = initInstance();
-  
-    // Distinguished user-chosen name of this runtime instance.
-    private String  instanceName;
-  
-	// Database configuration.
-	private String  dbConnectionPoolName;
-	private int     dbConnectionPoolSize;
-	private String  dbUser;
-	private String  dbPassword;
-	private String  jdbcURL;
-	private int     dbMeterMinutes;
+  /* ********************************************************************** */
+  /*                               Constants                                */
+  /* ********************************************************************** */
+  // Tracing.
+  private static final Logger _log = LoggerFactory.getLogger(RuntimeParameters.class);
 
-	// Service config
-	private String servicePassword;
+  // Parameter defaults.
+  private static final int CONNECTION_POOL_SIZE = 10;
 
-    // Site on which we are running
-    private String siteId;
+  // Maximum size of a instance name string.
+  private static final int MAX_INSTANCE_NAME_LEN = 26;
 
-    // Service base URLs - tenants, Security Kernel
-	private String tenantsSvcURL;
-	private String skSvcURL;
+  // Default database metering interval in minutes.
+  private static final int DEFAULT_DB_METER_INTERVAL_MINUTES = 60 * 24;
+
+  // Email defaults.
+  private static final String DEFAULT_EMAIL_PROVIDER = "LOG";
+  private static final int    DEFAULT_EMAIL_PORT = 25;
+  private static final String DEFAULT_EMAIL_FROM_NAME = "Tapis Notifications Service";
+  private static final String DEFAULT_EMAIL_FROM_ADDRESS = "no-reply@nowhere.com";
+
+  // Support defaults.
+  private static final String DEFAULT_SUPPORT_NAME = "TACC";
+
+  /* ********************************************************************** */
+  /*                                 Fields                                 */
+  /* ********************************************************************** */
+  // Singleton instance.
+  private static RuntimeParameters _instance = initInstance();
+
+  // Distinguished user-chosen name of this runtime instance.
+  private String  instanceName;
+
+  // Database configuration.
+  private String  dbConnectionPoolName;
+  private int     dbConnectionPoolSize;
+  private String  dbUser;
+  private String  dbPassword;
+  private String  jdbcURL;
+  private int     dbMeterMinutes;
+
+  // Service config
+  private String servicePassword;
+
+  // Site on which we are running
+  private String siteId;
+
+  // Service base URLs - tenants, Security Kernel
+  private String tenantsSvcURL;
+  private String skSvcURL;
 
   // RabbitMQ configuration.
   private String  queueAdminUser;
@@ -102,51 +102,55 @@ public final class RuntimeParameters implements EmailClientParameters
   private boolean queueAutoRecoveryEnabled = true;
 
   // Mail configuration.
-	private EmailProviderType emailProviderType;
-	private boolean emailAuth;
-	private String  emailHost;
-	private int     emailPort;
-	private String  emailUser;
-	private String  emailPassword;
-	private String  emailFromName;
-	private String  emailFromAddress;
-	
-	// Support.
-	private String  supportName;
-	private String  supportEmail;
-	
-	// Allow test query parameters to be used.
-	private boolean allowTestHeaderParms;
-	
-	// The slf4j/logback target directory and file.
-	private String  logDirectory;
-	private String  logFile;
+  private EmailProviderType emailProviderType;
+  private boolean emailAuth;
+  private String  emailHost;
+  private int     emailPort;
+  private String  emailUser;
+  private String  emailPassword;
+  private String  emailFromName;
+  private String  emailFromAddress;
 
-    // TAPIS_NTF_DELIVERY_THREAD_POOL_SIZE
-    private int ntfDeliveryThreadPoolSize = DispatchService.DEFAULT_NUM_DELIVERY_WORKERS;
-    // TAPIS_NTF_SUBSCR_REAPER_INTERVAL (in minutes)
-    private int ntfSubscriptionReaperInterval = DispatchService.DEFAULT_SUBSCR_REAPER_INTERVAL;
+  // Support.
+  private String  supportName;
+  private String  supportEmail;
 
-    // Number of attempts during initial delivery and interval (in seconds) between each one
-    private int ntfDeliveryAttempts = DispatchService.DEFAULT_DELIVERY_ATTEMPTS;
-    private int  ntfDeliveryRetryInterval = DispatchService.DEFAULT_DELIVERY_RETRY_INTERVAL;
+  // Allow test query parameters to be used.
+  private boolean allowTestHeaderParms;
+
+  // The slf4j/logback target directory and file.
+  private String  logDirectory;
+  private String  logFile;
+
+  // TAPIS_NTF_DELIVERY_THREAD_POOL_SIZE
+  private int ntfDeliveryThreadPoolSize = DispatchService.DEFAULT_NUM_DELIVERY_WORKERS;
+  // TAPIS_NTF_SUBSCR_REAPER_INTERVAL (in minutes)
+  private int ntfSubscriptionReaperInterval = DispatchService.DEFAULT_SUBSCR_REAPER_INTERVAL;
+
+  // Number of attempts during initial delivery and interval (in seconds) between each one
+  private int ntfDeliveryAttempts = DispatchService.DEFAULT_DELIVERY_ATTEMPTS;
+  private int  ntfDeliveryRetryInterval = DispatchService.DEFAULT_DELIVERY_RETRY_INTERVAL;
+
+  // Number of attempts during recovery delivery and interval (in minutes) between each one
+  private int ntfDeliveryRecoveryAttempts = DispatchService.DEFAULT_DELIVERY_RCVRY_ATTEMPTS;
+  private int  ntfDeliveryRecoveryRetryInterval = DispatchService.DEFAULT_DELIVERY_RCVRY_RETRY_INTERVAL;
 
   // TAPIS__LOCAL_TEST
   // Indicates we are running the service in TEST mode on localhost
   private boolean localTest = false;
 
   /* ********************************************************************** */
-	/*                              Constructors                              */
-	/* ********************************************************************** */
-	/** This is where the work happens--either we can successfully create the
-	 * singleton object or we throw an exception which should abort service
-	 * initialization.  If an object is created, then all required input 
-	 * parameters have been set in a syntactically valid way.
-	 * 
-	 * @throws TapisRuntimeException on error
-	 */
-	private RuntimeParameters() throws TapisRuntimeException
-	{
+  /*                              Constructors                              */
+  /* ********************************************************************** */
+  /** This is where the work happens--either we can successfully create the
+   * singleton object or we throw an exception which should abort service
+   * initialization.  If an object is created, then all required input
+   * parameters have been set in a syntactically valid way.
+   *
+   * @throws TapisRuntimeException on error
+   */
+  private RuntimeParameters() throws TapisRuntimeException
+  {
       // Get env map vor EnvVar2 settings
       var envMap = System.getenv();
 
@@ -493,6 +497,36 @@ public final class RuntimeParameters implements EmailClientParameters
       }
       setNtfDeliveryRetryInterval(parmInt);
 
+      //  ntfDeliveryRecoveryAttempts
+      parm = envMap.get(EnvVar2.TAPIS_NTF_DELIVERY_RCVRY_ATTEMPTS.name());
+      parmInt = DispatchService.DEFAULT_DELIVERY_RCVRY_ATTEMPTS;
+      // If parameter is set attempt to parse it as an integer
+      if (!StringUtils.isBlank(parm))
+      {
+        try { parmInt = Integer.parseInt(parm); }
+        catch (NumberFormatException e)
+        {
+          // Log a warning
+          _log.warn(LibUtils.getMsg("NTFLIB_RUNTIME_NUM_PARSE_FAIL", EnvVar2.TAPIS_NTF_DELIVERY_RCVRY_ATTEMPTS, parm));
+        }
+      }
+      setNtfDeliveryRecoveryAttempts(parmInt);
+
+      //  ntfDeliveryRecoveryRetryInterval
+      parm = envMap.get(EnvVar2.TAPIS_NTF_DELIVERY_RCVRY_RETRY_INTERVAL.name());
+      parmInt = DispatchService.DEFAULT_DELIVERY_RCVRY_RETRY_INTERVAL;
+      // If parameter is set attempt to parse it as an integer
+      if (!StringUtils.isBlank(parm))
+      {
+        try { parmInt = Integer.parseInt(parm); }
+        catch (NumberFormatException e)
+        {
+          // Log a warning
+          _log.warn(LibUtils.getMsg("NTFLIB_RUNTIME_NUM_PARSE_FAIL", EnvVar2.TAPIS_NTF_DELIVERY_RETRY_INTERVAL, parm));
+        }
+      }
+      setNtfDeliveryRecoveryRetryInterval(parmInt);
+
       // Optional flag indicating we are running in local test mode
       parm = envMap.get(EnvVar2.TAPIS_LOCAL_TEST.name());
       if (StringUtils.isBlank(parm)) setLocalTest(false);
@@ -623,6 +657,8 @@ public final class RuntimeParameters implements EmailClientParameters
     buf.append("\ntapis.ntf.subscription.reaper.interval: ").append(getNtfSubscriptionReaperInterval());
     buf.append("\ntapis.ntf.delivery.attempts: ").append(getNtfDeliveryAttempts());
     buf.append("\ntapis.ntf.delivery.retry.interval: ").append(getNtfDeliveryRetryInterval());
+    buf.append("\ntapis.ntf.delivery.rcvry.attempts: ").append(getNtfDeliveryRecoveryAttempts());
+    buf.append("\ntapis.ntf.delivery.rcvry.retry.interval: ").append(getNtfDeliveryRecoveryRetryInterval());
     buf.append("\ntapis.local.test: ").append(isLocalTest());
     buf.append("\n------- Logging -----------------------------------");
     buf.append("\ntapis.log.directory: ");
@@ -1045,6 +1081,12 @@ public final class RuntimeParameters implements EmailClientParameters
   // property TAPIS_NTF_DELIVERY_RETRY_INTERVAL
   public int getNtfDeliveryRetryInterval() { return ntfDeliveryRetryInterval; }
   private void setNtfDeliveryRetryInterval(int i) { ntfDeliveryRetryInterval = i; }
+  // property TAPIS_NTF_DELIVERY_RCVRY_ATTEMPTS
+  public int getNtfDeliveryRecoveryAttempts() { return ntfDeliveryRecoveryAttempts; }
+  private void setNtfDeliveryRecoveryAttempts(int i) { ntfDeliveryRecoveryAttempts = i; }
+  // property TAPIS_NTF_DELIVERY_RCVRY_RETRY_INTERVAL
+  public int getNtfDeliveryRecoveryRetryInterval() { return ntfDeliveryRecoveryRetryInterval; }
+  private void setNtfDeliveryRecoveryRetryInterval(int i) { ntfDeliveryRecoveryRetryInterval = i; }
 
   // property TAPIS_NTF_LOCAL_TEST_FLAG
   // Indicates we are running the service in TEST mode on localhost
@@ -1062,5 +1104,7 @@ public final class RuntimeParameters implements EmailClientParameters
     TAPIS_NTF_SUBSCR_REAPER_INTERVAL,
     TAPIS_NTF_DELIVERY_ATTEMPTS,
     TAPIS_NTF_DELIVERY_RETRY_INTERVAL,
+    TAPIS_NTF_DELIVERY_RCVRY_ATTEMPTS,
+    TAPIS_NTF_DELIVERY_RCVRY_RETRY_INTERVAL,
     TAPIS_LOCAL_TEST}
 }

@@ -7,11 +7,6 @@ import java.util.UUID;
 import java.util.concurrent.Callable;
 import javax.ws.rs.core.Response.Status;
 
-import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
-import edu.utexas.tacc.tapis.shared.providers.email.EmailClient;
-import edu.utexas.tacc.tapis.shared.providers.email.EmailClientFactory;
-import edu.utexas.tacc.tapis.shared.utils.HTMLizer;
-import edu.utexas.tacc.tapis.shared.utils.TapisGsonUtils;
 import okhttp3.Call;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -22,8 +17,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import edu.utexas.tacc.tapis.shared.providers.email.EmailClient;
+import edu.utexas.tacc.tapis.shared.providers.email.EmailClientFactory;
+import edu.utexas.tacc.tapis.shared.utils.HTMLizer;
+import edu.utexas.tacc.tapis.shared.utils.TapisGsonUtils;
 import edu.utexas.tacc.tapis.shared.TapisConstants;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
+import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
 import edu.utexas.tacc.tapis.notifications.utils.LibUtils;
 import edu.utexas.tacc.tapis.notifications.dao.NotificationsDao;
 import edu.utexas.tacc.tapis.notifications.model.DeliveryMethod;
@@ -110,7 +110,7 @@ public final class DeliveryTask implements Callable<Notification>
       try {log.debug("Sleep 15 seconds"); Thread.sleep(deliveryAttemptInterval); } catch (InterruptedException e) {}
     }
 
-    // We have failed to deliver. Add to recovery
+    // We have failed to deliver. Add to recovery table
     addNotificationToRecovery();
     return null;
   }
@@ -237,7 +237,7 @@ public final class DeliveryTask implements Callable<Notification>
     } catch (TapisException e)
     {
       log.error(LibUtils.getMsg("NTFLIB_DSP_DLVRY_EM_FAIL_ERR", bucketNum, notification.getUuid(),
-              deliveryMethod.getDeliveryType(), deliveryMethod.getDeliveryAddress(), e.getMessage(), e));
+                            deliveryMethod.getDeliveryType(), deliveryMethod.getDeliveryAddress(), e.getMessage(), e));
       delivered = false;
     }
     return delivered;
