@@ -2,7 +2,6 @@ package edu.utexas.tacc.tapis.notifications.service;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.net.http.HttpClient;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import javax.ws.rs.core.Response.Status;
@@ -50,8 +49,6 @@ public final class DeliveryTask implements Callable<Notification>
   /* ********************************************************************** */
 
   private final NotificationsDao dao;
-
-  private final HttpClient httpClient = HttpClient.newHttpClient();
 
   private final String tenant;
   private final Notification notification; // The notification to be processed
@@ -244,15 +241,32 @@ public final class DeliveryTask implements Callable<Notification>
   }
 
   /*
-   * Notification has been delivered
-   * TODO
+   * Notification has been delivered. Remove it from the table.
    */
   private Notification notificationDelivered()
   {
-    try { dao.deleteNotification(tenant, notification) }
+    try { dao.deleteNotification(tenant, notification); }
     catch (TapisException e)
     {
-      log.warn();
+      String msg = LibUtils.getMsg("NTFLIB_DSP_DLVRY_DEL_ERR", bucketNum, notification.getUuid(),
+                             deliveryMethod.getDeliveryType(), deliveryMethod.getDeliveryAddress(), e.getMessage(), e);
+      log.error(msg);
+      return null;
+    }
+    return notification;
+  }
+
+  /*
+   * Initial Notification delivery failed. Add it to the recovery table.the table.
+   */
+  private Notification addNotificationToRecovery()
+  {
+    try { dao.deleteNotification(tenant, notification); }
+    catch (TapisException e)
+    {
+      String msg = LibUtils.getMsg("NTFLIB_DSP_DLVRY_DEL_ERR", bucketNum, notification.getUuid(),
+              deliveryMethod.getDeliveryType(), deliveryMethod.getDeliveryAddress(), e.getMessage(), e);
+      log.error(msg);
       return null;
     }
     return notification;

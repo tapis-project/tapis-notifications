@@ -1564,9 +1564,9 @@ public class NotificationsDaoImpl implements NotificationsDao
     if (rUser == null) LibUtils.logAndThrowNullParmException(opName, "resourceRequestUser");
     if (StringUtils.isBlank(subscrId)) LibUtils.logAndThrowNullParmException(opName, "subscriptionId");
 
-    String tenantId = rUser.getOboTenantId();
-    String apiUser = rUser.getOboUserId();
-    Subscription subscription = getSubscription(tenantId, subscrId);
+    String oboTenant = rUser.getOboTenantId();
+    String oboUser = rUser.getOboUserId();
+    Subscription subscription = getSubscription(oboTenant, subscrId);
     if (subscription == null) return false;
 
     // ------------------------- Call SQL ----------------------------
@@ -1578,7 +1578,7 @@ public class NotificationsDaoImpl implements NotificationsDao
       DSLContext db = DSL.using(conn);
 
       // Check to see if resource exists. If yes then throw IllegalStateException
-      boolean doesExist = checkForTestSequence(db, tenantId, subscrId);
+      boolean doesExist = checkForTestSequence(db, oboTenant, subscrId);
       if (doesExist)
         throw new IllegalStateException(LibUtils.getMsgAuth("NTFLIB_TEST_EXISTS", rUser, subscrId));
 
@@ -1586,9 +1586,9 @@ public class NotificationsDaoImpl implements NotificationsDao
       JsonElement eventsJson = TestSequence.EMPTY_EVENTS;
       Record record = db.insertInto(NOTIFICATIONS_TESTS)
               .set(NOTIFICATIONS_TESTS.SUBSCR_SEQ_ID, subscription.getSeqId())
-              .set(NOTIFICATIONS_TESTS.TENANT, tenantId)
+              .set(NOTIFICATIONS_TESTS.TENANT, oboTenant)
               .set(NOTIFICATIONS_TESTS.SUBSCR_ID, subscrId)
-              .set(NOTIFICATIONS_TESTS.OWNER, apiUser)
+              .set(NOTIFICATIONS_TESTS.OWNER, oboUser)
               .set(NOTIFICATIONS_TESTS.NOTIFICATION_COUNT, 0)
               .set(NOTIFICATIONS_TESTS.NOTIFICATIONS, eventsJson)
               .returningResult(NOTIFICATIONS_TESTS.SEQ_ID)
@@ -1831,8 +1831,8 @@ public class NotificationsDaoImpl implements NotificationsDao
     // Persist update record
     db.insertInto(SUBSCRIPTION_UPDATES)
             .set(SUBSCRIPTION_UPDATES.SUBSCRIPTION_SEQ_ID, seqId)
-            .set(SUBSCRIPTION_UPDATES.API_TENANT, rUser.getJwtTenantId())
-            .set(SUBSCRIPTION_UPDATES.API_USER, rUser.getJwtUserId())
+            .set(SUBSCRIPTION_UPDATES.JWT_TENANT, rUser.getJwtTenantId())
+            .set(SUBSCRIPTION_UPDATES.JWT_USER, rUser.getJwtUserId())
             .set(SUBSCRIPTION_UPDATES.OBO_TENANT, rUser.getOboTenantId())
             .set(SUBSCRIPTION_UPDATES.OBO_USER, rUser.getOboUserId())
             .set(SUBSCRIPTION_UPDATES.SUBSCRIPTION_ID, id)

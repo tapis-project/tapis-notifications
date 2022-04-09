@@ -446,8 +446,10 @@ public final class RuntimeParameters implements EmailClientParameters
         try { parmInt = Integer.parseInt(parm); }
         catch (NumberFormatException e)
         {
-          // Log a warning
-          _log.warn(LibUtils.getMsg("NTFLIB_RUNTIME_NUM_PARSE_FAIL", EnvVar2.TAPIS_NTF_DELIVERY_THREAD_POOL_SIZE, parm));
+          // Log error and stop
+          String msg = LibUtils.getMsg("NTFLIB_RUNTIME_NUM_PARSE_FAIL", EnvVar2.TAPIS_NTF_DELIVERY_THREAD_POOL_SIZE, parm);
+          _log.error(msg, e);
+          throw new TapisRuntimeException(msg, e);
         }
       }
       setNtfDeliveryThreadPoolSize(parmInt);
@@ -461,8 +463,10 @@ public final class RuntimeParameters implements EmailClientParameters
         try { parmInt = Integer.parseInt(parm); }
         catch (NumberFormatException e)
         {
-          // Log a warning
-          _log.warn(LibUtils.getMsg("NTFLIB_RUNTIME_NUM_PARSE_FAIL", EnvVar2.TAPIS_NTF_SUBSCR_REAPER_INTERVAL, parm));
+          // Log error and stop
+          String msg = LibUtils.getMsg("NTFLIB_RUNTIME_NUM_PARSE_FAIL", EnvVar2.TAPIS_NTF_SUBSCR_REAPER_INTERVAL, parm);
+          _log.error(msg, e);
+          throw new TapisRuntimeException(msg, e);
         }
       }
       setNtfSubscriptionReaperInterval(parmInt);
@@ -476,8 +480,10 @@ public final class RuntimeParameters implements EmailClientParameters
         try { parmInt = Integer.parseInt(parm); }
         catch (NumberFormatException e)
         {
-          // Log a warning
-          _log.warn(LibUtils.getMsg("NTFLIB_RUNTIME_NUM_PARSE_FAIL", EnvVar2.TAPIS_NTF_DELIVERY_ATTEMPTS, parm));
+          // Log error and stop
+          String msg = LibUtils.getMsg("NTFLIB_RUNTIME_NUM_PARSE_FAIL", EnvVar2.TAPIS_NTF_DELIVERY_ATTEMPTS, parm);
+          _log.error(msg, e);
+          throw new TapisRuntimeException(msg, e);
         }
       }
       setNtfDeliveryAttempts(parmInt);
@@ -491,8 +497,10 @@ public final class RuntimeParameters implements EmailClientParameters
         try { parmInt = Integer.parseInt(parm); }
         catch (NumberFormatException e)
         {
-          // Log a warning
-          _log.warn(LibUtils.getMsg("NTFLIB_RUNTIME_NUM_PARSE_FAIL", EnvVar2.TAPIS_NTF_DELIVERY_RETRY_INTERVAL, parm));
+          // Log error and stop
+          String msg = LibUtils.getMsg("NTFLIB_RUNTIME_NUM_PARSE_FAIL", EnvVar2.TAPIS_NTF_DELIVERY_RETRY_INTERVAL, parm);
+          _log.error(msg, e);
+          throw new TapisRuntimeException(msg, e);
         }
       }
       setNtfDeliveryRetryInterval(parmInt);
@@ -506,8 +514,10 @@ public final class RuntimeParameters implements EmailClientParameters
         try { parmInt = Integer.parseInt(parm); }
         catch (NumberFormatException e)
         {
-          // Log a warning
-          _log.warn(LibUtils.getMsg("NTFLIB_RUNTIME_NUM_PARSE_FAIL", EnvVar2.TAPIS_NTF_DELIVERY_RCVRY_ATTEMPTS, parm));
+          // Log error and stop
+          String msg = LibUtils.getMsg("NTFLIB_RUNTIME_NUM_PARSE_FAIL", EnvVar2.TAPIS_NTF_DELIVERY_RCVRY_ATTEMPTS, parm);
+          _log.error(msg, e);
+          throw new TapisRuntimeException(msg, e);
         }
       }
       setNtfDeliveryRecoveryAttempts(parmInt);
@@ -521,8 +531,10 @@ public final class RuntimeParameters implements EmailClientParameters
         try { parmInt = Integer.parseInt(parm); }
         catch (NumberFormatException e)
         {
-          // Log a warning
-          _log.warn(LibUtils.getMsg("NTFLIB_RUNTIME_NUM_PARSE_FAIL", EnvVar2.TAPIS_NTF_DELIVERY_RETRY_INTERVAL, parm));
+          // Log error and stop
+          String msg = LibUtils.getMsg("NTFLIB_RUNTIME_NUM_PARSE_FAIL", EnvVar2.TAPIS_NTF_DELIVERY_RETRY_INTERVAL, parm);
+          _log.error(msg, e);
+          throw new TapisRuntimeException(msg, e);
         }
       }
       setNtfDeliveryRecoveryRetryInterval(parmInt);

@@ -52,6 +52,7 @@ public class DispatchService
 
   // Default number of workers per bucket for handling notification delivery. Can be changed via runtime parameter.
   public static final int DEFAULT_NUM_DELIVERY_WORKERS = 5;
+
   // Default interval in minutes to use when periodically running the subscription reaper. Can be changed via runtime parameter.
   public static final int DEFAULT_SUBSCR_REAPER_INTERVAL = 3;
 

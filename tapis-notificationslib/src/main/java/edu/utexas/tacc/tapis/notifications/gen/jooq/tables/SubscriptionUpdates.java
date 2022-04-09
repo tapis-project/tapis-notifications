@@ -75,14 +75,14 @@ public class SubscriptionUpdates extends TableImpl<SubscriptionUpdatesRecord> {
     public final TableField<SubscriptionUpdatesRecord, String> OBO_USER = createField(DSL.name("obo_user"), SQLDataType.CLOB.nullable(false), this, "");
 
     /**
-     * The column <code>tapis_ntf.subscription_updates.api_tenant</code>.
+     * The column <code>tapis_ntf.subscription_updates.jwt_tenant</code>.
      */
-    public final TableField<SubscriptionUpdatesRecord, String> API_TENANT = createField(DSL.name("api_tenant"), SQLDataType.CLOB.nullable(false), this, "");
+    public final TableField<SubscriptionUpdatesRecord, String> JWT_TENANT = createField(DSL.name("jwt_tenant"), SQLDataType.CLOB.nullable(false), this, "");
 
     /**
-     * The column <code>tapis_ntf.subscription_updates.api_user</code>.
+     * The column <code>tapis_ntf.subscription_updates.jwt_user</code>.
      */
-    public final TableField<SubscriptionUpdatesRecord, String> API_USER = createField(DSL.name("api_user"), SQLDataType.CLOB.nullable(false), this, "");
+    public final TableField<SubscriptionUpdatesRecord, String> JWT_USER = createField(DSL.name("jwt_user"), SQLDataType.CLOB.nullable(false), this, "");
 
     /**
      * The column <code>tapis_ntf.subscription_updates.subscription_id</code>.
