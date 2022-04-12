@@ -1,15 +1,21 @@
 package edu.utexas.tacc.tapis.notifications.service;
 
+import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.FutureTask;
 
+import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
+import edu.utexas.tacc.tapis.notifications.model.Notification;
+import edu.utexas.tacc.tapis.notifications.utils.LibUtils;
+import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import edu.utexas.tacc.tapis.notifications.dao.NotificationsDao;
 
 /*
  * Callable for processing notifications that are in recovery.
- *
+ * When the process wakes up it makes a single delivery attempt for each notification in recovery.
+ * Once the maximum number of attempts for a notification is reached an error is logged and the
+ * notification is removed from the recovery table.
  */
 public final class RecoveryTask implements Callable<String>
 {
@@ -28,8 +34,9 @@ public final class RecoveryTask implements Callable<String>
   /* ********************************************************************** */
 
   private final int bucketNum;
-
   private final NotificationsDao dao;
+  private final int sleepTime;
+  private final int maxAttempts;
 
   /* ********************************************************************** */
   /*                             Constructors                               */
@@ -42,6 +49,8 @@ public final class RecoveryTask implements Callable<String>
   {
     bucketNum = bucketNum1;
     dao = dao1;
+    sleepTime = RuntimeParameters.getInstance().getNtfDeliveryRecoveryRetryInterval();
+    maxAttempts = RuntimeParameters.getInstance().getNtfDeliveryRecoveryMaxAttempts();
   }
   
   /* ********************************************************************** */
@@ -54,21 +63,56 @@ public final class RecoveryTask implements Callable<String>
   @Override
   public String call()
   {
-    log.info("**** Starting notification delivery recovery for bucket number: {}", bucketNum);
     Thread.currentThread().setName("Recovery-bucket-"+ bucketNum);
-    log.info("ThreadId: {} ThreadName: {}", Thread.currentThread().getId(), Thread.currentThread().getName());
-    // TODO
-    try
-    {
-      log.info("TODO: For now, bucketRecovery task just sleeping ...");
-      Thread.sleep(3000000);
-    }
-    catch (InterruptedException e)
-    {
-      log.info("Notification delivery recovery interrupted. Bucket number: {}", bucketNum);
-    }
+    log.info(LibUtils.getMsg("NTFLIB_DSP_BUCKET_RCVRY_START", bucketNum, sleepTime,
+                             Thread.currentThread().getId(), Thread.currentThread().getName()));
+    // Convert sleepTime from minutes to milliseconds;
+    long sleepTimeMs = sleepTime * 60L * 1000L;
 
-    log.info("**** Stopping notification delivery recovery for bucket number: {}", bucketNum);
+    boolean done = false;
+    // Loop until we are interrupted or error
+    // If interrupted we are done, on error continue.
+    while (!done)
+    {
+      try
+      {
+        // Get all notifications in recovery for our bucket
+        List<Notification> notifications = dao.getNotificationsInRecovery(bucketNum);
+        // Make one pass through each notification in recovery
+        for (Notification ntf : notifications)
+        {
+          boolean delivered = DeliveryTask.deliverNotification(ntf);
+          // If delivered ok we are done. Perform any post-delivery steps and return
+          if (delivered)
+          {
+            recoveryAttemptSucceeded(ntf);
+          }
+          else
+          {
+            recoveryAttemptFailed(ntf);
+          }
+        }
+      }
+      catch (TapisException e)
+      {
+        log.warn(LibUtils.getMsg("NTFLIB_DSP_BUCKET_RCVRY_ERR", bucketNum, e.getMessage()), e);
+      }
+
+      // Pause for configured interval before checking for more work and trying again
+      // If interrupted it is time to shut down
+      log.debug(LibUtils.getMsg("NTFLIB_DSP_BUCKET_RCVRY_PAUSE", bucketNum, sleepTime));
+      try
+      {
+        Thread.sleep(sleepTimeMs);
+      }
+      catch (InterruptedException e)
+      {
+        log.info(LibUtils.getMsg("NTFLIB_DSP_BUCKET_RCVRY_INTRPT", bucketNum));
+        done = true;
+      }
+    }
+    log.info(LibUtils.getMsg("NTFLIB_DSP_BUCKET_RCVRY_STOP", bucketNum, Thread.currentThread().getId(),
+                             Thread.currentThread().getName()));
     return "shutdown";
   }
 
@@ -76,47 +120,56 @@ public final class RecoveryTask implements Callable<String>
   /*                             Accessors                                  */
   /* ********************************************************************** */
 
-//  public int getBucketNum() { return bucketNum; }
 
   /* ********************************************************************** */
   /*                             Private Methods                            */
   /* ********************************************************************** */
 
-//  private void processDelivery(Delivery delivery) throws IOException
-//  {
-//    // TODO Check to see if we have already processed this event
-//    log.info("Checking for duplicate event {}", delivery.getEvent().getUuid());
-//    // TODO Find matching subscriptions
-//    log.info("Checking for subscriptions {}", delivery.getEvent().getUuid());
-//    // TODO Create notifications from subscriptions
-//    log.info("Creating notifications {}", delivery.getEvent().getUuid());
-//    // TODO Persist notifications to DB
-//    log.info("Persisting notifications to DB {}", delivery.getEvent().getUuid());
-//
-//    // All notifications for the event have been persisted, remove message from message broker queue
-//    log.info("Acking event {}", delivery.getEvent().getUuid());
-//    MessageBroker.getInstance().ackMsg(delivery.getDeliveryTag());
-//
-//    // TODO Deliver notifications (threadpool?)
-//    log.info("Delivering notifications {}", delivery.getEvent().getUuid());
-//    // TODO Remove notifications from DB (handled by workers in threadpool?)
-//    log.info("Removing notifications from DB {}", delivery.getEvent().getUuid());
-//  }
+  /*
+   * Notification has been delivered.
+   * Log a msg and remove it from the table.
+   */
+  private void recoveryAttemptSucceeded(Notification notification)
+  {
+    log.info(LibUtils.getMsg("NTFLIB_DSP_BUCKET_RCVRY_SUCCESS", bucketNum, notification.getUuid()));
+    try { dao.deleteNotificationFromRecovery(notification); }
+    catch (TapisException e)
+    {
+      String msg = LibUtils.getMsg("NTFLIB_DSP_BUCKET_RCVRY_DEL_ERR", bucketNum, notification.getUuid(),
+                                   e.getMessage(), e);
+      log.error(msg);
+    }
+  }
 
-//  // TODO/TBD: This might help in supporting a callable along with afterExecute
-//  //           also need a custom threadfactory?
-//
-//class RecoveryFutureTask<T> extends FutureTask<T>
-//{
-//  private Callable<T> callable;
-//
-//  public RecoveryFutureTask(Callable<T> callable){
-//    super(callable);
-//    this.callable = callable;
-//  }
-//
-//  public Callable<T> getCallable(){
-//    return this.callable;
-//  }
-//}
+  /*
+   * Notification recovery attempt failed.
+   * Either update the attempt count or remove it.
+   * Log a warning or error.
+   */
+  private void recoveryAttemptFailed(Notification notification)
+  {
+    try
+    {
+      // Get the number of attempts
+      int numAttempts = dao.getNotificationRecoveryAttemptCount(notification);
+      // if we hit the max then log and error and remove it
+      // else log a warning and bump up the count
+      if (numAttempts >= maxAttempts)
+      {
+        log.error(LibUtils.getMsg("NTFLIB_DSP_BUCKET_RCVRY_FAIL_MAX", bucketNum, notification.getUuid(), maxAttempts));
+        dao.deleteNotificationFromRecovery(notification);
+      }
+      else
+      {
+        log.warn(LibUtils.getMsg("NTFLIB_DSP_BUCKET_RCVRY_FAIL", bucketNum, notification.getUuid(), numAttempts));
+        dao.setNotificationRecoveryAttemptCount(notification, numAttempts++);
+      }
+    }
+    catch (TapisException e)
+    {
+      String msg = LibUtils.getMsg("NTFLIB_DSP_BUCKET_RCVRY_FAIL_ERR", bucketNum, notification.getUuid(),
+                                   e.getMessage(), e);
+      log.error(msg);
+    }
+  }
 }

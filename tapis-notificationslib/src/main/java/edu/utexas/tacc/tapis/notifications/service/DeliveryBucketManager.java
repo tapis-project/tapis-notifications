@@ -82,11 +82,11 @@ public final class DeliveryBucketManager implements Callable<String>
     // Check for invalid parameters.
     if (deliveryBucketQueue1 == null)
     {
-      throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_DSP_BUCKETMGR_NULL",bucketNum1));
+      throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_DSP_BUCKETMGR_NULL",bucketNum1, "DeliveryBucketQueue"));
     }
     if (dao1 == null)
     {
-      throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_DSP_BUCKETMGR_DAO_NULL", bucketNum1));
+      throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_DSP_BUCKETMGR_NULL",bucketNum1, "Dao"));
     }
     dao = dao1;
     bucketNum = bucketNum1;
@@ -115,8 +115,11 @@ public final class DeliveryBucketManager implements Callable<String>
     // RECOVERY Process any deliveries for this bucket that were interrupted during a crash.
     proccessInterruptedDeliveries();
 
-    // Wait for and process items until we are interrupted
     Delivery delivery;
+    boolean done = false;
+
+    // Wait for and process first event until we are interrupted or error
+    // If interrupted we are done, on error continue.
     try
     {
       // RECOVERY Blocking call to get first event.
@@ -132,18 +135,12 @@ public final class DeliveryBucketManager implements Callable<String>
       {
         processDelivery(delivery);
       }
-
-      // Now processes events as they come in
-      while (true)
-      {
-        // Blocking call to get next event
-        delivery = deliveryBucketQueue.take();
-        processDelivery(delivery);
-      }
     }
     catch (InterruptedException e)
     {
       log.info(LibUtils.getMsg("NTFLIB_DSP_BUCKET_INTRPT", bucketNum));
+      // If interrupted waiting on first event then we are done.
+      done = true;
     }
     catch (IOException e)
     {
@@ -153,11 +150,33 @@ public final class DeliveryBucketManager implements Callable<String>
     {
       log.warn(LibUtils.getMsg("NTFLIB_DSP_BUCKET_ERR2", bucketNum, e.getMessage()), e);
     }
-    finally
-    {
-      stopRecoveryTask();
-    }
 
+    // Now processes events as they come in until we are interrupted or error
+    // If interrupted we are done, on error continue.
+    while (!done)
+    {
+      try
+      {
+        // Blocking call to get next event
+        delivery = deliveryBucketQueue.take();
+        processDelivery(delivery);
+      }
+      catch (InterruptedException e)
+      {
+        log.info(LibUtils.getMsg("NTFLIB_DSP_BUCKET_INTRPT", bucketNum));
+        // If interrupted we are done
+        done = true;
+      }
+      catch (IOException e)
+      {
+        log.warn(LibUtils.getMsg("NTFLIB_DSP_BUCKET_ERR1", bucketNum, e.getMessage()), e);
+      }
+      catch (TapisException e)
+      {
+        log.warn(LibUtils.getMsg("NTFLIB_DSP_BUCKET_ERR2", bucketNum, e.getMessage()), e);
+      }
+    }
+    stopRecoveryTask();
     log.info(LibUtils.getMsg("NTFLIB_DSP_BUCKET_STOP", bucketNum, Thread.currentThread().getId(), Thread.currentThread().getName()));
     return "shutdown";
   }
@@ -167,7 +186,6 @@ public final class DeliveryBucketManager implements Callable<String>
   /*                             Accessors                                  */
   /* ********************************************************************** */
 
-//  public int getBucketNum() { return bucketNum; }
 
   /* ********************************************************************** */
   /*                             Private Methods                            */
@@ -207,8 +225,10 @@ public final class DeliveryBucketManager implements Callable<String>
    */
   private void proccessInterruptedDeliveries()
   {
-    // TODO
     log.debug(LibUtils.getMsg("NTFLIB_DSP_BUCKET_PROC_INT", bucketNum));
+// TODO
+//  Delivery delivery = null;
+//  processDelivery(delivery);
   }
 
   /*
@@ -216,7 +236,7 @@ public final class DeliveryBucketManager implements Callable<String>
    */
   private void startRecoveryTask()
   {
-    log.info(LibUtils.getMsg("NTFLIB_DSP_BUCKET_RCVRY_START", bucketNum));
+    log.info(LibUtils.getMsg("NTFLIB_DSP_BUCKET_START_RCVRY", bucketNum));
     recoveryTaskFuture = recoveryExecService.submit(new RecoveryTask(bucketNum, dao));
   }
 
@@ -225,7 +245,7 @@ public final class DeliveryBucketManager implements Callable<String>
    */
   public void stopRecoveryTask()
   {
-    log.info(LibUtils.getMsg("NTFLIB_DSP_BUCKET_RCVRY_STOP", bucketNum));
+    log.info(LibUtils.getMsg("NTFLIB_DSP_BUCKET_STOP_RCVRY", bucketNum));
     if (recoveryTaskFuture != null)  recoveryTaskFuture.cancel(mayInterruptIfRunning);
   }
 
@@ -269,7 +289,7 @@ public final class DeliveryBucketManager implements Callable<String>
     for (Notification notification : notifications)
     {
       log.debug(LibUtils.getMsg("NTFLIB_DSP_BUCKET_DLVRY1", bucketNum, event.getUuid(), notification.getDeliveryMethod()));
-      Future<Notification> future = deliveryTaskExecService.submit(new DeliveryTask(dao, event.getTenant(), notification));
+      Future<Notification> future = deliveryTaskExecService.submit(new DeliveryTask(dao, notification));
       deliveryTaskFutures.add(future);
       deliveryTaskReturns.put(future, null);
     }

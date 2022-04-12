@@ -114,13 +114,13 @@ CREATE TABLE notifications_recovery
     uuid UUID PRIMARY KEY,
     subscr_seq_id INTEGER REFERENCES subscriptions(seq_id) ON DELETE CASCADE,
     tenant TEXT NOT NULL,
+    subscr_id TEXT NOT NULL,
     bucket_number INTEGER NOT NULL DEFAULT 0,
     event_uuid UUID NOT NULL,
     event JSONB NOT NULL,
     delivery_method JSONB NOT NULL,
     recovery_attempt INTEGER NOT NULL DEFAULT 0,
     last_attempt TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),
-    expiry TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),
     created TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),
     updated TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc')
 );

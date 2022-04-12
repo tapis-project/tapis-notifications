@@ -57,11 +57,11 @@ public class DispatchService
   public static final int DEFAULT_SUBSCR_REAPER_INTERVAL = 3;
 
   // Number of attempts during initial delivery and interval (in seconds) between each one
-  public static final int DEFAULT_DELIVERY_ATTEMPTS = 4;
+  public static final int DEFAULT_DELIVERY_MAX_ATTEMPTS = 4;
   public static final int DEFAULT_DELIVERY_RETRY_INTERVAL = 20;
 
   // Number of attempts during recovery delivery and interval (in minutes) between each one
-  public static final int DEFAULT_DELIVERY_RCVRY_ATTEMPTS = 150;
+  public static final int DEFAULT_DELIVERY_RCVRY_MAX_ATTEMPTS = 150;
   public static final int DEFAULT_DELIVERY_RCVRY_RETRY_INTERVAL = 10;
 
   // Allow interrupt when shutting down executor services.

@@ -128,11 +128,11 @@ public final class RuntimeParameters implements EmailClientParameters
   private int ntfSubscriptionReaperInterval = DispatchService.DEFAULT_SUBSCR_REAPER_INTERVAL;
 
   // Number of attempts during initial delivery and interval (in seconds) between each one
-  private int ntfDeliveryAttempts = DispatchService.DEFAULT_DELIVERY_ATTEMPTS;
+  private int ntfDeliveryMaxAttempts = DispatchService.DEFAULT_DELIVERY_MAX_ATTEMPTS;
   private int  ntfDeliveryRetryInterval = DispatchService.DEFAULT_DELIVERY_RETRY_INTERVAL;
 
   // Number of attempts during recovery delivery and interval (in minutes) between each one
-  private int ntfDeliveryRecoveryAttempts = DispatchService.DEFAULT_DELIVERY_RCVRY_ATTEMPTS;
+  private int ntfDeliveryRecoveryMaxAttempts = DispatchService.DEFAULT_DELIVERY_RCVRY_MAX_ATTEMPTS;
   private int  ntfDeliveryRecoveryRetryInterval = DispatchService.DEFAULT_DELIVERY_RCVRY_RETRY_INTERVAL;
 
   // TAPIS__LOCAL_TEST
@@ -437,7 +437,7 @@ public final class RuntimeParameters implements EmailClientParameters
         }
       }
 
-      //  ntfDeliveryThreadPoolSize
+    //  ntfDeliveryThreadPoolSize
       parm = envMap.get(EnvVar2.TAPIS_NTF_DELIVERY_THREAD_POOL_SIZE.name());
       int parmInt = DispatchService.DEFAULT_NUM_DELIVERY_WORKERS;
       // If parameter is set attempt to parse it as an integer
@@ -473,7 +473,7 @@ public final class RuntimeParameters implements EmailClientParameters
 
       //  ntfDeliveryAttempts
       parm = envMap.get(EnvVar2.TAPIS_NTF_DELIVERY_ATTEMPTS.name());
-      parmInt = DispatchService.DEFAULT_DELIVERY_ATTEMPTS;
+      parmInt = DispatchService.DEFAULT_DELIVERY_MAX_ATTEMPTS;
       // If parameter is set attempt to parse it as an integer
       if (!StringUtils.isBlank(parm))
       {
@@ -486,7 +486,7 @@ public final class RuntimeParameters implements EmailClientParameters
           throw new TapisRuntimeException(msg, e);
         }
       }
-      setNtfDeliveryAttempts(parmInt);
+      setNtfDeliveryMaxAttempts(parmInt);
 
       //  ntfDeliveryRetryInterval
       parm = envMap.get(EnvVar2.TAPIS_NTF_DELIVERY_RETRY_INTERVAL.name());
@@ -507,7 +507,7 @@ public final class RuntimeParameters implements EmailClientParameters
 
       //  ntfDeliveryRecoveryAttempts
       parm = envMap.get(EnvVar2.TAPIS_NTF_DELIVERY_RCVRY_ATTEMPTS.name());
-      parmInt = DispatchService.DEFAULT_DELIVERY_RCVRY_ATTEMPTS;
+      parmInt = DispatchService.DEFAULT_DELIVERY_RCVRY_MAX_ATTEMPTS;
       // If parameter is set attempt to parse it as an integer
       if (!StringUtils.isBlank(parm))
       {
@@ -520,7 +520,7 @@ public final class RuntimeParameters implements EmailClientParameters
           throw new TapisRuntimeException(msg, e);
         }
       }
-      setNtfDeliveryRecoveryAttempts(parmInt);
+      setNtfDeliveryRecoveryMaxAttempts(parmInt);
 
       //  ntfDeliveryRecoveryRetryInterval
       parm = envMap.get(EnvVar2.TAPIS_NTF_DELIVERY_RCVRY_RETRY_INTERVAL.name());
@@ -667,9 +667,9 @@ public final class RuntimeParameters implements EmailClientParameters
     buf.append("\n------- Service Specific -------------------------------");
     buf.append("\ntapis.ntf.delivery.thread.pool.size: ").append(getNtfDeliveryThreadPoolSize());
     buf.append("\ntapis.ntf.subscription.reaper.interval: ").append(getNtfSubscriptionReaperInterval());
-    buf.append("\ntapis.ntf.delivery.attempts: ").append(getNtfDeliveryAttempts());
+    buf.append("\ntapis.ntf.delivery.attempts: ").append(getNtfDeliveryMaxAttempts());
     buf.append("\ntapis.ntf.delivery.retry.interval: ").append(getNtfDeliveryRetryInterval());
-    buf.append("\ntapis.ntf.delivery.rcvry.attempts: ").append(getNtfDeliveryRecoveryAttempts());
+    buf.append("\ntapis.ntf.delivery.rcvry.attempts: ").append(getNtfDeliveryRecoveryMaxAttempts());
     buf.append("\ntapis.ntf.delivery.rcvry.retry.interval: ").append(getNtfDeliveryRecoveryRetryInterval());
     buf.append("\ntapis.local.test: ").append(isLocalTest());
     buf.append("\n------- Logging -----------------------------------");
@@ -1088,14 +1088,14 @@ public final class RuntimeParameters implements EmailClientParameters
   public int getNtfSubscriptionReaperInterval() { return ntfSubscriptionReaperInterval; }
   private void setNtfSubscriptionReaperInterval(int i) { ntfSubscriptionReaperInterval = i; }
   // property TAPIS_NTF_DELIVERY_ATTEMPTS
-  public int getNtfDeliveryAttempts() { return ntfDeliveryAttempts; }
-  private void setNtfDeliveryAttempts(int i) { ntfDeliveryAttempts = i; }
+  public int getNtfDeliveryMaxAttempts() { return ntfDeliveryMaxAttempts; }
+  private void setNtfDeliveryMaxAttempts(int i) { ntfDeliveryMaxAttempts = i; }
   // property TAPIS_NTF_DELIVERY_RETRY_INTERVAL
   public int getNtfDeliveryRetryInterval() { return ntfDeliveryRetryInterval; }
   private void setNtfDeliveryRetryInterval(int i) { ntfDeliveryRetryInterval = i; }
   // property TAPIS_NTF_DELIVERY_RCVRY_ATTEMPTS
-  public int getNtfDeliveryRecoveryAttempts() { return ntfDeliveryRecoveryAttempts; }
-  private void setNtfDeliveryRecoveryAttempts(int i) { ntfDeliveryRecoveryAttempts = i; }
+  public int getNtfDeliveryRecoveryMaxAttempts() { return ntfDeliveryRecoveryMaxAttempts; }
+  private void setNtfDeliveryRecoveryMaxAttempts(int i) { ntfDeliveryRecoveryMaxAttempts = i; }
   // property TAPIS_NTF_DELIVERY_RCVRY_RETRY_INTERVAL
   public int getNtfDeliveryRecoveryRetryInterval() { return ntfDeliveryRecoveryRetryInterval; }
   private void setNtfDeliveryRecoveryRetryInterval(int i) { ntfDeliveryRecoveryRetryInterval = i; }
@@ -1116,6 +1116,7 @@ public final class RuntimeParameters implements EmailClientParameters
     TAPIS_NTF_SUBSCR_REAPER_INTERVAL,
     TAPIS_NTF_DELIVERY_ATTEMPTS,
     TAPIS_NTF_DELIVERY_RETRY_INTERVAL,
+    TAPIS_NTF_DELIVERY_RCVRY_PROC_SLEEP,
     TAPIS_NTF_DELIVERY_RCVRY_ATTEMPTS,
     TAPIS_NTF_DELIVERY_RCVRY_RETRY_INTERVAL,
     TAPIS_LOCAL_TEST}

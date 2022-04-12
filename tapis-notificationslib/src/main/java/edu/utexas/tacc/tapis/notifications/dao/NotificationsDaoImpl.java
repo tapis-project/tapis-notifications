@@ -19,6 +19,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.NotificationsLastEventRecord;
+import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.NotificationsRecoveryRecord;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,6 +61,8 @@ import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.NotificationsRecord;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.NotificationsTestsRecord;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.SubscriptionsRecord;
+
+import static edu.utexas.tacc.tapis.notifications.gen.jooq.Tables.NOTIFICATIONS_RECOVERY;
 import static edu.utexas.tacc.tapis.notifications.gen.jooq.Tables.SUBSCRIPTIONS;
 import static edu.utexas.tacc.tapis.notifications.gen.jooq.Tables.SUBSCRIPTION_UPDATES;
 import static edu.utexas.tacc.tapis.notifications.gen.jooq.Tables.NOTIFICATIONS;
@@ -1472,10 +1475,65 @@ public class NotificationsDaoImpl implements NotificationsDao
   }
 
   /**
+   * Delete a notification and add it to the recovery table in one transaction
+   */
+  @Override
+  public void deleteNotificationAndAddToRecovery(String tenant, Notification notification) throws TapisException
+  {
+    String opName = "deleteNotificationAndAddToRecovery";
+    // ------------------------- Check Input -------------------------
+    if (StringUtils.isBlank(tenant)) LibUtils.logAndThrowNullParmException(opName, "tenant");
+    if (notification == null) LibUtils.logAndThrowNullParmException(opName, "notification");
+
+    JsonElement eventJson = TapisGsonUtils.getGson().toJsonTree(notification.getEvent());
+    JsonElement deliveryMethodJson = EMPTY_JSON_ELEM;
+    if (notification.getDeliveryMethod() != null) deliveryMethodJson =
+            TapisGsonUtils.getGson().toJsonTree(notification.getDeliveryMethod());
+
+    // ------------------------- Call SQL ----------------------------
+    Connection conn = null;
+    try
+    {
+      conn = getConnection();
+      DSLContext db = DSL.using(conn);
+
+      // Delete it from the main table
+      db.deleteFrom(NOTIFICATIONS)
+              .where(NOTIFICATIONS.TENANT.eq(tenant), NOTIFICATIONS.UUID.eq(notification.getUuid()))
+              .execute();
+
+      // Add it to the recovery table initializing recovery attempts to 0
+      // Let created and updated default to now()
+      // Insert the record
+      db.insertInto(NOTIFICATIONS_RECOVERY)
+              .set(NOTIFICATIONS_RECOVERY.UUID, notification.getUuid())
+              .set(NOTIFICATIONS_RECOVERY.SUBSCR_SEQ_ID, notification.getSubscrSeqId())
+              .set(NOTIFICATIONS_RECOVERY.TENANT, tenant)
+              .set(NOTIFICATIONS_RECOVERY.SUBSCR_ID, notification.getSubscriptionId())
+              .set(NOTIFICATIONS_RECOVERY.BUCKET_NUMBER, notification.getBucketNum())
+              .set(NOTIFICATIONS_RECOVERY.EVENT_UUID, notification.getEvent().getUuid())
+              .set(NOTIFICATIONS_RECOVERY.EVENT, eventJson)
+              .set(NOTIFICATIONS_RECOVERY.DELIVERY_METHOD, deliveryMethodJson)
+              .set(NOTIFICATIONS_RECOVERY.RECOVERY_ATTEMPT, 0)
+              .execute();
+
+      LibUtils.closeAndCommitDB(conn, null, null);
+    }
+    catch (Exception e)
+    {
+      LibUtils.rollbackDB(conn, e,"DB_DELETE_FAILURE", "subscriptions");
+    }
+    finally
+    {
+      LibUtils.finalCloseDB(conn);
+    }
+  }
+
+  /**
    * Delete a notification
    */
   @Override
-  public int deleteNotification(String tenant, Notification notification) throws TapisException
+  public void deleteNotification(String tenant, Notification notification) throws TapisException
   {
     String opName = "deleteNotification";
     // ------------------------- Check Input -------------------------
@@ -1495,17 +1553,16 @@ public class NotificationsDaoImpl implements NotificationsDao
     }
     catch (Exception e)
     {
-      LibUtils.rollbackDB(conn, e,"DB_DELETE_FAILURE", "subscriptions");
+      LibUtils.rollbackDB(conn, e,"DB_DELETE_FAILURE", "notifications");
     }
     finally
     {
       LibUtils.finalCloseDB(conn);
     }
-    return 1;
   }
 
   /**
-   * Get UUID for last event processed by the bucket mananger
+   * Get UUID for last event processed by the bucket manager
    * @param bucketNum - bucket manager
    * @return uuid
    * @throws TapisException on error
@@ -1544,6 +1601,118 @@ public class NotificationsDaoImpl implements NotificationsDao
     return result;
   }
 
+  /**
+   * Retrieve all Notifications waiting on recovery
+   *
+   * @param bucketNum - Bucket associated with the notifications
+   * @return - list of Notification objects
+   * @throws TapisException - on error
+   */
+  @Override
+  public List<Notification> getNotificationsInRecovery(int bucketNum) throws TapisException
+  {
+
+    // The result list should always be non-null.
+    List<Notification> retList = new ArrayList<>();
+
+    // ------------------------- Build and execute SQL ----------------------------
+    Connection conn = null;
+    try
+    {
+      // Get a database connection.
+      conn = getConnection();
+      DSLContext db = DSL.using(conn);
+
+      Result<NotificationsRecoveryRecord> results =
+              db.selectFrom(NOTIFICATIONS_RECOVERY).where(NOTIFICATIONS_RECOVERY.BUCKET_NUMBER.eq(bucketNum)).fetch();
+
+      if (results == null || results.isEmpty()) return retList;
+
+      for (Record r : results) { retList.add(getNotificationFromRecoveryRecord(r)); }
+
+      // Close out and commit
+      LibUtils.closeAndCommitDB(conn, null, null);
+    }
+    catch (Exception e)
+    {
+      // Rollback transaction and throw an exception
+      LibUtils.rollbackDB(conn, e,"DB_QUERY_ERROR", "notifications_recovery", e.getMessage());
+    }
+    finally
+    {
+      // Always return the connection back to the connection pool.
+      LibUtils.finalCloseDB(conn);
+    }
+    return retList;
+  }
+
+  /**
+   * Delete a notification from recovery table
+   */
+  @Override
+  public void deleteNotificationFromRecovery(Notification notification) throws TapisException
+  {
+    String opName = "deleteNotification";
+    // ------------------------- Check Input -------------------------
+    if (notification == null) LibUtils.logAndThrowNullParmException(opName, "notification");
+
+    // ------------------------- Call SQL ----------------------------
+    Connection conn = null;
+    try
+    {
+      conn = getConnection();
+      DSLContext db = DSL.using(conn);
+      db.deleteFrom(NOTIFICATIONS_RECOVERY)
+              .where(NOTIFICATIONS_RECOVERY.UUID.eq(notification.getUuid()))
+              .execute();
+      LibUtils.closeAndCommitDB(conn, null, null);
+    }
+    catch (Exception e)
+    {
+      LibUtils.rollbackDB(conn, e,"DB_DELETE_FAILURE", "notifications_recovery");
+    }
+    finally
+    {
+      LibUtils.finalCloseDB(conn);
+    }
+  }
+
+  /**
+   * Get attempt count for a notification in the recovery table
+   * @param notification - the notification
+   * @return the number of attempts so far
+   * @throws TapisException on error
+   */
+  public int getNotificationRecoveryAttemptCount(Notification notification) throws TapisException
+  {
+    int attemptCount;
+    // ------------------------- Call SQL ----------------------------
+    Connection conn = null;
+    try
+    {
+      // Get a database connection.
+      conn = getConnection();
+      DSLContext db = DSL.using(conn);
+      r = db.selectFrom(NOTIFICATIONS_RECOVERY).where(NOTIFICATIONS_RECOVERY.UUID.eq(notification.getUuid())).fetchOne();
+      if (r == null) return null;
+
+      result = r.get(NOTIFICATIONS_LAST_EVENT.EVENT_UUID);
+
+      // Close out and commit
+      LibUtils.closeAndCommitDB(conn, null, null);
+    }
+    catch (Exception e)
+    {
+      // Rollback transaction and throw an exception
+      LibUtils.rollbackDB(conn, e,"NTFLIB_DB_SELECT_ERROR", "Notifications_Last_Event", "N/A", result, e.getMessage());
+    }
+    finally
+    {
+      // Always return the connection back to the connection pool.
+      LibUtils.finalCloseDB(conn);
+    }
+    return attemptCount;
+  }
   // -----------------------------------------------------------------------
   // ------------------------- Test Sequences ------------------------------
   // -----------------------------------------------------------------------
@@ -2207,7 +2376,6 @@ public class NotificationsDaoImpl implements NotificationsDao
 
   /**
    * Given a record from a select, create a Notification object
-   *
    */
   private static Notification getNotificationFromRecord(Record r)
   {
@@ -2227,6 +2395,26 @@ public class NotificationsDaoImpl implements NotificationsDao
     return ntf;
   }
 
+  /**
+   * Given a recovery record from a select, create a Notification object
+   */
+  private static Notification getNotificationFromRecoveryRecord(Record r)
+  {
+    Notification ntf;
+    // Convert LocalDateTime to Instant. Note that although "Local" is in the type, timestamps from the DB are in UTC.
+    Instant created = r.get(NOTIFICATIONS_RECOVERY.CREATED).toInstant(ZoneOffset.UTC);
+
+    // Convert JSONB columns to native types
+    JsonElement eventJson = r.get(NOTIFICATIONS_RECOVERY.EVENT);
+    Event event = TapisGsonUtils.getGson().fromJson(eventJson, Event.class);
+    JsonElement dmJson = r.get(NOTIFICATIONS_RECOVERY.DELIVERY_METHOD);
+    DeliveryMethod dm = TapisGsonUtils.getGson().fromJson(dmJson, DeliveryMethod.class);
+
+    ntf = new Notification(r.get(NOTIFICATIONS_RECOVERY.UUID), r.get(NOTIFICATIONS_RECOVERY.SUBSCR_SEQ_ID),
+            r.get(NOTIFICATIONS_RECOVERY.TENANT), r.get(NOTIFICATIONS_RECOVERY.SUBSCR_ID),
+            r.get(NOTIFICATIONS_RECOVERY.BUCKET_NUMBER), r.get(NOTIFICATIONS_RECOVERY.EVENT_UUID), event, dm, created);
+    return ntf;
+  }
   /**
    * Given an sql connection check to see if specified TestSequence exists
    * @param db - jooq context

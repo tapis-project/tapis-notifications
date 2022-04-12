@@ -84,11 +84,21 @@ public interface NotificationsDao
 
   Notification getNotification(String tenant, UUID uuid) throws TapisException;
 
-  int deleteNotification(String tenant, Notification notification) throws TapisException;
+  void deleteNotificationAndAddToRecovery(String tenant, Notification notification) throws TapisException;
+
+  void deleteNotification(String tenant, Notification notification) throws TapisException;
 
   UUID getLastEventUUID(int bucketNum) throws TapisException;
 
   boolean checkForLastEvent(UUID eventUuid, int bucketNum) throws TapisException;
+
+  List<Notification> getNotificationsInRecovery(int bucketNum) throws TapisException;
+
+  void deleteNotificationFromRecovery(Notification notification) throws TapisException;
+
+  int getNotificationRecoveryAttemptCount(Notification notification) throws TapisException;
+
+  void setNotificationRecoveryAttemptCount(Notification notification, int attemptCount) throws TapisException;
 
   // -----------------------------------------------------------------------
   // --------------------- Test Sequences ----------------------------------
