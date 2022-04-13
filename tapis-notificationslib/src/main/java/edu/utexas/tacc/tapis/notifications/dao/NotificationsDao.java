@@ -46,7 +46,7 @@ public interface NotificationsDao
   void updateSubscriptionTTL(ResourceRequestUser rUser, String tenantId, String id, int newTTL, Instant newExpiry)
           throws TapisException;
 
-  void addUpdateRecord(ResourceRequestUser rUser, String tenant, String id, SubscriptionOperation op,
+  void addUpdateRecord(ResourceRequestUser rUser, String id, SubscriptionOperation op,
                        String upd_json, String upd_text) throws TapisException;
 
   int deleteSubscription(String tenant, String id) throws TapisException;
@@ -71,22 +71,34 @@ public interface NotificationsDao
 
   String getSubscriptionOwner(String tenant, String id) throws TapisException;
 
+  List<Subscription> getExpiredSubscriptions() throws TapisException;
+
   // -----------------------------------------------------------------------
   // -------------------- Notifications ------------------------------------
   // -----------------------------------------------------------------------
 
-  boolean persistNotificationsUpdateLastEvent(String tenant, Event event, int bucketNum, List<Notification> notifications)
+  boolean persistNotificationsAndUpdateLastEvent(String tenant, Event event, int bucketNum, List<Notification> notifications)
           throws TapisException;
 
   List<Notification> getNotificationsForEvent(String tenant, Event event, int bucketNum) throws TapisException;
 
   Notification getNotification(String tenant, UUID uuid) throws TapisException;
 
-  int deleteNotification(String tenant, Notification notification) throws TapisException;
+  void deleteNotificationAndAddToRecovery(String tenant, Notification notification) throws TapisException;
+
+  void deleteNotification(String tenant, Notification notification) throws TapisException;
 
   UUID getLastEventUUID(int bucketNum) throws TapisException;
 
   boolean checkForLastEvent(UUID eventUuid, int bucketNum) throws TapisException;
+
+  List<Notification> getNotificationsInRecovery(int bucketNum) throws TapisException;
+
+  void deleteNotificationFromRecovery(Notification notification) throws TapisException;
+
+  int getNotificationRecoveryAttemptCount(Notification notification) throws TapisException;
+
+  void setNotificationRecoveryAttemptCount(Notification notification, int attemptCount) throws TapisException;
 
   // -----------------------------------------------------------------------
   // --------------------- Test Sequences ----------------------------------

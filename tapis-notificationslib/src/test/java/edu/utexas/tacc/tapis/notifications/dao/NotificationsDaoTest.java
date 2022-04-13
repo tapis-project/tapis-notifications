@@ -280,7 +280,7 @@ public class NotificationsDaoTest
     var notifications = IntegrationUtils.makeNotifications(numNotifications, testKey, tmpSub.getSeqId(), tmpSub.getId());
 
     // Persist test notifications
-    boolean b = dao.persistNotificationsUpdateLastEvent(tenantName, event1, bucketNum1, notifications);
+    boolean b = dao.persistNotificationsAndUpdateLastEvent(tenantName, event1, bucketNum1, notifications);
     Assert.assertTrue(b);
 
     // Check that they were persisted.

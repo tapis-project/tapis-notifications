@@ -78,7 +78,7 @@ public class DispatchApplication
 
     // Start background process to clean up expired subscriptions.
     System.out.println("Starting subscription reaper");
-    dispatchService.startReaper();
+    dispatchService.startReaper(runParms.getNtfSubscriptionReaperInterval());
 
     // Start message broker consumer and bucket managers.
     // This is the main loop to process events while the service is running.

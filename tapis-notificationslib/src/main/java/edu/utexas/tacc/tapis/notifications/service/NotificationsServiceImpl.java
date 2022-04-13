@@ -1325,7 +1325,7 @@ public class NotificationsServiceImpl implements NotificationsService
    * @param subId - name of the subscription
    * @param owner - subscription owner
    * @param perms - List of permissions for the revokePerm case
-   * @throws NotAuthorizedException - apiUserId not authorized to perform operation
+   * @throws NotAuthorizedException - user not authorized to perform operation
    */
   private void checkAuth(ResourceRequestUser rUser, SubscriptionOperation op, String subId,
                          String owner, String userIdToCheck, Set<Permission> perms)
@@ -1373,7 +1373,7 @@ public class NotificationsServiceImpl implements NotificationsService
    * @param subId - id of the subscription
    * @param owner - owner of the subscription
    * @param perms - List of permissions for the revokePerm case
-   * @throws NotAuthorizedException - apiUserId not authorized to perform operation
+   * @throws NotAuthorizedException - user not authorized to perform operation
    */
   private void checkAuthUser(ResourceRequestUser rUser, SubscriptionOperation op,
                              String tenantIdToCheck, String userIdToCheck,

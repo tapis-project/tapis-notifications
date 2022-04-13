@@ -1,15 +1,15 @@
 package edu.utexas.tacc.tapis.notifications.service;
 
-import java.util.concurrent.Callable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import edu.utexas.tacc.tapis.notifications.dao.NotificationsDao;
+import edu.utexas.tacc.tapis.notifications.model.Subscription;
+import edu.utexas.tacc.tapis.notifications.utils.LibUtils;
 
 /*
- * Callable process for cleaning up expired subscriptions.
- *
+ * Support cleaning up expired subscriptions.
  */
-public final class SubscriptionReaper implements Callable<String>
+public final class SubscriptionReaper
 {
   /* ********************************************************************** */
   /*                               Constants                                */
@@ -25,42 +25,35 @@ public final class SubscriptionReaper implements Callable<String>
   /*                                 Fields                                 */
   /* ********************************************************************** */
 
-  private NotificationsDao dao;
-
   /* ********************************************************************** */
   /*                             Constructors                               */
   /* ********************************************************************** */
 
-  SubscriptionReaper(NotificationsDao dao1)
-  {
-    dao = dao1;
-  }
-  
   /* ********************************************************************** */
   /*                             Public Methods                             */
   /* ********************************************************************** */
 
   /*
-   * Main method for thread.start
+   * Main method for cleanup
    */
-  @Override
-  public String call()
+  public static void cleanup(NotificationsDao dao)
   {
-    log.info("**** Starting Subscription Reaper");
-    Thread.currentThread().setName("SubscriptionReaper");
-    log.info("ThreadId: {} ThreadName: {}", Thread.currentThread().getId(), Thread.currentThread().getName());
+    log.info(LibUtils.getMsg("NTFLIB_DSP_REAPER_RUN"));
     try
     {
-      // TODO
-      log.info("TODO: For now, reaper only sleeps ...");
-      Thread.sleep(3000000);
+      // Get all subscriptions passed their expiration time
+      var expiredSubscriptions = dao.getExpiredSubscriptions();
+      if (expiredSubscriptions == null || expiredSubscriptions.isEmpty()) return;
+      log.info(LibUtils.getMsg("NTFLIB_DSP_REAPER_COUNT", expiredSubscriptions.size()));
+      for (Subscription s : expiredSubscriptions)
+      {
+        dao.deleteSubscription(s.getTenant(), s.getId());
+      }
     }
-    catch (InterruptedException e)
+    catch (Exception e)
     {
-      log.info("Subscription Reaper interrupted");
+      log.error(LibUtils.getMsg("NTFLIB_DSP_REAPER_ERR", e.getMessage()), e);
     }
-    log.info("**** Stopping Subscription Reaper");
-    return "shutdown";
   }
 
   /* ********************************************************************** */
