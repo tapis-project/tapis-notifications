@@ -139,16 +139,16 @@ public class NotificationsRecoveryRecord extends UpdatableRecordImpl<Notificatio
     }
 
     /**
-     * Setter for <code>tapis_ntf.notifications_recovery.recovery_attempt</code>.
+     * Setter for <code>tapis_ntf.notifications_recovery.attempt_count</code>.
      */
-    public void setRecoveryAttempt(Integer value) {
+    public void setAttemptCount(Integer value) {
         set(8, value);
     }
 
     /**
-     * Getter for <code>tapis_ntf.notifications_recovery.recovery_attempt</code>.
+     * Getter for <code>tapis_ntf.notifications_recovery.attempt_count</code>.
      */
-    public Integer getRecoveryAttempt() {
+    public Integer getAttemptCount() {
         return (Integer) get(8);
     }
 
@@ -259,7 +259,7 @@ public class NotificationsRecoveryRecord extends UpdatableRecordImpl<Notificatio
 
     @Override
     public Field<Integer> field9() {
-        return NotificationsRecovery.NOTIFICATIONS_RECOVERY.RECOVERY_ATTEMPT;
+        return NotificationsRecovery.NOTIFICATIONS_RECOVERY.ATTEMPT_COUNT;
     }
 
     @Override
@@ -319,7 +319,7 @@ public class NotificationsRecoveryRecord extends UpdatableRecordImpl<Notificatio
 
     @Override
     public Integer component9() {
-        return getRecoveryAttempt();
+        return getAttemptCount();
     }
 
     @Override
@@ -379,7 +379,7 @@ public class NotificationsRecoveryRecord extends UpdatableRecordImpl<Notificatio
 
     @Override
     public Integer value9() {
-        return getRecoveryAttempt();
+        return getAttemptCount();
     }
 
     @Override
@@ -447,7 +447,7 @@ public class NotificationsRecoveryRecord extends UpdatableRecordImpl<Notificatio
 
     @Override
     public NotificationsRecoveryRecord value9(Integer value) {
-        setRecoveryAttempt(value);
+        setAttemptCount(value);
         return this;
     }
 
@@ -500,7 +500,7 @@ public class NotificationsRecoveryRecord extends UpdatableRecordImpl<Notificatio
     /**
      * Create a detached, initialised NotificationsRecoveryRecord
      */
-    public NotificationsRecoveryRecord(UUID uuid, Integer subscrSeqId, String tenant, String subscrId, Integer bucketNumber, UUID eventUuid, JsonElement event, JsonElement deliveryMethod, Integer recoveryAttempt, LocalDateTime lastAttempt, LocalDateTime created, LocalDateTime updated) {
+    public NotificationsRecoveryRecord(UUID uuid, Integer subscrSeqId, String tenant, String subscrId, Integer bucketNumber, UUID eventUuid, JsonElement event, JsonElement deliveryMethod, Integer attemptCount, LocalDateTime lastAttempt, LocalDateTime created, LocalDateTime updated) {
         super(NotificationsRecovery.NOTIFICATIONS_RECOVERY);
 
         setUuid(uuid);
@@ -511,7 +511,7 @@ public class NotificationsRecoveryRecord extends UpdatableRecordImpl<Notificatio
         setEventUuid(eventUuid);
         setEvent(event);
         setDeliveryMethod(deliveryMethod);
-        setRecoveryAttempt(recoveryAttempt);
+        setAttemptCount(attemptCount);
         setLastAttempt(lastAttempt);
         setCreated(created);
         setUpdated(updated);

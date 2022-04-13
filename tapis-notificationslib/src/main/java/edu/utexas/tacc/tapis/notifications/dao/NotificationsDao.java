@@ -77,7 +77,7 @@ public interface NotificationsDao
   // -------------------- Notifications ------------------------------------
   // -----------------------------------------------------------------------
 
-  boolean persistNotificationsUpdateLastEvent(String tenant, Event event, int bucketNum, List<Notification> notifications)
+  boolean persistNotificationsAndUpdateLastEvent(String tenant, Event event, int bucketNum, List<Notification> notifications)
           throws TapisException;
 
   List<Notification> getNotificationsForEvent(String tenant, Event event, int bucketNum) throws TapisException;

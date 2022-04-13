@@ -112,7 +112,7 @@ public final class DeliveryBucketManager implements Callable<String>
     // RECOVERY Start a thread to work on notifications associated with this bucket that are in recovery.
     startRecoveryTask();
 
-    // RECOVERY Process any deliveries for this bucket that were interrupted during a crash.
+    // TODO RECOVERY Process any deliveries for this bucket that were interrupted during a crash.
     proccessInterruptedDeliveries();
 
     Delivery delivery;
@@ -125,6 +125,7 @@ public final class DeliveryBucketManager implements Callable<String>
       // RECOVERY Blocking call to get first event.
       // First event may be a duplicate so handle it as a special case.
       // For first event received check for a duplicate. If already processed then simply ack it, else process it.
+      log.info(LibUtils.getMsg("NTFLIB_DSP_BUCKET_WAIT_FIRST", bucketNum));
       delivery = deliveryBucketQueue.take();
       if (dao.checkForLastEvent(delivery.getEvent().getUuid(), bucketNum))
       {
@@ -153,6 +154,7 @@ public final class DeliveryBucketManager implements Callable<String>
 
     // Now processes events as they come in until we are interrupted or error
     // If interrupted we are done, on error continue.
+    log.info(LibUtils.getMsg("NTFLIB_DSP_BUCKET_WAIT_NEXT", bucketNum));
     while (!done)
     {
       try
@@ -275,7 +277,7 @@ public final class DeliveryBucketManager implements Callable<String>
         notifList.add(new Notification(null, s.getSeqId(), tenant, s.getId(), bucketNum, eventUuid, event, dm, created));
       }
     }
-    dao.persistNotificationsUpdateLastEvent(event.getTenant(), event, bucketNum, notifList);
+    dao.persistNotificationsAndUpdateLastEvent(event.getTenant(), event, bucketNum, notifList);
     log.debug(LibUtils.getMsg("NTFLIB_DSP_BUCKET_GEN_N2", bucketNum, event.getUuid(), notifList.size()));
     return notifList;
   }
@@ -315,7 +317,7 @@ public final class DeliveryBucketManager implements Callable<String>
           // Task is done. If we have not captured the return value do it now.
           // Note that the Future.get() will throw an InterruptedException or ExecutionException if the underlying
           //   thread threw an exception, including runtime exceptions.
-          // TODO deal with exceptions
+          // TODO/TBD deal with exceptions
           if (deliveryTaskReturns.get(f) == null)
           {
             try

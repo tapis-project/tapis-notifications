@@ -2,20 +2,23 @@ package edu.utexas.tacc.tapis.notifications.service;
 
 import java.util.List;
 import java.util.concurrent.Callable;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
 import edu.utexas.tacc.tapis.notifications.model.Notification;
 import edu.utexas.tacc.tapis.notifications.utils.LibUtils;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import edu.utexas.tacc.tapis.notifications.dao.NotificationsDao;
 
 /*
- * Callable for processing notifications that are in recovery.
+ * Callable for processing notifications that are in recovery for a specific bucket.
  * When the process wakes up it makes a single delivery attempt for each notification in recovery.
  * Once the maximum number of attempts for a notification is reached an error is logged and the
  * notification is removed from the recovery table.
+ *
+ *  Max number of attempts determined by runtime setting TAPIS_NTF_DELIVERY_RCVRY_ATTEMPTS
+ * Attempt interval determined by runtime setting TAPIS_NTF_DELIVERY_RCVRY_RETRY_INTERVAL
+
  */
 public final class RecoveryTask implements Callable<String>
 {
@@ -78,11 +81,11 @@ public final class RecoveryTask implements Callable<String>
       {
         // Get all notifications in recovery for our bucket
         List<Notification> notifications = dao.getNotificationsInRecovery(bucketNum);
-        // Make one pass through each notification in recovery
+        // Make one pass through the list
         for (Notification ntf : notifications)
         {
           boolean delivered = DeliveryTask.deliverNotification(ntf);
-          // If delivered ok we are done. Perform any post-delivery steps and return
+          // If delivered ok we are done. Perform any post-delivery steps
           if (delivered)
           {
             recoveryAttemptSucceeded(ntf);
@@ -143,26 +146,26 @@ public final class RecoveryTask implements Callable<String>
 
   /*
    * Notification recovery attempt failed.
-   * Either update the attempt count or remove it.
+   * Either update the attempt count or remove the notification
    * Log a warning or error.
    */
   private void recoveryAttemptFailed(Notification notification)
   {
     try
     {
-      // Get the number of attempts
-      int numAttempts = dao.getNotificationRecoveryAttemptCount(notification);
-      // if we hit the max then log and error and remove it
+      // Get the current attempt number
+      int currentAttemptNumber = dao.getNotificationRecoveryAttemptCount(notification) + 1;
+      // if we hit the max then log an error and remove the notification
       // else log a warning and bump up the count
-      if (numAttempts >= maxAttempts)
+      if (currentAttemptNumber >= maxAttempts)
       {
         log.error(LibUtils.getMsg("NTFLIB_DSP_BUCKET_RCVRY_FAIL_MAX", bucketNum, notification.getUuid(), maxAttempts));
         dao.deleteNotificationFromRecovery(notification);
       }
       else
       {
-        log.warn(LibUtils.getMsg("NTFLIB_DSP_BUCKET_RCVRY_FAIL", bucketNum, notification.getUuid(), numAttempts));
-        dao.setNotificationRecoveryAttemptCount(notification, numAttempts++);
+        log.warn(LibUtils.getMsg("NTFLIB_DSP_BUCKET_RCVRY_FAIL", bucketNum, notification.getUuid(), currentAttemptNumber));
+        dao.setNotificationRecoveryAttemptCount(notification, currentAttemptNumber);
       }
     }
     catch (TapisException e)

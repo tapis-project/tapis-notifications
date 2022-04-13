@@ -18,8 +18,6 @@ import javax.sql.DataSource;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.NotificationsLastEventRecord;
-import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.NotificationsRecoveryRecord;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,6 +59,8 @@ import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.NotificationsRecord;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.NotificationsTestsRecord;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.SubscriptionsRecord;
+import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.NotificationsLastEventRecord;
+import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.NotificationsRecoveryRecord;
 
 import static edu.utexas.tacc.tapis.notifications.gen.jooq.Tables.NOTIFICATIONS_RECOVERY;
 import static edu.utexas.tacc.tapis.notifications.gen.jooq.Tables.SUBSCRIPTIONS;
@@ -657,7 +657,7 @@ public class NotificationsDaoImpl implements NotificationsDao
     catch (Exception e)
     {
       // Rollback transaction and throw an exception
-      LibUtils.rollbackDB(conn, e,"NTFLIB_DB_SELECT_ERROR", "Subscription", tenantId, subId, e.getMessage());
+      LibUtils.rollbackDB(conn, e, "NTFLIB_DB_SELECT_ERROR", "Subscription", tenantId, subId, e.getMessage());
     }
     finally
     {
@@ -697,7 +697,7 @@ public class NotificationsDaoImpl implements NotificationsDao
     catch (Exception e)
     {
       // Rollback transaction and throw an exception
-      LibUtils.rollbackDB(conn, e,"NTFLIB_DB_SELECT_ERROR", "Subscription", tenantId, id, e.getMessage());
+      LibUtils.rollbackDB(conn, e, "NTFLIB_DB_SELECT_ERROR", "Subscription", tenantId, id, e.getMessage());
     }
     finally
     {
@@ -1276,7 +1276,7 @@ public class NotificationsDaoImpl implements NotificationsDao
    * @throws TapisException - on error
    */
   @Override
-  public boolean persistNotificationsUpdateLastEvent(String tenant, Event event, int bucketNum, List<Notification> notifications)
+  public boolean persistNotificationsAndUpdateLastEvent(String tenant, Event event, int bucketNum, List<Notification> notifications)
           throws TapisException
   {
     String opName = "persistNotificationsForEvent";
@@ -1464,7 +1464,7 @@ public class NotificationsDaoImpl implements NotificationsDao
     catch (Exception e)
     {
       // Rollback transaction and throw an exception
-      LibUtils.rollbackDB(conn, e,"NTFLIB_DB_SELECT_ERROR", "Notification", tenantId, uuid, e.getMessage());
+      LibUtils.rollbackDB(conn, e, "NTFLIB_DB_SELECT_ERROR", "Notification", tenantId, uuid, e.getMessage());
     }
     finally
     {
@@ -1475,7 +1475,8 @@ public class NotificationsDaoImpl implements NotificationsDao
   }
 
   /**
-   * Delete a notification and add it to the recovery table in one transaction
+   * Delete a notification from the main NOTIFICATIONS table and add it to the recovery table
+   *   NOTIFICATIONS_RECOVERY in one transaction
    */
   @Override
   public void deleteNotificationAndAddToRecovery(String tenant, Notification notification) throws TapisException
@@ -1514,7 +1515,7 @@ public class NotificationsDaoImpl implements NotificationsDao
               .set(NOTIFICATIONS_RECOVERY.EVENT_UUID, notification.getEvent().getUuid())
               .set(NOTIFICATIONS_RECOVERY.EVENT, eventJson)
               .set(NOTIFICATIONS_RECOVERY.DELIVERY_METHOD, deliveryMethodJson)
-              .set(NOTIFICATIONS_RECOVERY.RECOVERY_ATTEMPT, 0)
+              .set(NOTIFICATIONS_RECOVERY.ATTEMPT_COUNT, 0)
               .execute();
 
       LibUtils.closeAndCommitDB(conn, null, null);
@@ -1530,7 +1531,7 @@ public class NotificationsDaoImpl implements NotificationsDao
   }
 
   /**
-   * Delete a notification
+   * Delete a notification from the main NOTIFICATIONS table
    */
   @Override
   public void deleteNotification(String tenant, Notification notification) throws TapisException
@@ -1591,7 +1592,7 @@ public class NotificationsDaoImpl implements NotificationsDao
     catch (Exception e)
     {
       // Rollback transaction and throw an exception
-      LibUtils.rollbackDB(conn, e,"NTFLIB_DB_SELECT_ERROR", "Notifications_Last_Event", "N/A", result, e.getMessage());
+      LibUtils.rollbackDB(conn, e, "NTFLIB_DB_SELECT_ERROR", "Notifications_Last_Event", "N/A", result, e.getMessage());
     }
     finally
     {
@@ -1647,7 +1648,7 @@ public class NotificationsDaoImpl implements NotificationsDao
   }
 
   /**
-   * Delete a notification from recovery table
+   * Delete a notification from recovery table NOTIFICATIONS_RECOVERY
    */
   @Override
   public void deleteNotificationFromRecovery(Notification notification) throws TapisException
@@ -1685,7 +1686,7 @@ public class NotificationsDaoImpl implements NotificationsDao
    */
   public int getNotificationRecoveryAttemptCount(Notification notification) throws TapisException
   {
-    int attemptCount;
+    Integer attemptCount = null;
     // ------------------------- Call SQL ----------------------------
     Connection conn = null;
     try
@@ -1693,10 +1694,9 @@ public class NotificationsDaoImpl implements NotificationsDao
       // Get a database connection.
       conn = getConnection();
       DSLContext db = DSL.using(conn);
-      r = db.selectFrom(NOTIFICATIONS_RECOVERY).where(NOTIFICATIONS_RECOVERY.UUID.eq(notification.getUuid())).fetchOne();
-      if (r == null) return null;
-
-      result = r.get(NOTIFICATIONS_LAST_EVENT.EVENT_UUID);
+      attemptCount = db.selectFrom(NOTIFICATIONS_RECOVERY)
+                       .where(NOTIFICATIONS_RECOVERY.UUID.eq(notification.getUuid()))
+                       .fetchOne(NOTIFICATIONS_RECOVERY.ATTEMPT_COUNT);
 
       // Close out and commit
       LibUtils.closeAndCommitDB(conn, null, null);
@@ -1704,15 +1704,50 @@ public class NotificationsDaoImpl implements NotificationsDao
     catch (Exception e)
     {
       // Rollback transaction and throw an exception
-      LibUtils.rollbackDB(conn, e,"NTFLIB_DB_SELECT_ERROR", "Notifications_Last_Event", "N/A", result, e.getMessage());
+      LibUtils.rollbackDB(conn, e, "NTFLIB_DB_SELECT_ERROR", "Notifications_Recovery", "N/A", "<recoveryAttempt>",
+                          e.getMessage());
     }
     finally
     {
       // Always return the connection back to the connection pool.
       LibUtils.finalCloseDB(conn);
     }
+    if (attemptCount == null)
+    {
+      String msg = LibUtils.getMsg("NTFLIB_DB_SELECT_ERROR", "Notifications_Recovery", "N/A", "<recoveryAttempt>",
+                                   "null result");
+      throw new TapisException(msg);
+    }
     return attemptCount;
   }
+
+  /**
+   * Update attempt count for a notification in recovery
+   */
+  @Override
+  public void setNotificationRecoveryAttemptCount(Notification notification, int attemptCount) throws TapisException
+  {
+    // ------------------------- Call SQL ----------------------------
+    Connection conn = null;
+    try
+    {
+      conn = getConnection();
+      DSLContext db = DSL.using(conn);
+      db.update(NOTIFICATIONS_RECOVERY)
+              .set(NOTIFICATIONS_RECOVERY.ATTEMPT_COUNT, attemptCount)
+              .where(NOTIFICATIONS_RECOVERY.UUID.eq(notification.getUuid())).execute();
+      LibUtils.closeAndCommitDB(conn, null, null);
+    }
+    catch (Exception e)
+    {
+      LibUtils.rollbackDB(conn, e,"DB_UPDATE_FAILURE", "notifications_recovery", notification.getUuid());
+    }
+    finally
+    {
+      LibUtils.finalCloseDB(conn);
+    }
+  }
+
   // -----------------------------------------------------------------------
   // ------------------------- Test Sequences ------------------------------
   // -----------------------------------------------------------------------
@@ -1812,7 +1847,7 @@ public class NotificationsDaoImpl implements NotificationsDao
     catch (Exception e)
     {
       // Rollback transaction and throw an exception
-      LibUtils.rollbackDB(conn, e,"NTFLIB_DB_SELECT_ERROR", "TestSequence", tenantId, subscriptionId, e.getMessage());
+      LibUtils.rollbackDB(conn, e, "NTFLIB_DB_SELECT_ERROR", "TestSequence", tenantId, subscriptionId, e.getMessage());
     }
     finally
     {
@@ -2415,6 +2450,7 @@ public class NotificationsDaoImpl implements NotificationsDao
             r.get(NOTIFICATIONS_RECOVERY.BUCKET_NUMBER), r.get(NOTIFICATIONS_RECOVERY.EVENT_UUID), event, dm, created);
     return ntf;
   }
+
   /**
    * Given an sql connection check to see if specified TestSequence exists
    * @param db - jooq context

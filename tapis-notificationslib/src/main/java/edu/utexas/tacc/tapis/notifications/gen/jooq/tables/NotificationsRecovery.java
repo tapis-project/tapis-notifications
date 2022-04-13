@@ -92,9 +92,9 @@ public class NotificationsRecovery extends TableImpl<NotificationsRecoveryRecord
     public final TableField<NotificationsRecoveryRecord, JsonElement> DELIVERY_METHOD = createField(DSL.name("delivery_method"), SQLDataType.JSONB.nullable(false), this, "", new JSONBToJsonElementBinding());
 
     /**
-     * The column <code>tapis_ntf.notifications_recovery.recovery_attempt</code>.
+     * The column <code>tapis_ntf.notifications_recovery.attempt_count</code>.
      */
-    public final TableField<NotificationsRecoveryRecord, Integer> RECOVERY_ATTEMPT = createField(DSL.name("recovery_attempt"), SQLDataType.INTEGER.nullable(false).defaultValue(DSL.field("0", SQLDataType.INTEGER)), this, "");
+    public final TableField<NotificationsRecoveryRecord, Integer> ATTEMPT_COUNT = createField(DSL.name("attempt_count"), SQLDataType.INTEGER.nullable(false).defaultValue(DSL.field("0", SQLDataType.INTEGER)), this, "");
 
     /**
      * The column <code>tapis_ntf.notifications_recovery.last_attempt</code>.

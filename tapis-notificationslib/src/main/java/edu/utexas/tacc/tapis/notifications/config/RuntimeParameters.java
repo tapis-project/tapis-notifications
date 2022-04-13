@@ -532,7 +532,7 @@ public final class RuntimeParameters implements EmailClientParameters
         catch (NumberFormatException e)
         {
           // Log error and stop
-          String msg = LibUtils.getMsg("NTFLIB_RUNTIME_NUM_PARSE_FAIL", EnvVar2.TAPIS_NTF_DELIVERY_RETRY_INTERVAL, parm);
+          String msg = LibUtils.getMsg("NTFLIB_RUNTIME_NUM_PARSE_FAIL", EnvVar2.TAPIS_NTF_DELIVERY_RCVRY_RETRY_INTERVAL, parm);
           _log.error(msg, e);
           throw new TapisRuntimeException(msg, e);
         }
@@ -1116,7 +1116,6 @@ public final class RuntimeParameters implements EmailClientParameters
     TAPIS_NTF_SUBSCR_REAPER_INTERVAL,
     TAPIS_NTF_DELIVERY_ATTEMPTS,
     TAPIS_NTF_DELIVERY_RETRY_INTERVAL,
-    TAPIS_NTF_DELIVERY_RCVRY_PROC_SLEEP,
     TAPIS_NTF_DELIVERY_RCVRY_ATTEMPTS,
     TAPIS_NTF_DELIVERY_RCVRY_RETRY_INTERVAL,
     TAPIS_LOCAL_TEST}
