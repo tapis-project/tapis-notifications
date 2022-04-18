@@ -59,6 +59,7 @@ public final class Notification
 
   public String getTenant() { return tenant; }
   public String getSubscriptionId() { return subscriptionId; }
+  public UUID getEventUuid() { return eventUuid; }
   public Event getEvent() { return event; }
   public DeliveryMethod getDeliveryMethod() { return deliveryMethod; }
   public int getSubscrSeqId() { return subscrSeqId; }

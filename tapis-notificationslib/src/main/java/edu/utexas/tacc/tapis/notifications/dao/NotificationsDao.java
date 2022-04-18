@@ -82,6 +82,8 @@ public interface NotificationsDao
 
   List<Notification> getNotificationsForEvent(String tenant, Event event, int bucketNum) throws TapisException;
 
+  List<Notification> getNotifications(int bucketNum) throws TapisException;
+
   Notification getNotification(String tenant, UUID uuid) throws TapisException;
 
   void deleteNotificationAndAddToRecovery(String tenant, Notification notification) throws TapisException;

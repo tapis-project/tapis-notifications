@@ -1,7 +1,6 @@
 package edu.utexas.tacc.tapis.notifications.service;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import javax.ws.rs.core.Response.Status;
@@ -133,8 +132,9 @@ public final class DeliveryTask implements Callable<Notification>
 
   /*
    * Send out a notification
+   * TODO: Handle exceptions?
    */
-  public static boolean deliverNotification(Notification notification)
+  public static boolean deliverNotification(Notification notification) throws IOException, TapisException
   {
     int bucketNum = notification.getBucketNum();
     Event event = notification.getEvent();
@@ -144,25 +144,25 @@ public final class DeliveryTask implements Callable<Notification>
             deliveryMethod.getDeliveryAddress(), event.getSource(), event.getType(),
             event.getSubject(), event.getSeriesId(), event.getTime(), event.getUuid()));
     boolean deliveryStatus = false;
-    try
-    {
+//    try
+//    {
       switch (deliveryMethod.getDeliveryType())
       {
         case WEBHOOK -> deliveryStatus = deliverByWebhook(notification);
         case EMAIL -> deliveryStatus = deliverByEmail(notification);
       }
-    }
-    catch (IOException | URISyntaxException | InterruptedException e)
-    {
-      // TODO
-      log.warn("Caught exception during notification delivery: " + e.getMessage(), e);
-    }
+//    }
+//    catch (IOException | TapisException e)
+//    {
+//      // TODO
+//      log.warn("Caught exception during notification delivery: " + e.getMessage(), e);
+//    }
     return deliveryStatus;
   }
 
   /*
    * Send out the notification via Webhook
-   * TODO: Handle exceptions
+   * TODO: Handle exceptions?
    *
    * TODO:
    *   - Cache the client
@@ -172,8 +172,7 @@ public final class DeliveryTask implements Callable<Notification>
    *   - other headers?
    *
    */
-  public static boolean deliverByWebhook(Notification ntf)
-          throws URISyntaxException, IOException, InterruptedException
+  public static boolean deliverByWebhook(Notification ntf) throws IOException
   {
     boolean delivered = true;
     int bucketNum = ntf.getBucketNum();
@@ -181,7 +180,7 @@ public final class DeliveryTask implements Callable<Notification>
     // Body is the notification as json
     String notifJsonStr = TapisGsonUtils.getGson(true).toJson(ntf);
 
-    //    //??????????????????
+//    //??????????????????
 //    // test GET - works
 //    URI uri2 = new URI("http://localhost:8080/v3/notifications/healthcheck");
 //    // TODO/TBD: timeout is 10 seconds
@@ -226,12 +225,11 @@ public final class DeliveryTask implements Callable<Notification>
 
   /*
    * Send out the notification via email
-   * TODO: Handle exceptions
+   * TODO: Handle exceptions?
    */
-  public static boolean deliverByEmail(Notification ntf) throws IOException, InterruptedException
+  public static boolean deliverByEmail(Notification ntf) throws TapisException
   {
     boolean delivered = true;
-    int bucketNum = ntf.getBucketNum();
     DeliveryMethod deliveryMethod =  ntf.getDeliveryMethod();
     // Body is the notification as json
     String notifJsonStr = TapisGsonUtils.getGson(true).toJson(ntf);
@@ -247,16 +245,8 @@ public final class DeliveryTask implements Callable<Notification>
     String sendToAddress = deliveryMethod.getDeliveryAddress();
     String sendToName = deliveryMethod.getDeliveryAddress();
     RuntimeParameters runtime = RuntimeParameters.getInstance();
-    try
-    {
-      EmailClient client = EmailClientFactory.getClient(runtime);
-      client.send(sendToName, sendToAddress, mailSubj, mailBody, HTMLizer.htmlize(mailBody));
-    } catch (TapisException e)
-    {
-      log.error(LibUtils.getMsg("NTFLIB_DSP_DLVRY_EM_FAIL_ERR", bucketNum, ntf.getUuid(),
-                            deliveryMethod.getDeliveryType(), deliveryMethod.getDeliveryAddress(), e.getMessage(), e));
-      delivered = false;
-    }
+    EmailClient client = EmailClientFactory.getClient(runtime);
+    client.send(sendToName, sendToAddress, mailSubj, mailBody, HTMLizer.htmlize(mailBody));
     return delivered;
   }
 
