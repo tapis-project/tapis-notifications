@@ -1,6 +1,5 @@
 package edu.utexas.tacc.tapis.notifications.service;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Callable;
 import org.slf4j.Logger;
