@@ -1372,7 +1372,9 @@ public class NotificationsDaoImpl implements NotificationsDao
       Result<NotificationsRecord> results = db.selectFrom(NOTIFICATIONS)
                        .where(NOTIFICATIONS.TENANT.eq(tenant),
                               NOTIFICATIONS.BUCKET_NUMBER.eq(bucketNum),
-                              NOTIFICATIONS.EVENT_UUID.eq(event.getUuid())).fetch();
+                              NOTIFICATIONS.EVENT_UUID.eq(event.getUuid()))
+                       .orderBy(NOTIFICATIONS.SEQ_ID)
+                       .fetch();
 
       if (results == null || results.isEmpty()) return retList;
 
@@ -1394,6 +1396,51 @@ public class NotificationsDaoImpl implements NotificationsDao
     return retList;
   }
 
+  /**
+   * Retrieve all Notifications associated with a bucket
+   *
+   * @param bucketNum - Bucket associated with the notifications
+   * @return - list of Notification objects
+   * @throws TapisException - on error
+   */
+  @Override
+  public List<Notification> getNotifications(int bucketNum) throws TapisException
+  {
+    // The result list should always be non-null.
+    List<Notification> retList = new ArrayList<>();
+
+    // ------------------------- Build and execute SQL ----------------------------
+    Connection conn = null;
+    try
+    {
+      // Get a database connection.
+      conn = getConnection();
+      DSLContext db = DSL.using(conn);
+
+      Result<NotificationsRecord> results = db.selectFrom(NOTIFICATIONS)
+              .where(NOTIFICATIONS.BUCKET_NUMBER.eq(bucketNum))
+              .orderBy(NOTIFICATIONS.SEQ_ID)
+              .fetch();
+
+      if (results == null || results.isEmpty()) return retList;
+
+      for (Record r : results) { retList.add(getNotificationFromRecord(r)); }
+
+      // Close out and commit
+      LibUtils.closeAndCommitDB(conn, null, null);
+    }
+    catch (Exception e)
+    {
+      // Rollback transaction and throw an exception
+      LibUtils.rollbackDB(conn, e,"DB_QUERY_ERROR", "notifications", e.getMessage());
+    }
+    finally
+    {
+      // Always return the connection back to the connection pool.
+      LibUtils.finalCloseDB(conn);
+    }
+    return retList;
+  }
   /**
    * checkForLastEvent
    * @param eventUuid -
@@ -1625,7 +1672,10 @@ public class NotificationsDaoImpl implements NotificationsDao
       DSLContext db = DSL.using(conn);
 
       Result<NotificationsRecoveryRecord> results =
-              db.selectFrom(NOTIFICATIONS_RECOVERY).where(NOTIFICATIONS_RECOVERY.BUCKET_NUMBER.eq(bucketNum)).fetch();
+              db.selectFrom(NOTIFICATIONS_RECOVERY)
+                      .where(NOTIFICATIONS_RECOVERY.BUCKET_NUMBER.eq(bucketNum))
+                      .orderBy(NOTIFICATIONS_RECOVERY.SEQ_ID)
+                      .fetch();
 
       if (results == null || results.isEmpty()) return retList;
 

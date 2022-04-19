@@ -95,7 +95,8 @@ ALTER TABLE subscription_updates OWNER TO tapis_ntf;
 -- Note that event_uuid is needed to find all notifications associated with a specific event.
 CREATE TABLE notifications
 (
-    uuid UUID PRIMARY KEY,
+    seq_id SERIAL PRIMARY KEY,
+    uuid UUID NOT NULL,
     subscr_seq_id INTEGER REFERENCES subscriptions(seq_id) ON DELETE CASCADE,
     tenant TEXT NOT NULL,
     subscr_id TEXT NOT NULL,
@@ -111,7 +112,8 @@ ALTER TABLE notifications OWNER TO tapis_ntf;
 -- In-flight notifications that have failed and are in recovery.
 CREATE TABLE notifications_recovery
 (
-    uuid UUID PRIMARY KEY,
+    seq_id SERIAL PRIMARY KEY,
+    uuid UUID NOT NULL,
     subscr_seq_id INTEGER REFERENCES subscriptions(seq_id) ON DELETE CASCADE,
     tenant TEXT NOT NULL,
     subscr_id TEXT NOT NULL,

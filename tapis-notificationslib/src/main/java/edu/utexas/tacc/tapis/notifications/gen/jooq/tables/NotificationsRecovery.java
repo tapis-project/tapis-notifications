@@ -17,9 +17,10 @@ import java.util.List;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
+import org.jooq.Identity;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row12;
+import org.jooq.Row13;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -50,6 +51,11 @@ public class NotificationsRecovery extends TableImpl<NotificationsRecoveryRecord
     public Class<NotificationsRecoveryRecord> getRecordType() {
         return NotificationsRecoveryRecord.class;
     }
+
+    /**
+     * The column <code>tapis_ntf.notifications_recovery.seq_id</code>.
+     */
+    public final TableField<NotificationsRecoveryRecord, Integer> SEQ_ID = createField(DSL.name("seq_id"), SQLDataType.INTEGER.nullable(false).identity(true), this, "");
 
     /**
      * The column <code>tapis_ntf.notifications_recovery.uuid</code>.
@@ -150,6 +156,11 @@ public class NotificationsRecovery extends TableImpl<NotificationsRecoveryRecord
     }
 
     @Override
+    public Identity<NotificationsRecoveryRecord, Integer> getIdentity() {
+        return (Identity<NotificationsRecoveryRecord, Integer>) super.getIdentity();
+    }
+
+    @Override
     public UniqueKey<NotificationsRecoveryRecord> getPrimaryKey() {
         return Keys.NOTIFICATIONS_RECOVERY_PKEY;
     }
@@ -200,11 +211,11 @@ public class NotificationsRecovery extends TableImpl<NotificationsRecoveryRecord
     }
 
     // -------------------------------------------------------------------------
-    // Row12 type methods
+    // Row13 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row12<java.util.UUID, Integer, String, String, Integer, java.util.UUID, JsonElement, JsonElement, Integer, LocalDateTime, LocalDateTime, LocalDateTime> fieldsRow() {
-        return (Row12) super.fieldsRow();
+    public Row13<Integer, java.util.UUID, Integer, String, String, Integer, java.util.UUID, JsonElement, JsonElement, Integer, LocalDateTime, LocalDateTime, LocalDateTime> fieldsRow() {
+        return (Row13) super.fieldsRow();
     }
 }
