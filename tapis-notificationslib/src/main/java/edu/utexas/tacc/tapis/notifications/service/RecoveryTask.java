@@ -13,6 +13,7 @@ import edu.utexas.tacc.tapis.notifications.dao.NotificationsDao;
 
 /*
  * Callable for processing notifications that are in recovery for a specific bucket.
+ * Designed to run until interrupted. Wakes up and processes at regular intervals.
  * When the process wakes up it makes a single delivery attempt for each notification in recovery.
  * Once the maximum number of attempts for a notification is reached an error is logged and the
  * notification is removed from the recovery table.
@@ -91,9 +92,10 @@ public final class RecoveryTask implements Callable<String>
           }
         }
       }
-      catch (IOException | TapisException e)
+      catch (Exception e)
       {
         // Main processing loop has thrown an exception that we might be able to recover from, e.g. the DB is down.
+        // Most likely this is IOException or TapisException, but catch all exceptions so we can keep going.
         // Pause for a while before resuming operations. If pause interrupted then we are done.
         log.error(LibUtils.getMsg("NTFLIB_DSP_BUCKET_RCVRY_ERR", bucketNum, e.getMessage()), e);
         done = pauseProcessing();

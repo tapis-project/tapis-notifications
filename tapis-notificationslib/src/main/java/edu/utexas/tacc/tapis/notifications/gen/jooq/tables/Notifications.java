@@ -17,9 +17,10 @@ import java.util.List;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
+import org.jooq.Identity;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row9;
+import org.jooq.Row10;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -50,6 +51,11 @@ public class Notifications extends TableImpl<NotificationsRecord> {
     public Class<NotificationsRecord> getRecordType() {
         return NotificationsRecord.class;
     }
+
+    /**
+     * The column <code>tapis_ntf.notifications.seq_id</code>.
+     */
+    public final TableField<NotificationsRecord, Integer> SEQ_ID = createField(DSL.name("seq_id"), SQLDataType.INTEGER.nullable(false).identity(true), this, "");
 
     /**
      * The column <code>tapis_ntf.notifications.uuid</code>.
@@ -135,6 +141,11 @@ public class Notifications extends TableImpl<NotificationsRecord> {
     }
 
     @Override
+    public Identity<NotificationsRecord, Integer> getIdentity() {
+        return (Identity<NotificationsRecord, Integer>) super.getIdentity();
+    }
+
+    @Override
     public UniqueKey<NotificationsRecord> getPrimaryKey() {
         return Keys.NOTIFICATIONS_PKEY;
     }
@@ -185,11 +196,11 @@ public class Notifications extends TableImpl<NotificationsRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row9 type methods
+    // Row10 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row9<java.util.UUID, Integer, String, String, JsonElement, java.util.UUID, JsonElement, Integer, LocalDateTime> fieldsRow() {
-        return (Row9) super.fieldsRow();
+    public Row10<Integer, java.util.UUID, Integer, String, String, JsonElement, java.util.UUID, JsonElement, Integer, LocalDateTime> fieldsRow() {
+        return (Row10) super.fieldsRow();
     }
 }

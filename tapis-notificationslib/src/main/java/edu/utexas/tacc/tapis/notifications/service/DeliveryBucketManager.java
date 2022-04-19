@@ -30,8 +30,9 @@ import edu.utexas.tacc.tapis.notifications.dao.NotificationsDao;
 
 /*
  * Callable for sending out notifications when an event is received and assigned to a bucket.
+ * Designed to run until interrupted.
  *
- * Each callable works from an in-memory queue associated with a bucket.
+ * The callable works off an in-memory queue associated with a bucket.
  * Number and types of delivery notifications will be determined by subscriptions for the event.
  *
  */
@@ -59,9 +60,11 @@ public final class DeliveryBucketManager implements Callable<String>
   private final int bucketNum;
   private final BlockingQueue<Delivery> deliveryBucketQueue;
 
-  // ExecutorService and futures for delivery workers
+  // ExecutorService for delivery worker tasks
   private final ExecutorService deliveryTaskExecService;
+  // List of futures for delivery worker tasks
   private final List<Future<Notification>> deliveryTaskFutures = new ArrayList<>();
+  // Map of notifications and their future values. Used to track which notifications have been delivered
   private final Map<Future<Notification>, Notification> deliveryTaskReturns = new HashMap<>();
 
   // ExecutorService and future for the long-running background recovery task
@@ -118,27 +121,16 @@ public final class DeliveryBucketManager implements Callable<String>
     {
       try
       {
-        // RECOVERY Process any deliveries for this bucket that were interrupted during a crash.
+        // RECOVERY Check for and process an interrupted delivery. This can happen if we crash during a delivery.
         proccessInterruptedDelivery();
-
-        Delivery delivery;
 
         // RECOVERY Blocking call to get first event.
         // First event may be a duplicate so handle it as a special case.
-        // For first event received check for a duplicate. If already processed then simply ack it, else process it.
-        log.info(LibUtils.getMsg("NTFLIB_DSP_BUCKET_WAIT_FIRST", bucketNum));
-        delivery = deliveryBucketQueue.take();
-        if (dao.checkForLastEvent(delivery.getEvent().getUuid(), bucketNum))
-        {
-          log.warn(LibUtils.getMsg("NTFLIB_DSP_BUCKET_ACK_DUP", bucketNum, delivery.getEvent().getUuid()));
-          MessageBroker.getInstance().ackMsg(delivery.getDeliveryTag());
-        } else
-        {
-          processDelivery(delivery);
-        }
+        processFirstEvent();
 
         // Now processes events as they come in
         log.info(LibUtils.getMsg("NTFLIB_DSP_BUCKET_WAIT_NEXT", bucketNum));
+        Delivery delivery;
         // Loop forever until interrupted or error
         while (true)
         {
@@ -147,18 +139,19 @@ public final class DeliveryBucketManager implements Callable<String>
           processDelivery(delivery);
         }
       }
-      catch (IOException | TapisException e)
-      {
-        // Main processing loop has thrown an exception that we might be able to recover from, e.g. the DB is down.
-        // Pause for a while before resuming operations. If pause interrupted then we are done.
-        log.error(LibUtils.getMsg("NTFLIB_DSP_BUCKET_ERR", bucketNum, BUCKET_ERR_PAUSE_INTERVAL, e.getMessage()), e);
-        done = pauseProcessing();
-      }
       catch (InterruptedException e)
       {
         // We were interrupted,  it is time to stop
         log.info(LibUtils.getMsg("NTFLIB_DSP_BUCKET_INTRPT", bucketNum));
         done = true;
+      }
+      catch (Exception e)
+      {
+        // Main processing loop has thrown an exception that we might be able to recover from, e.g. the DB is down.
+        // Most likely this is IOException or TapisException, but catch all exceptions so we can keep going.
+        // Pause for a while before resuming operations. If pause interrupted then we are done.
+        log.error(LibUtils.getMsg("NTFLIB_DSP_BUCKET_ERR", bucketNum, BUCKET_ERR_PAUSE_INTERVAL, e.getMessage()), e);
+        done = pauseProcessing();
       }
     }
 
@@ -186,6 +179,7 @@ public final class DeliveryBucketManager implements Callable<String>
     log.debug(LibUtils.getMsg("NTFLIB_DSP_BUCKET_SUBS", bucketNum, event.getUuid(), matchingSubscriptions.size()));
 
     // Generate and persist notifications based on subscriptions, update last_event table.
+    // This should all happen in a single transaction.
     List<Notification> notifications = createAndPersistNotifications(event, matchingSubscriptions);
 
     // RECOVERY NOTE: If we crash here, notifications will have been persisted but the event will not have been
@@ -210,6 +204,26 @@ public final class DeliveryBucketManager implements Callable<String>
     var notifications = dao.getNotifications(bucketNum);
     // Deliver them
     deliverNotifications(notifications);
+  }
+
+  /*
+   * Wait for and process the first incoming event
+   */
+  private void processFirstEvent() throws TapisException, InterruptedException, IOException
+  {
+    log.info(LibUtils.getMsg("NTFLIB_DSP_BUCKET_WAIT_FIRST", bucketNum));
+    // Blocking call to get next event
+    Delivery delivery = deliveryBucketQueue.take();
+    // For first event received check for a duplicate. If already processed then simply ack it, else process it.
+    if (dao.checkForLastEvent(delivery.getEvent().getUuid(), bucketNum))
+    {
+      log.warn(LibUtils.getMsg("NTFLIB_DSP_BUCKET_ACK_DUP", bucketNum, delivery.getEvent().getUuid()));
+      MessageBroker.getInstance().ackMsg(delivery.getDeliveryTag());
+    }
+    else
+    {
+      processDelivery(delivery);
+    }
   }
 
   /*
@@ -256,6 +270,7 @@ public final class DeliveryBucketManager implements Callable<String>
         notifList.add(new Notification(null, s.getSeqId(), tenant, s.getId(), bucketNum, eventUuid, event, dm, created));
       }
     }
+    // Persist all notifications and update the last_event table in a single transaction.
     dao.persistNotificationsAndUpdateLastEvent(event.getTenant(), event, bucketNum, notifList);
     log.debug(LibUtils.getMsg("NTFLIB_DSP_BUCKET_GEN_N2", bucketNum, event.getUuid(), notifList.size()));
     return notifList;
@@ -273,18 +288,27 @@ public final class DeliveryBucketManager implements Callable<String>
     // Get eventUuid for logging. Each notification has the same event
     UUID eventUuid = notifications.get(0).getEventUuid();
 
+    // Clear out futures list and map. They get re-used.
+    deliveryTaskFutures.clear();
+    deliveryTaskReturns.clear();
     // Add a delivery task for each notification
     for (Notification ntf : notifications)
     {
       log.debug(LibUtils.getMsg("NTFLIB_DSP_BUCKET_DLVRY1", bucketNum, ntf.getEventUuid(), ntf.getDeliveryMethod()));
+      // Create a delivery task and submit it to the executor service.
       Future<Notification> future = deliveryTaskExecService.submit(new DeliveryTask(dao, ntf));
+      // Add the task to the list
       deliveryTaskFutures.add(future);
+      // Initialize the map entry for tracking the future returns
       deliveryTaskReturns.put(future, null);
     }
 
     // Wait for all tasks to finish
     log.debug(LibUtils.getMsg("NTFLIB_DSP_BUCKET_DLVRY2", bucketNum, eventUuid, deliveryTaskFutures.size()));
     // Loop indefinitely waiting for tasks to finish
+    // The call to get a future value for a task is a blocking call so no need to pause.
+    // As tasks finish the future values get put into the map. Once all tasks are done the final pass through the
+    //   list of futures will quickly fill in any remaining values and the loop will exit.
     boolean notDone = true;
     while (notDone)
     {
@@ -303,29 +327,33 @@ public final class DeliveryBucketManager implements Callable<String>
           // Task is done. If we have not captured the return value do it now.
           // Note that the Future.get() will throw an InterruptedException or ExecutionException if the underlying
           //   thread threw an exception, including runtime exceptions.
-          // TODO/TBD deal with exceptions
           if (deliveryTaskReturns.get(f) == null)
           {
             try
             {
+              // Make a blocking call to get the return value of the future.
               Notification ret = f.get();
               log.debug(LibUtils.getMsg("NTFLIB_DSP_BUCKET_DLVRY3", bucketNum, eventUuid, ret.getDeliveryMethod()));
               deliveryTaskReturns.put(f, ret);
             }
             catch (InterruptedException e)
             {
+              // Log exception for the failed delivery
               log.warn(LibUtils.getMsg("NTFLIB_DSP_BUCKET_DLVRY_ERR1", bucketNum, eventUuid, e.getMessage()), e);
             }
             catch (ExecutionException e)
             {
+              // Log exception for the failed delivery
               log.warn(LibUtils.getMsg("NTFLIB_DSP_BUCKET_DLVRY_ERR2", bucketNum, eventUuid, e.getMessage()), e);
             }
           }
         }
       }
     }
-    // Clear out futures
-    deliveryTaskFutures.clear();
+
+    // At this point all tasks are done. The map of values has been filled in as much as possible.
+    //   If any tasks threw an exception then the value in the map deliveryTaskReturns will be null.
+
   }
 
   /**

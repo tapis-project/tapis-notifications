@@ -8,6 +8,7 @@ import edu.utexas.tacc.tapis.notifications.utils.LibUtils;
 
 /*
  * Support cleaning up expired subscriptions.
+ * Contains a single static cleanup method that is run at fixed intervals using a ScheduledExecutorService.
  */
 public final class SubscriptionReaper
 {
@@ -16,18 +17,6 @@ public final class SubscriptionReaper
   /* ********************************************************************** */
   // Tracing.
   private static final Logger log = LoggerFactory.getLogger(SubscriptionReaper.class);
-
-  /* ********************************************************************** */
-  /*                                Enums                                   */
-  /* ********************************************************************** */
-
-  /* ********************************************************************** */
-  /*                                 Fields                                 */
-  /* ********************************************************************** */
-
-  /* ********************************************************************** */
-  /*                             Constructors                               */
-  /* ********************************************************************** */
 
   /* ********************************************************************** */
   /*                             Public Methods                             */

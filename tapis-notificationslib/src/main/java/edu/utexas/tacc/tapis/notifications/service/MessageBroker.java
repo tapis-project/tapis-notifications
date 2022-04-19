@@ -133,7 +133,7 @@ public final class MessageBroker
 
     instance = new MessageBroker();
   }
-  
+
   /*
    * Get the singleton instance of this class.
    * The init() method must be called first.

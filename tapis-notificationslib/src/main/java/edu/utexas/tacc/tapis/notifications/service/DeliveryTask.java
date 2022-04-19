@@ -80,7 +80,7 @@ public final class DeliveryTask implements Callable<Notification>
    * Number of attempts and interval are based on runtime settings.
    */
   @Override
-  public Notification call() throws TapisException
+  public Notification call() throws InterruptedException
   {
     int bucketNum = notification.getBucketNum();
     DeliveryMethod deliveryMethod = notification.getDeliveryMethod();
@@ -92,7 +92,7 @@ public final class DeliveryTask implements Callable<Notification>
     // Get number of attempts and attempt interval from settings.
     int numAttempts = RuntimeParameters.getInstance().getNtfDeliveryMaxAttempts();
     long deliveryAttemptInterval = RuntimeParameters.getInstance().getNtfDeliveryRetryInterval() * 1000L;
-    for (int i = 1; i < numAttempts; i++)
+    for (int i = 1; i <= numAttempts; i++)
     {
       log.debug(LibUtils.getMsg("NTFLIB_DSP_DLVRY_ATTEMPT", bucketNum, uuid, i, deliveryMethod));
       try
@@ -110,12 +110,9 @@ public final class DeliveryTask implements Callable<Notification>
         log.warn(LibUtils.getMsg("NTFLIB_DSP_DLVRY_FAIL2", bucketNum, uuid, i, deliveryMethod, e.getMessage()), e);
       }
       // Pause for configured interval before trying again
-      try
-      {
-        log.debug(LibUtils.getMsg("NTFLIB_DSP_DLVRY_ATTEMPT_PAUSE", bucketNum, uuid, i, deliveryAttemptInterval));
-        Thread.sleep(deliveryAttemptInterval);
-      }
-      catch (InterruptedException e) {}
+      // NOTE: Do not catch InterruptedException. If interrupted we are shutting down and should not make another attempt.
+      log.debug(LibUtils.getMsg("NTFLIB_DSP_DLVRY_ATTEMPT_PAUSE", bucketNum, uuid, i, deliveryAttemptInterval));
+      Thread.sleep(deliveryAttemptInterval);
     }
 
     // Give up for now, log warning and add to recovery table
@@ -131,8 +128,7 @@ public final class DeliveryTask implements Callable<Notification>
   // ====================================================================================
 
   /*
-   * Send out a notification
-   * TODO: Handle exceptions?
+   * Send out a notification via WEBHOOK or EMAIL
    */
   public static boolean deliverNotification(Notification notification) throws IOException, TapisException
   {
@@ -144,27 +140,17 @@ public final class DeliveryTask implements Callable<Notification>
             deliveryMethod.getDeliveryAddress(), event.getSource(), event.getType(),
             event.getSubject(), event.getSeriesId(), event.getTime(), event.getUuid()));
     boolean deliveryStatus = false;
-//    try
-//    {
-      switch (deliveryMethod.getDeliveryType())
-      {
-        case WEBHOOK -> deliveryStatus = deliverByWebhook(notification);
-        case EMAIL -> deliveryStatus = deliverByEmail(notification);
-      }
-//    }
-//    catch (IOException | TapisException e)
-//    {
-//      // TODO
-//      log.warn("Caught exception during notification delivery: " + e.getMessage(), e);
-//    }
+    switch (deliveryMethod.getDeliveryType())
+    {
+      case WEBHOOK -> deliveryStatus = deliverByWebhook(notification);
+      case EMAIL -> deliveryStatus = deliverByEmail(notification);
+    }
     return deliveryStatus;
   }
 
   /*
    * Send out the notification via Webhook
-   * TODO: Handle exceptions?
-   *
-   * TODO:
+   * TODO/TBD:
    *   - Cache the client
    *   - set client timeout
    *   - special handling for https?
@@ -225,7 +211,6 @@ public final class DeliveryTask implements Callable<Notification>
 
   /*
    * Send out the notification via email
-   * TODO: Handle exceptions?
    */
   public static boolean deliverByEmail(Notification ntf) throws TapisException
   {

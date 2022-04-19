@@ -1372,7 +1372,9 @@ public class NotificationsDaoImpl implements NotificationsDao
       Result<NotificationsRecord> results = db.selectFrom(NOTIFICATIONS)
                        .where(NOTIFICATIONS.TENANT.eq(tenant),
                               NOTIFICATIONS.BUCKET_NUMBER.eq(bucketNum),
-                              NOTIFICATIONS.EVENT_UUID.eq(event.getUuid())).fetch();
+                              NOTIFICATIONS.EVENT_UUID.eq(event.getUuid()))
+                       .orderBy(NOTIFICATIONS.SEQ_ID)
+                       .fetch();
 
       if (results == null || results.isEmpty()) return retList;
 
@@ -1416,7 +1418,9 @@ public class NotificationsDaoImpl implements NotificationsDao
       DSLContext db = DSL.using(conn);
 
       Result<NotificationsRecord> results = db.selectFrom(NOTIFICATIONS)
-              .where(NOTIFICATIONS.BUCKET_NUMBER.eq(bucketNum)).fetch();
+              .where(NOTIFICATIONS.BUCKET_NUMBER.eq(bucketNum))
+              .orderBy(NOTIFICATIONS.SEQ_ID)
+              .fetch();
 
       if (results == null || results.isEmpty()) return retList;
 
@@ -1668,7 +1672,10 @@ public class NotificationsDaoImpl implements NotificationsDao
       DSLContext db = DSL.using(conn);
 
       Result<NotificationsRecoveryRecord> results =
-              db.selectFrom(NOTIFICATIONS_RECOVERY).where(NOTIFICATIONS_RECOVERY.BUCKET_NUMBER.eq(bucketNum)).fetch();
+              db.selectFrom(NOTIFICATIONS_RECOVERY)
+                      .where(NOTIFICATIONS_RECOVERY.BUCKET_NUMBER.eq(bucketNum))
+                      .orderBy(NOTIFICATIONS_RECOVERY.SEQ_ID)
+                      .fetch();
 
       if (results == null || results.isEmpty()) return retList;
 

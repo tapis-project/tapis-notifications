@@ -85,6 +85,8 @@ public class TapisNtf extends SchemaImpl {
     @Override
     public final List<Sequence<?>> getSequences() {
         return Arrays.<Sequence<?>>asList(
+            Sequences.NOTIFICATIONS_RECOVERY_SEQ_ID_SEQ,
+            Sequences.NOTIFICATIONS_SEQ_ID_SEQ,
             Sequences.NOTIFICATIONS_TESTS_SEQ_ID_SEQ,
             Sequences.SUBSCRIPTION_UPDATES_SEQ_ID_SEQ,
             Sequences.SUBSCRIPTIONS_SEQ_ID_SEQ);
