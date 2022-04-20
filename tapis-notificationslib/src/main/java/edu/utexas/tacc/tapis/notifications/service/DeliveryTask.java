@@ -56,6 +56,8 @@ public final class DeliveryTask implements Callable<Notification>
   private final UUID uuid;
   private final int bucketNum; // Bucket that generated the notification
   private final DeliveryMethod deliveryMethod;
+  private static final OkHttpClient httpClient = new OkHttpClient();
+
   /* ********************************************************************** */
   /*                             Constructors                               */
   /* ********************************************************************** */
@@ -150,13 +152,7 @@ public final class DeliveryTask implements Callable<Notification>
 
   /*
    * Send out the notification via Webhook
-   * TODO/TBD:
-   *   - Cache the client
-   *   - set client timeout
-   *   - special handling for https?
-   *   - handle auth if provided?
-   *   - other headers?
-   *
+   * By default OkHttpClient has read and write timeouts of 1 second.
    */
   public static boolean deliverByWebhook(Notification ntf) throws IOException
   {
@@ -166,45 +162,21 @@ public final class DeliveryTask implements Callable<Notification>
     // Body is the notification as json
     String notifJsonStr = TapisGsonUtils.getGson(true).toJson(ntf);
 
-//    //??????????????????
-//    // test GET - works
-//    URI uri2 = new URI("http://localhost:8080/v3/notifications/healthcheck");
-//    // TODO/TBD: timeout is 10 seconds
-//    Duration timeout2 = Duration.of(10, ChronoUnit.SECONDS);
-//    HttpRequest request2 = HttpRequest.newBuilder().uri(uri2)
-//            .header("Accept", "application/json")
-//            .header("Content-Type", "application/json")
-//            .timeout(timeout2).build();
-//    HttpResponse<String> response2 = httpClient.send(request2, HttpResponse.BodyHandlers.ofString());
-//    // ?????????????????
-
-    // TODO/TBD: Get works but POST hangs? maybe grizzly issue?
-//    // Post to the delivery address which should be a URL
-//    URI uri = new URI(deliveryMethod.getDeliveryAddress());
-//    BodyPublisher bodyPublisher = HttpRequest.BodyPublishers.ofString(eventJsonStr);
-//    // TODO/TBD: timeout is 10 seconds
-//    Duration timeout = Duration.of(30, ChronoUnit.SECONDS);
-//    HttpRequest request = HttpRequest.newBuilder().uri(uri)
-//            .header("Accept", "application/json")
-//            .header("Content-Type", "application/json")
-////            .method("POST", bodyPublisher).timeout(timeout).build();
-////            .POST(bodyPublisher).timeout(timeout).build();
-//            .POST(HttpRequest.BodyPublishers.noBody()).timeout(timeout).build();
-//    HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-//    if (response.statusCode() == Status.OK.getStatusCode()) return true;
-
-    OkHttpClient client = new OkHttpClient();
+    // Build the request
     RequestBody body = RequestBody.create(notifJsonStr, MediaType.parse("application/json"));
     Request.Builder requestBuilder = new Request.Builder().url(deliveryMethod.getDeliveryAddress()).post(body);
     Request request = requestBuilder.addHeader("User-Agent", "Tapis/%s".formatted(TapisConstants.API_VERSION)).build();
-    Call call = client.newCall(request);
-    Response response = call.execute();
-    // If response status code is not 200 assume delivery failed.
-    if (response.code() != Status.OK.getStatusCode())
+    Call call = httpClient.newCall(request);
+    // Use try-with-resources to auto-close the response.
+    try (Response response = call.execute())
     {
-      log.error(LibUtils.getMsg("NTFLIB_DSP_DLVRY_WH_FAIL_ERR", bucketNum, ntf.getUuid(),
-              deliveryMethod.getDeliveryType(), deliveryMethod.getDeliveryAddress(), response.code()));
-      delivered = false;
+      // If response status code is not 200 assume delivery failed.
+      if (response.code() != Status.OK.getStatusCode())
+      {
+        log.error(LibUtils.getMsg("NTFLIB_DSP_DLVRY_WH_FAIL_ERR", bucketNum, ntf.getUuid(),
+                deliveryMethod.getDeliveryType(), deliveryMethod.getDeliveryAddress(), response.code()));
+        delivered = false;
+      }
     }
     return delivered;
   }

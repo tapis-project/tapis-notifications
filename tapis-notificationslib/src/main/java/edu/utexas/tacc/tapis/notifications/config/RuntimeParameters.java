@@ -86,9 +86,8 @@ public final class RuntimeParameters implements EmailClientParameters
   // Site on which we are running
   private String siteId;
 
-  // Service base URLs - tenants, Security Kernel
+  // Service base URLs - tenants
   private String tenantsSvcURL;
-  private String skSvcURL;
 
   // RabbitMQ configuration.
   private String  queueAdminUser;
@@ -699,8 +698,6 @@ public final class RuntimeParameters implements EmailClientParameters
     buf.append("\n------- Base Service URLs --------------------------");
     buf.append("\ntapis.svc.tenants.url: ");
     buf.append(tenantsSvcURL);
-    buf.append("\ntapis.svc.sk.url: ");
-    buf.append(skSvcURL);
 
     buf.append("\n------- RabbitMQ Configuration --------------------");
     buf.append("\ntapis.queue.host: ");

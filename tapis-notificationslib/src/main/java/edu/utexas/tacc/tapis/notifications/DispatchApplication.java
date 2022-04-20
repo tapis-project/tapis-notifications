@@ -71,8 +71,8 @@ public class DispatchApplication
     System.out.println("Initializing service");
     dispatchService.initService(siteAdminTenantId, RuntimeParameters.getInstance());
 
-    System.out.println("Registering shutdownHook");
     // Add a shutdown hook so we can gracefully stop
+    System.out.println("Registering shutdownHook");
     Thread shudownHook = new DispatchShutdown(dispatchService);
     Runtime.getRuntime().addShutdownHook(shudownHook);
 
