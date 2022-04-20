@@ -40,11 +40,13 @@ import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
 import static edu.utexas.tacc.tapis.notifications.service.DispatchService.NUM_BUCKETS;
 
 /*
- * Singleton class to provide message broker services:
- *  - initialize connections and channels.
- *  - initialize exchanges and queues.
- *  - publish an event to a queue
- *  - read an event from a queue
+ * Singleton class to provide message broker services. There is a single queue QUEUE_MAIN.
+ *  - initialize connection and channel.
+ *  - initialize exchange and queue.
+ *  - start the message consumer
+ *  - publish an event to the queue
+ *  - read an event from the queue
+ *  - acknowledge a message read from the queue
  *
  * Notifications service uses a single primary queue for events, so we include all support in this one class.
  */
@@ -401,7 +403,7 @@ public final class MessageBroker
   /*
    * Compute a bucket number from 0 to NUM_BUCKETS-1
    *   based on hash of event source, subject and seriesId
-   * NOTE that we clear the top 4 bits of the hash so we always have a positive integer
+   * NOTE that we clear the top 4 bits of the hash so that we always have a positive integer
    */
   private static int computeBucketNumber(Event event)
   {
