@@ -58,14 +58,14 @@ public class Notifications extends TableImpl<NotificationsRecord> {
     public final TableField<NotificationsRecord, Integer> SEQ_ID = createField(DSL.name("seq_id"), SQLDataType.INTEGER.nullable(false).identity(true), this, "");
 
     /**
-     * The column <code>tapis_ntf.notifications.uuid</code>.
-     */
-    public final TableField<NotificationsRecord, java.util.UUID> UUID = createField(DSL.name("uuid"), SQLDataType.UUID.nullable(false), this, "");
-
-    /**
      * The column <code>tapis_ntf.notifications.subscr_seq_id</code>.
      */
     public final TableField<NotificationsRecord, Integer> SUBSCR_SEQ_ID = createField(DSL.name("subscr_seq_id"), SQLDataType.INTEGER, this, "");
+
+    /**
+     * The column <code>tapis_ntf.notifications.uuid</code>.
+     */
+    public final TableField<NotificationsRecord, java.util.UUID> UUID = createField(DSL.name("uuid"), SQLDataType.UUID.nullable(false), this, "");
 
     /**
      * The column <code>tapis_ntf.notifications.tenant</code>.
@@ -200,7 +200,7 @@ public class Notifications extends TableImpl<NotificationsRecord> {
     // -------------------------------------------------------------------------
 
     @Override
-    public Row10<Integer, java.util.UUID, Integer, String, String, JsonElement, java.util.UUID, JsonElement, Integer, LocalDateTime> fieldsRow() {
+    public Row10<Integer, Integer, java.util.UUID, String, String, JsonElement, java.util.UUID, JsonElement, Integer, LocalDateTime> fieldsRow() {
         return (Row10) super.fieldsRow();
     }
 }

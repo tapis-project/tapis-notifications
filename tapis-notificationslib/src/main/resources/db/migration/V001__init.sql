@@ -96,8 +96,8 @@ ALTER TABLE subscription_updates OWNER TO tapis_ntf;
 CREATE TABLE notifications
 (
     seq_id SERIAL PRIMARY KEY,
-    uuid UUID NOT NULL,
     subscr_seq_id INTEGER REFERENCES subscriptions(seq_id) ON DELETE CASCADE,
+    uuid UUID NOT NULL,
     tenant TEXT NOT NULL,
     subscr_id TEXT NOT NULL,
     delivery_method JSONB NOT NULL,
@@ -113,14 +113,14 @@ ALTER TABLE notifications OWNER TO tapis_ntf;
 CREATE TABLE notifications_recovery
 (
     seq_id SERIAL PRIMARY KEY,
-    uuid UUID NOT NULL,
     subscr_seq_id INTEGER REFERENCES subscriptions(seq_id) ON DELETE CASCADE,
+    uuid UUID NOT NULL,
     tenant TEXT NOT NULL,
     subscr_id TEXT NOT NULL,
-    bucket_number INTEGER NOT NULL DEFAULT 0,
+    delivery_method JSONB NOT NULL,
     event_uuid UUID NOT NULL,
     event JSONB NOT NULL,
-    delivery_method JSONB NOT NULL,
+    bucket_number INTEGER NOT NULL DEFAULT 0,
     attempt_count INTEGER NOT NULL DEFAULT 0,
     last_attempt TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),
     created TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),

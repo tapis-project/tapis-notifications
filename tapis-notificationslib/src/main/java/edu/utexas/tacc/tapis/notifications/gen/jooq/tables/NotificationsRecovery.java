@@ -58,14 +58,14 @@ public class NotificationsRecovery extends TableImpl<NotificationsRecoveryRecord
     public final TableField<NotificationsRecoveryRecord, Integer> SEQ_ID = createField(DSL.name("seq_id"), SQLDataType.INTEGER.nullable(false).identity(true), this, "");
 
     /**
-     * The column <code>tapis_ntf.notifications_recovery.uuid</code>.
-     */
-    public final TableField<NotificationsRecoveryRecord, java.util.UUID> UUID = createField(DSL.name("uuid"), SQLDataType.UUID.nullable(false), this, "");
-
-    /**
      * The column <code>tapis_ntf.notifications_recovery.subscr_seq_id</code>.
      */
     public final TableField<NotificationsRecoveryRecord, Integer> SUBSCR_SEQ_ID = createField(DSL.name("subscr_seq_id"), SQLDataType.INTEGER, this, "");
+
+    /**
+     * The column <code>tapis_ntf.notifications_recovery.uuid</code>.
+     */
+    public final TableField<NotificationsRecoveryRecord, java.util.UUID> UUID = createField(DSL.name("uuid"), SQLDataType.UUID.nullable(false), this, "");
 
     /**
      * The column <code>tapis_ntf.notifications_recovery.tenant</code>.
@@ -78,9 +78,9 @@ public class NotificationsRecovery extends TableImpl<NotificationsRecoveryRecord
     public final TableField<NotificationsRecoveryRecord, String> SUBSCR_ID = createField(DSL.name("subscr_id"), SQLDataType.CLOB.nullable(false), this, "");
 
     /**
-     * The column <code>tapis_ntf.notifications_recovery.bucket_number</code>.
+     * The column <code>tapis_ntf.notifications_recovery.delivery_method</code>.
      */
-    public final TableField<NotificationsRecoveryRecord, Integer> BUCKET_NUMBER = createField(DSL.name("bucket_number"), SQLDataType.INTEGER.nullable(false).defaultValue(DSL.field("0", SQLDataType.INTEGER)), this, "");
+    public final TableField<NotificationsRecoveryRecord, JsonElement> DELIVERY_METHOD = createField(DSL.name("delivery_method"), SQLDataType.JSONB.nullable(false), this, "", new JSONBToJsonElementBinding());
 
     /**
      * The column <code>tapis_ntf.notifications_recovery.event_uuid</code>.
@@ -93,9 +93,9 @@ public class NotificationsRecovery extends TableImpl<NotificationsRecoveryRecord
     public final TableField<NotificationsRecoveryRecord, JsonElement> EVENT = createField(DSL.name("event"), SQLDataType.JSONB.nullable(false), this, "", new JSONBToJsonElementBinding());
 
     /**
-     * The column <code>tapis_ntf.notifications_recovery.delivery_method</code>.
+     * The column <code>tapis_ntf.notifications_recovery.bucket_number</code>.
      */
-    public final TableField<NotificationsRecoveryRecord, JsonElement> DELIVERY_METHOD = createField(DSL.name("delivery_method"), SQLDataType.JSONB.nullable(false), this, "", new JSONBToJsonElementBinding());
+    public final TableField<NotificationsRecoveryRecord, Integer> BUCKET_NUMBER = createField(DSL.name("bucket_number"), SQLDataType.INTEGER.nullable(false).defaultValue(DSL.field("0", SQLDataType.INTEGER)), this, "");
 
     /**
      * The column <code>tapis_ntf.notifications_recovery.attempt_count</code>.
@@ -215,7 +215,7 @@ public class NotificationsRecovery extends TableImpl<NotificationsRecoveryRecord
     // -------------------------------------------------------------------------
 
     @Override
-    public Row13<Integer, java.util.UUID, Integer, String, String, Integer, java.util.UUID, JsonElement, JsonElement, Integer, LocalDateTime, LocalDateTime, LocalDateTime> fieldsRow() {
+    public Row13<Integer, Integer, java.util.UUID, String, String, JsonElement, java.util.UUID, JsonElement, Integer, Integer, LocalDateTime, LocalDateTime, LocalDateTime> fieldsRow() {
         return (Row13) super.fieldsRow();
     }
 }
