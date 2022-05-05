@@ -22,7 +22,6 @@ import edu.utexas.tacc.tapis.notifications.client.gen.model.TapisSubscription;
 import edu.utexas.tacc.tapis.notifications.model.Notification;
 import edu.utexas.tacc.tapis.shared.threadlocal.TapisThreadContext;
 import edu.utexas.tacc.tapis.sharedapi.security.AuthenticatedUser;
-import edu.utexas.tacc.tapis.systems.client.SystemsClient;
 import org.apache.commons.lang3.StringUtils;
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
@@ -149,7 +148,7 @@ public class NotificationsServiceImpl implements NotificationsService
    * Secrets in the text should be masked.
    * If id is empty then generate a uuid and use that as the id.
    * @param rUser - ResourceRequestUser containing tenant, user and request info
-   * @param sub - Pre-populated Subscription object
+   * @param subscription - Pre-populated Subscription object
    * @param scrubbedText - Text used to create the Subscription object - secrets should be scrubbed. Saved in update record.
    * @return subscription Id
    * @throws TapisException - for Tapis related exceptions
@@ -158,39 +157,39 @@ public class NotificationsServiceImpl implements NotificationsService
    * @throws NotAuthorizedException - unauthorized
    */
   @Override
-  public String createSubscription(ResourceRequestUser rUser, Subscription sub, String scrubbedText)
+  public String createSubscription(ResourceRequestUser rUser, Subscription subscription, String scrubbedText)
           throws TapisException, TapisClientException, IllegalStateException, IllegalArgumentException, NotAuthorizedException
   {
     SubscriptionOperation op = SubscriptionOperation.create;
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
-    if (sub == null) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_NULL_INPUT", rUser));
+    if (subscription == null) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_NULL_INPUT", rUser));
     log.trace(LibUtils.getMsgAuth("NTFLIB_CREATE_TRACE", rUser, scrubbedText));
-    String resourceTenantId = sub.getTenant();
-    String resourceId = sub.getId();
+    String oboTenant = rUser.getOboTenantId();
+    String subscriptionId = subscription.getId();
 
     // ---------------------------- Check inputs ------------------------------------
-    if (StringUtils.isBlank(resourceTenantId))
+    if (StringUtils.isBlank(oboTenant))
     {
-      throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_CREATE_ERROR_ARG", rUser, resourceId));
+      throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_CREATE_ERROR_ARG", rUser, subscriptionId));
     }
 
     // sub1 is the subscription object that will be passed to the dao layer.
     Subscription sub1;
     // If no Id provided then fill in with a UUID.
-    if (StringUtils.isBlank(resourceId))
+    if (StringUtils.isBlank(subscriptionId))
     {
-      resourceId = UUID.randomUUID().toString();
-      sub1 = new Subscription(sub, resourceTenantId, resourceId);
+      subscriptionId = UUID.randomUUID().toString();
+      sub1 = new Subscription(subscription, oboTenant, subscriptionId);
     }
     else
     {
-      sub1 = new Subscription(sub);
+      sub1 = new Subscription(subscription);
     }
 
     // Check if subscription already exists
-    if (dao.checkForSubscription(resourceTenantId, resourceId))
+    if (dao.checkForSubscription(oboTenant, subscriptionId))
     {
-      throw new IllegalStateException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_EXISTS", rUser, resourceId));
+      throw new IllegalStateException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_EXISTS", rUser, subscriptionId));
     }
 
     // Make sure owner, notes and tags are all set
@@ -199,8 +198,8 @@ public class NotificationsServiceImpl implements NotificationsService
     // ----------------- Resolve variables for any attributes that might contain them --------------------
     sub1.resolveVariables(rUser.getOboUserId());
 
-    // ------------------------- Check service level authorization -------------------------
-    checkAuth(rUser, op, resourceId, sub1.getOwner(), null, null);
+    // ------------------------- Check authorization -------------------------
+    checkAuth(rUser, op, subscriptionId, sub1.getOwner());
 
     // ---------------- Check constraints on Subscription attributes ------------------------
     validateSubscription(rUser, sub1);
@@ -216,7 +215,7 @@ public class NotificationsServiceImpl implements NotificationsService
     // Creation of subscription and perms not in single DB transaction.
     // Use try/catch to rollback any writes in case of failure.
     boolean subCreated = false;
-    String subsPermSpecALL = getPermSpecAllStr(resourceTenantId, resourceId);
+    String subsPermSpecALL = getPermSpecAllStr(oboTenant, subscriptionId);
 
     // Get SK client now. If we cannot get this rollback not needed.
     var skClient = getSKClient();
@@ -227,26 +226,26 @@ public class NotificationsServiceImpl implements NotificationsService
 
       // ------------------- Add permissions -----------------------------
       // Give owner full access to the subscription
-//      skClient.grantUserPermission(resourceTenantId, sub1.getOwner(), subsPermSpecALL);
+//      skClient.grantUserPermission(oboTenant, sub1.getOwner(), subsPermSpecALL);
     }
     catch (Exception e0)
     {
       // Something went wrong. Attempt to undo all changes and then re-throw the exception
       // Log error
-      String msg = LibUtils.getMsgAuth("NTFLIB_CREATE_ERROR_ROLLBACK", rUser, resourceId, e0.getMessage());
+      String msg = LibUtils.getMsgAuth("NTFLIB_CREATE_ERROR_ROLLBACK", rUser, subscriptionId, e0.getMessage());
       log.error(msg);
 
       // Rollback
       // Remove subscription from DB
-      if (subCreated) try {dao.deleteSubscription(resourceTenantId, resourceId); }
+      if (subCreated) try {dao.deleteSubscription(oboTenant, subscriptionId); }
       catch (Exception e) {
-        log.warn(LibUtils.getMsgAuth(ERROR_ROLLBACK, rUser, resourceId, "delete", e.getMessage()));}
+        log.warn(LibUtils.getMsgAuth(ERROR_ROLLBACK, rUser, subscriptionId, "delete", e.getMessage()));}
       // Remove perms
-//      try { skClient.revokeUserPermission(resourceTenantId, sub1.getOwner(), subsPermSpecALL); }
+//      try { skClient.revokeUserPermission(oboTenant, sub1.getOwner(), subsPermSpecALL); }
 //      catch (Exception e) {_log.warn(LibUtils.getMsgAuth(ERROR_ROLLBACK, rUser, resourceId, "revokePermOwner", e.getMessage()));}
       throw e0;
     }
-    return resourceId;
+    return subscriptionId;
   }
 
   /**
@@ -263,7 +262,7 @@ public class NotificationsServiceImpl implements NotificationsService
    * @throws NotFoundException - Resource not found
    */
   @Override
-  public void patchSubscription(ResourceRequestUser rUser, String subId, PatchSubscription patchSubscription,
+  public void patchSubscription(ResourceRequestUser rUser, String subscriptionId, PatchSubscription patchSubscription,
                                 String scrubbedText)
           throws TapisException, TapisClientException, IllegalStateException, IllegalArgumentException,
                  NotAuthorizedException, NotFoundException
@@ -272,27 +271,27 @@ public class NotificationsServiceImpl implements NotificationsService
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
     if (patchSubscription == null) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_NULL_INPUT", rUser));
     // Extract various names for convenience
-    String resourceTenantId = rUser.getOboTenantId();
-    String resourceId = subId;
+    String oboTenant = rUser.getOboTenantId();
+    String resourceId = subscriptionId;
 
     // ---------------------------- Check inputs ------------------------------------
-    if (StringUtils.isBlank(resourceTenantId) || StringUtils.isBlank(resourceId) || StringUtils.isBlank(scrubbedText))
+    if (StringUtils.isBlank(oboTenant) || StringUtils.isBlank(resourceId) || StringUtils.isBlank(scrubbedText))
     {
       throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_CREATE_ERROR_ARG", rUser, resourceId));
     }
 
     // Subscription must already exist
-    if (!dao.checkForSubscription(resourceTenantId, resourceId))
+    if (!dao.checkForSubscription(oboTenant, resourceId))
     {
       throw new NotFoundException(LibUtils.getMsgAuth("NTFLIB_VER_NOT_FOUND", rUser, resourceId));
     }
 
     // Retrieve the subscription being patched and create fully populated Subscription with changes merged in
-    Subscription origSubscription = dao.getSubscription(resourceTenantId, resourceId);
+    Subscription origSubscription = dao.getSubscription(oboTenant, resourceId);
     Subscription patchedSubscription = createPatchedSubscription(origSubscription, patchSubscription);
 
-    // ------------------------- Check service level authorization -------------------------
-    checkAuth(rUser, op, resourceId, origSubscription.getOwner(), null, null);
+    // ------------------------- Check authorization -------------------------
+    checkAuth(rUser, op, resourceId, origSubscription.getOwner());
 
     // ---------------- Check constraints on Subscription attributes ------------------------
     validateSubscription(rUser, patchedSubscription);
@@ -303,7 +302,7 @@ public class NotificationsServiceImpl implements NotificationsService
     // ----------------- Create all artifacts --------------------
     // No distributed transactions so no distributed rollback needed
     // ------------------- Make Dao call to persist the subscription -----------------------------------
-    dao.patchSubscription(rUser, subId, patchedSubscription, updateJsonStr, scrubbedText);
+    dao.patchSubscription(rUser, subscriptionId, patchedSubscription, updateJsonStr, scrubbedText);
   }
 
   /**
@@ -331,27 +330,27 @@ public class NotificationsServiceImpl implements NotificationsService
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
     if (putSub == null) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_NULL_INPUT", rUser));
     // Extract various names for convenience
-    String resourceTenantId = putSub.getTenant();
+    String oboTenant = rUser.getOboTenantId();
     String resourceId = putSub.getId();
 
     // ---------------------------- Check inputs ------------------------------------
-    if (StringUtils.isBlank(resourceTenantId) || StringUtils.isBlank(resourceId) || StringUtils.isBlank(scrubbedText))
+    if (StringUtils.isBlank(oboTenant) || StringUtils.isBlank(resourceId) || StringUtils.isBlank(scrubbedText))
     {
       throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_CREATE_ERROR_ARG", rUser, resourceId));
     }
 
     // Subscription must already exist
-    if (!dao.checkForSubscription(resourceTenantId, resourceId))
+    if (!dao.checkForSubscription(oboTenant, resourceId))
     {
       throw new NotFoundException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_NOT_FOUND", rUser, resourceId));
     }
 
     // Retrieve the subscription being updated and create fully populated Subscription with changes merged in
-    Subscription origSub = dao.getSubscription(resourceTenantId, resourceId);
+    Subscription origSub = dao.getSubscription(oboTenant, resourceId);
     Subscription updatedSub = createUpdatedSubscription(origSub, putSub);
 
-    // ------------------------- Check service level authorization -------------------------
-    checkAuth(rUser, op, resourceId, origSub.getOwner(), null, null);
+    // ------------------------- Check authorization -------------------------
+    checkAuth(rUser, op, resourceId, origSub.getOwner());
 
     // ---------------- Check constraints on Subscription attributes ------------------------
     validateSubscription(rUser, updatedSub);
@@ -426,8 +425,8 @@ public class NotificationsServiceImpl implements NotificationsService
     // If subscription does not exist then 0 changes
     if (!dao.checkForSubscription(rUser.getOboTenantId(), subId)) return 0;
 
-    // ------------------------- Check service level authorization -------------------------
-    checkAuth(rUser, op, subId, null, null, null);
+    // ------------------------- Check authorization -------------------------
+    checkAuth(rUser, op, subId);
 
     // Delete the subscription
     return dao.deleteSubscription(rUser.getOboTenantId(), subId);
@@ -456,21 +455,21 @@ public class NotificationsServiceImpl implements NotificationsService
     if (StringUtils.isBlank(subId) || StringUtils.isBlank(newOwnerName))
          throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_NULL_INPUT", rUser));
  
-    String resourceTenantId = rUser.getOboTenantId();
+    String oboTenant = rUser.getOboTenantId();
 
     // ---------------------------- Check inputs ------------------------------------
-    if (StringUtils.isBlank(resourceTenantId))
+    if (StringUtils.isBlank(oboTenant))
          throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_CREATE_ERROR_ARG", rUser, subId));
 
     // Subscription must already exist
-    if (!dao.checkForSubscription(resourceTenantId, subId))
+    if (!dao.checkForSubscription(oboTenant, subId))
          throw new NotFoundException(LibUtils.getMsgAuth(NOT_FOUND, rUser, subId));
 
     // Retrieve the old owner
-    String oldOwnerName = dao.getSubscriptionOwner(resourceTenantId, subId);
+    String oldOwnerName = dao.getSubscriptionOwner(oboTenant, subId);
 
-    // ------------------------- Check service level authorization -------------------------
-    checkAuth(rUser, op, subId, oldOwnerName, null, null);
+    // ------------------------- Check authorization -------------------------
+    checkAuth(rUser, op, subId, oldOwnerName);
 
     // If new owner same as old owner then this is a no-op
     if (newOwnerName.equals(oldOwnerName)) return 0;
@@ -480,23 +479,23 @@ public class NotificationsServiceImpl implements NotificationsService
     // Use try/catch to rollback any changes in case of failure.
     // Get SK client now. If we cannot get this rollback not needed.
     var skClient = getSKClient();
-    String subsPermSpec = getPermSpecAllStr(resourceTenantId, subId);
+    String subsPermSpec = getPermSpecAllStr(oboTenant, subId);
     try {
       // ------------------- Make Dao call to update the subscription owner -----------------------------------
-      dao.updateSubscriptionOwner(rUser, resourceTenantId, subId, newOwnerName);
+      dao.updateSubscriptionOwner(rUser, oboTenant, subId, newOwnerName);
 //      // Add permissions for new owner
-//      skClient.grantUserPermission(resourceTenantId, newOwnerName, subsPermSpec);
+//      skClient.grantUserPermission(oboTenant, newOwnerName, subsPermSpec);
 //      // Remove permissions from old owner
-//      skClient.revokeUserPermission(resourceTenantId, oldOwnerName, subsPermSpec);
+//      skClient.revokeUserPermission(oboTenant, oldOwnerName, subsPermSpec);
     }
     catch (Exception e0)
     {
       // Something went wrong. Attempt to undo all changes and then re-throw the exception
-      try { dao.updateSubscriptionOwner(rUser, resourceTenantId, subId, oldOwnerName); } catch (Exception e) {
+      try { dao.updateSubscriptionOwner(rUser, oboTenant, subId, oldOwnerName); } catch (Exception e) {
         log.warn(LibUtils.getMsgAuth(ERROR_ROLLBACK, rUser, subId, "updateOwner", e.getMessage()));}
-//      try { skClient.revokeUserPermission(resourceTenantId, newOwnerName, subsPermSpec); }
+//      try { skClient.revokeUserPermission(oboTenant, newOwnerName, subsPermSpec); }
 //      catch (Exception e) {_log.warn(LibUtils.getMsgAuth(ERROR_ROLLBACK, rUser, subId, "revokePermNewOwner", e.getMessage()));}
-//      try { skClient.grantUserPermission(resourceTenantId, oldOwnerName, subsPermSpec); }
+//      try { skClient.grantUserPermission(oboTenant, oldOwnerName, subsPermSpec); }
 //      catch (Exception e) {_log.warn(LibUtils.getMsgAuth(ERROR_ROLLBACK, rUser, subId, "grantPermOldOwner", e.getMessage()));}
       throw e0;
     }
@@ -526,18 +525,18 @@ public class NotificationsServiceImpl implements NotificationsService
     if (StringUtils.isBlank(subId) || StringUtils.isBlank(newTTLStr))
       throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_NULL_INPUT", rUser));
 
-    String resourceTenantId = rUser.getOboTenantId();
+    String oboTenant = rUser.getOboTenantId();
 
     // ---------------------------- Check inputs ------------------------------------
-    if (StringUtils.isBlank(resourceTenantId))
+    if (StringUtils.isBlank(oboTenant))
       throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_CREATE_ERROR_ARG", rUser, subId));
 
     // Subscription must already exist
-    if (!dao.checkForSubscription(resourceTenantId, subId))
+    if (!dao.checkForSubscription(oboTenant, subId))
       throw new NotFoundException(LibUtils.getMsgAuth(NOT_FOUND, rUser, subId));
 
-    // ------------------------- Check service level authorization -------------------------
-    checkAuth(rUser, op, subId, null, null, null);
+    // ------------------------- Check authorization -------------------------
+    checkAuth(rUser, op, subId);
 
     // If TTL provided is not an integer then throw an exception
     int newTTL;
@@ -548,41 +547,10 @@ public class NotificationsServiceImpl implements NotificationsService
     }
 
     // ----------------- Make update --------------------
-    dao.updateSubscriptionTTL(rUser, resourceTenantId, subId, newTTL, Subscription.computeExpiryFromNow(newTTL));
+    dao.updateSubscriptionTTL(rUser, oboTenant, subId, newTTL, Subscription.computeExpiryFromNow(newTTL));
     return 1;
   }
 
-//  /**
-//   * Hard delete a subscription record given the subscription name.
-//   * Also remove artifacts from the Security Kernel.
-//   * NOTE: This is package-private. Only test code should ever use it.
-//   *
-//   * @param rUser - ResourceRequestUser containing tenant, user and request info
-//   * @param subId - name of subscription
-//   * @return Number of items deleted
-//   * @throws TapisException - for Tapis related exceptions
-//   * @throws NotAuthorizedException - unauthorized
-//   */
-//  int hardDeleteSubscription(ResourceRequestUser rUser, String resourceTenantId, String subId)
-//          throws TapisException, TapisClientException, NotAuthorizedException
-//  {
-//    SubscriptionOperation op = SubscriptionOperation.delete;
-//    if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
-//    if (StringUtils.isBlank(subId)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_NULL_INPUT", rUser));
-//
-//    // If subscription does not exist then 0 changes
-//    if (!dao.checkForSubscription(resourceTenantId, subId)) return 0;
-//
-//    // ------------------------- Check service level authorization -------------------------
-//    checkAuth(rUser, op, subId, null, null, null);
-//
-//    // Remove SK artifacts
-//// TODO/TBD    removeSKArtifacts(resourceTenantId, subId);
-//
-//    // Delete the subscription
-//    return dao.deleteSubscription(resourceTenantId, subId);
-//  }
-//
   /**
    * Hard delete all resources in the "test" tenant.
    * Also remove artifacts from the Security Kernel.
@@ -597,13 +565,13 @@ public class NotificationsServiceImpl implements NotificationsService
           throws TapisException, TapisClientException, NotAuthorizedException
   {
     // For safety hard code the tenant name
-    String resourceTenantId = "test";
+    String oboTenant = "test";
     // Fetch all resource Ids including deleted items
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
-    var resourceIdSet = dao.getSubscriptionIDs(resourceTenantId);
+    var resourceIdSet = dao.getSubscriptionIDs(oboTenant);
     for (String id : resourceIdSet)
     {
-//      hardDeleteSubscription(rUser, resourceTenantId, id);
+//      hardDeleteSubscription(rUser, oboTenant, id);
       deleteSubscription(rUser, id);
     }
     return resourceIdSet.size();
@@ -647,7 +615,7 @@ public class NotificationsServiceImpl implements NotificationsService
     ResourceRequestUser rUser = new ResourceRequestUser(authUser);
     // Note we could call service beginSequence() directly, but we would have to duplicate code for computing baseUrl
     // Although slower it is probably a better check to call ourselves via the client.
-    String subscrId = "N/A";
+    String subscriptionId = "N/A";
     try
     {
       ntfClient = serviceClients.getClient(userName, tenantName, NotificationsClient.class);
@@ -659,15 +627,15 @@ public class NotificationsServiceImpl implements NotificationsService
         ntfClient.setBasePath("http://localhost:8080");
       }
       TapisSubscription subscription = ntfClient.beginTestSequence(DEFAULT_TEST_TTL);
-      subscrId = subscription.getId();
-      log.debug(LibUtils.getMsg("NTFLIB_DSP_CHECK_BEGIN", subscrId));
-      waitForTestSequenceStart(tenantName, subscrId);
-      dao.deleteSubscription(tenantName, subscrId);
-      log.debug(LibUtils.getMsg("NTFLIB_DSP_CHECK_END", subscrId));
+      subscriptionId = subscription.getId();
+      log.debug(LibUtils.getMsg("NTFLIB_DSP_CHECK_BEGIN", subscriptionId));
+      waitForTestSequenceStart(tenantName, subscriptionId);
+      dao.deleteSubscription(tenantName, subscriptionId);
+      log.debug(LibUtils.getMsg("NTFLIB_DSP_CHECK_END", subscriptionId));
     }
     catch (Exception e)
     {
-      String msg = LibUtils.getMsg("NTFLIB_DSP_CHECK_ERR", subscrId, e.getMessage());
+      String msg = LibUtils.getMsg("NTFLIB_DSP_CHECK_ERR", subscriptionId, e.getMessage());
       log.warn(msg);
       retValue = new TapisException(msg, e);
     }
@@ -689,12 +657,12 @@ public class NotificationsServiceImpl implements NotificationsService
     SubscriptionOperation op = SubscriptionOperation.read;
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
     if (StringUtils.isBlank(subId)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_NULL_INPUT", rUser));
-    String resourceTenantId = rUser.getOboTenantId();
+    String oboTenant = rUser.getOboTenantId();
  
     // We need owner to check auth and if subscription not there cannot find owner, so cannot do auth check if no subscription
-    if (dao.checkForSubscription(resourceTenantId, subId)) {
-      // ------------------------- Check service level authorization -------------------------
-      checkAuth(rUser, op, subId, null, null, null);
+    if (dao.checkForSubscription(oboTenant, subId)) {
+      // ------------------------- Check authorization -------------------------
+      checkAuth(rUser, op, subId);
       return true;
     }
     return false;
@@ -716,15 +684,15 @@ public class NotificationsServiceImpl implements NotificationsService
     SubscriptionOperation op = SubscriptionOperation.read;
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
     if (StringUtils.isBlank(subId)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_NULL_INPUT", rUser));
-    String resourceTenantId = rUser.getOboTenantId();
+    String oboTenant = rUser.getOboTenantId();
 
     // Resource must exist
-    if (!dao.checkForSubscription(resourceTenantId, subId))
+    if (!dao.checkForSubscription(oboTenant, subId))
       throw new NotFoundException(LibUtils.getMsgAuth(NOT_FOUND, rUser, subId));
 
-    // ------------------------- Check service level authorization -------------------------
-    checkAuth(rUser, op, subId, null, null, null);
-    return dao.isEnabled(resourceTenantId, subId);
+    // ------------------------- Check authorization -------------------------
+    checkAuth(rUser, op, subId);
+    return dao.isEnabled(oboTenant, subId);
   }
 
   /**
@@ -744,16 +712,16 @@ public class NotificationsServiceImpl implements NotificationsService
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
     if (StringUtils.isBlank(subId)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_NULL_INPUT", rUser));
     // Extract various names for convenience
-    String resourceTenantId = rUser.getOboTenantId();
+    String oboTenant = rUser.getOboTenantId();
 
     // We need owner to check auth and if sub not there cannot find owner, so
     // if sub does not exist then return null
-    if (!dao.checkForSubscription(resourceTenantId, subId)) return null;
+    if (!dao.checkForSubscription(oboTenant, subId)) return null;
 
-    // ------------------------- Check service level authorization -------------------------
-    checkAuth(rUser, op, subId, null, null, null);
+    // ------------------------- Check authorization -------------------------
+    checkAuth(rUser, op, subId);
 
-    Subscription result = dao.getSubscription(resourceTenantId, subId);
+    Subscription result = dao.getSubscription(oboTenant, subId);
     return result;
   }
 
@@ -919,8 +887,8 @@ public class NotificationsServiceImpl implements NotificationsService
     // if subscription does not exist then return null
     if (!dao.checkForSubscription(rUser.getOboTenantId(), subId)) return null;
 
-    // ------------------------- Check service level authorization -------------------------
-    checkAuth(rUser, op, subId, null, null, null);
+    // ------------------------- Check authorization -------------------------
+    checkAuth(rUser, op, subId);
 
     return dao.getSubscriptionOwner(rUser.getOboTenantId(), subId);
   }
@@ -980,8 +948,8 @@ public class NotificationsServiceImpl implements NotificationsService
     String user = rUser.getOboUserId();
 
     // Use uuid as the subscription Id
-    String subscrId = UUID.randomUUID().toString();
-    log.trace(LibUtils.getMsgAuth("NTFLIB_CREATE_TRACE", rUser, subscrId));
+    String subscriptionId = UUID.randomUUID().toString();
+    log.trace(LibUtils.getMsgAuth("NTFLIB_CREATE_TRACE", rUser, subscriptionId));
 
     // Determine the subscription TTL
     int subscrTTL = DEFAULT_TEST_TTL;
@@ -997,23 +965,23 @@ public class NotificationsServiceImpl implements NotificationsService
 
     // Build the callback delivery method
     // Example https://dev.develop.tapis.io/v3/notifications/test/callback/<subscriptionId>
-    String callbackStr = String.format("%s/test/callback/%s", baseServiceUrl, subscrId);
+    String callbackStr = String.format("%s/test/callback/%s", baseServiceUrl, subscriptionId);
     DeliveryMethod dm = new DeliveryMethod(DeliveryMethod.DeliveryType.WEBHOOK, callbackStr);
     var dmList = Collections.singletonList(dm);
 
     // Set other test subscription properties
     String typeFilter = TEST_SUBSCR_TYPE_FILTER;
-    String subjFilter = subscrId;
+    String subjFilter = subscriptionId;
 
     // Create the subscription
     // NOTE: Might be able to call the svc method createSubscription() but creating here avoids some overhead.
     //   For example, the auth check is not needed and could potentially cause problems.
-    Subscription sub1 = new Subscription(-1, tenant, subscrId, null, user, true, typeFilter, subjFilter, dmList,
+    Subscription sub1 = new Subscription(-1, tenant, subscriptionId, null, user, true, typeFilter, subjFilter, dmList,
                                          subscrTTL, null, null, null, null, null);
     // If subscription already exists it is an error. Unlikely since it is a UUID
-    if (dao.checkForSubscription(tenant, subscrId))
+    if (dao.checkForSubscription(tenant, subscriptionId))
     {
-      throw new IllegalStateException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_EXISTS", rUser, subscrId));
+      throw new IllegalStateException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_EXISTS", rUser, subscriptionId));
     }
 
     // Set defaults, resolve variables and check constraints.
@@ -1034,19 +1002,19 @@ public class NotificationsServiceImpl implements NotificationsService
     dao.createSubscription(rUser, sub1, expiry, createJsonStr, null);
 
     // Persist the initial test sequence record
-    dao.createTestSequence(rUser, subscrId);
+    dao.createTestSequence(rUser, subscriptionId);
 
     // Create and publish an event
     URI eventSource = new URI(baseServiceUrl);
     String eventType = TEST_EVENT_TYPE;
-    String eventSubject = subscrId;
+    String eventSubject = subscriptionId;
     String eventSeries = null;
     String eventTime = OffsetDateTime.now().toString();
     UUID eventUUID = UUID.randomUUID();
     Event event = new Event(tenant, user, eventSource, eventType, eventSubject, eventSeries, eventTime, eventUUID);
     MessageBroker.getInstance().publishEvent(rUser, event);
 
-    return dao.getSubscription(tenant, subscrId);
+    return dao.getSubscription(tenant, subscriptionId);
   }
 
   /**
@@ -1063,15 +1031,15 @@ public class NotificationsServiceImpl implements NotificationsService
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
     if (StringUtils.isBlank(subscriptionId)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_NULL_INPUT", rUser));
     // Extract various names for convenience
-    String resourceTenantId = rUser.getOboTenantId();
+    String oboTenant = rUser.getOboTenantId();
 
     // We need owner to check auth and if sub not there cannot find owner, so if sub does not exist then return null
-    if (!dao.checkForSubscription(resourceTenantId, subscriptionId)) return null;
+    if (!dao.checkForSubscription(oboTenant, subscriptionId)) return null;
 
-    // ------------------------- Check service level authorization -------------------------
-    checkAuth(rUser, op, subscriptionId, null, null, null);
+    // ------------------------- Check authorization -------------------------
+    checkAuth(rUser, op, subscriptionId);
 
-    TestSequence result = dao.getTestSequence(resourceTenantId, subscriptionId);
+    TestSequence result = dao.getTestSequence(oboTenant, subscriptionId);
     return result;
   }
 
@@ -1098,8 +1066,8 @@ public class NotificationsServiceImpl implements NotificationsService
     // If subscription does not exist then 0 changes
     if (!dao.checkForSubscription(rUser.getOboTenantId(), subscriptionId)) return 0;
 
-    // ------------------------- Check service level authorization -------------------------
-    checkAuth(rUser, op, subscriptionId, null, null, null);
+    // ------------------------- Check authorization -------------------------
+    checkAuth(rUser, op, subscriptionId);
 
     // Check that subscription exists in the notifications_test table.
     // If not it is an error
@@ -1152,20 +1120,20 @@ public class NotificationsServiceImpl implements NotificationsService
     if (StringUtils.isBlank(subId))
       throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_NULL_INPUT", rUser));
 
-    String resourceTenantId = rUser.getOboTenantId();
+    String oboTenant = rUser.getOboTenantId();
 
     // Subscription must already exist
-    if (!dao.checkForSubscription(resourceTenantId, subId))
+    if (!dao.checkForSubscription(oboTenant, subId))
       throw new NotFoundException(LibUtils.getMsgAuth(NOT_FOUND, rUser, subId));
 
-    // ------------------------- Check service level authorization -------------------------
-    checkAuth(rUser, subscriptionOp, subId, null, null, null);
+    // ------------------------- Check authorization -------------------------
+    checkAuth(rUser, subscriptionOp, subId);
 
     // ----------------- Make update --------------------
     if (subscriptionOp == SubscriptionOperation.enable)
-      dao.updateEnabled(rUser, resourceTenantId, subId, true);
+      dao.updateEnabled(rUser, oboTenant, subId, true);
     else
-      dao.updateEnabled(rUser, resourceTenantId, subId, false);
+      dao.updateEnabled(rUser, oboTenant, subId, false);
     return 1;
   }
 
@@ -1286,14 +1254,12 @@ public class NotificationsServiceImpl implements NotificationsService
    * For an owner permissions are never checked directly.
    *
    * @param rUser - ResourceRequestUser containing tenant, user and request info
-   * @param tenant Subscription tenant
    * @param id Subscription id
-   * @param userName user for whom perms are being updated
+   * @param targetOboUser user for whom perms are being updated
    * @param opStr Operation in progress, for logging
    * @return name of owner
    */
-  private String checkForOwnerPermUpdate(ResourceRequestUser rUser, String tenant, String id,
-                                         String userName, String opStr)
+  private String checkForOwnerPermUpdate(ResourceRequestUser rUser, String id, String targetOboUser, String opStr)
           throws TapisException, NotAuthorizedException
   {
     // Look up owner. If not found then consider not authorized. Very unlikely at this point.
@@ -1301,9 +1267,9 @@ public class NotificationsServiceImpl implements NotificationsService
     if (StringUtils.isBlank(owner))
       throw new NotAuthorizedException(LibUtils.getMsgAuth("NTFLIB_UNAUTH", rUser, id, opStr), NO_CHALLENGE);
     // If owner making the request and owner is the target user for the perm update then reject.
-    if (owner.equals(rUser.getOboUserId()) && owner.equals(userName))
+    if (owner.equals(rUser.getOboUserId()) && owner.equals(targetOboUser))
     {
-      // If it is a svc making request reject with no auth, if user making request reject with special message.
+      // If it is a svc making request reject with not authorized, if user making request reject with special message.
       // Need this check since svc not allowed to update perms but checkAuth happens after checkForOwnerPermUpdate.
       // Without this the op would be denied with a misleading message.
       // Unfortunately this means auth check for svc in 2 places but not clear how to avoid it.
@@ -1316,118 +1282,6 @@ public class NotificationsServiceImpl implements NotificationsService
   }
 
   /**
-   * Standard service level authorization check. Check is different for service and user requests.
-   * A check should be made for subscription existence before calling this method.
-   * If no owner is passed in and one cannot be found then an error is logged and authorization is denied.
-   *
-   * @param rUser - ResourceRequestUser containing tenant, user and request info
-   * @param op - operation name
-   * @param subId - name of the subscription
-   * @param owner - subscription owner
-   * @param perms - List of permissions for the revokePerm case
-   * @throws NotAuthorizedException - user not authorized to perform operation
-   */
-  private void checkAuth(ResourceRequestUser rUser, SubscriptionOperation op, String subId,
-                         String owner, String userIdToCheck, Set<Permission> perms)
-      throws TapisException, TapisClientException, NotAuthorizedException
-  {
-    // Check service and user requests separately to avoid confusing a service name with a user name
-    if (rUser.isServiceRequest())
-    {
-      // This is a service request. The user name will be the service name. E.g. files, jobs, streams, etc
-// TODO/TBD: Any service can read subscriptions
-//      if (op == SubscriptionOperation.read && SVCLIST_READ.contains(rUser.getJwtUserId())) return;
-      if (op == SubscriptionOperation.read) return;
-    }
-    else
-    {
-      // User check
-      checkAuthUser(rUser, op, null, null, subId, owner, userIdToCheck, perms);
-      return;
-    }
-    // Not authorized, throw an exception
-    throw new NotAuthorizedException(LibUtils.getMsgAuth("NTFLIB_UNAUTH", rUser, subId, op.name()), NO_CHALLENGE);
-  }
-
-  /**
-   * User based authorization check.
-   * Can be used for OBOUser type checks.
-   * By default, use JWT tenant and user from rUser, allow for optional tenant or user.
-   * A check should be made for subscription existence before calling this method.
-   * If no owner is passed in and one cannot be found then an error is logged and
-   *   authorization is denied.
-   * Operations:
-   *  Create -      must be owner or have admin role
-   *  Delete -      must be owner or have admin role
-   *  ChangeOwner - must be owner or have admin role
-   *  GrantPerm -   must be owner or have admin role
-   *  Read -     must be owner or have admin role or have READ or MODIFY permission or be in list of allowed services
-   *  getPerms - must be owner or have admin role or have READ or MODIFY permission or be in list of allowed services
-   *  Modify - must be owner or have admin role or have MODIFY permission
-   *  RevokePerm -  must be owner or have admin role or apiUserId=targetUser and meet certain criteria (allowUserRevokePerm)
-   *
-   * @param rUser - ResourceRequestUser containing tenant, user and request info
-   * @param op - operation name
-   * @param tenantIdToCheck - optional name of the tenant to use. Default is to use authenticatedUser.
-   * @param userIdToCheck - optional name of the user to check. Default is to use authenticatedUser.
-   * @param subId - id of the subscription
-   * @param owner - owner of the subscription
-   * @param perms - List of permissions for the revokePerm case
-   * @throws NotAuthorizedException - user not authorized to perform operation
-   */
-  private void checkAuthUser(ResourceRequestUser rUser, SubscriptionOperation op,
-                             String tenantIdToCheck, String userIdToCheck,
-                             String subId, String owner, String targetUser, Set<Permission> perms)
-          throws TapisException, TapisClientException, NotAuthorizedException
-  {
-    // Use JWT tenant and user from authenticatedUsr or optional provided values
-    String tenantName = (StringUtils.isBlank(tenantIdToCheck) ? rUser.getOboTenantId() : tenantIdToCheck);
-    String userName = (StringUtils.isBlank(userIdToCheck) ? rUser.getJwtUserId() : userIdToCheck);
-
-    // Most checks require owner. If no owner specified and owner cannot be determined then log an error and deny.
-    if (StringUtils.isBlank(owner)) owner = dao.getSubscriptionOwner(tenantName, subId);
-    if (StringUtils.isBlank(owner)) {
-      String msg = LibUtils.getMsgAuth("NTFLIB_AUTH_NO_OWNER", rUser, subId, op.name());
-      log.error(msg);
-      throw new NotAuthorizedException(msg, NO_CHALLENGE);
-    }
-    switch(op) {
-      case create:
-      case enable:
-      case disable:
-      case delete:
-      case changeOwner:
-//      case grantPerms:
-        if (owner.equals(userName) || hasAdminRole(rUser, tenantName, userName)) return;
-        break;
-      case read:
-//      case getPerms:
-        if (owner.equals(userName) || hasAdminRole(rUser, tenantName, userName)) return;
-        break;
-//        if (owner.equals(userName) || hasAdminRole(rUser, tenantName, userName) ||
-//              isPermittedAny(rUser, tenantName, userName, subId, READMODIFY_PERMS))
-//          return;
-//        break;
-      case modify:
-      case updateTTL:
-        if (owner.equals(userName) || hasAdminRole(rUser, tenantName, userName)) return;
-        break;
-//        if (owner.equals(userName) || hasAdminRole(rUser, tenantName, userName) ||
-//                isPermitted(rUser, tenantName, userName, subId, Permission.MODIFY))
-//          return;
-//        break;
-//      case revokePerms:
-//        if (owner.equals(userName) || hasAdminRole(rUser, tenantName, userName) ||
-//                (userName.equals(targetUser) &&
-//                        allowUserRevokePerm(rUser, tenantName, userName, subId, perms)))
-//          return;
-//        break;
-    }
-    // Not authorized, throw an exception
-    throw new NotAuthorizedException(LibUtils.getMsgAuth("NTFLIB_UNAUTH", rUser, subId, op.name()), NO_CHALLENGE);
-  }
-
-  /**
    * Determine all subscriptions that a user is allowed to see.
    * If all subscriptions return null else return list of subscription IDs
    * An empty list indicates no subscriptions allowed.
@@ -1437,8 +1291,7 @@ public class NotificationsServiceImpl implements NotificationsService
           throws TapisException, TapisClientException
   {
     // If requester is a service calling as itself or an admin then all resources allowed
-    if (rUser.isServiceRequest() && rUser.getJwtUserId().equals(rUser.getOboUserId()) ||
-            hasAdminRole(rUser, null, null))
+    if (rUser.isServiceRequest() && rUser.getJwtUserId().equals(rUser.getOboUserId()) || hasAdminRole(rUser))
     {
       return null;
     }
@@ -1462,19 +1315,6 @@ public class NotificationsServiceImpl implements NotificationsService
 //      }
 //    }
 //    return subscriptionIDs;
-  }
-
-  /**
-   * Check to see if a user has the service admin role
-   * By default use rUser, allow for optional tenant or user.
-   */
-  private boolean hasAdminRole(ResourceRequestUser rUser, String tenantToCheck, String userToCheck)
-          throws TapisException, TapisClientException
-  {
-    // Use JWT tenant and user from authenticatedUsr or optional provided values
-    String tenantName = (StringUtils.isBlank(tenantToCheck) ? rUser.getOboTenantId() : tenantToCheck);
-    String userName = (StringUtils.isBlank(userToCheck) ? rUser.getJwtUserId() : userToCheck);
-    return getSKClient().isAdmin(tenantName, userName);
   }
 
 //  /**
@@ -1513,41 +1353,23 @@ public class NotificationsServiceImpl implements NotificationsService
 //  }
 //
 //  /**
-//   * Check to see if a user who is not owner or admin is authorized to revoke permissions
-//   * By default use JWT tenant and user from rUser, allow for optional tenant or user.
-//   */
-//  private boolean allowUserRevokePerm(ResourceRequestUser rUser, String tenantToCheck, String userToCheck,
-//                                      String subId, Set<Permission> perms)
-//          throws TapisException, TapisClientException
-//  {
-//    // Perms should never be null. Fall back to deny as best security practice.
-//    if (perms == null) return false;
-//    // Use JWT tenant and user from authenticatedUsr or optional provided values
-//    String tenantName = (StringUtils.isBlank(tenantToCheck) ? rUser.getOboTenantId() : tenantToCheck);
-//    String userName = (StringUtils.isBlank(userToCheck) ? rUser.getJwtUserId() : userToCheck);
-//    if (perms.contains(Permission.MODIFY)) return isPermitted(rUser, tenantName, userName, subId, Permission.MODIFY);
-//    if (perms.contains(Permission.READ)) return isPermittedAny(rUser, tenantName, userName, subId, READMODIFY_PERMS);
-//    return false;
-//  }
-//
-//  /**
 //   * Remove all SK artifacts associated with an Subscription: user permissions, Subscription role
 //   * No checks are done for incoming arguments and the subscription must exist
 //   */
-//  private void removeSKArtifacts(String resourceTenantId, String subId)
+//  private void removeSKArtifacts(String oboTenant, String subId)
 //          throws TapisException, TapisClientException
 //  {
 //    var skClient = getSKClient();
 //
 //    // Use Security Kernel client to find all users with perms associated with the subscription.
-//    String permSpec = String.format(PERM_SPEC_TEMPLATE, resourceTenantId, "%", subId);
-//    var userNames = skClient.getUsersWithPermission(resourceTenantId, permSpec);
+//    String permSpec = String.format(PERM_SPEC_TEMPLATE, oboTenant, "%", subId);
+//    var userNames = skClient.getUsersWithPermission(oboTenant, permSpec);
 //    // Revoke all perms for all users
 //    for (String userName : userNames)
 //    {
-//      revokePermissions(skClient, resourceTenantId, subId, userName, ALL_PERMS);
+//      revokePermissions(skClient, oboTenant, subId, userName, ALL_PERMS);
 //      // Remove wildcard perm
-//      skClient.revokeUserPermission(resourceTenantId, userName, getPermSpecAllStr(resourceTenantId, subId));
+//      skClient.revokeUserPermission(oboTenant, userName, getPermSpecAllStr(oboTenant, subId));
 //    }
 //  }
 //
@@ -1555,15 +1377,15 @@ public class NotificationsServiceImpl implements NotificationsService
 //   * Revoke permissions
 //   * No checks are done for incoming arguments and the subscription must exist
 //   */
-//  private static int revokePermissions(SKClient skClient, String resourceTenantId, String subId, String userName, Set<Permission> permissions)
+//  private static int revokePermissions(SKClient skClient, String oboTenant, String subId, String userName, Set<Permission> permissions)
 //          throws TapisClientException
 //  {
 //    // Create a set of individual permSpec entries based on the list passed in
-//    Set<String> permSpecSet = getPermSpecSet(resourceTenantId, subId, permissions);
+//    Set<String> permSpecSet = getPermSpecSet(oboTenant, subId, permissions);
 //    // Remove perms from default user role
 //    for (String permSpec : permSpecSet)
 //    {
-//      skClient.revokeUserPermission(resourceTenantId, userName, permSpec);
+//      skClient.revokeUserPermission(oboTenant, userName, permSpec);
 //    }
 //    return permSpecSet.size();
 //  }
@@ -1605,10 +1427,10 @@ public class NotificationsServiceImpl implements NotificationsService
    * Wait for the TestSquence associated with the subscription Id to start.
    * Check a few times and then give up by throwing a TapisException at the end
    *
-   * @param subscrId Subscription Id
+   * @param subscriptionId Subscription Id
    * @throws TapisException On error
    */
-  private void waitForTestSequenceStart(String tenant, String subscrId) throws TapisException
+  private void waitForTestSequenceStart(String tenant, String subscriptionId) throws TapisException
   {
     // Try 4 times with a 5 second poll interval
     int NUM_TEST_START_ATTEMPTS = 4;
@@ -1619,17 +1441,196 @@ public class NotificationsServiceImpl implements NotificationsService
       Thread.sleep(1000);
       for (int i = 0; i < NUM_TEST_START_ATTEMPTS; i++)
       {
-        log.debug(LibUtils.getMsg("NTFLIB_DSP_CHECK_POLL1", i + 1, subscrId));
-        TestSequence testSeq = dao.getTestSequence(tenant, subscrId);
-        log.debug(LibUtils.getMsg("NTFLIB_DSP_CHECK_POLL2", testSeq.getNotificationCount(), subscrId));
+        log.debug(LibUtils.getMsg("NTFLIB_DSP_CHECK_POLL1", i + 1, subscriptionId));
+        TestSequence testSeq = dao.getTestSequence(tenant, subscriptionId);
+        log.debug(LibUtils.getMsg("NTFLIB_DSP_CHECK_POLL2", testSeq.getNotificationCount(), subscriptionId));
         if (testSeq.getNotificationCount() > 0) return;
         Thread.sleep(DSP_CHECK_START_POLL_MS);
       }
     }
     catch (Exception e)
     {
-      throw new TapisException(LibUtils.getMsg("NTFLIB_DSP_CHECK_FAIL2", NUM_TEST_START_ATTEMPTS, subscrId));
+      throw new TapisException(LibUtils.getMsg("NTFLIB_DSP_CHECK_FAIL2", NUM_TEST_START_ATTEMPTS, subscriptionId));
     }
-    throw new TapisException(LibUtils.getMsg("NTFLIB_DSP_CHECK_FAIL", NUM_TEST_START_ATTEMPTS, subscrId));
+    throw new TapisException(LibUtils.getMsg("NTFLIB_DSP_CHECK_FAIL", NUM_TEST_START_ATTEMPTS, subscriptionId));
   }
+
+  // ************************************************************************
+  // **************************  Auth checking ******************************
+  // ************************************************************************
+
+  /*
+   * Check for case when owner is not known
+   */
+  private void checkAuth(ResourceRequestUser rUser, SubscriptionOperation op, String subscriptionId)
+          throws TapisException, TapisClientException, NotAuthorizedException, IllegalStateException
+  {
+    checkAuth(rUser, op, subscriptionId, null, null, null);
+  }
+
+  /*
+   * Check for case when owner is known
+   */
+  private void checkAuth(ResourceRequestUser rUser, SubscriptionOperation op, String subscriptionId, String owner)
+          throws TapisException, TapisClientException, NotAuthorizedException, IllegalStateException
+  {
+    checkAuth(rUser, op, subscriptionId, owner, null, null);
+  }
+
+  /**
+   * Standard authorization check using all arguments.
+   * Check is different for service and user requests.
+   * A check should be made for subscription existence before calling this method.
+   * If no owner is passed in and one cannot be found then an error is logged and authorization is denied.
+   * TODO:
+   *   Currently targetUser and perms are always null, but when we revisit what is needed in the area of
+   *   perms we will likely need to use them.
+   * @param rUser - ResourceRequestUser containing tenant, user and request info
+   * @param op - operation name
+   * @param subscriptionId - name of the app
+   * @param owner - app owner
+   * @param targetUser - Target user for operation
+   * @param perms - List of permissions for the revokePerm case
+   * @throws NotAuthorizedException - user not authorized to perform operation
+   */
+  private void checkAuth(ResourceRequestUser rUser, SubscriptionOperation op, String subscriptionId, String owner,
+                         String targetUser, Set<Permission> perms)
+          throws TapisException, TapisClientException, NotAuthorizedException, IllegalStateException
+  {
+    // Check service and user requests separately to avoid confusing a service name with a user name
+    if (rUser.isServiceRequest())
+    {
+      checkAuthSvc(rUser, op, subscriptionId);
+    }
+    else
+    {
+      // User check
+      checkAuthOboUser(rUser, op, subscriptionId, owner, targetUser, perms);
+    }
+  }
+
+  /**
+   * Service authorization check.
+   * ONLY CALL this method when it is a service request
+   * A check should be made for subscription existence before calling this method.
+   *
+   * @param rUser - ResourceRequestUser containing tenant, user and request info
+   * @param op - operation name
+   * @param subscriptionId - the subscription
+   * @throws NotAuthorizedException - user not authorized to perform operation
+   */
+  private void checkAuthSvc(ResourceRequestUser rUser, SubscriptionOperation op, String subscriptionId)
+          throws NotAuthorizedException, IllegalStateException
+  {
+    // If ever called and not a svc request then fall back to denied
+    if (!rUser.isServiceRequest())
+      throw new NotAuthorizedException(LibUtils.getMsgAuth("NTFLIB_UNAUTH", rUser, subscriptionId, op.name()), NO_CHALLENGE);
+
+    // TODO/TBD: Any service can read subscriptions
+    //      if (op == SubscriptionOperation.read && SVCLIST_READ.contains(rUser.getJwtUserId())) return;
+    if (op == SubscriptionOperation.read) return;
+
+    // Not authorized, throw an exception
+    throw new NotAuthorizedException(LibUtils.getMsgAuth("NTFLIB_UNAUTH", rUser, subscriptionId, op.name()), NO_CHALLENGE);
+  }
+
+  /**
+   * OboUser based authorization check.
+   * A check should be made for subscription existence before calling this method.
+   * If no owner is passed in and one cannot be found then an error is logged and authorization is denied.
+   * Operations:
+   *  Create -      must be owner or have admin role
+   *  Delete -      must be owner or have admin role
+   *  ChangeOwner - must be owner or have admin role
+   *  GrantPerm -   must be owner or have admin role
+   *  Read -     must be owner or have admin role or have READ or MODIFY permission or be in list of allowed services
+   *  getPerms - must be owner or have admin role or have READ or MODIFY permission or be in list of allowed services
+   *  Modify - must be owner or have admin role or have MODIFY permission
+   *  RevokePerm -  must be owner or have admin role or apiUserId=targetUser and meet certain criteria (allowUserRevokePerm)
+   *
+   * @param rUser - ResourceRequestUser containing tenant, user and request info
+   * @param op - operation name
+   * @param subscriptionId - id of the subscription
+   * @param owner - owner of the subscription
+   * @param perms - List of permissions for the revokePerm case
+   * @throws NotAuthorizedException - user not authorized to perform operation
+   */
+  private void checkAuthOboUser(ResourceRequestUser rUser, SubscriptionOperation op, String subscriptionId,
+                                String owner, String targetUser, Set<Permission> perms)
+          throws TapisException, TapisClientException, NotAuthorizedException
+  {
+    String oboTenant = rUser.getOboTenantId();
+    String oboUser =  rUser.getJwtUserId();
+
+    // If no owner specified and owner cannot be determined then log an error and deny.
+    if (StringUtils.isBlank(owner)) owner = dao.getSubscriptionOwner(oboTenant, subscriptionId);
+    if (StringUtils.isBlank(owner))
+    {
+      String msg = LibUtils.getMsgAuth("NTFLIB_AUTH_NO_OWNER", rUser, subscriptionId, op.name());
+      log.error(msg);
+      throw new NotAuthorizedException(msg, NO_CHALLENGE);
+    }
+    switch(op) {
+      case create:
+      case enable:
+      case disable:
+      case delete:
+      case changeOwner:
+//      case grantPerms:
+        if (owner.equals(oboUser) || hasAdminRole(rUser)) return;
+        break;
+      case read:
+//      case getPerms:
+        if (owner.equals(oboUser) || hasAdminRole(rUser)) return;
+        break;
+//        if (owner.equals(userName) || hasAdminRole(rUser) ||
+//              isPermittedAny(rUser, tenantName, userName, subId, READMODIFY_PERMS))
+//          return;
+//        break;
+      case modify:
+      case updateTTL:
+        if (owner.equals(oboUser) || hasAdminRole(rUser)) return;
+        break;
+//        if (owner.equals(userName) || hasAdminRole(rUser) ||
+//                isPermitted(rUser, tenantName, userName, subId, Permission.MODIFY))
+//          return;
+//        break;
+//      case revokePerms:
+//        if (owner.equals(userName) || hasAdminRole(rUser) ||
+//                (userName.equals(targetUser) &&
+//                        allowUserRevokePerm(rUser, tenantName, userName, subId, perms)))
+//          return;
+//        break;
+    }
+    // Not authorized, throw an exception
+    throw new NotAuthorizedException(LibUtils.getMsgAuth("NTFLIB_UNAUTH", rUser, subscriptionId, op.name()), NO_CHALLENGE);
+  }
+
+  /**
+   * Check to see if a user has the service admin role
+   * By default use rUser, allow for optional tenant or user.
+   */
+  private boolean hasAdminRole(ResourceRequestUser rUser) throws TapisException, TapisClientException
+  {
+    return getSKClient().isAdmin(rUser.getOboTenantId(), rUser.getOboUserId());
+  }
+
+//  /**
+//   * Check to see if a user who is not owner or admin is authorized to revoke permissions
+//   * By default use JWT tenant and user from rUser, allow for optional tenant or user.
+//   */
+//  private boolean allowUserRevokePerm(ResourceRequestUser rUser, String tenantToCheck, String userToCheck,
+//                                      String subId, Set<Permission> perms)
+//          throws TapisException, TapisClientException
+//  {
+//    // Perms should never be null. Fall back to deny as best security practice.
+//    if (perms == null) return false;
+//    // Use JWT tenant and user from authenticatedUsr or optional provided values
+//    String tenantName = (StringUtils.isBlank(tenantToCheck) ? rUser.getOboTenantId() : tenantToCheck);
+//    String userName = (StringUtils.isBlank(userToCheck) ? rUser.getJwtUserId() : userToCheck);
+//    if (perms.contains(Permission.MODIFY)) return isPermitted(rUser, tenantName, userName, subId, Permission.MODIFY);
+//    if (perms.contains(Permission.READ)) return isPermittedAny(rUser, tenantName, userName, subId, READMODIFY_PERMS);
+//    return false;
+//  }
+//
 }
