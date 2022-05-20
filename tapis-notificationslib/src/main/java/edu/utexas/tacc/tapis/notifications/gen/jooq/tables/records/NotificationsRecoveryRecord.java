@@ -83,30 +83,30 @@ public class NotificationsRecoveryRecord extends UpdatableRecordImpl<Notificatio
     }
 
     /**
-     * Setter for <code>tapis_ntf.notifications_recovery.subscr_id</code>.
+     * Setter for <code>tapis_ntf.notifications_recovery.subscr_name</code>.
      */
-    public void setSubscrId(String value) {
+    public void setSubscrName(String value) {
         set(4, value);
     }
 
     /**
-     * Getter for <code>tapis_ntf.notifications_recovery.subscr_id</code>.
+     * Getter for <code>tapis_ntf.notifications_recovery.subscr_name</code>.
      */
-    public String getSubscrId() {
+    public String getSubscrName() {
         return (String) get(4);
     }
 
     /**
-     * Setter for <code>tapis_ntf.notifications_recovery.delivery_method</code>.
+     * Setter for <code>tapis_ntf.notifications_recovery.delivery_target</code>.
      */
-    public void setDeliveryMethod(JsonElement value) {
+    public void setDeliveryTarget(JsonElement value) {
         set(5, value);
     }
 
     /**
-     * Getter for <code>tapis_ntf.notifications_recovery.delivery_method</code>.
+     * Getter for <code>tapis_ntf.notifications_recovery.delivery_target</code>.
      */
-    public JsonElement getDeliveryMethod() {
+    public JsonElement getDeliveryTarget() {
         return (JsonElement) get(5);
     }
 
@@ -253,12 +253,12 @@ public class NotificationsRecoveryRecord extends UpdatableRecordImpl<Notificatio
 
     @Override
     public Field<String> field5() {
-        return NotificationsRecovery.NOTIFICATIONS_RECOVERY.SUBSCR_ID;
+        return NotificationsRecovery.NOTIFICATIONS_RECOVERY.SUBSCR_NAME;
     }
 
     @Override
     public Field<JsonElement> field6() {
-        return NotificationsRecovery.NOTIFICATIONS_RECOVERY.DELIVERY_METHOD;
+        return NotificationsRecovery.NOTIFICATIONS_RECOVERY.DELIVERY_TARGET;
     }
 
     @Override
@@ -318,12 +318,12 @@ public class NotificationsRecoveryRecord extends UpdatableRecordImpl<Notificatio
 
     @Override
     public String component5() {
-        return getSubscrId();
+        return getSubscrName();
     }
 
     @Override
     public JsonElement component6() {
-        return getDeliveryMethod();
+        return getDeliveryTarget();
     }
 
     @Override
@@ -383,12 +383,12 @@ public class NotificationsRecoveryRecord extends UpdatableRecordImpl<Notificatio
 
     @Override
     public String value5() {
-        return getSubscrId();
+        return getSubscrName();
     }
 
     @Override
     public JsonElement value6() {
-        return getDeliveryMethod();
+        return getDeliveryTarget();
     }
 
     @Override
@@ -452,13 +452,13 @@ public class NotificationsRecoveryRecord extends UpdatableRecordImpl<Notificatio
 
     @Override
     public NotificationsRecoveryRecord value5(String value) {
-        setSubscrId(value);
+        setSubscrName(value);
         return this;
     }
 
     @Override
     public NotificationsRecoveryRecord value6(JsonElement value) {
-        setDeliveryMethod(value);
+        setDeliveryTarget(value);
         return this;
     }
 
@@ -536,15 +536,15 @@ public class NotificationsRecoveryRecord extends UpdatableRecordImpl<Notificatio
     /**
      * Create a detached, initialised NotificationsRecoveryRecord
      */
-    public NotificationsRecoveryRecord(Integer seqId, Integer subscrSeqId, UUID uuid, String tenant, String subscrId, JsonElement deliveryMethod, UUID eventUuid, JsonElement event, Integer bucketNumber, Integer attemptCount, LocalDateTime lastAttempt, LocalDateTime created, LocalDateTime updated) {
+    public NotificationsRecoveryRecord(Integer seqId, Integer subscrSeqId, UUID uuid, String tenant, String subscrName, JsonElement deliveryTarget, UUID eventUuid, JsonElement event, Integer bucketNumber, Integer attemptCount, LocalDateTime lastAttempt, LocalDateTime created, LocalDateTime updated) {
         super(NotificationsRecovery.NOTIFICATIONS_RECOVERY);
 
         setSeqId(seqId);
         setSubscrSeqId(subscrSeqId);
         setUuid(uuid);
         setTenant(tenant);
-        setSubscrId(subscrId);
-        setDeliveryMethod(deliveryMethod);
+        setSubscrName(subscrName);
+        setDeliveryTarget(deliveryTarget);
         setEventUuid(eventUuid);
         setEvent(event);
         setBucketNumber(bucketNumber);

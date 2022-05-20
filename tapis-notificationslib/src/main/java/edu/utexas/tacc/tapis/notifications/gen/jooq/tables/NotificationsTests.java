@@ -68,9 +68,9 @@ public class NotificationsTests extends TableImpl<NotificationsTestsRecord> {
     public final TableField<NotificationsTestsRecord, String> TENANT = createField(DSL.name("tenant"), SQLDataType.CLOB.nullable(false), this, "");
 
     /**
-     * The column <code>tapis_ntf.notifications_tests.subscr_id</code>.
+     * The column <code>tapis_ntf.notifications_tests.subscr_name</code>.
      */
-    public final TableField<NotificationsTestsRecord, String> SUBSCR_ID = createField(DSL.name("subscr_id"), SQLDataType.CLOB.nullable(false), this, "");
+    public final TableField<NotificationsTestsRecord, String> SUBSCR_NAME = createField(DSL.name("subscr_name"), SQLDataType.CLOB.nullable(false), this, "");
 
     /**
      * The column <code>tapis_ntf.notifications_tests.owner</code>.

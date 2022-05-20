@@ -1,7 +1,6 @@
 package edu.utexas.tacc.tapis.notifications.model;
 
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import edu.utexas.tacc.tapis.notifications.utils.LibUtils;
 import edu.utexas.tacc.tapis.shared.utils.TapisGsonUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -51,21 +50,19 @@ public final class Subscription
   public static final boolean DEFAULT_ENABLED = true;
   public static final String DEFAULT_SUBJECT_FILTER = "*";
   private static final String EMPTY_JSON_OBJ = "{}";
-  public static final JsonElement DEFAULT_DELIVERY_METHODS = TapisGsonUtils.getGson().fromJson("[]", JsonElement.class);
+  public static final JsonElement DEFAULT_DELIVERY_TARGETS = TapisGsonUtils.getGson().fromJson("[]", JsonElement.class);
   public static final int DEFAULT_TTL = 7*24*60; // One week in minutes
-  public static final JsonObject DEFAULT_NOTES = TapisGsonUtils.getGson().fromJson("{}", JsonObject.class);
 
   // Attribute names, also used as field names in Json
   public static final String TENANT_FIELD = "tenant";
-  public static final String ID_FIELD = "id";
+  public static final String NAME_FIELD = "name";
   public static final String DESCRIPTION_FIELD = "description";
   public static final String OWNER_FIELD = "owner";
   public static final String ENABLED_FIELD = "enabled";
   public static final String TYPE_FILTER_FIELD = "typeFilter";
   public static final String SUBJECT_FILTER_FIELD = "subjectFilter";
-  public static final String DELIVERY_METHODS_FIELD = "deliveryMethods";
-  public static final String TTL_FIELD = "ttl";
-  public static final String NOTES_FIELD = "notes";
+  public static final String DELIVERY_TARGETS_FIELD = "deliveryTargets";
+  public static final String TTL_FIELD = "ttlMinutes";
   public static final String UUID_FIELD = "uuid";
   public static final String EXPIRY_FIELD = "expiry";
   public static final String CREATED_FIELD = "created";
@@ -98,7 +95,7 @@ public final class Subscription
   // ************************************************************************
   private int seqId;
   private String tenant;
-  private String id;
+  private String name;
   private String description;
   private String owner;
   private boolean enabled;
@@ -107,9 +104,8 @@ public final class Subscription
   private String typeFilter2;
   private String typeFilter3;
   private String subjectFilter;
-  private List<DeliveryMethod> deliveryMethods;
-  private int ttl;
-  private Object notes;   // Simple metadata as json.
+  private List<DeliveryTarget> deliveryTargets;
+  private int ttlMinutes;
   private UUID uuid;
   private Instant expiry;
   private Instant created; // UTC time for when record was created
@@ -122,32 +118,31 @@ public final class Subscription
   /**
    * Constructor using only required attributes.
    */
-  public Subscription(String tf, List<DeliveryMethod> dmList1)
+  public Subscription(String tf, List<DeliveryTarget> dmList1)
   {
     setTypeFilter(tf);
     subjectFilter = DEFAULT_SUBJECT_FILTER;
-    deliveryMethods = dmList1;
+    deliveryTargets = dmList1;
   }
 
   /**
    * Constructor using non-updatable attributes.
    * Rather than exposing otherwise unnecessary setters we use a special constructor.
    */
-  public Subscription(Subscription s, String tenant1, String id1)
+  public Subscription(Subscription s, String tenant1, String name1)
   {
-    if (s==null || StringUtils.isBlank(tenant1) || StringUtils.isBlank(id1))
+    if (s==null || StringUtils.isBlank(tenant1) || StringUtils.isBlank(name1))
       throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT"));
     seqId = s.getSeqId();
     tenant = tenant1;
-    id = id1;
+    name = name1;
     description = s.getDescription();
     owner = s.getOwner();
     enabled = s.isEnabled();
     setTypeFilter(s.getTypeFilter());
     subjectFilter = s.getSubjectFilter();
-    deliveryMethods = s.getDeliveryMethods();
-    ttl = s.getTtl();
-    notes = s.getNotes();
+    deliveryTargets = s.getDeliveryTargets();
+    ttlMinutes = s.getTtlMinutes();
     uuid = s.getUuid();
     expiry = s.getExpiry();
     created = s.getCreated();
@@ -159,20 +154,19 @@ public final class Subscription
    * Also useful for testing
    */
   public Subscription(int seqId1, String tenant1, String id1, String description1, String owner1, boolean enabled1,
-                      String tf, String subjectFilter1, List<DeliveryMethod> dmList1, int ttl1, Object notes1,
-                      UUID uuid1, Instant expiry1, Instant created1, Instant updated1)
+                      String tf, String subjectFilter1, List<DeliveryTarget> dmList1, int ttl1, UUID uuid1,
+                      Instant expiry1, Instant created1, Instant updated1)
   {
     seqId = seqId1;
     tenant = tenant1;
-    id = id1;
+    name = id1;
     description = description1;
     owner = owner1;
     enabled = enabled1;
     setTypeFilter(tf);
     subjectFilter = (subjectFilter1 == null) ? "*" : subjectFilter1;
-    deliveryMethods = (dmList1 == null) ? null : new ArrayList<>(dmList1);
-    ttl = ttl1;
-    notes = notes1;
+    deliveryTargets = (dmList1 == null) ? null : new ArrayList<>(dmList1);
+    ttlMinutes = ttl1;
     uuid = uuid1;
     expiry = expiry1;
     created = created1;
@@ -188,15 +182,14 @@ public final class Subscription
     if (s==null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT"));
     seqId = s.getSeqId();
     tenant = s.getTenant();
-    id = s.getId();
+    name = s.getName();
     description = s.getDescription();
     owner = s.getOwner();
     enabled = s.isEnabled();
     setTypeFilter(s.getTypeFilter());
     subjectFilter = s.getSubjectFilter();
-    deliveryMethods = s.getDeliveryMethods();
-    ttl = s.getTtl();
-    notes = s.getNotes();
+    deliveryTargets = s.getDeliveryTargets();
+    ttlMinutes = s.getTtlMinutes();
     uuid = s.getUuid();
     expiry = s.getExpiry();
     created = s.getCreated();
@@ -224,7 +217,6 @@ public final class Subscription
   {
     if (StringUtils.isBlank(subjectFilter)) setSubjectFilter(DEFAULT_SUBJECT_FILTER);
     if (StringUtils.isBlank(owner)) setOwner(DEFAULT_OWNER);
-    if (notes == null) setNotes(DEFAULT_NOTES);
   }
 
   /**
@@ -268,7 +260,7 @@ public final class Subscription
 
   public String getTenant() { return tenant; }
 
-  public String getId() { return id; }
+  public String getName() { return name; }
 
   public String getDescription() { return description; }
   public void setDescription(String d) { description = d; }
@@ -297,20 +289,17 @@ public final class Subscription
   public String getSubjectFilter() { return subjectFilter; }
   public void setSubjectFilter(String s) { subjectFilter = s; }
 
-  public List<DeliveryMethod> getDeliveryMethods()
+  public List<DeliveryTarget> getDeliveryTargets()
   {
-    return (deliveryMethods == null) ? null : new ArrayList<>(deliveryMethods);
+    return (deliveryTargets == null) ? null : new ArrayList<>(deliveryTargets);
   }
-  public void setDeliveryMethods(List<DeliveryMethod> dmList1)
+  public void setDeliveryTargets(List<DeliveryTarget> dmList1)
   {
-    deliveryMethods = (dmList1 == null) ? null : new ArrayList<>(dmList1);
+    deliveryTargets = (dmList1 == null) ? null : new ArrayList<>(dmList1);
   }
 
-  public int getTtl() { return ttl; }
-  public void setTtl(int i) { ttl = i; }
-
-  public Object getNotes() { return notes; }
-  public void setNotes(Object n) { notes = n; }
+  public int getTtlMinutes() { return ttlMinutes; }
+  public void setTtlMinutes(int i) { ttlMinutes = i; }
 
   public UUID getUuid() { return uuid; }
   public void setUuid(UUID u) { uuid = u; }
@@ -339,15 +328,15 @@ public final class Subscription
 
   /**
    * Check for missing required attributes
-   *   Id, typeFilter and deliveryMethods are required
-   *   deliveryMethods must have at least one entry
+   *   Id, typeFilter and deliveryTargets are required
+   *   deliveryTargets must have at least one entry
    */
   private void checkAttrRequired(List<String> errMessages)
   {
-    if (StringUtils.isBlank(id)) errMessages.add(LibUtils.getMsg(CREATE_MISSING_ATTR, ID_FIELD));
+    if (StringUtils.isBlank(name)) errMessages.add(LibUtils.getMsg(CREATE_MISSING_ATTR, NAME_FIELD));
     if (StringUtils.isBlank(typeFilter)) errMessages.add(LibUtils.getMsg(CREATE_MISSING_ATTR, TYPE_FILTER_FIELD));
-    if (deliveryMethods == null) errMessages.add(LibUtils.getMsg(CREATE_MISSING_ATTR, DELIVERY_METHODS_FIELD));
-    if (deliveryMethods != null && deliveryMethods.isEmpty()) errMessages.add(LibUtils.getMsg("NTFLIB_NO_DM"));
+    if (deliveryTargets == null) errMessages.add(LibUtils.getMsg(CREATE_MISSING_ATTR, DELIVERY_TARGETS_FIELD));
+    if (deliveryTargets != null && deliveryTargets.isEmpty()) errMessages.add(LibUtils.getMsg("NTFLIB_NO_DT"));
   }
 
   /**
@@ -357,7 +346,7 @@ public final class Subscription
   private void checkAttrValidity(List<String> errMessages)
   {
     // Check that id is not empty and contains a valid pattern
-    if (!StringUtils.isBlank(id) && !isValidId(id)) errMessages.add(LibUtils.getMsg(INVALID_STR_ATTR, ID_FIELD, id));
+    if (!StringUtils.isBlank(name) && !isValidId(name)) errMessages.add(LibUtils.getMsg(INVALID_STR_ATTR, NAME_FIELD, name));
   }
 
   /**
@@ -366,9 +355,9 @@ public final class Subscription
    */
   private void checkAttrStringLengths(List<String> errMessages)
   {
-    if (!StringUtils.isBlank(id) && id.length() > MAX_ID_LEN)
+    if (!StringUtils.isBlank(name) && name.length() > MAX_ID_LEN)
     {
-      errMessages.add(LibUtils.getMsg(TOO_LONG_ATTR, ID_FIELD, MAX_ID_LEN));
+      errMessages.add(LibUtils.getMsg(TOO_LONG_ATTR, NAME_FIELD, MAX_ID_LEN));
     }
 
     if (!StringUtils.isBlank(description) && description.length() > MAX_DESCRIPTION_LEN)

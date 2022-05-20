@@ -83,30 +83,30 @@ public class NotificationsRecord extends UpdatableRecordImpl<NotificationsRecord
     }
 
     /**
-     * Setter for <code>tapis_ntf.notifications.subscr_id</code>.
+     * Setter for <code>tapis_ntf.notifications.subscr_name</code>.
      */
-    public void setSubscrId(String value) {
+    public void setSubscrName(String value) {
         set(4, value);
     }
 
     /**
-     * Getter for <code>tapis_ntf.notifications.subscr_id</code>.
+     * Getter for <code>tapis_ntf.notifications.subscr_name</code>.
      */
-    public String getSubscrId() {
+    public String getSubscrName() {
         return (String) get(4);
     }
 
     /**
-     * Setter for <code>tapis_ntf.notifications.delivery_method</code>.
+     * Setter for <code>tapis_ntf.notifications.delivery_target</code>.
      */
-    public void setDeliveryMethod(JsonElement value) {
+    public void setDeliveryTarget(JsonElement value) {
         set(5, value);
     }
 
     /**
-     * Getter for <code>tapis_ntf.notifications.delivery_method</code>.
+     * Getter for <code>tapis_ntf.notifications.delivery_target</code>.
      */
-    public JsonElement getDeliveryMethod() {
+    public JsonElement getDeliveryTarget() {
         return (JsonElement) get(5);
     }
 
@@ -211,12 +211,12 @@ public class NotificationsRecord extends UpdatableRecordImpl<NotificationsRecord
 
     @Override
     public Field<String> field5() {
-        return Notifications.NOTIFICATIONS.SUBSCR_ID;
+        return Notifications.NOTIFICATIONS.SUBSCR_NAME;
     }
 
     @Override
     public Field<JsonElement> field6() {
-        return Notifications.NOTIFICATIONS.DELIVERY_METHOD;
+        return Notifications.NOTIFICATIONS.DELIVERY_TARGET;
     }
 
     @Override
@@ -261,12 +261,12 @@ public class NotificationsRecord extends UpdatableRecordImpl<NotificationsRecord
 
     @Override
     public String component5() {
-        return getSubscrId();
+        return getSubscrName();
     }
 
     @Override
     public JsonElement component6() {
-        return getDeliveryMethod();
+        return getDeliveryTarget();
     }
 
     @Override
@@ -311,12 +311,12 @@ public class NotificationsRecord extends UpdatableRecordImpl<NotificationsRecord
 
     @Override
     public String value5() {
-        return getSubscrId();
+        return getSubscrName();
     }
 
     @Override
     public JsonElement value6() {
-        return getDeliveryMethod();
+        return getDeliveryTarget();
     }
 
     @Override
@@ -365,13 +365,13 @@ public class NotificationsRecord extends UpdatableRecordImpl<NotificationsRecord
 
     @Override
     public NotificationsRecord value5(String value) {
-        setSubscrId(value);
+        setSubscrName(value);
         return this;
     }
 
     @Override
     public NotificationsRecord value6(JsonElement value) {
-        setDeliveryMethod(value);
+        setDeliveryTarget(value);
         return this;
     }
 
@@ -428,15 +428,15 @@ public class NotificationsRecord extends UpdatableRecordImpl<NotificationsRecord
     /**
      * Create a detached, initialised NotificationsRecord
      */
-    public NotificationsRecord(Integer seqId, Integer subscrSeqId, UUID uuid, String tenant, String subscrId, JsonElement deliveryMethod, UUID eventUuid, JsonElement event, Integer bucketNumber, LocalDateTime created) {
+    public NotificationsRecord(Integer seqId, Integer subscrSeqId, UUID uuid, String tenant, String subscrName, JsonElement deliveryTarget, UUID eventUuid, JsonElement event, Integer bucketNumber, LocalDateTime created) {
         super(Notifications.NOTIFICATIONS);
 
         setSeqId(seqId);
         setSubscrSeqId(subscrSeqId);
         setUuid(uuid);
         setTenant(tenant);
-        setSubscrId(subscrId);
-        setDeliveryMethod(deliveryMethod);
+        setSubscrName(subscrName);
+        setDeliveryTarget(deliveryTarget);
         setEventUuid(eventUuid);
         setEvent(event);
         setBucketNumber(bucketNumber);

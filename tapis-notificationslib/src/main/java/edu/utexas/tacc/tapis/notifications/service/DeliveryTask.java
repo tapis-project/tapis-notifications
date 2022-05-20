@@ -5,6 +5,7 @@ import java.util.UUID;
 import java.util.concurrent.Callable;
 import javax.ws.rs.core.Response.Status;
 
+import edu.utexas.tacc.tapis.notifications.model.DeliveryTarget;
 import okhttp3.Call;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -24,7 +25,6 @@ import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
 import edu.utexas.tacc.tapis.notifications.utils.LibUtils;
 import edu.utexas.tacc.tapis.notifications.dao.NotificationsDao;
-import edu.utexas.tacc.tapis.notifications.model.DeliveryMethod;
 import edu.utexas.tacc.tapis.notifications.model.Event;
 import edu.utexas.tacc.tapis.notifications.model.Notification;
 
@@ -55,7 +55,7 @@ public final class DeliveryTask implements Callable<Notification>
   private final String tenant;
   private final UUID uuid;
   private final int bucketNum; // Bucket that generated the notification
-  private final DeliveryMethod deliveryMethod;
+  private final DeliveryTarget deliveryTarget;
   private static final OkHttpClient httpClient = new OkHttpClient();
 
   /* ********************************************************************** */
@@ -68,7 +68,7 @@ public final class DeliveryTask implements Callable<Notification>
     notification = n1;
     tenant = n1.getTenant();
     bucketNum = n1.getBucketNum();
-    deliveryMethod = n1.getDeliveryMethod();
+    deliveryTarget = n1.getDeliveryMethod();
     uuid = n1.getUuid();
   }
 
@@ -85,10 +85,10 @@ public final class DeliveryTask implements Callable<Notification>
   public Notification call() throws InterruptedException
   {
     int bucketNum = notification.getBucketNum();
-    DeliveryMethod deliveryMethod = notification.getDeliveryMethod();
+    DeliveryTarget deliveryTarget = notification.getDeliveryMethod();
     UUID uuid = notification.getUuid();
 
-    Thread.currentThread().setName("ThreadDelivery-bucket-" + bucketNum + "-method-" + deliveryMethod);
+    Thread.currentThread().setName("ThreadDelivery-bucket-" + bucketNum + "-method-" + deliveryTarget);
     log.debug(LibUtils.getMsg("NTFLIB_DSP_DLVRY_START", bucketNum, Thread.currentThread().getId(), Thread.currentThread().getName()));
 
     // Get number of attempts and attempt interval from settings.
@@ -96,7 +96,7 @@ public final class DeliveryTask implements Callable<Notification>
     long deliveryAttemptInterval = RuntimeParameters.getInstance().getNtfDeliveryRetryInterval() * 1000L;
     for (int i = 1; i <= numAttempts; i++)
     {
-      log.debug(LibUtils.getMsg("NTFLIB_DSP_DLVRY_ATTEMPT", bucketNum, uuid, i, deliveryMethod));
+      log.debug(LibUtils.getMsg("NTFLIB_DSP_DLVRY_ATTEMPT", bucketNum, uuid, i, deliveryTarget));
       try
       {
         // Attempt to make the delivery
@@ -105,11 +105,11 @@ public final class DeliveryTask implements Callable<Notification>
         if (delivered) return notificationDelivered();
 
         // Delivery failed, log a warning.
-        log.warn(LibUtils.getMsg("NTFLIB_DSP_DLVRY_FAIL1", bucketNum, uuid, i, deliveryMethod));
+        log.warn(LibUtils.getMsg("NTFLIB_DSP_DLVRY_FAIL1", bucketNum, uuid, i, deliveryTarget));
       }
       catch (Exception e)
       {
-        log.warn(LibUtils.getMsg("NTFLIB_DSP_DLVRY_FAIL2", bucketNum, uuid, i, deliveryMethod, e.getMessage()), e);
+        log.warn(LibUtils.getMsg("NTFLIB_DSP_DLVRY_FAIL2", bucketNum, uuid, i, deliveryTarget, e.getMessage()), e);
       }
       // Pause for configured interval before trying again
       // NOTE: Do not catch InterruptedException. If interrupted we are shutting down and should not make another attempt.
@@ -119,7 +119,7 @@ public final class DeliveryTask implements Callable<Notification>
 
     // Give up for now, log warning and add to recovery table
     String msg = LibUtils.getMsg("NTFLIB_DSP_DLVRY_FAIL", bucketNum, notification.getUuid(),
-                                 deliveryMethod.getDeliveryType(), deliveryMethod.getDeliveryAddress(), numAttempts);
+                                 deliveryTarget.getDeliveryType(), deliveryTarget.getDeliveryAddress(), numAttempts);
     log.warn(msg);
     addNotificationToRecovery();
     return null;
@@ -136,13 +136,13 @@ public final class DeliveryTask implements Callable<Notification>
   {
     int bucketNum = notification.getBucketNum();
     Event event = notification.getEvent();
-    DeliveryMethod deliveryMethod =  notification.getDeliveryMethod();
+    DeliveryTarget deliveryTarget =  notification.getDeliveryMethod();
 
-    log.debug(LibUtils.getMsg("NTFLIB_DSP_DLVRY", bucketNum, notification.getUuid(), deliveryMethod.getDeliveryType(),
-            deliveryMethod.getDeliveryAddress(), event.getSource(), event.getType(),
+    log.debug(LibUtils.getMsg("NTFLIB_DSP_DLVRY", bucketNum, notification.getUuid(), deliveryTarget.getDeliveryType(),
+            deliveryTarget.getDeliveryAddress(), event.getSource(), event.getType(),
             event.getSubject(), event.getSeriesId(), event.getTime(), event.getUuid()));
     boolean deliveryStatus = false;
-    switch (deliveryMethod.getDeliveryType())
+    switch (deliveryTarget.getDeliveryType())
     {
       case WEBHOOK -> deliveryStatus = deliverByWebhook(notification);
       case EMAIL -> deliveryStatus = deliverByEmail(notification);
@@ -158,13 +158,13 @@ public final class DeliveryTask implements Callable<Notification>
   {
     boolean delivered = true;
     int bucketNum = ntf.getBucketNum();
-    DeliveryMethod deliveryMethod =  ntf.getDeliveryMethod();
+    DeliveryTarget deliveryTarget =  ntf.getDeliveryMethod();
     // Body is the notification as json
     String notifJsonStr = TapisGsonUtils.getGson(true).toJson(ntf);
 
     // Build the request
     RequestBody body = RequestBody.create(notifJsonStr, MediaType.parse("application/json"));
-    Request.Builder requestBuilder = new Request.Builder().url(deliveryMethod.getDeliveryAddress()).post(body);
+    Request.Builder requestBuilder = new Request.Builder().url(deliveryTarget.getDeliveryAddress()).post(body);
     Request request = requestBuilder.addHeader("User-Agent", "Tapis/%s".formatted(TapisConstants.API_VERSION)).build();
     Call call = httpClient.newCall(request);
     // Use try-with-resources to auto-close the response.
@@ -174,7 +174,7 @@ public final class DeliveryTask implements Callable<Notification>
       if (response.code() != Status.OK.getStatusCode())
       {
         log.error(LibUtils.getMsg("NTFLIB_DSP_DLVRY_WH_FAIL_ERR", bucketNum, ntf.getUuid(),
-                deliveryMethod.getDeliveryType(), deliveryMethod.getDeliveryAddress(), response.code()));
+                deliveryTarget.getDeliveryType(), deliveryTarget.getDeliveryAddress(), response.code()));
         delivered = false;
       }
     }
@@ -187,7 +187,7 @@ public final class DeliveryTask implements Callable<Notification>
   public static boolean deliverByEmail(Notification ntf) throws TapisException
   {
     boolean delivered = true;
-    DeliveryMethod deliveryMethod =  ntf.getDeliveryMethod();
+    DeliveryTarget deliveryTarget =  ntf.getDeliveryMethod();
     // Body is the notification as json
     String notifJsonStr = TapisGsonUtils.getGson(true).toJson(ntf);
 
@@ -199,8 +199,8 @@ public final class DeliveryTask implements Callable<Notification>
     else
       mailSubj = LibUtils.getMsg("NTFLIB_DSP_DLVRY_MAIL_SUBJ2", TapisConstants.API_VERSION, eventType, eventSubj);
     String mailBody = notifJsonStr;
-    String sendToAddress = deliveryMethod.getDeliveryAddress();
-    String sendToName = deliveryMethod.getDeliveryAddress();
+    String sendToAddress = deliveryTarget.getDeliveryAddress();
+    String sendToName = deliveryTarget.getDeliveryAddress();
     RuntimeParameters runtime = RuntimeParameters.getInstance();
     EmailClient client = EmailClientFactory.getClient(runtime);
     client.send(sendToName, sendToAddress, mailSubj, mailBody, HTMLizer.htmlize(mailBody));
@@ -220,7 +220,7 @@ public final class DeliveryTask implements Callable<Notification>
     catch (TapisException e)
     {
       String msg = LibUtils.getMsg("NTFLIB_DSP_DLVRY_DEL_ERR", bucketNum, uuid,
-                             deliveryMethod.getDeliveryType(), deliveryMethod.getDeliveryAddress(), e.getMessage(), e);
+                             deliveryTarget.getDeliveryType(), deliveryTarget.getDeliveryAddress(), e.getMessage(), e);
       log.error(msg);
       return null;
     }
@@ -240,7 +240,7 @@ public final class DeliveryTask implements Callable<Notification>
     catch (TapisException e)
     {
       String msg = LibUtils.getMsg("NTFLIB_DSP_DLVRY_RCVR_ADD_ERR", bucketNum, notification.getUuid(),
-                                   deliveryMethod.getDeliveryType(), deliveryMethod.getDeliveryAddress(),
+                                   deliveryTarget.getDeliveryType(), deliveryTarget.getDeliveryAddress(),
                                    e.getMessage(), e);
       log.error(msg);
     }

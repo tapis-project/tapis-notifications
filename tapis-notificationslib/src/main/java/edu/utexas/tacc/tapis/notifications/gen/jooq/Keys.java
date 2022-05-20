@@ -44,7 +44,7 @@ public class Keys {
     public static final UniqueKey<NotificationsTestsRecord> NOTIFICATIONS_TESTS_PKEY = Internal.createUniqueKey(NotificationsTests.NOTIFICATIONS_TESTS, DSL.name("notifications_tests_pkey"), new TableField[] { NotificationsTests.NOTIFICATIONS_TESTS.SEQ_ID }, true);
     public static final UniqueKey<SubscriptionUpdatesRecord> SUBSCRIPTION_UPDATES_PKEY = Internal.createUniqueKey(SubscriptionUpdates.SUBSCRIPTION_UPDATES, DSL.name("subscription_updates_pkey"), new TableField[] { SubscriptionUpdates.SUBSCRIPTION_UPDATES.SEQ_ID }, true);
     public static final UniqueKey<SubscriptionsRecord> SUBSCRIPTIONS_PKEY = Internal.createUniqueKey(Subscriptions.SUBSCRIPTIONS, DSL.name("subscriptions_pkey"), new TableField[] { Subscriptions.SUBSCRIPTIONS.SEQ_ID }, true);
-    public static final UniqueKey<SubscriptionsRecord> SUBSCRIPTIONS_TENANT_ID_KEY = Internal.createUniqueKey(Subscriptions.SUBSCRIPTIONS, DSL.name("subscriptions_tenant_id_key"), new TableField[] { Subscriptions.SUBSCRIPTIONS.TENANT, Subscriptions.SUBSCRIPTIONS.ID }, true);
+    public static final UniqueKey<SubscriptionsRecord> SUBSCRIPTIONS_TENANT_NAME_KEY = Internal.createUniqueKey(Subscriptions.SUBSCRIPTIONS, DSL.name("subscriptions_tenant_name_key"), new TableField[] { Subscriptions.SUBSCRIPTIONS.TENANT, Subscriptions.SUBSCRIPTIONS.NAME }, true);
 
     // -------------------------------------------------------------------------
     // FOREIGN KEY definitions

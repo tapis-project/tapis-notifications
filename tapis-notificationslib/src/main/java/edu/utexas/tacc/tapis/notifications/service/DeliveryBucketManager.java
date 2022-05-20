@@ -18,7 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
-import edu.utexas.tacc.tapis.notifications.model.DeliveryMethod;
+import edu.utexas.tacc.tapis.notifications.model.DeliveryTarget;
 import edu.utexas.tacc.tapis.notifications.utils.LibUtils;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.shared.utils.TapisUtils;
@@ -262,12 +262,12 @@ public final class DeliveryBucketManager implements Callable<String>
     // For each deliveryMethod in a Subscription
     for (Subscription s : subscriptions)
     {
-      var deliveryMethods = s.getDeliveryMethods();
+      var deliveryMethods = s.getDeliveryTargets();
       if (deliveryMethods == null || deliveryMethods.isEmpty()) continue;
-      for (DeliveryMethod dm : deliveryMethods)
+      for (DeliveryTarget dm : deliveryMethods)
       {
         Instant created = TapisUtils.getUTCTimeNow().toInstant(ZoneOffset.UTC);
-        notifList.add(new Notification(null, s.getSeqId(), tenant, s.getId(), bucketNum, eventUuid, event, dm, created));
+        notifList.add(new Notification(null, s.getSeqId(), tenant, s.getName(), bucketNum, eventUuid, event, dm, created));
       }
     }
     // Persist all notifications and update the last_event table in a single transaction.

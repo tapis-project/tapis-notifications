@@ -19,6 +19,7 @@ import javax.ws.rs.NotFoundException;
 
 import edu.utexas.tacc.tapis.notifications.client.NotificationsClient;
 import edu.utexas.tacc.tapis.notifications.client.gen.model.TapisSubscription;
+import edu.utexas.tacc.tapis.notifications.model.DeliveryTarget;
 import edu.utexas.tacc.tapis.notifications.model.Notification;
 import edu.utexas.tacc.tapis.shared.threadlocal.TapisThreadContext;
 import edu.utexas.tacc.tapis.sharedapi.security.AuthenticatedUser;
@@ -43,7 +44,6 @@ import edu.utexas.tacc.tapis.sharedapi.security.ResourceRequestUser;
 
 import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
 import edu.utexas.tacc.tapis.notifications.dao.NotificationsDao;
-import edu.utexas.tacc.tapis.notifications.model.DeliveryMethod;
 import edu.utexas.tacc.tapis.notifications.model.Event;
 import edu.utexas.tacc.tapis.notifications.model.PatchSubscription;
 import edu.utexas.tacc.tapis.notifications.model.Subscription;
@@ -165,7 +165,7 @@ public class NotificationsServiceImpl implements NotificationsService
     if (subscription == null) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_NULL_INPUT", rUser));
     log.trace(LibUtils.getMsgAuth("NTFLIB_CREATE_TRACE", rUser, scrubbedText));
     String oboTenant = rUser.getOboTenantId();
-    String subscriptionId = subscription.getId();
+    String subscriptionId = subscription.getName();
 
     // ---------------------------- Check inputs ------------------------------------
     if (StringUtils.isBlank(oboTenant))
@@ -209,7 +209,7 @@ public class NotificationsServiceImpl implements NotificationsService
     String createJsonStr = TapisGsonUtils.getGson().toJson(scrubbedSubscription);
 
     // Compute the expiry time from now
-    Instant expiry = Subscription.computeExpiryFromNow(sub1.getTtl());
+    Instant expiry = Subscription.computeExpiryFromNow(sub1.getTtlMinutes());
 
     // ----------------- Create all artifacts --------------------
     // Creation of subscription and perms not in single DB transaction.
@@ -331,7 +331,7 @@ public class NotificationsServiceImpl implements NotificationsService
     if (putSub == null) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_NULL_INPUT", rUser));
     // Extract various names for convenience
     String oboTenant = rUser.getOboTenantId();
-    String resourceId = putSub.getId();
+    String resourceId = putSub.getName();
 
     // ---------------------------- Check inputs ------------------------------------
     if (StringUtils.isBlank(oboTenant) || StringUtils.isBlank(resourceId) || StringUtils.isBlank(scrubbedText))
@@ -615,7 +615,7 @@ public class NotificationsServiceImpl implements NotificationsService
     ResourceRequestUser rUser = new ResourceRequestUser(authUser);
     // Note we could call service beginSequence() directly, but we would have to duplicate code for computing baseUrl
     // Although slower it is probably a better check to call ourselves via the client.
-    String subscriptionId = "N/A";
+    String subscriptionName = "N/A";
     try
     {
       ntfClient = serviceClients.getClient(userName, tenantName, NotificationsClient.class);
@@ -627,15 +627,15 @@ public class NotificationsServiceImpl implements NotificationsService
         ntfClient.setBasePath("http://localhost:8080");
       }
       TapisSubscription subscription = ntfClient.beginTestSequence(DEFAULT_TEST_TTL);
-      subscriptionId = subscription.getId();
-      log.debug(LibUtils.getMsg("NTFLIB_DSP_CHECK_BEGIN", subscriptionId));
-      waitForTestSequenceStart(tenantName, subscriptionId);
-      dao.deleteSubscription(tenantName, subscriptionId);
-      log.debug(LibUtils.getMsg("NTFLIB_DSP_CHECK_END", subscriptionId));
+      subscriptionName = subscription.getName();
+      log.debug(LibUtils.getMsg("NTFLIB_DSP_CHECK_BEGIN", subscriptionName));
+      waitForTestSequenceStart(tenantName, subscriptionName);
+      dao.deleteSubscription(tenantName, subscriptionName);
+      log.debug(LibUtils.getMsg("NTFLIB_DSP_CHECK_END", subscriptionName));
     }
     catch (Exception e)
     {
-      String msg = LibUtils.getMsg("NTFLIB_DSP_CHECK_ERR", subscriptionId, e.getMessage());
+      String msg = LibUtils.getMsg("NTFLIB_DSP_CHECK_ERR", subscriptionName, e.getMessage());
       log.warn(msg);
       retValue = new TapisException(msg, e);
     }
@@ -966,7 +966,7 @@ public class NotificationsServiceImpl implements NotificationsService
     // Build the callback delivery method
     // Example https://dev.develop.tapis.io/v3/notifications/test/callback/<subscriptionId>
     String callbackStr = String.format("%s/test/callback/%s", baseServiceUrl, subscriptionId);
-    DeliveryMethod dm = new DeliveryMethod(DeliveryMethod.DeliveryType.WEBHOOK, callbackStr);
+    DeliveryTarget dm = new DeliveryTarget(DeliveryTarget.DeliveryMethod.WEBHOOK, callbackStr);
     var dmList = Collections.singletonList(dm);
 
     // Set other test subscription properties
@@ -977,7 +977,7 @@ public class NotificationsServiceImpl implements NotificationsService
     // NOTE: Might be able to call the svc method createSubscription() but creating here avoids some overhead.
     //   For example, the auth check is not needed and could potentially cause problems.
     Subscription sub1 = new Subscription(-1, tenant, subscriptionId, null, user, true, typeFilter, subjFilter, dmList,
-                                         subscrTTL, null, null, null, null, null);
+                                         subscrTTL, null, null, null, null);
     // If subscription already exists it is an error. Unlikely since it is a UUID
     if (dao.checkForSubscription(tenant, subscriptionId))
     {
@@ -994,7 +994,7 @@ public class NotificationsServiceImpl implements NotificationsService
     String createJsonStr = TapisGsonUtils.getGson().toJson(scrubbedSubscription);
 
     // Compute the expiry time from now
-    Instant expiry = Subscription.computeExpiryFromNow(sub1.getTtl());
+    Instant expiry = Subscription.computeExpiryFromNow(sub1.getTtlMinutes());
 
     // Persist the subscription
     // NOTE: no need to rollback since only one DB transaction
@@ -1179,7 +1179,7 @@ public class NotificationsServiceImpl implements NotificationsService
     if (!errMessages.isEmpty())
     {
       // Construct message reporting all errors
-      String allErrors = getListOfErrors(rUser, sub.getId(), errMessages);
+      String allErrors = getListOfErrors(rUser, sub.getName(), errMessages);
       log.error(allErrors);
       throw new IllegalStateException(allErrors);
     }
@@ -1398,7 +1398,7 @@ public class NotificationsServiceImpl implements NotificationsService
   private Subscription createUpdatedSubscription(Subscription origSub, Subscription putSub)
   {
     // Rather than exposing otherwise unnecessary setters we use a special constructor.
-    Subscription updatedSub = new Subscription(putSub, origSub.getTenant(), origSub.getId());
+    Subscription updatedSub = new Subscription(putSub, origSub.getTenant(), origSub.getName());
     updatedSub.setOwner(origSub.getOwner());
     updatedSub.setEnabled(origSub.isEnabled());
     return updatedSub;
@@ -1417,9 +1417,8 @@ public class NotificationsServiceImpl implements NotificationsService
     if (p.getDescription() != null) sub1.setDescription(p.getDescription());
     if (p.getTypeFilter() != null) sub1.setTypeFilter(p.getTypeFilter());
     if (p.getSubjectFilter() != null) sub1.setSubjectFilter(p.getSubjectFilter());
-    if (p.getDeliveryMethods() != null) sub1.setDeliveryMethods(p.getDeliveryMethods());
-    if (p.getTtl() != null) sub1.setTtl(p.getTtl());
-    if (p.getNotes() != null) sub1.setNotes(p.getNotes());
+    if (p.getDeliveryMethods() != null) sub1.setDeliveryTargets(p.getDeliveryMethods());
+    if (p.getTtlMinutes() != null) sub1.setTtlMinutes(p.getTtlMinutes());
     return sub1;
   }
 

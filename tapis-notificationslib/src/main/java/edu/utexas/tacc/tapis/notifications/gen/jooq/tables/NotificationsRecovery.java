@@ -73,14 +73,14 @@ public class NotificationsRecovery extends TableImpl<NotificationsRecoveryRecord
     public final TableField<NotificationsRecoveryRecord, String> TENANT = createField(DSL.name("tenant"), SQLDataType.CLOB.nullable(false), this, "");
 
     /**
-     * The column <code>tapis_ntf.notifications_recovery.subscr_id</code>.
+     * The column <code>tapis_ntf.notifications_recovery.subscr_name</code>.
      */
-    public final TableField<NotificationsRecoveryRecord, String> SUBSCR_ID = createField(DSL.name("subscr_id"), SQLDataType.CLOB.nullable(false), this, "");
+    public final TableField<NotificationsRecoveryRecord, String> SUBSCR_NAME = createField(DSL.name("subscr_name"), SQLDataType.CLOB.nullable(false), this, "");
 
     /**
-     * The column <code>tapis_ntf.notifications_recovery.delivery_method</code>.
+     * The column <code>tapis_ntf.notifications_recovery.delivery_target</code>.
      */
-    public final TableField<NotificationsRecoveryRecord, JsonElement> DELIVERY_METHOD = createField(DSL.name("delivery_method"), SQLDataType.JSONB.nullable(false), this, "", new JSONBToJsonElementBinding());
+    public final TableField<NotificationsRecoveryRecord, JsonElement> DELIVERY_TARGET = createField(DSL.name("delivery_target"), SQLDataType.JSONB.nullable(false), this, "", new JSONBToJsonElementBinding());
 
     /**
      * The column <code>tapis_ntf.notifications_recovery.event_uuid</code>.

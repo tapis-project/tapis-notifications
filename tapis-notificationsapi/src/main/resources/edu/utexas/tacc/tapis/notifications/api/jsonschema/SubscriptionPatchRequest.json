@@ -9,8 +9,7 @@
     "description": { "type": "string", "maxLength": 2048 },
     "typeFilter": { "type": "string" },
     "subjectFilter": { "type": "string" },
-    "deliveryMethods": { "$ref": "resource:///edu/utexas/tacc/tapis/notifications/api/jsonschema/Definitions.json#/DeliveryMethodList" },
-    "ttl": { "type":  "integer" },
-    "notes": { "type": "object" }
+    "deliveryTargets": { "$ref": "resource:///edu/utexas/tacc/tapis/notifications/api/jsonschema/Definitions.json#/DeliveryTargetList" },
+    "ttlMinutes": { "type":  "integer" }
   }
 }

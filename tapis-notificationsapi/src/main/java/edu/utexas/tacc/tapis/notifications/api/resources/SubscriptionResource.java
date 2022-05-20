@@ -63,7 +63,7 @@ import edu.utexas.tacc.tapis.notifications.api.utils.ApiUtils;
 import edu.utexas.tacc.tapis.notifications.model.PatchSubscription;
 import edu.utexas.tacc.tapis.notifications.model.Subscription;
 import edu.utexas.tacc.tapis.notifications.service.NotificationsService;
-import static edu.utexas.tacc.tapis.notifications.model.Subscription.ID_FIELD;
+import static edu.utexas.tacc.tapis.notifications.model.Subscription.NAME_FIELD;
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.OWNER_FIELD;
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.TYPE_FILTER_FIELD;
 
@@ -116,7 +116,7 @@ public class SubscriptionResource
   private static final boolean PRETTY = true;
 
   // Top level summary attributes to be included by default in some cases.
-  public static final List<String> SUMMARY_ATTRS = new ArrayList<>(List.of(ID_FIELD, OWNER_FIELD, TYPE_FILTER_FIELD));
+  public static final List<String> SUMMARY_ATTRS = new ArrayList<>(List.of(NAME_FIELD, OWNER_FIELD, TYPE_FILTER_FIELD));
 
   // ************************************************************************
   // *********************** Fields *****************************************
@@ -215,7 +215,7 @@ public class SubscriptionResource
     // Validate the subscription type filter
     if (!Subscription.isValidTypeFilter(req.typeFilter))
     {
-      msg = ApiUtils.getMsgAuth("NTFAPI_SUBSCR_TYPE_ERR", rUser, req.id, req.typeFilter);
+      msg = ApiUtils.getMsgAuth("NTFAPI_SUBSCR_TYPE_ERR", rUser, req.name, req.typeFilter);
       _log.error(msg);
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
@@ -233,7 +233,7 @@ public class SubscriptionResource
     if (resp != null) return resp;
 
     // ---------------------------- Make service call to create the subscription -------------------------------
-    String subscriptionId = subscription.getId();
+    String subscriptionId = subscription.getName();
     try
     {
       subscriptionId = notificationsService.createSubscription(rUser, subscription, scrubbedJson);
@@ -349,10 +349,6 @@ public class SubscriptionResource
     }
 
     if (_log.isTraceEnabled()) _log.trace(ApiUtils.getMsgAuth("NTFAPI_PATCH_TRACE", rUser, rawJson));
-
-    // Notes require special handling. Else they end up as a LinkedTreeMap which causes trouble when attempting to
-    // convert to a JsonObject.
-    patchSubscription.setNotes(extractNotes(rawJson));
 
     // Validate the subscription type filter
     if (!Subscription.isValidTypeFilter(patchSubscription.getTypeFilter()))
@@ -1057,11 +1053,9 @@ public class SubscriptionResource
    */
   private static Subscription createSubscriptionFromPostRequest(String tenantId, ReqPostSubscription req, String rawJson)
   {
-    // Extract Notes from the raw json.
-    Object notes = extractNotes(rawJson);
     // Create Subscription
-    return new Subscription(-1, tenantId, req.id, req.description, req.owner, req.enabled, req.typeFilter,
-                            req.subjectFilter, req.deliveryMethods, req.ttl, notes, null, null, null, null);
+    return new Subscription(-1, tenantId, req.name, req.description, req.owner, req.enabled, req.typeFilter,
+                            req.subjectFilter, req.deliveryTargets, req.ttlMinutes, null, null, null, null);
   }
 
   /**
@@ -1069,14 +1063,11 @@ public class SubscriptionResource
    */
   private static Subscription createSubscriptionFromPutRequest(String tenantId, String id, ReqPutSubscription req, String rawJson)
   {
-    // Extract Notes from the raw json.
-    Object notes = extractNotes(rawJson);
-
     // NOTE: Following attributes are not updatable and must be filled in on service side.
     String owner = null;
     boolean enabled = true;
     return new Subscription(-1, tenantId, id, req.description, owner, enabled, req.typeFilter, req.subjectFilter,
-                            req.deliveryMethods, req.ttl, notes, null, null, null, null);
+                            req.deliveryTargets, req.ttl, null, null, null, null);
   }
 
   /**
@@ -1099,29 +1090,11 @@ public class SubscriptionResource
     if (!errMessages.isEmpty())
     {
       // Construct message reporting all errors
-      String allErrors = getListOfErrors(errMessages, rUser, RESOURCE_TYPE, subscription1.getId());
+      String allErrors = getListOfErrors(errMessages, rUser, RESOURCE_TYPE, subscription1.getName());
       _log.error(allErrors);
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(allErrors, PRETTY)).build();
     }
     return null;
-  }
-
-  /**
-   * Extract notes from the incoming json
-   * This explicit method to extract is needed because notes is an unstructured object and other seemingly simpler
-   * approaches caused problems with the json marshalling. This method ensures notes end up as a JsonObject rather
-   * than a LinkedTreeMap.
-   */
-  private static Object extractNotes(String rawJson)
-  {
-    Object notes = null;
-    // Check inputs
-    if (StringUtils.isBlank(rawJson)) return notes;
-    // Turn the request string into a json object and extract the notes object
-    JsonObject topObj = TapisGsonUtils.getGson().fromJson(rawJson, JsonObject.class);
-    if (!topObj.has(Subscription.NOTES_FIELD)) return notes;
-    notes = topObj.getAsJsonObject(Subscription.NOTES_FIELD);
-    return notes;
   }
 
   /**

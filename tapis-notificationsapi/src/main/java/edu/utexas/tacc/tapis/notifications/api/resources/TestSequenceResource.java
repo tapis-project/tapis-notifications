@@ -177,7 +177,7 @@ public class TestSequenceResource
 
     // ---------------------------- Success -------------------------------
     RespSubscription resp1 = new RespSubscription(subscription, null);
-    msg = ApiUtils.getMsgAuth("NTFAPI_TEST_BEGIN", rUser, subscription.getId());
+    msg = ApiUtils.getMsgAuth("NTFAPI_TEST_BEGIN", rUser, subscription.getName());
     return createSuccessResponse(Status.CREATED, msg, resp1);
   }
 
@@ -364,8 +364,8 @@ public class TestSequenceResource
       _log.error(msg);
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
-    // If deliveryMethod is null that is an unrecoverable error
-    if (req.deliveryMethod == null)
+    // If deliveryTarget is null that is an unrecoverable error
+    if (req.deliveryTarget == null)
     {
       msg = ApiUtils.getMsg("NTFAPI_TEST_DM_NULL", subscriptionId);
       _log.error(msg);
@@ -444,7 +444,7 @@ public class TestSequenceResource
     Event event = new Event(tenant, user, source, type, subject, seriesId, time, eventUuid);
     // Create a notification from the request
     Notification notification = new Notification(notifUuid, -1, tenant, subscriptionId, -1, eventUuid, event,
-                                                 req.deliveryMethod, notifCreated);
+                                                 req.deliveryTarget, notifCreated);
 
     // ---------------------------- Make service call to record the event -------------------------------
     try

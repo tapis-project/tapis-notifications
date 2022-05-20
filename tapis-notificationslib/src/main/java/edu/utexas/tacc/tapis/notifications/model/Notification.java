@@ -29,7 +29,7 @@ public final class Notification
 
   // What and how to deliver the notification to the recipient
   private final Event event; // The event being delivered
-  private final DeliveryMethod deliveryMethod; // How and where it is to be delivered
+  private final DeliveryTarget deliveryTarget; // How and where it is to be delivered
   private final Instant created; // UTC time for when record was created
 
   // Attributes used to track in-flight notifications while delivery attempt is in progress.
@@ -44,7 +44,7 @@ public final class Notification
    * If created is null then the current system time is used.
    */
   public Notification(UUID uuid1, int subscrSeqId1, String tenant1, String subscrId1, int bucketNum1, UUID eventUuid1,
-                      Event event1, DeliveryMethod deliveryMethod1, Instant created1)
+                      Event event1, DeliveryTarget deliveryTarget1, Instant created1)
   {
     uuid = (uuid1 != null) ? uuid1 : UUID.randomUUID();
     subscrSeqId = subscrSeqId1;
@@ -53,7 +53,7 @@ public final class Notification
     bucketNum = bucketNum1;
     eventUuid = eventUuid1;
     event = event1;
-    deliveryMethod = deliveryMethod1;
+    deliveryTarget = deliveryTarget1;
     created = (created1 != null) ? created1 : TapisUtils.getUTCTimeNow().toInstant(ZoneOffset.UTC);
   }
 
@@ -61,7 +61,7 @@ public final class Notification
   public String getSubscriptionId() { return subscriptionId; }
   public UUID getEventUuid() { return eventUuid; }
   public Event getEvent() { return event; }
-  public DeliveryMethod getDeliveryMethod() { return deliveryMethod; }
+  public DeliveryTarget getDeliveryMethod() { return deliveryTarget; }
   public int getSubscrSeqId() { return subscrSeqId; }
   public int getBucketNum() { return bucketNum; }
   public UUID getUuid() { return uuid; }
@@ -71,6 +71,6 @@ public final class Notification
   public String toString()
   {
     String msg = "UUID: %s%nSubscrSeqId: %d%nTenant: %s%nbucketNum: %d%neventUuid: %s%nEvent %s%nDeliveryMethod: %s%nCreated: %s";
-    return msg.formatted(uuid, subscrSeqId, tenant, bucketNum, eventUuid, event, deliveryMethod, created);
+    return msg.formatted(uuid, subscrSeqId, tenant, bucketNum, eventUuid, event, deliveryTarget, created);
   }
 }

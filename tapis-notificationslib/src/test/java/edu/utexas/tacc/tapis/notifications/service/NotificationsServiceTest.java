@@ -3,7 +3,7 @@ package edu.utexas.tacc.tapis.notifications.service;
 import com.google.gson.JsonObject;
 import edu.utexas.tacc.tapis.notifications.dao.NotificationsDao;
 import edu.utexas.tacc.tapis.notifications.dao.NotificationsDaoImpl;
-import edu.utexas.tacc.tapis.notifications.model.DeliveryMethod;
+import edu.utexas.tacc.tapis.notifications.model.DeliveryTarget;
 import edu.utexas.tacc.tapis.notifications.model.Event;
 import edu.utexas.tacc.tapis.notifications.model.PatchSubscription;
 import edu.utexas.tacc.tapis.notifications.model.Subscription;
@@ -128,12 +128,12 @@ public class NotificationsServiceTest
     //Remove all objects created by tests
     for (int i = 0; i < numSubscriptions; i++)
     {
-      svcImpl.deleteSubscription(rAdminUser, subscriptions[i].getId());
+      svcImpl.deleteSubscription(rAdminUser, subscriptions[i].getName());
     }
     svcImpl.deleteSubscription(rAdminUser, specialId1);
 
-    Subscription tmpSub = svcImpl.getSubscription(rAdminUser, subscriptions[0].getId());
-    Assert.assertNull(tmpSub, "Subscription not deleted. Subscription Id: " + subscriptions[0].getId());
+    Subscription tmpSub = svcImpl.getSubscription(rAdminUser, subscriptions[0].getName());
+    Assert.assertNull(tmpSub, "Subscription not deleted. Subscription Id: " + subscriptions[0].getName());
   }
 
   @BeforeTest
@@ -150,9 +150,9 @@ public class NotificationsServiceTest
   {
     Subscription sub0 = subscriptions[0];
     svcImpl.createSubscription(rUser1, sub0, scrubbedJson);
-    Subscription tmpSub = svcImpl.getSubscription(rUser1, sub0.getId());
-    Assert.assertNotNull(tmpSub, "Failed to create item: " + sub0.getId());
-    System.out.println("Found item: " + sub0.getId());
+    Subscription tmpSub = svcImpl.getSubscription(rUser1, sub0.getName());
+    Assert.assertNotNull(tmpSub, "Failed to create item: " + sub0.getName());
+    System.out.println("Found item: " + sub0.getName());
   }
 
   // Test retrieving a resource
@@ -161,7 +161,7 @@ public class NotificationsServiceTest
   {
     Subscription sub0 = subscriptions[1];
     svcImpl.createSubscription(rUser1, sub0, scrubbedJson);
-    Subscription tmpSub = svcImpl.getSubscription(rUser1, sub0.getId());
+    Subscription tmpSub = svcImpl.getSubscription(rUser1, sub0.getName());
     checkCommonSubscriptionAttrs(sub0, tmpSub);
   }
 
@@ -172,17 +172,17 @@ public class NotificationsServiceTest
   {
     String subId = null;
     Subscription sub0 = new Subscription(-1, tenantName, subId, description1, owner1, isEnabledTrue, typeFilter1,
-                                        subjectFilter1, dmList1, ttl1, notes1, uuidNull, expiryNull, createdNull, updatedNull);
-    System.out.println("Initial subscription Id: " + sub0.getId());
+                                        subjectFilter1, dmList1, ttl1, uuidNull, expiryNull, createdNull, updatedNull);
+    System.out.println("Initial subscription Id: " + sub0.getName());
     subId = svcImpl.createSubscription(rUser1, sub0, scrubbedJson);
     System.out.println("Subscription Id from createSubscription: " + subId);
     Assert.assertFalse(StringUtils.isBlank(subId));
     Subscription tmpSub = svcImpl.getSubscription(rUser1, subId);
-    Assert.assertNotNull(tmpSub, "Failed to create item: " + sub0.getId());
-    System.out.println("Found item: " + tmpSub.getId());
+    Assert.assertNotNull(tmpSub, "Failed to create item: " + sub0.getName());
+    System.out.println("Found item: " + tmpSub.getName());
     Subscription sub1 = new Subscription(sub0, tenantName, subId);
     checkCommonSubscriptionAttrs(sub1, tmpSub);
-    svcImpl.deleteSubscription(rUser1, tmpSub.getId());
+    svcImpl.deleteSubscription(rUser1, tmpSub.getName());
   }
 
   // Test update using PUT
@@ -190,7 +190,7 @@ public class NotificationsServiceTest
   public void testPutSubscription() throws Exception
   {
     Subscription sub0 = subscriptions[2];
-    String subId = sub0.getId();
+    String subId = sub0.getName();
     String createText = "{\"testPut\": \"0-create1\"}";
     svcImpl.createSubscription(rUser1, sub0, createText);
     Subscription tmpSub = svcImpl.getSubscription(rUser1, subId);
@@ -219,8 +219,7 @@ public class NotificationsServiceTest
     sub0.setDescription(description2);
     sub0.setTypeFilter(typeFilter2);
     sub0.setSubjectFilter(subjectFilter2);
-    sub0.setDeliveryMethods(dmList2);
-    sub0.setNotes(notes2);
+    sub0.setDeliveryTargets(dmList2);
     //Check common attributes:
     checkCommonSubscriptionAttrs(sub0, tmpSub);
 
@@ -232,7 +231,7 @@ public class NotificationsServiceTest
   {
     // Test updating all attributes that can be updated.
     Subscription sub0 = subscriptions[3];
-    String subId = sub0.getId();
+    String subId = sub0.getName();
     String createText = "{\"testPatch\": \"0-createFull\"}";
     svcImpl.createSubscription(rUser1, sub0, createText);
     Subscription tmpSub = svcImpl.getSubscription(rUser1, subId);
@@ -258,8 +257,7 @@ public class NotificationsServiceTest
     sub0.setDescription(description2);
     sub0.setTypeFilter(typeFilter2);
     sub0.setSubjectFilter(subjectFilter2);
-    sub0.setDeliveryMethods(dmList2);
-    sub0.setNotes(notes2);
+    sub0.setDeliveryTargets(dmList2);
     //Check common attributes:
     checkCommonSubscriptionAttrs(sub0, tmpSubFull);
   }
@@ -276,28 +274,28 @@ public class NotificationsServiceTest
     ResourceRequestUser newOwnerAuth = rUser3;
 
     svcImpl.createSubscription(origOwnerAuth, sub0, createText);
-    Subscription tmpSub = svcImpl.getSubscription(origOwnerAuth, sub0.getId());
-    Assert.assertNotNull(tmpSub, "Failed to create item: " + sub0.getId());
+    Subscription tmpSub = svcImpl.getSubscription(origOwnerAuth, sub0.getName());
+    Assert.assertNotNull(tmpSub, "Failed to create item: " + sub0.getName());
 
     // Change owner using api
-    svcImpl.changeSubscriptionOwner(origOwnerAuth, sub0.getId(), newOwnerName);
+    svcImpl.changeSubscriptionOwner(origOwnerAuth, sub0.getName(), newOwnerName);
 
     // Confirm new owner
-    tmpSub = svcImpl.getSubscription(newOwnerAuth, sub0.getId());
+    tmpSub = svcImpl.getSubscription(newOwnerAuth, sub0.getName());
     Assert.assertEquals(tmpSub.getOwner(), newOwnerName);
 
     // Original owner should not be able to modify
     try {
-      svcImpl.deleteSubscription(origOwnerAuth, sub0.getId());
-      Assert.fail("Original owner should not have permission to update resource after change of ownership. Subscription name: " + sub0.getId() +
+      svcImpl.deleteSubscription(origOwnerAuth, sub0.getName());
+      Assert.fail("Original owner should not have permission to update resource after change of ownership. Subscription name: " + sub0.getName() +
               " Old owner: " + origOwnerName + " New Owner: " + newOwnerName);
     } catch (Exception e) {
       Assert.assertTrue(e.getMessage().startsWith("NTFLIB_UNAUTH"));
     }
     // Original owner should not be able to read
     try {
-      svcImpl.getSubscription(origOwnerAuth, sub0.getId());
-      Assert.fail("Original owner should not have permission to read resource after change of ownership. Subscription name: " + sub0.getId() +
+      svcImpl.getSubscription(origOwnerAuth, sub0.getName());
+      Assert.fail("Original owner should not have permission to read resource after change of ownership. Subscription name: " + sub0.getName() +
               " Old owner: " + origOwnerName + " New Owner: " + newOwnerName);
     } catch (Exception e) {
       Assert.assertTrue(e.getMessage().startsWith("NTFLIB_UNAUTH"));
@@ -313,7 +311,7 @@ public class NotificationsServiceTest
     List<Subscription> subscriptions = svcImpl.getSubscriptions(rUser1, null, -1, null, -1, null);
     for (Subscription sub : subscriptions)
     {
-      System.out.println("Found item with id: " + sub.getId());
+      System.out.println("Found item with id: " + sub.getName());
     }
   }
 
@@ -323,12 +321,12 @@ public class NotificationsServiceTest
   {
     // Create 3 resources, 2 of which are owned by testUser5.
     Subscription sub0 = subscriptions[6];
-    String sub1Name = sub0.getId();
+    String sub1Name = sub0.getName();
     sub0.setOwner(rUser5.getOboUserId());
     svcImpl.createSubscription(rUser5, sub0, scrubbedJson);
 
     sub0 = subscriptions[7];
-    String sub2Name = sub0.getId();
+    String sub2Name = sub0.getName();
     sub0.setOwner(rUser5.getOboUserId());
     svcImpl.createSubscription(rUser5, sub0, scrubbedJson);
 
@@ -341,8 +339,8 @@ public class NotificationsServiceTest
     Assert.assertEquals(subscriptions.size(), 2);
     for (Subscription sub : subscriptions)
     {
-      System.out.println("Found item with subId: " + sub.getId());
-      Assert.assertTrue(sub.getId().equals(sub1Name) || sub.getId().equalsIgnoreCase(sub2Name));
+      System.out.println("Found item with subId: " + sub.getName());
+      Assert.assertTrue(sub.getName().equals(sub1Name) || sub.getName().equalsIgnoreCase(sub2Name));
     }
   }
 
@@ -352,7 +350,7 @@ public class NotificationsServiceTest
   {
     // Create the resource
     Subscription sub0 = subscriptions[9];
-    String subId = sub0.getId();
+    String subId = sub0.getName();
     svcImpl.createSubscription(rUser1, sub0, scrubbedJson);
     // Enabled should start off true, then become false and finally true again.
     Subscription tmpSub = svcImpl.getSubscription(rUser1, subId);
@@ -382,10 +380,10 @@ public class NotificationsServiceTest
   {
     Subscription sub0 = subscriptions[10];
     // If not there we should get false
-    Assert.assertFalse(svcImpl.checkForSubscription(rUser1, sub0.getId()));
+    Assert.assertFalse(svcImpl.checkForSubscription(rUser1, sub0.getName()));
     // After creating we should get true
     svcImpl.createSubscription(rUser1, sub0, scrubbedJson);
-    Assert.assertTrue(svcImpl.checkForSubscription(rUser1, sub0.getId()));
+    Assert.assertTrue(svcImpl.checkForSubscription(rUser1, sub0.getName()));
   }
 
   // Check that if resource already exists we get an IllegalStateException when attempting to create
@@ -395,7 +393,7 @@ public class NotificationsServiceTest
     // Create the subscription
     Subscription sub0 = subscriptions[11];
     svcImpl.createSubscription(rUser1, sub0, scrubbedJson);
-    Assert.assertTrue(svcImpl.checkForSubscription(rUser1, sub0.getId()));
+    Assert.assertTrue(svcImpl.checkForSubscription(rUser1, sub0.getName()));
     // Now attempt to create again, should get IllegalStateException with msg NTFLIB_SUBSCR_EXISTS
     svcImpl.createSubscription(rUser1, sub0, scrubbedJson);
   }
@@ -406,7 +404,7 @@ public class NotificationsServiceTest
   {
     // Create the resource
     Subscription sub0 = subscriptions[12];
-    String subId = sub0.getId();
+    String subId = sub0.getName();
     // Get the current time
     Instant now = Instant.now();
     svcImpl.createSubscription(rUser1, sub0, scrubbedJson);
@@ -416,7 +414,7 @@ public class NotificationsServiceTest
     // Check to the nearest second, i.e., assume it took much less than one second to create the subscription
     Instant expiry = tmpSub.getExpiry();
     long expirySeconds = expiry.truncatedTo(ChronoUnit.SECONDS).getEpochSecond() - now.truncatedTo(ChronoUnit.SECONDS).getEpochSecond();
-    Assert.assertEquals(tmpSub.getTtl()*60L, expirySeconds);
+    Assert.assertEquals(tmpSub.getTtlMinutes()*60L, expirySeconds);
 
     // Sleep a couple of seconds
     Thread.sleep(2000);
@@ -427,7 +425,7 @@ public class NotificationsServiceTest
     tmpSub = svcImpl.getSubscription(rUser1, subId);
     expiry = tmpSub.getExpiry();
     expirySeconds = expiry.truncatedTo(ChronoUnit.SECONDS).getEpochSecond() - now.truncatedTo(ChronoUnit.SECONDS).getEpochSecond();
-    Assert.assertEquals(tmpSub.getTtl()*60L, expirySeconds);
+    Assert.assertEquals(tmpSub.getTtlMinutes()*60L, expirySeconds);
 
     // Test that setting TTL to 0 results in expiry of null
     svcImpl.updateSubscriptionTTL(rUser1, subId, "0");
@@ -547,46 +545,34 @@ public class NotificationsServiceTest
    */
   private static void checkCommonSubscriptionAttrs(Subscription origSub, Subscription fetchedSub)
   {
-    Assert.assertNotNull(fetchedSub, "Failed to create item: " + origSub.getId());
-    System.out.println("Found item: " + origSub.getId());
+    Assert.assertNotNull(fetchedSub, "Failed to create item: " + origSub.getName());
+    System.out.println("Found item: " + origSub.getName());
     Assert.assertEquals(fetchedSub.getTenant(), origSub.getTenant());
-    Assert.assertEquals(fetchedSub.getId(), origSub.getId());
+    Assert.assertEquals(fetchedSub.getName(), origSub.getName());
     Assert.assertEquals(fetchedSub.getDescription(), origSub.getDescription());
     Assert.assertEquals(fetchedSub.getTypeFilter(), origSub.getTypeFilter());
     Assert.assertEquals(fetchedSub.getTypeFilter1(), origSub.getTypeFilter1());
     Assert.assertEquals(fetchedSub.getTypeFilter2(), origSub.getTypeFilter2());
     Assert.assertEquals(fetchedSub.getTypeFilter3(), origSub.getTypeFilter3());
     Assert.assertEquals(fetchedSub.getSubjectFilter(), origSub.getSubjectFilter());
-    Assert.assertEquals(fetchedSub.getTtl(), origSub.getTtl());
+    Assert.assertEquals(fetchedSub.getTtlMinutes(), origSub.getTtlMinutes());
     Assert.assertEquals(fetchedSub.getOwner(), origSub.getOwner());
     Assert.assertEquals(fetchedSub.isEnabled(), origSub.isEnabled());
     // Verify deliveryMethods
-    List<DeliveryMethod> fetchedDMList = fetchedSub.getDeliveryMethods();
+    List<DeliveryTarget> fetchedDMList = fetchedSub.getDeliveryTargets();
     Assert.assertNotNull(fetchedDMList);
-    List<DeliveryMethod> dmList0 = origSub.getDeliveryMethods();
+    List<DeliveryTarget> dmList0 = origSub.getDeliveryTargets();
     Assert.assertNotNull(dmList0);
     // Make sure the two dm lists are the same size
     Assert.assertEquals(fetchedDMList.size(), dmList0.size());
     // Make sure the fetched DMs contain all the expected delivery addresses
     // Put all the fetched delivery addresses into a list
     var addrSet = new HashSet<String>();
-    for (DeliveryMethod dm : fetchedDMList) { addrSet.add(dm.getDeliveryAddress()); }
-    for (DeliveryMethod dMethod : origSub.getDeliveryMethods())
+    for (DeliveryTarget dm : fetchedDMList) { addrSet.add(dm.getDeliveryAddress()); }
+    for (DeliveryTarget dMethod : origSub.getDeliveryTargets())
     {
       Assert.assertTrue(addrSet.contains(dMethod.getDeliveryAddress()),
                         "List of addresses did not contain: " + dMethod.getDeliveryAddress());
     }
-    // Verify notes
-    Assert.assertNotNull(origSub.getNotes(), "Orig Notes should not be null");
-    Assert.assertNotNull(fetchedSub.getNotes(), "Fetched Notes should not be null");
-    System.out.println("Found notes: " + origSub.getNotes().toString());
-    JsonObject tmpObj = (JsonObject) fetchedSub.getNotes();
-    JsonObject origNotes = (JsonObject) origSub.getNotes();
-    Assert.assertTrue(tmpObj.has("project"));
-    String projStr = origNotes.get("project").getAsString();
-    Assert.assertEquals(tmpObj.get("project").getAsString(), projStr);
-    Assert.assertTrue(tmpObj.has("testdata"));
-    String testdataStr = origNotes.get("testdata").getAsString();
-    Assert.assertEquals(tmpObj.get("testdata").getAsString(), testdataStr);
   }
 }
