@@ -294,7 +294,7 @@ public final class DeliveryBucketManager implements Callable<String>
     // Add a delivery task for each notification
     for (Notification ntf : notifications)
     {
-      log.debug(LibUtils.getMsg("NTFLIB_DSP_BUCKET_DLVRY1", bucketNum, ntf.getEventUuid(), ntf.getDeliveryMethod()));
+      log.debug(LibUtils.getMsg("NTFLIB_DSP_BUCKET_DLVRY1", bucketNum, ntf.getEventUuid(), ntf.getDeliveryTarget()));
       // Create a delivery task and submit it to the executor service.
       Future<Notification> future = deliveryTaskExecService.submit(new DeliveryTask(dao, ntf));
       // Add the task to the list
@@ -333,7 +333,7 @@ public final class DeliveryBucketManager implements Callable<String>
             {
               // Make a blocking call to get the return value of the future.
               Notification ret = f.get();
-              log.debug(LibUtils.getMsg("NTFLIB_DSP_BUCKET_DLVRY3", bucketNum, eventUuid, ret.getDeliveryMethod()));
+              log.debug(LibUtils.getMsg("NTFLIB_DSP_BUCKET_DLVRY3", bucketNum, eventUuid, ret.getDeliveryTarget()));
               deliveryTaskReturns.put(f, ret);
             }
             catch (InterruptedException e)

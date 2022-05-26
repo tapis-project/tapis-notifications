@@ -32,44 +32,42 @@ public interface NotificationsDao
                              String scrubbedText)
           throws TapisException, IllegalStateException;
 
-  void patchSubscription(ResourceRequestUser rUser, String subId, Subscription patchedSubscription,
+  void patchSubscription(ResourceRequestUser rUser, String owner, String name, Subscription patchedSubscription,
                 String updateJsonStr, String scrubbedText)
           throws TapisException, IllegalStateException;
 
-  void putSubscription(ResourceRequestUser rUser, Subscription putSubscription, String updateJsonStr, String scrubbedText)
-          throws TapisException, IllegalStateException;
-
-  void updateEnabled(ResourceRequestUser rUser, String tenantId, String id, boolean enabled) throws TapisException;
-
-  void updateSubscriptionOwner(ResourceRequestUser rUser, String tenantId, String id, String newOwnerName) throws TapisException;
-
-  void updateSubscriptionTTL(ResourceRequestUser rUser, String tenantId, String id, int newTTL, Instant newExpiry)
+  void updateEnabled(ResourceRequestUser rUser, String tenantId, String owner, String name, boolean enabled)
           throws TapisException;
 
-  void addUpdateRecord(ResourceRequestUser rUser, String id, SubscriptionOperation op,
-                       String upd_json, String upd_text) throws TapisException;
+  void updateSubscriptionTTL(ResourceRequestUser rUser, String tenantId, String owner, String name, int newTTL, Instant newExpiry)
+          throws TapisException;
 
-  int deleteSubscription(String tenant, String id) throws TapisException;
+  void addUpdateRecord(ResourceRequestUser rUser, String owner, String name, SubscriptionOperation op,
+                       String upd_json, String upd_text)
+          throws TapisException;
 
-  boolean checkForSubscription(String tenant, String id) throws TapisException;
+  int deleteSubscription(String tenant, String owner, String name) throws TapisException;
 
-  boolean isEnabled(String tenant, String id) throws TapisException;
+  boolean checkForSubscription(String tenant, String owner, String name) throws TapisException;
 
-  Subscription getSubscription(String tenant, String id) throws TapisException;
+  boolean isEnabled(String tenant, String owner, String name) throws TapisException;
 
-  int getSubscriptionsCount(String tenant, List<String> searchList, ASTNode searchAST, Set<String> setOfIDs,
-                   List<OrderBy> orderByList, String startAfter) throws TapisException;
+  Subscription getSubscription(String tenant, String owner, String name) throws TapisException;
 
-  List<Subscription> getSubscriptions(String tenant, List<String> searchList, ASTNode searchAST, Set<String> subIDs, int limit,
-                    List<OrderBy> orderByList, int skip, String startAfter) throws TapisException;
+  int getSubscriptionsCount(String tenant, String owner, List<String> searchList, ASTNode searchAST,
+                            Set<String> setOfIDs, List<OrderBy> orderByList, String startAfter)
+          throws TapisException;
+
+  List<Subscription> getSubscriptions(String tenant, String owner, List<String> searchList, ASTNode searchAST,
+                                      Set<String> names, int limit, List<OrderBy> orderByList, int skip,
+                                      String startAfter)
+          throws TapisException;
 
   List<Subscription> getSubscriptionsForEvent(Event event) throws TapisException;
 
   Set<String> getSubscriptionIDsByOwner(String tenant, String owner) throws TapisException;
 
   Set<String> getSubscriptionIDs(String tenant) throws TapisException;
-
-  String getSubscriptionOwner(String tenant, String id) throws TapisException;
 
   List<Subscription> getExpiredSubscriptions() throws TapisException;
 
@@ -105,13 +103,13 @@ public interface NotificationsDao
   // -----------------------------------------------------------------------
   // --------------------- Test Sequences ----------------------------------
   // -----------------------------------------------------------------------
-  boolean createTestSequence(ResourceRequestUser rUser, String subscrId)
+  boolean createTestSequence(ResourceRequestUser rUser, String owner, String name)
           throws TapisException, IllegalStateException;
 
-  TestSequence getTestSequence(String tenantId, String subscriptionId) throws TapisException;
+  TestSequence getTestSequence(String tenantId, String owner, String name) throws TapisException;
 
   void addTestSequenceNotification(String tenant, String user, String subscrId, Notification notification)
           throws TapisException, IllegalStateException;
 
-  boolean checkForTestSequence(String tenantId, String subscriptionId) throws TapisException;
+  boolean checkForTestSequence(String tenantId, String owner, String name) throws TapisException;
 }

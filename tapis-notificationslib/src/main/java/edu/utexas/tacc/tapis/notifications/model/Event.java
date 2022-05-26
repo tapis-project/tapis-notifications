@@ -33,7 +33,7 @@ public final class Event
 
   // Valid pattern for event type, must be 3 sections separated by a '.'
   // Each section must contain a series of lower case letters and may not be empty
-  private static final Pattern EVENT_TYPE_PATTERN = Pattern.compile("^[a-z]+\\.[a-z]+\\.[a-z]+$");
+  private static final Pattern EVENT_TYPE_PATTERN = Pattern.compile("^[a-z]+\\.[A-Za-z]+\\.[A-Za-z]+$");
 
   /* ********************************************************************** */
   /*                                 Fields                                 */
@@ -47,6 +47,7 @@ public final class Event
   private final String subject; // Subject of event in context of event producer.
   private final String seriesId; // Optional Id for grouping events from same source.
   private final String time; // Timestamp of when the occurrence happened. RFC 3339 (ISO 8601)
+  private final String data; // Data associated with the event.
   private final UUID uuid;
   // Mark as transient so Gson will not include it.
   private transient String type1; // Field 1 of type (service name)
@@ -60,7 +61,7 @@ public final class Event
   /*                           Constructors                                 */
   /* ********************************************************************** */
   public Event(String tenant1, String user1, URI source1, String type1, String subject1, String seriesId1,
-               String time1, UUID uuid1)
+               String time1, String data1, UUID uuid1)
   {
     tenant = tenant1;
     user = user1;
@@ -69,6 +70,7 @@ public final class Event
     subject = subject1;
     seriesId = seriesId1;
     time = time1;
+    data = data1;
     uuid = uuid1;
     setTypeFields();
 //    datacontenttype = null;
@@ -87,6 +89,7 @@ public final class Event
   public String getSubject() { return subject; }
   public String getSeriesId() { return seriesId; }
   public String getTime() { return time; }
+  public String getData() { return data; }
   public UUID getUuid() { return uuid; }
   public String getType1() { return type1; }
   public String getType2() { return type2; }
@@ -107,8 +110,8 @@ public final class Event
   @Override
   public String toString()
   {
-    String msg = "Source: %s Type: %s Subject: %s SeriesId: %s Time: %s UUID: %s";
-    return msg.formatted(source, type, subject, seriesId, time, uuid);
+    String msg = "Source: %s Type: %s Subject: %s SeriesId: %s Time: %s UUID: %s Data: %s";
+    return msg.formatted(source, type, subject, seriesId, time, uuid, data);
   }
 
   /*
@@ -126,5 +129,4 @@ public final class Event
   /* ********************************************************************** */
   /*                      Private methods                                   */
   /* ********************************************************************** */
-
 }

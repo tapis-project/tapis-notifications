@@ -68,7 +68,7 @@ public final class DeliveryTask implements Callable<Notification>
     notification = n1;
     tenant = n1.getTenant();
     bucketNum = n1.getBucketNum();
-    deliveryTarget = n1.getDeliveryMethod();
+    deliveryTarget = n1.getDeliveryTarget();
     uuid = n1.getUuid();
   }
 
@@ -85,7 +85,7 @@ public final class DeliveryTask implements Callable<Notification>
   public Notification call() throws InterruptedException
   {
     int bucketNum = notification.getBucketNum();
-    DeliveryTarget deliveryTarget = notification.getDeliveryMethod();
+    DeliveryTarget deliveryTarget = notification.getDeliveryTarget();
     UUID uuid = notification.getUuid();
 
     Thread.currentThread().setName("ThreadDelivery-bucket-" + bucketNum + "-method-" + deliveryTarget);
@@ -136,7 +136,7 @@ public final class DeliveryTask implements Callable<Notification>
   {
     int bucketNum = notification.getBucketNum();
     Event event = notification.getEvent();
-    DeliveryTarget deliveryTarget =  notification.getDeliveryMethod();
+    DeliveryTarget deliveryTarget =  notification.getDeliveryTarget();
 
     log.debug(LibUtils.getMsg("NTFLIB_DSP_DLVRY", bucketNum, notification.getUuid(), deliveryTarget.getDeliveryType(),
             deliveryTarget.getDeliveryAddress(), event.getSource(), event.getType(),
@@ -158,7 +158,7 @@ public final class DeliveryTask implements Callable<Notification>
   {
     boolean delivered = true;
     int bucketNum = ntf.getBucketNum();
-    DeliveryTarget deliveryTarget =  ntf.getDeliveryMethod();
+    DeliveryTarget deliveryTarget =  ntf.getDeliveryTarget();
     // Body is the notification as json
     String notifJsonStr = TapisGsonUtils.getGson(true).toJson(ntf);
 
@@ -187,7 +187,7 @@ public final class DeliveryTask implements Callable<Notification>
   public static boolean deliverByEmail(Notification ntf) throws TapisException
   {
     boolean delivered = true;
-    DeliveryTarget deliveryTarget =  ntf.getDeliveryMethod();
+    DeliveryTarget deliveryTarget =  ntf.getDeliveryTarget();
     // Body is the notification as json
     String notifJsonStr = TapisGsonUtils.getGson(true).toJson(ntf);
 

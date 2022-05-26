@@ -61,7 +61,7 @@ public final class Notification
   public String getSubscriptionId() { return subscriptionId; }
   public UUID getEventUuid() { return eventUuid; }
   public Event getEvent() { return event; }
-  public DeliveryTarget getDeliveryMethod() { return deliveryTarget; }
+  public DeliveryTarget getDeliveryTarget() { return deliveryTarget; }
   public int getSubscrSeqId() { return subscrSeqId; }
   public int getBucketNum() { return bucketNum; }
   public UUID getUuid() { return uuid; }
@@ -70,7 +70,7 @@ public final class Notification
   @Override
   public String toString()
   {
-    String msg = "UUID: %s%nSubscrSeqId: %d%nTenant: %s%nbucketNum: %d%neventUuid: %s%nEvent %s%nDeliveryMethod: %s%nCreated: %s";
+    String msg = "UUID: %s%nSubscrSeqId: %d%nTenant: %s%nbucketNum: %d%neventUuid: %s%nEvent %s%nDeliveryTarget: %s%nCreated: %s";
     return msg.formatted(uuid, subscrSeqId, tenant, bucketNum, eventUuid, event, deliveryTarget, created);
   }
 }

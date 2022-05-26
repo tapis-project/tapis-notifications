@@ -44,28 +44,28 @@ CREATE TABLE subscriptions
 (
     seq_id  SERIAL PRIMARY KEY,
     tenant  TEXT NOT NULL,
+    owner   TEXT NOT NULL,
     name      TEXT NOT NULL,
     description TEXT,
-    owner   TEXT NOT NULL,
     enabled  BOOLEAN NOT NULL DEFAULT true,
-    type_filter TEXT NOT NULL DEFAULT '*.*.*',
-    type_filter1 TEXT NOT NULL DEFAULT '*',
-    type_filter2 TEXT NOT NULL DEFAULT '*',
-    type_filter3 TEXT NOT NULL DEFAULT '*',
-    subject_filter TEXT NOT NULL DEFAULT '*',
+    type_filter TEXT NOT NULL,
+    type_filter1 TEXT NOT NULL,
+    type_filter2 TEXT NOT NULL,
+    type_filter3 TEXT NOT NULL,
+    subject_filter TEXT NOT NULL,
     delivery_targets JSONB NOT NULL,
     ttlMinutes INTEGER NOT NULL DEFAULT -1,
     uuid  UUID NOT NULL,
     expiry  TIMESTAMP WITHOUT TIME ZONE,
     created TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),
     updated TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),
-    UNIQUE (tenant,name)
+    UNIQUE (tenant,owner,name)
 );
 ALTER TABLE subscriptions OWNER TO tapis_ntf;
 COMMENT ON COLUMN subscriptions.seq_id IS 'Subscription sequence id';
 COMMENT ON COLUMN subscriptions.tenant IS 'Tenant name associated with the subscription';
-COMMENT ON COLUMN subscriptions.name IS 'Unique name for the subscription';
 COMMENT ON COLUMN subscriptions.owner IS 'User name of owner';
+COMMENT ON COLUMN subscriptions.name IS 'Name for the subscription. tenant+owner+name must be unique';
 COMMENT ON COLUMN subscriptions.enabled IS 'Indicates if subscription is currently active and available for use';
 COMMENT ON COLUMN subscriptions.created IS 'UTC time for when record was created';
 COMMENT ON COLUMN subscriptions.updated IS 'UTC time for when record was last updated';
@@ -144,12 +144,13 @@ CREATE TABLE notifications_tests
     seq_id SERIAL PRIMARY KEY,
     subscr_seq_id INTEGER REFERENCES subscriptions(seq_id) ON DELETE CASCADE,
     tenant TEXT NOT NULL,
-    subscr_name TEXT NOT NULL,
     owner  TEXT NOT NULL,
+    subscr_name TEXT NOT NULL,
     notification_count INTEGER NOT NULL DEFAULT 0,
     notifications JSONB NOT NULL,
     created TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),
-    updated TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc')
+    updated TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),
+    UNIQUE (tenant,owner,subscr_name)
 );
 ALTER TABLE notifications_tests OWNER TO tapis_ntf;
 

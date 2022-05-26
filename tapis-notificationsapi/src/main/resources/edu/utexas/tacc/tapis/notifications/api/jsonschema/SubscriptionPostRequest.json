@@ -4,7 +4,7 @@
   "description": "Schema for a request to create a subscription via POST",
 
   "type": "object",
-  "required": [ "name", "typeFilter", "deliveryMethods" ],
+  "required": [ "name", "typeFilter", "subjectFilter", "deliveryTargets" ],
   "additionalProperties": false,
   "properties": {
     "name": { "type": ["string", "null"], "minLength": 1, "maxLength": 80 },
@@ -12,7 +12,7 @@
     "owner": { "$ref": "resource:///edu/utexas/tacc/tapis/notifications/api/jsonschema/Definitions.json#/UserName" },
     "enabled": { "type": "boolean", "default": true },
     "typeFilter": { "type": "string", "minLength": 5},
-    "subjectFilter": { "type": ["string", "null"] },
+    "subjectFilter": { "type": "string", "minLength": 1 },
     "deliveryTargets": { "$ref": "resource:///edu/utexas/tacc/tapis/notifications/api/jsonschema/Definitions.json#/DeliveryTargetList" },
     "ttlMinutes": { "type":  "integer" },
     "tenant": { "type":  "string" },

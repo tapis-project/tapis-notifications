@@ -143,23 +143,11 @@ public final class IntegrationUtils
       String suffix = key + "_" + iStr;
       String subscrId = getSubscrName(key, i+1);
       // Constructor initializes all attributes
-      subscriptions[i] = new Subscription(-1, tenantName, subscrId, description1+suffix, owner1, isEnabledTrue,
+      subscriptions[i] = new Subscription(-1, tenantName, owner1, subscrId, description1+suffix, isEnabledTrue,
                                           typeFilter1, subjectFilter1, dmList1, ttl1, uuidNull,
                                           expiryNull, createdNull, updatedNull);
     }
     return subscriptions;
-  }
-
-  /**
-   * Create a Subscription in memory for use in testing the PUT operation.
-   * All updatable attributes are modified.
-   */
-  public static Subscription makePutSubscriptionFull(Subscription sub)
-  {
-    Subscription putSubscr = new Subscription(sub.getSeqId(), tenantName, sub.getName(), description2,
-                       sub.getOwner(), sub.isEnabled(), typeFilter2, subjectFilter2,
-                       dmList2, ttl2, null, null, null, null);
-    return putSubscr;
   }
 
   /**

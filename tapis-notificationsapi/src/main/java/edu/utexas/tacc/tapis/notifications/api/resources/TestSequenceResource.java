@@ -185,15 +185,15 @@ public class TestSequenceResource
    * getTestResults
    * Retrieve status and history for a test sequence.
    * Provided subscription must have been created using the beginTestSequence endpoint.
-   * @param subscriptionId - name of the subscription
+   * @param name - name of the subscription
    * @param securityContext - user identity
    * @return Response with test results
    */
   @GET
-  @Path("{subscriptionId}")
+  @Path("{name}")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  public Response getTestResults(@PathParam("subscriptionId") String subscriptionId,
+  public Response getTestResults(@PathParam("name") String name,
                                  @Context SecurityContext securityContext)
   {
     String opName = "getTestResults";
@@ -208,16 +208,16 @@ public class TestSequenceResource
 
     // Trace this request.
     if (_log.isTraceEnabled())
-      ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "subscriptionId="+subscriptionId);
+      ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "name="+name);
 
     TestSequence testSequence;
     try
     {
-      testSequence = notificationsService.getTestSequence(rUser, subscriptionId);
+      testSequence = notificationsService.getTestSequence(rUser, name);
     }
     catch (Exception e)
     {
-      String msg = ApiUtils.getMsgAuth("NTFAPI_TEST_GET_ERR", rUser, subscriptionId, e.getMessage());
+      String msg = ApiUtils.getMsgAuth("NTFAPI_TEST_GET_ERR", rUser, name, e.getMessage());
       _log.error(msg, e);
       return Response.status(TapisRestUtils.getStatus(e)).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
@@ -225,7 +225,7 @@ public class TestSequenceResource
     // Resource was not found.
     if (testSequence == null)
     {
-      String msg = ApiUtils.getMsgAuth("NTFAPI_NOT_FOUND", rUser, subscriptionId);
+      String msg = ApiUtils.getMsgAuth("NTFAPI_NOT_FOUND", rUser, name);
       _log.warn(msg);
       return Response.status(Status.NOT_FOUND).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
@@ -233,22 +233,22 @@ public class TestSequenceResource
     // ---------------------------- Success -------------------------------
     // Success means we retrieved the subscription information.
     RespTestSequence resp1 = new RespTestSequence(testSequence);
-    return createSuccessResponse(Status.OK, MsgUtils.getMsg("TAPIS_FOUND", "TestSequence", subscriptionId), resp1);
+    return createSuccessResponse(Status.OK, MsgUtils.getMsg("TAPIS_FOUND", "TestSequence", name), resp1);
   }
 
   /**
    * Delete a test sequence.
    * This removes all results associated with a subscription as well as the subscription
    * Provided subscription must have been created using the beginTestSequence endpoint.
-   * @param subscriptionId - name of the subscription
+   * @param name - name of the subscription
    * @param securityContext - user identity
    * @return - response with change count as the result
    */
   @DELETE
-  @Path("{subscriptionId}")
+  @Path("{name}")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  public Response deleteTestSequence(@PathParam("subscriptionId") String subscriptionId,
+  public Response deleteTestSequence(@PathParam("name") String name,
                                      @Context SecurityContext securityContext)
   {
     String opName = "deleteTestSequence";
@@ -263,24 +263,24 @@ public class TestSequenceResource
 
     // Trace this request.
     if (_log.isTraceEnabled())
-      ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "subscriptionId="+subscriptionId);
+      ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "name="+name);
 
     // ---------------------------- Make service call to delete the profile -------------------------------
     int changeCount;
     String msg;
     try
     {
-      changeCount = notificationsService.deleteTestSequence(rUser, subscriptionId);
+      changeCount = notificationsService.deleteTestSequence(rUser, name);
     }
     catch (NotAuthorizedException e)
     {
-      msg = ApiUtils.getMsgAuth("NTFAPI_SUBSCR_UNAUTH", rUser, subscriptionId, opName);
+      msg = ApiUtils.getMsgAuth("NTFAPI_SUBSCR_UNAUTH", rUser, rUser.getOboUserId(), name, opName);
       _log.warn(msg);
       return Response.status(Status.UNAUTHORIZED).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
     catch (Exception e)
     {
-      msg = ApiUtils.getMsgAuth("NTFAPI_TEST_ERR1", rUser, opName, subscriptionId, e.getMessage());
+      msg = ApiUtils.getMsgAuth("NTFAPI_TEST_ERR1", rUser, opName, name, e.getMessage());
       _log.error(msg, e);
       return Response.status(Status.INTERNAL_SERVER_ERROR).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
@@ -291,7 +291,7 @@ public class TestSequenceResource
     ResultChangeCount count = new ResultChangeCount();
     count.changes = changeCount;
     RespChangeCount resp1 = new RespChangeCount(count);
-    return createSuccessResponse(Status.OK, ApiUtils.getMsgAuth("NTFAPI_TEST_DELETE", rUser, subscriptionId), resp1);
+    return createSuccessResponse(Status.OK, ApiUtils.getMsgAuth("NTFAPI_TEST_DELETE", rUser, name), resp1);
   }
 
   /**
@@ -302,11 +302,11 @@ public class TestSequenceResource
    * @return basic response
    */
   @POST
-  @Path("callback/{subscriptionId}")
+  @Path("callback/{name}")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   @PermitAll
-  public Response recordTestNotification(@PathParam("subscriptionId") String subscriptionId,
+  public Response recordTestNotification(@PathParam("name") String name,
                                          InputStream payloadStream, @Context SecurityContext securityContext)
   {
     String opName = "recordTestNotification";
@@ -314,7 +314,7 @@ public class TestSequenceResource
     if (_log.isTraceEnabled())
     {
       String msg = ApiUtils.getMsg("NTFAPI_TRACE_REQUEST", "N/A", "N/A", "N/A", "N/A", className, opName,
-                                   _request.getRequestURL(), "subscriptionId="+subscriptionId);
+                                   _request.getRequestURL(), "name="+name);
       _log.trace(msg);
     }
     // ------------------------- Extract and validate payload -------------------------
@@ -353,21 +353,21 @@ public class TestSequenceResource
     // If req is null that is an unrecoverable error
     if (req == null)
     {
-      msg = ApiUtils.getMsg("NTFAPI_TEST_CB_REQ_NULL", subscriptionId);
+      msg = ApiUtils.getMsg("NTFAPI_TEST_CB_REQ_NULL", name);
       _log.error(msg);
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
     // If req.event is null that is an unrecoverable error
     if (req.event == null)
     {
-      msg = ApiUtils.getMsg("NTFAPI_TEST_EVENT_NULL", subscriptionId);
+      msg = ApiUtils.getMsg("NTFAPI_TEST_EVENT_NULL", name);
       _log.error(msg);
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
     // If deliveryTarget is null that is an unrecoverable error
     if (req.deliveryTarget == null)
     {
-      msg = ApiUtils.getMsg("NTFAPI_TEST_DM_NULL", subscriptionId);
+      msg = ApiUtils.getMsg("NTFAPI_TEST_DM_NULL", name);
       _log.error(msg);
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
@@ -380,7 +380,7 @@ public class TestSequenceResource
     try { notifUuid = UUID.fromString(notifUuidStr); }
     catch (Exception e)
     {
-      msg = ApiUtils.getMsg("NTFAPI_TEST_NOTIF_UUID_ERR", subscriptionId, notifUuidStr, e.getMessage());
+      msg = ApiUtils.getMsg("NTFAPI_TEST_NOTIF_UUID_ERR", name, notifUuidStr, e.getMessage());
       _log.error(msg);
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
@@ -390,7 +390,7 @@ public class TestSequenceResource
     try { notifCreated = TapisUtils.getUTCTimeFromString(notifCreatedStr).toInstant(ZoneOffset.UTC); }
     catch (Exception e)
     {
-      msg = ApiUtils.getMsg("NTFAPI_TEST_NOTIF_UUID_ERR", subscriptionId, notifUuidStr, e.getMessage());
+      msg = ApiUtils.getMsg("NTFAPI_TEST_NOTIF_UUID_ERR", name, notifUuidStr, e.getMessage());
       _log.error(msg);
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
@@ -408,14 +408,14 @@ public class TestSequenceResource
     // Tenant and user should both have values
     if (StringUtils.isBlank(tenant) || StringUtils.isBlank(user))
     {
-      msg = ApiUtils.getMsg("NTFAPI_TEST_USR_ERR", tenant, user, sourceStr, type, subject, time, subscriptionId);
+      msg = ApiUtils.getMsg("NTFAPI_TEST_USR_ERR", tenant, user, sourceStr, type, subject, time, name);
       _log.error(msg);
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
     // Validate the event type
     if (!Event.isValidType(type))
     {
-      msg = ApiUtils.getMsg("NTFAPI_TEST_EVENT_TYPE_ERR", tenant, user, sourceStr, type, subject, time, subscriptionId);
+      msg = ApiUtils.getMsg("NTFAPI_TEST_EVENT_TYPE_ERR", tenant, user, sourceStr, type, subject, time, name);
       _log.error(msg);
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
@@ -425,7 +425,7 @@ public class TestSequenceResource
     try { source = new URI(sourceStr); }
     catch (URISyntaxException e)
     {
-      msg = ApiUtils.getMsg("NTFAPI_TEST_EVENT_SOURCE_ERR", tenant, user, sourceStr, type, subject, time, subscriptionId, e.getMessage());
+      msg = ApiUtils.getMsg("NTFAPI_TEST_EVENT_SOURCE_ERR", tenant, user, sourceStr, type, subject, time, name, e.getMessage());
       _log.error(msg);
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
@@ -435,33 +435,35 @@ public class TestSequenceResource
     try { eventUuid = UUID.fromString(eventUuidStr); }
     catch (Exception e)
     {
-      msg = ApiUtils.getMsg("NTFAPI_TEST_EVENT_UUID_ERR", subscriptionId, eventUuidStr, e.getMessage());
+      msg = ApiUtils.getMsg("NTFAPI_TEST_EVENT_UUID_ERR", name, eventUuidStr, e.getMessage());
       _log.error(msg);
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
 
     // Create an Event from the request
-    Event event = new Event(tenant, user, source, type, subject, seriesId, time, eventUuid);
+    // TODO
+    String data = null;
+    Event event = new Event(tenant, user, source, type, subject, seriesId, time, data, eventUuid);
     // Create a notification from the request
-    Notification notification = new Notification(notifUuid, -1, tenant, subscriptionId, -1, eventUuid, event,
+    Notification notification = new Notification(notifUuid, -1, tenant, name, -1, eventUuid, event,
                                                  req.deliveryTarget, notifCreated);
 
     // ---------------------------- Make service call to record the event -------------------------------
     try
     {
-      notificationsService.recordTestNotification(tenant, user, subscriptionId, notification);
+      notificationsService.recordTestNotification(tenant, user, name, notification);
     }
     catch (IllegalStateException e)
     {
       // IllegalStateException means test sequence not found
-      msg = ApiUtils.getMsg("NTFAPI_TEST_RECORD_NO_TEST", tenant, user, subscriptionId, event.getType());
+      msg = ApiUtils.getMsg("NTFAPI_TEST_RECORD_NO_TEST", tenant, user, name, event.getType());
       _log.warn(msg);
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
     catch (Exception e)
     {
       msg = ApiUtils.getMsg("NTFAPI_TEST_CB_ERR", tenant, user, sourceStr, type, subject, seriesId, time,
-                            subscriptionId, e.getMessage());
+                            name, e.getMessage());
       _log.error(msg);
       return Response.status(Status.INTERNAL_SERVER_ERROR).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
@@ -469,7 +471,7 @@ public class TestSequenceResource
     // ---------------------------- Success -------------------------------
     // Success means the object was created.
     RespBasic resp1 = new RespBasic();
-    msg = ApiUtils.getMsg("NTFAPI_TEST_RECORD", tenant, user, subscriptionId, event.getType());
+    msg = ApiUtils.getMsg("NTFAPI_TEST_RECORD", tenant, user, name, event.getType());
     return Response.status(Status.OK).entity(TapisRestUtils.createSuccessResponse(msg, PRETTY, resp1)).build();
   }
 

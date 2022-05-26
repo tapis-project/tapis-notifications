@@ -48,7 +48,6 @@ public final class Subscription
   public static final String[] EMPTY_STR_ARRAY = new String[0];
   public static final String DEFAULT_OWNER = APIUSERID_VAR;
   public static final boolean DEFAULT_ENABLED = true;
-  public static final String DEFAULT_SUBJECT_FILTER = "*";
   private static final String EMPTY_JSON_OBJ = "{}";
   public static final JsonElement DEFAULT_DELIVERY_TARGETS = TapisGsonUtils.getGson().fromJson("[]", JsonElement.class);
   public static final int DEFAULT_TTL = 7*24*60; // One week in minutes
@@ -95,9 +94,9 @@ public final class Subscription
   // ************************************************************************
   private int seqId;
   private String tenant;
+  private String owner;
   private String name;
   private String description;
-  private String owner;
   private boolean enabled;
   private String typeFilter;
   private String typeFilter1;
@@ -118,10 +117,10 @@ public final class Subscription
   /**
    * Constructor using only required attributes.
    */
-  public Subscription(String tf, List<DeliveryTarget> dmList1)
+  public Subscription(String tf, String sf, List<DeliveryTarget> dmList1)
   {
     setTypeFilter(tf);
-    subjectFilter = DEFAULT_SUBJECT_FILTER;
+    setSubjectFilter(sf);
     deliveryTargets = dmList1;
   }
 
@@ -129,15 +128,15 @@ public final class Subscription
    * Constructor using non-updatable attributes.
    * Rather than exposing otherwise unnecessary setters we use a special constructor.
    */
-  public Subscription(Subscription s, String tenant1, String name1)
+  public Subscription(Subscription s, String tenant1, String owner1, String name1)
   {
-    if (s==null || StringUtils.isBlank(tenant1) || StringUtils.isBlank(name1))
+    if (s==null || StringUtils.isBlank(tenant1) || StringUtils.isBlank(owner1) || StringUtils.isBlank(name1))
       throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT"));
     seqId = s.getSeqId();
     tenant = tenant1;
+    owner = owner1;
     name = name1;
     description = s.getDescription();
-    owner = s.getOwner();
     enabled = s.isEnabled();
     setTypeFilter(s.getTypeFilter());
     subjectFilter = s.getSubjectFilter();
@@ -153,15 +152,15 @@ public final class Subscription
    * Constructor for jOOQ with input parameter matching order of columns in DB
    * Also useful for testing
    */
-  public Subscription(int seqId1, String tenant1, String id1, String description1, String owner1, boolean enabled1,
+  public Subscription(int seqId1, String tenant1, String owner1, String name1, String description1, boolean enabled1,
                       String tf, String subjectFilter1, List<DeliveryTarget> dmList1, int ttl1, UUID uuid1,
                       Instant expiry1, Instant created1, Instant updated1)
   {
     seqId = seqId1;
     tenant = tenant1;
-    name = id1;
-    description = description1;
     owner = owner1;
+    name = name1;
+    description = description1;
     enabled = enabled1;
     setTypeFilter(tf);
     subjectFilter = (subjectFilter1 == null) ? "*" : subjectFilter1;
@@ -182,9 +181,9 @@ public final class Subscription
     if (s==null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT"));
     seqId = s.getSeqId();
     tenant = s.getTenant();
+    owner = s.getOwner();
     name = s.getName();
     description = s.getDescription();
-    owner = s.getOwner();
     enabled = s.isEnabled();
     setTypeFilter(s.getTypeFilter());
     subjectFilter = s.getSubjectFilter();
@@ -211,15 +210,6 @@ public final class Subscription
   }
 
   /**
-   * Fill in defaults
-   */
-  public void setDefaults()
-  {
-    if (StringUtils.isBlank(subjectFilter)) setSubjectFilter(DEFAULT_SUBJECT_FILTER);
-    if (StringUtils.isBlank(owner)) setOwner(DEFAULT_OWNER);
-  }
-
-  /**
    *  Check constraints on attributes.
    *  Make checks that do not require a dao or service call.
    *  Check only internal consistency and restrictions.
@@ -232,7 +222,6 @@ public final class Subscription
     checkAttrRequired(errMessages);
     checkAttrValidity(errMessages);
     checkAttrStringLengths(errMessages);
-    checkAttrMisc(errMessages);
     return errMessages;
   }
 
@@ -260,13 +249,13 @@ public final class Subscription
 
   public String getTenant() { return tenant; }
 
+  public String getOwner() { return owner; }
+  public void setOwner(String s) { owner = s; }
+
   public String getName() { return name; }
 
   public String getDescription() { return description; }
   public void setDescription(String d) { description = d; }
-
-  public String getOwner() { return owner; }
-  public void setOwner(String s) { owner = s; }
 
   public boolean isEnabled() { return enabled; }
   public void setEnabled(boolean b) { enabled = b; }
@@ -328,13 +317,15 @@ public final class Subscription
 
   /**
    * Check for missing required attributes
-   *   Id, typeFilter and deliveryTargets are required
+   *   name, typeFilter, subjectFilter and deliveryTargets are required
    *   deliveryTargets must have at least one entry
    */
   private void checkAttrRequired(List<String> errMessages)
   {
+    if (StringUtils.isBlank(owner)) errMessages.add(LibUtils.getMsg(CREATE_MISSING_ATTR, OWNER_FIELD));
     if (StringUtils.isBlank(name)) errMessages.add(LibUtils.getMsg(CREATE_MISSING_ATTR, NAME_FIELD));
     if (StringUtils.isBlank(typeFilter)) errMessages.add(LibUtils.getMsg(CREATE_MISSING_ATTR, TYPE_FILTER_FIELD));
+    if (StringUtils.isBlank(subjectFilter)) errMessages.add(LibUtils.getMsg(CREATE_MISSING_ATTR, SUBJECT_FILTER_FIELD));
     if (deliveryTargets == null) errMessages.add(LibUtils.getMsg(CREATE_MISSING_ATTR, DELIVERY_TARGETS_FIELD));
     if (deliveryTargets != null && deliveryTargets.isEmpty()) errMessages.add(LibUtils.getMsg("NTFLIB_NO_DT"));
   }
@@ -346,15 +337,20 @@ public final class Subscription
   private void checkAttrValidity(List<String> errMessages)
   {
     // Check that id is not empty and contains a valid pattern
-    if (!StringUtils.isBlank(name) && !isValidId(name)) errMessages.add(LibUtils.getMsg(INVALID_STR_ATTR, NAME_FIELD, name));
+    if (!StringUtils.isBlank(name) && !isValidName(name)) errMessages.add(LibUtils.getMsg(INVALID_STR_ATTR, NAME_FIELD, name));
   }
 
   /**
    * Check for attribute strings that exceed limits
-   *   id, description, owner
+   *   owner, name, description
    */
   private void checkAttrStringLengths(List<String> errMessages)
   {
+    if (!StringUtils.isBlank(owner) && owner.length() > MAX_USERNAME_LEN)
+    {
+      errMessages.add(LibUtils.getMsg(TOO_LONG_ATTR, OWNER_FIELD, MAX_USERNAME_LEN));
+    }
+
     if (!StringUtils.isBlank(name) && name.length() > MAX_ID_LEN)
     {
       errMessages.add(LibUtils.getMsg(TOO_LONG_ATTR, NAME_FIELD, MAX_ID_LEN));
@@ -364,58 +360,12 @@ public final class Subscription
     {
       errMessages.add(LibUtils.getMsg(TOO_LONG_ATTR, DESCRIPTION_FIELD, MAX_DESCRIPTION_LEN));
     }
-
-    if (!StringUtils.isBlank(owner) && owner.length() > MAX_USERNAME_LEN)
-    {
-      errMessages.add(LibUtils.getMsg(TOO_LONG_ATTR, OWNER_FIELD, MAX_USERNAME_LEN));
-    }
   }
 
-  /**
-   * Check misc attribute restrictions
-   *   TODO/TBD
-   */
-  private void checkAttrMisc(List<String> errMessages)
-  {
-//    // If containerized is true then containerImage must be set
-//    if (containerized && StringUtils.isBlank(containerImage))
-//    {
-//      errMessages.add(LibUtils.getMsg("APPLIB_CONTAINERIZED_NOIMAGE"));
-//    }
-//
-//    // If containerized and SINGULARITY then RuntimeOptions must be provided and include one and only one of
-//    //   SINGULARITY_START, SINGULARITY_RUN
-//    if (containerized && Runtime.SINGULARITY.equals(runtime))
-//    {
-//      // If options list contains both or neither of START and RUN then reject.
-//      if ( runtimeOptions == null ||
-//              (runtimeOptions.contains(RuntimeOption.SINGULARITY_RUN) && runtimeOptions.contains(RuntimeOption.SINGULARITY_START))
-//              ||
-//              !(runtimeOptions.contains(RuntimeOption.SINGULARITY_RUN) || runtimeOptions.contains(RuntimeOption.SINGULARITY_START)))
-//      {
-//        errMessages.add(LibUtils.getMsg("APPLIB_CONTAINERIZED_SING_OPT", SING_OPT_LIST));
-//      }
-//    }
-//
-//    // If dynamicExecSystem then execSystemConstraints must be given
-//    if (dynamicExecSystem)
-//    {
-//      if (execSystemConstraints == null || execSystemConstraints.length == 0)
-//      {
-//        errMessages.add(LibUtils.getMsg("APPLIB_DYNAMIC_NOCONSTRAINTS"));
-//      }
-//    }
-//
-//    // If archiveSystem given then archive dir must be given
-//    if (!StringUtils.isBlank(archiveSystemId) && StringUtils.isBlank(archiveSystemDir))
-//    {
-//      errMessages.add(LibUtils.getMsg("APPLIB_ARCHIVE_NODIR"));
-//    }
-  }
 
   /**
-   * Validate an ID string.
+   * Validate a name string.
    * Must start alphabetic and contain only alphanumeric and 4 special characters: - . _ ~
    */
-  private boolean isValidId(String id) { return id.matches(PATTERN_VALID_ID); }
+  private boolean isValidName(String name) { return name.matches(PATTERN_VALID_ID); }
 }

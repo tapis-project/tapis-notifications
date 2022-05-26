@@ -8,10 +8,10 @@ import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.PATCH;
 import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -56,15 +55,17 @@ import edu.utexas.tacc.tapis.sharedapi.security.AuthenticatedUser;
 import edu.utexas.tacc.tapis.sharedapi.security.ResourceRequestUser;
 import edu.utexas.tacc.tapis.sharedapi.utils.TapisRestUtils;
 import edu.utexas.tacc.tapis.notifications.api.requests.ReqPostSubscription;
-import edu.utexas.tacc.tapis.notifications.api.requests.ReqPutSubscription;
 import edu.utexas.tacc.tapis.notifications.api.responses.RespSubscription;
 import edu.utexas.tacc.tapis.notifications.api.responses.RespSubscriptions;
 import edu.utexas.tacc.tapis.notifications.api.utils.ApiUtils;
 import edu.utexas.tacc.tapis.notifications.model.PatchSubscription;
 import edu.utexas.tacc.tapis.notifications.model.Subscription;
 import edu.utexas.tacc.tapis.notifications.service.NotificationsService;
+
+import static edu.utexas.tacc.tapis.notifications.model.Subscription.DEFAULT_OWNER;
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.NAME_FIELD;
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.OWNER_FIELD;
+import static edu.utexas.tacc.tapis.notifications.model.Subscription.SUBJECT_FILTER_FIELD;
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.TYPE_FILTER_FIELD;
 
 /*
@@ -86,8 +87,7 @@ public class SubscriptionResource
 
   // Json schema resource files.
   private static final String FILE_SUBSCR_POST_REQUEST = "/edu/utexas/tacc/tapis/notifications/api/jsonschema/SubscriptionPostRequest.json";
-  private static final String FILE_SUBSCR_PUT_REQUEST = "/edu/utexas/tacc/tapis/notifications/api/jsonschema/SubscriptionPutRequest.json";
-  private static final String FILE_SUBSCR_UPDATE_REQUEST = "/edu/utexas/tacc/tapis/notifications/api/jsonschema/SubscriptionPatchRequest.json";
+  private static final String FILE_SUBSCR_PATCH_REQUEST = "/edu/utexas/tacc/tapis/notifications/api/jsonschema/SubscriptionPatchRequest.json";
   private static final String FILE_SUBSCR_SEARCH_REQUEST = "/edu/utexas/tacc/tapis/notifications/api/jsonschema/SubscriptionSearchRequest.json";
 
   // Message keys
@@ -108,7 +108,6 @@ public class SubscriptionResource
   // Operation names
   private static final String OP_ENABLE = "enableSubscription";
   private static final String OP_DISABLE = "disableSubscription";
-  private static final String OP_CHANGEOWNER = "changeSubscriptionOwner";
   private static final String OP_UPDATE_TTL = "updateTTL";
   private static final String OP_DELETE = "deleteSubscription";
 
@@ -116,7 +115,8 @@ public class SubscriptionResource
   private static final boolean PRETTY = true;
 
   // Top level summary attributes to be included by default in some cases.
-  public static final List<String> SUMMARY_ATTRS = new ArrayList<>(List.of(NAME_FIELD, OWNER_FIELD, TYPE_FILTER_FIELD));
+  public static final List<String> SUMMARY_ATTRS =
+          new ArrayList<>(List.of(NAME_FIELD, OWNER_FIELD, TYPE_FILTER_FIELD, SUBJECT_FILTER_FIELD));
 
   // ************************************************************************
   // *********************** Fields *****************************************
@@ -221,43 +221,43 @@ public class SubscriptionResource
     }
 
     // Create a subscription from the request
-    Subscription subscription = createSubscriptionFromPostRequest(rUser.getOboTenantId(), req, rawJson);
+    Subscription subscription = createSubscriptionFromPostRequest(rUser.getOboTenantId(), req);
 
     // So far no need to scrub out secrets, so scrubbed and raw are the same.
     String scrubbedJson = rawJson;
     if (_log.isTraceEnabled()) _log.trace(ApiUtils.getMsgAuth("NTFAPI_CREATE_TRACE", rUser, scrubbedJson));
 
-    // Fill in defaults and check constraints on Subscription attributes
-    subscription.setDefaults();
+    // Check constraints on Subscription attributes
     resp = validateSubscription(subscription, rUser);
     if (resp != null) return resp;
 
     // ---------------------------- Make service call to create the subscription -------------------------------
-    String subscriptionId = subscription.getName();
+    String name = subscription.getName();
+    String owner = subscription.getOwner();
     try
     {
-      subscriptionId = notificationsService.createSubscription(rUser, subscription, scrubbedJson);
+      name = notificationsService.createSubscription(rUser, subscription, scrubbedJson);
     }
     catch (IllegalStateException e)
     {
       if (e.getMessage().contains("NTFLIB_SUBSCR_EXISTS"))
       {
         // IllegalStateException with msg containing SUBSCR_EXISTS indicates object exists - return 409 - Conflict
-        msg = ApiUtils.getMsgAuth("NTFAPI_SUBSCR_EXISTS", rUser, subscriptionId);
+        msg = ApiUtils.getMsgAuth("NTFAPI_SUBSCR_EXISTS", rUser, owner, name);
         _log.warn(msg);
         return Response.status(Status.CONFLICT).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
       }
       else if (e.getMessage().contains(LIB_UNAUTH))
       {
         // IllegalStateException with msg containing NTF_UNAUTH indicates operation not authorized for apiUser - return 401
-        msg = ApiUtils.getMsgAuth(API_UNAUTH, rUser, subscriptionId, opName);
+        msg = ApiUtils.getMsgAuth(API_UNAUTH, rUser, owner, name, opName);
         _log.warn(msg);
         return Response.status(Status.UNAUTHORIZED).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
       }
       else
       {
         // IllegalStateException indicates an Invalid Subscription was passed in
-        msg = ApiUtils.getMsgAuth(CREATE_ERR, rUser, subscriptionId, e.getMessage());
+        msg = ApiUtils.getMsgAuth(CREATE_ERR, rUser, name, e.getMessage());
         _log.error(msg);
         return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
       }
@@ -265,13 +265,13 @@ public class SubscriptionResource
     catch (IllegalArgumentException e)
     {
       // IllegalArgumentException indicates somehow a bad argument made it this far
-      msg = ApiUtils.getMsgAuth(CREATE_ERR, rUser, subscriptionId, e.getMessage());
+      msg = ApiUtils.getMsgAuth(CREATE_ERR, rUser, name, e.getMessage());
       _log.error(msg);
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
     catch (Exception e)
     {
-      msg = ApiUtils.getMsgAuth(CREATE_ERR, rUser, subscriptionId, e.getMessage());
+      msg = ApiUtils.getMsgAuth(CREATE_ERR, rUser, name, e.getMessage());
       _log.error(msg, e);
       return Response.status(Status.INTERNAL_SERVER_ERROR).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
@@ -279,25 +279,27 @@ public class SubscriptionResource
     // ---------------------------- Success -------------------------------
     // Success means the object was created.
     ResultResourceUrl respUrl = new ResultResourceUrl();
-    respUrl.url = _request.getRequestURL().toString() + "/" + subscriptionId;
+    respUrl.url = _request.getRequestURL().toString() + "/" + name;
     RespResourceUrl resp1 = new RespResourceUrl(respUrl);
-    return createSuccessResponse(Status.CREATED, ApiUtils.getMsgAuth("NTFAPI_SUBSCR_CREATED", rUser, subscriptionId), resp1);
+    return createSuccessResponse(Status.CREATED, ApiUtils.getMsgAuth("NTFAPI_SUBSCR_CREATED", rUser, owner, name), resp1);
   }
 
   /**
    * Update selected attributes of a subscription
-   * @param subscriptionId - id of the subscription
+   * @param name name of the subscription
+   * @param owner subscription owner
    * @param payloadStream - request body
    * @param securityContext - user identity
    * @return response containing reference to updated object
    */
   @PATCH
-  @Path("{subscriptionId}")
+  @Path("{name}")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  public Response patchSubscription(@PathParam("subscriptionId") String subscriptionId,
-                           InputStream payloadStream,
-                           @Context SecurityContext securityContext)
+  public Response patchSubscription(@PathParam("name") String name,
+                                    @QueryParam("owner") String owner,
+                                    InputStream payloadStream,
+                                    @Context SecurityContext securityContext)
   {
     String opName = "patchSubscription";
     // ------------------------- Retrieve and validate thread context -------------------------
@@ -312,7 +314,7 @@ public class SubscriptionResource
 
     // Trace this request.
     if (_log.isTraceEnabled())
-      ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "subscriptionId="+subscriptionId);
+      ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "name="+name, "owner="+owner);
 
     // ------------------------- Extract and validate payload -------------------------
     // Read the payload into a string.
@@ -326,7 +328,7 @@ public class SubscriptionResource
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
     // Create validator specification and validate the json against the schema
-    JsonValidatorSpec spec = new JsonValidatorSpec(rawJson, FILE_SUBSCR_UPDATE_REQUEST);
+    JsonValidatorSpec spec = new JsonValidatorSpec(rawJson, FILE_SUBSCR_PATCH_REQUEST);
     try { JsonValidator.validate(spec); }
     catch (TapisJSONException e)
     {
@@ -353,7 +355,7 @@ public class SubscriptionResource
     // Validate the subscription type filter
     if (!Subscription.isValidTypeFilter(patchSubscription.getTypeFilter()))
     {
-      msg = ApiUtils.getMsgAuth("NTFAPI_SUBSCR_TYPE_ERR", rUser, subscriptionId, patchSubscription.getTypeFilter());
+      msg = ApiUtils.getMsgAuth("NTFAPI_SUBSCR_TYPE_ERR", rUser, name, patchSubscription.getTypeFilter());
       _log.error(msg);
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
@@ -361,14 +363,17 @@ public class SubscriptionResource
     // No attributes are required. Constraints validated and defaults filled in on server side.
     // No secrets in PatchSubscription so no need to scrub
 
+    // For owner use oboUser or string specified in optional query parameter
+    String subscrOwner =  StringUtils.isBlank(owner) ? rUser.getOboUserId() : owner;
+
     // ---------------------------- Make service call to update the subscription -------------------------------
     try
     {
-      notificationsService.patchSubscription(rUser, subscriptionId, patchSubscription, rawJson);
+      notificationsService.patchSubscription(rUser, subscrOwner, name, patchSubscription, rawJson);
     }
     catch (NotFoundException e)
     {
-      msg = ApiUtils.getMsgAuth(NOT_FOUND, rUser, subscriptionId);
+      msg = ApiUtils.getMsgAuth(NOT_FOUND, rUser, subscrOwner, name);
       _log.warn(msg);
       return Response.status(Status.NOT_FOUND).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
@@ -377,14 +382,14 @@ public class SubscriptionResource
       if (e.getMessage().contains(LIB_UNAUTH))
       {
         // IllegalStateException with msg containing NTF_UNAUTH indicates operation not authorized for apiUser - return 401
-        msg = ApiUtils.getMsgAuth(API_UNAUTH, rUser, subscriptionId, opName);
+        msg = ApiUtils.getMsgAuth(API_UNAUTH, rUser, subscrOwner, name, opName);
         _log.warn(msg);
         return Response.status(Status.UNAUTHORIZED).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
       }
       else
       {
         // IllegalStateException indicates an Invalid PatchSubscription was passed in
-        msg = ApiUtils.getMsgAuth(UPDATE_ERR, rUser, subscriptionId, opName, e.getMessage());
+        msg = ApiUtils.getMsgAuth(UPDATE_ERR, rUser, subscrOwner, name, opName, e.getMessage());
         _log.error(msg);
         return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
       }
@@ -392,13 +397,13 @@ public class SubscriptionResource
     catch (IllegalArgumentException e)
     {
       // IllegalArgumentException indicates somehow a bad argument made it this far
-      msg = ApiUtils.getMsgAuth(UPDATE_ERR, rUser, subscriptionId, opName, e.getMessage());
+      msg = ApiUtils.getMsgAuth(UPDATE_ERR, rUser, subscrOwner, name, opName, e.getMessage());
       _log.error(msg);
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
     catch (Exception e)
     {
-      msg = ApiUtils.getMsgAuth(UPDATE_ERR, rUser, subscriptionId, opName, e.getMessage());
+      msg = ApiUtils.getMsgAuth(UPDATE_ERR, rUser, subscrOwner, name, opName, e.getMessage());
       _log.error(msg, e);
       return Response.status(Status.INTERNAL_SERVER_ERROR).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
@@ -408,243 +413,97 @@ public class SubscriptionResource
     ResultResourceUrl respUrl = new ResultResourceUrl();
     respUrl.url = _request.getRequestURL().toString();
     RespResourceUrl resp1 = new RespResourceUrl(respUrl);
-    return createSuccessResponse(Status.OK, ApiUtils.getMsgAuth(UPDATED, rUser, subscriptionId, opName), resp1);
-  }
-
-  /**
-   * Update all updatable attributes of a subscription
-   * @param subscriptionId - id of the subscription
-   * @param payloadStream - request body
-   * @param securityContext - user identity
-   * @return response containing reference to updated object
-   */
-  @PUT
-  @Path("{subscriptionId}")
-  @Consumes(MediaType.APPLICATION_JSON)
-  @Produces(MediaType.APPLICATION_JSON)
-  public Response putSubscription(@PathParam("subscriptionId") String subscriptionId,
-                         InputStream payloadStream,
-                         @Context SecurityContext securityContext)
-  {
-    String opName = "putSubscription";
-    // ------------------------- Retrieve and validate thread context -------------------------
-    TapisThreadContext threadContext = TapisThreadLocal.tapisThreadContext.get();
-    // Check that we have all we need from the context, the jwtTenantId and jwtUserId
-    // Utility method returns null if all OK and appropriate error response if there was a problem.
-    Response resp = ApiUtils.checkContext(threadContext, PRETTY);
-    if (resp != null) return resp;
-
-    // Create a user that collects together tenant, user and request information needed by the service call
-    ResourceRequestUser rUser = new ResourceRequestUser((AuthenticatedUser) securityContext.getUserPrincipal());
-
-    // Trace this request.
-    if (_log.isTraceEnabled())
-      ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "subscriptionId="+subscriptionId);
-
-    // ------------------------- Extract and validate payload -------------------------
-    // Read the payload into a string.
-    String rawJson;
-    String msg;
-    try { rawJson = IOUtils.toString(payloadStream, StandardCharsets.UTF_8); }
-    catch (Exception e)
-    {
-      msg = MsgUtils.getMsg(INVALID_JSON_INPUT, opName , e.getMessage());
-      _log.error(msg, e);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
-    }
-    // Create validator specification and validate the json against the schema
-    // NOTE that CREATE and PUT are very similar schemas.
-    // Only difference should be for PUT there are no required properties.
-    JsonValidatorSpec spec = new JsonValidatorSpec(rawJson, FILE_SUBSCR_PUT_REQUEST);
-    try { JsonValidator.validate(spec); }
-    catch (TapisJSONException e)
-    {
-      msg = MsgUtils.getMsg(JSON_VALIDATION_ERR, e.getMessage());
-      _log.error(msg, e);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
-    }
-
-    // ------------------------- Create a subscription from the json and validate constraints -------------------------
-    ReqPutSubscription req;
-    try { req = TapisGsonUtils.getGson().fromJson(rawJson, ReqPutSubscription.class); }
-    catch (JsonSyntaxException e)
-    {
-      msg = MsgUtils.getMsg(INVALID_JSON_INPUT, opName, e.getMessage());
-      _log.error(msg, e);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
-    }
-    // If req is null that is an unrecoverable error
-    if (req == null)
-    {
-      msg = ApiUtils.getMsgAuth("NTFAPI_SUBSCR_UPDATE_ERROR", rUser, subscriptionId, opName, "ReqPutSubscription == null");
-      _log.error(msg);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
-    }
-
-    // Validate the subscription type filter
-    if (!Subscription.isValidTypeFilter(req.typeFilter))
-    {
-      msg = ApiUtils.getMsgAuth("NTFAPI_SUBSCR_TYPE_ERR", rUser, subscriptionId, req.typeFilter);
-      _log.error(msg);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
-    }
-
-    // Create a subscription from the request
-    Subscription putSubscription = createSubscriptionFromPutRequest(rUser.getOboTenantId(), subscriptionId, req, rawJson);
-
-    if (_log.isTraceEnabled()) _log.trace(ApiUtils.getMsgAuth("NTFAPI_PUT_TRACE", rUser, rawJson));
-
-    // Fill in defaults and check constraints on Subscription attributes
-    // NOTE: We do not have all the Tapis Subscription attributes yet so we cannot validate it
-    putSubscription.setDefaults();
-
-    // ---------------------------- Make service call to update the subscription -------------------------------
-    try
-    {
-       notificationsService.putSubscription(rUser, putSubscription, rawJson);
-    }
-    catch (NotFoundException e)
-    {
-      msg = ApiUtils.getMsgAuth(NOT_FOUND, rUser, subscriptionId);
-      _log.warn(msg);
-      return Response.status(Status.NOT_FOUND).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
-    }
-    catch (IllegalStateException e)
-    {
-      if (e.getMessage().contains(LIB_UNAUTH))
-      {
-        // IllegalStateException with msg containing NTF_UNAUTH indicates operation not authorized for apiUser - return 401
-        msg = ApiUtils.getMsgAuth(API_UNAUTH, rUser, subscriptionId, opName);
-        _log.warn(msg);
-        return Response.status(Status.UNAUTHORIZED).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
-      }
-      else
-      {
-        // IllegalStateException indicates an Invalid PutSubscription was passed in
-        msg = ApiUtils.getMsgAuth(UPDATE_ERR, rUser, subscriptionId, opName, e.getMessage());
-        _log.error(msg);
-        return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
-      }
-    }
-    catch (IllegalArgumentException e)
-    {
-      // IllegalArgumentException indicates somehow a bad argument made it this far
-      msg = ApiUtils.getMsgAuth(UPDATE_ERR, rUser, subscriptionId, opName, e.getMessage());
-      _log.error(msg);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
-    }
-    catch (Exception e)
-    {
-      msg = ApiUtils.getMsgAuth(UPDATE_ERR, rUser, subscriptionId, opName, e.getMessage());
-      _log.error(msg, e);
-      return Response.status(Status.INTERNAL_SERVER_ERROR).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
-    }
-
-    // ---------------------------- Success -------------------------------
-    // Success means updates were applied
-    ResultResourceUrl respUrl = new ResultResourceUrl();
-    respUrl.url = _request.getRequestURL().toString();
-    RespResourceUrl resp1 = new RespResourceUrl(respUrl);
-    return createSuccessResponse(Status.OK, ApiUtils.getMsgAuth(UPDATED, rUser, subscriptionId, opName), resp1);
+    return createSuccessResponse(Status.OK, ApiUtils.getMsgAuth(UPDATED, rUser, subscrOwner, name, opName), resp1);
   }
 
   /**
    * Enable a subscription
-   * @param subscriptionId - name of the subscription
+   * @param name - name of the subscription
+   * @param owner subscription owner
    * @param securityContext - user identity
    * @return - response with change count as the result
    */
   @POST
-  @Path("{subscriptionId}/enable")
+  @Path("{name}/enable")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  public Response enableSubscription(@PathParam("subscriptionId") String subscriptionId,
-                            @Context SecurityContext securityContext)
+  public Response enableSubscription(@PathParam("name") String name,
+                                     @QueryParam("owner") String owner,
+                                     @Context SecurityContext securityContext)
   {
-    return postSubscriptionSingleUpdate(OP_ENABLE, subscriptionId, null, securityContext);
+    return postSubscriptionSingleUpdate(OP_ENABLE, owner, name, null, securityContext);
   }
 
   /**
    * Disable a subscription
-   * @param subscriptionId - name of the subscription
+   * @param name - name of the subscription
+   * @param owner subscription owner
    * @param securityContext - user identity
    * @return - response with change count as the result
    */
   @POST
-  @Path("{subscriptionId}/disable")
+  @Path("{name}/disable")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  public Response disableSubscription(@PathParam("subscriptionId") String subscriptionId,
-                             @Context SecurityContext securityContext)
+  public Response disableSubscription(@PathParam("name") String name,
+                                      @QueryParam("owner") String owner,
+                                      @Context SecurityContext securityContext)
   {
-    return postSubscriptionSingleUpdate(OP_DISABLE, subscriptionId, null, securityContext);
+    return postSubscriptionSingleUpdate(OP_DISABLE, owner, name, null, securityContext);
   }
 
   /**
    * Delete a subscription
-   * @param subscriptionId - name of the subscription
+   * @param name - name of the subscription
+   * @param owner subscription owner
    * @param securityContext - user identity
    * @return - response with change count as the result
    */
   @DELETE
-  @Path("{subscriptionId}")
+  @Path("{name}")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  public Response deleteSubscription(@PathParam("subscriptionId") String subscriptionId,
-                            @Context SecurityContext securityContext)
+  public Response deleteSubscription(@PathParam("name") String name,
+                                     @QueryParam("owner") String owner,
+                                     @Context SecurityContext securityContext)
   {
-    return postSubscriptionSingleUpdate(OP_DELETE, subscriptionId, null, securityContext);
-  }
-
-  /**
-   * Change owner of a subscription
-   * @param subscriptionId - name of the subscription
-   * @param userName - name of the new owner
-   * @param securityContext - user identity
-   * @return - response with change count as the result
-   */
-  @POST
-  @Path("{subscriptionId}/changeOwner/{userName}")
-  @Consumes(MediaType.APPLICATION_JSON)
-  @Produces(MediaType.APPLICATION_JSON)
-  public Response changeSubscriptionOwner(@PathParam("subscriptionId") String subscriptionId,
-                                 @PathParam("userName") String userName,
-                                 @Context SecurityContext securityContext)
-  {
-    return postSubscriptionSingleUpdate(OP_CHANGEOWNER, subscriptionId, userName, securityContext);
+    return postSubscriptionSingleUpdate(OP_DELETE, owner, name, null, securityContext);
   }
 
   /**
    * Update TTL for a subscription
-   * @param subscriptionId - name of the subscription
-   * @param ttl - new value for TTL.
+   * @param name - name of the subscription
+   * @param owner subscription owner
    * @param securityContext - user identity
    * @return - response with change count as the result
    */
   @POST
-  @Path("{subscriptionId}/updateTTL/{ttl}")
+  @Path("{name}/updateTTL/{ttlMinutes}")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  public Response updateTTL(@PathParam("subscriptionId") String subscriptionId,
-                                          @PathParam("ttl") String ttl,
-                                          @Context SecurityContext securityContext)
+  public Response updateTTL(@PathParam("name") String name,
+                            @PathParam("ttlMinutes") String ttlMinutes,
+                            @QueryParam("owner") String owner,
+                            @Context SecurityContext securityContext)
   {
-    return postSubscriptionSingleUpdate(OP_UPDATE_TTL, subscriptionId, ttl, securityContext);
+    return postSubscriptionSingleUpdate(OP_UPDATE_TTL, owner, name, ttlMinutes, securityContext);
   }
 
   /**
    * getSubscription
    * Retrieve a subscription
-   * @param subscriptionId - name of the subscription
+   * @param name - name of the subscription
+   * @param owner subscription owner
    * @param securityContext - user identity
    * @return Response with subscription object as the result
    */
   @GET
-  @Path("{subscriptionId}")
+  @Path("{name}")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  public Response getSubscription(@PathParam("subscriptionId") String subscriptionId,
-                         @Context SecurityContext securityContext)
+  public Response getSubscription(@PathParam("name") String name,
+                                  @QueryParam("owner") String owner,
+                                  @Context SecurityContext securityContext)
   {
     String opName = "getSubscription";
     // Check that we have all we need from the context, the jwtTenantId and jwtUserId
@@ -658,18 +517,21 @@ public class SubscriptionResource
 
     // Trace this request.
     if (_log.isTraceEnabled())
-      ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "subscriptionId="+subscriptionId);
+      ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "name="+name, "owner="+owner);
 
     List<String> selectList = threadContext.getSearchParameters().getSelectList();
+
+    // For owner use oboUser or string specified in optional query parameter
+    String subscrOwner =  StringUtils.isBlank(owner) ? rUser.getOboUserId() : owner;
 
     Subscription subscription;
     try
     {
-      subscription = notificationsService.getSubscription(rUser, subscriptionId);
+      subscription = notificationsService.getSubscription(rUser, subscrOwner, name);
     }
     catch (Exception e)
     {
-      String msg = ApiUtils.getMsgAuth("NTFAPI_GET_NAME_ERROR", rUser, subscriptionId, e.getMessage());
+      String msg = ApiUtils.getMsgAuth("NTFAPI_GET_NAME_ERROR", rUser, subscrOwner, name, e.getMessage());
       _log.error(msg, e);
       return Response.status(TapisRestUtils.getStatus(e)).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
@@ -677,7 +539,7 @@ public class SubscriptionResource
     // Resource was not found.
     if (subscription == null)
     {
-      String msg = ApiUtils.getMsgAuth(NOT_FOUND, rUser, subscriptionId);
+      String msg = ApiUtils.getMsgAuth(NOT_FOUND, rUser, subscrOwner, name);
       _log.warn(msg);
       return Response.status(Status.NOT_FOUND).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
@@ -685,7 +547,7 @@ public class SubscriptionResource
     // ---------------------------- Success -------------------------------
     // Success means we retrieved the subscription information.
     RespSubscription resp1 = new RespSubscription(subscription, selectList);
-    return createSuccessResponse(Status.OK, MsgUtils.getMsg(TAPIS_FOUND, "Subscription", subscriptionId), resp1);
+    return createSuccessResponse(Status.OK, MsgUtils.getMsg(TAPIS_FOUND, "Subscription", name), resp1);
   }
 
   /**
@@ -693,13 +555,15 @@ public class SubscriptionResource
    * Retrieve all subscriptions accessible by requester and matching any search conditions provided.
    * NOTE: The query parameters search, limit, orderBy, skip, startAfter are all handled in the filter
    *       QueryParametersRequestFilter. No need to use @QueryParam here.
+   * @param owner subscription owner
    * @param securityContext - user identity
    * @return - list of subscriptions accessible by requester and matching search conditions.
    */
   @GET
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  public Response getSubscriptions(@Context SecurityContext securityContext)
+  public Response getSubscriptions(@QueryParam("owner") String owner,
+                                   @Context SecurityContext securityContext)
   {
     String opName = "getSubscriptions";
     // Check that we have all we need from the context, the jwtTenantId and jwtUserId
@@ -713,7 +577,7 @@ public class SubscriptionResource
 
     // Trace this request.
     if (_log.isTraceEnabled())
-      ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString());
+      ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "owner="+owner);
 
     // ThreadContext designed to never return null for SearchParameters
     SearchParameters srchParms = threadContext.getSearchParameters();
@@ -722,7 +586,7 @@ public class SubscriptionResource
     Response successResponse;
     try
     {
-      successResponse = getSearchResponse(rUser, null, srchParms);
+      successResponse = getSearchResponse(rUser, owner, null, srchParms);
     }
     catch (Exception e)
     {
@@ -736,6 +600,7 @@ public class SubscriptionResource
   /**
    * searchSubscriptionsQueryParameters
    * Dedicated search endpoint for Subscription resource. Search conditions provided as query parameters.
+   * @param owner subscription owner
    * @param securityContext - user identity
    * @return - list of subscriptions accessible by requester and matching search conditions.
    */
@@ -743,7 +608,8 @@ public class SubscriptionResource
   @Path("search")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  public Response searchSubscriptionsQueryParameters(@Context SecurityContext securityContext)
+  public Response searchSubscriptionsQueryParameters(@QueryParam("owner") String owner,
+                                                     @Context SecurityContext securityContext)
   {
     String opName = "searchSubscriptionsGet";
     // Check that we have all we need from the context, the jwtTenantId and jwtUserId
@@ -757,7 +623,7 @@ public class SubscriptionResource
 
     // Trace this request.
     if (_log.isTraceEnabled())
-      ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString());
+      ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "owner="+owner);
 
     // Create search list based on query parameters
     // Note that some validation is done for each condition but the back end will handle translating LIKE wildcard
@@ -782,7 +648,7 @@ public class SubscriptionResource
     Response successResponse;
     try
     {
-      successResponse = getSearchResponse(rUser, null, srchParms);
+      successResponse = getSearchResponse(rUser, owner, null, srchParms);
     }
     catch (Exception e)
     {
@@ -799,7 +665,8 @@ public class SubscriptionResource
    * searchSubscriptionsRequestBody
    * Dedicated search endpoint for Subscription resource. Search conditions provided in a request body.
    * Request body contains an array of strings that are concatenated to form the full SQL-like search string.
-   * @param payloadStream - request body
+   * @param owner subscription owner
+   * @param payloadStream - request body@quer
    * @param securityContext - user identity
    * @return - list of subscriptions accessible by requester and matching search conditions.
    */
@@ -807,8 +674,9 @@ public class SubscriptionResource
   @Path("search")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  public Response searchSubscriptionsRequestBody(InputStream payloadStream,
-                                        @Context SecurityContext securityContext)
+  public Response searchSubscriptionsRequestBody(@QueryParam("owner") String owner,
+                                                 InputStream payloadStream,
+                                                 @Context SecurityContext securityContext)
   {
     String opName = "searchSubscriptionsPost";
     // Check that we have all we need from the context, the jwtTenantId and jwtUserId
@@ -822,7 +690,7 @@ public class SubscriptionResource
 
     // Trace this request.
     if (_log.isTraceEnabled())
-      ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString());
+      ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "owner="+owner);
 
     // ------------------------- Extract and validate payload -------------------------
     // Read the payload into a string.
@@ -867,7 +735,7 @@ public class SubscriptionResource
     Response successResponse;
     try
     {
-      successResponse = getSearchResponse(rUser, sqlSearchStr, srchParms);
+      successResponse = getSearchResponse(rUser, owner, sqlSearchStr, srchParms);
     }
     catch (Exception e)
     {
@@ -883,16 +751,18 @@ public class SubscriptionResource
   /**
    * isEnabled
    * Check if subscription is enabled.
-   * @param subscriptionId - name of the subscription
+   * @param name - name of the subscription
+   * @param owner subscription owner
    * @param securityContext - user identity
    * @return Response with boolean result
    */
   @GET
-  @Path("{subscriptionId}/isEnabled")
+  @Path("{name}/isEnabled")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  public Response isEnabled(@PathParam("subscriptionId") String subscriptionId,
-                         @Context SecurityContext securityContext)
+  public Response isEnabled(@PathParam("name") String name,
+                            @QueryParam("owner") String owner,
+                            @Context SecurityContext securityContext)
   {
     String opName = "isEnabled";
     // Check that we have all we need from the context, the jwtTenantId and jwtUserId
@@ -906,22 +776,25 @@ public class SubscriptionResource
 
     // Trace this request.
     if (_log.isTraceEnabled())
-      ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "subscriptionId="+subscriptionId);
+      ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "name="+name, "owner="+owner);
+
+    // For owner use oboUser or string specified in optional query parameter
+    String subscrOwner =  StringUtils.isBlank(owner) ? rUser.getOboUserId() : owner;
 
     boolean isEnabled;
     try
     {
-      isEnabled = notificationsService.isEnabled(rUser, subscriptionId);
+      isEnabled = notificationsService.isEnabled(rUser, subscrOwner, name);
     }
     catch (NotFoundException e)
     {
-      String msg = ApiUtils.getMsgAuth(NOT_FOUND, rUser, subscriptionId);
+      String msg = ApiUtils.getMsgAuth(NOT_FOUND, rUser, name);
       _log.warn(msg);
       return Response.status(Status.NOT_FOUND).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
     catch (Exception e)
     {
-      String msg = ApiUtils.getMsgAuth("NTFAPI_GET_NAME_ERROR", rUser, subscriptionId, e.getMessage());
+      String msg = ApiUtils.getMsgAuth("NTFAPI_GET_NAME_ERROR", rUser, name, e.getMessage());
       _log.error(msg, e);
       return Response.status(TapisRestUtils.getStatus(e)).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
@@ -931,7 +804,7 @@ public class SubscriptionResource
     ResultBoolean respResult = new ResultBoolean();
     respResult.aBool = isEnabled;
     RespBoolean resp1 = new RespBoolean(respResult);
-    return createSuccessResponse(Status.OK, MsgUtils.getMsg(TAPIS_FOUND, "Subscription", subscriptionId), resp1);
+    return createSuccessResponse(Status.OK, MsgUtils.getMsg(TAPIS_FOUND, "Subscription", name), resp1);
   }
 
   /* **************************************************************************** */
@@ -939,15 +812,14 @@ public class SubscriptionResource
   /* **************************************************************************** */
 
   /**
-   * changeOwner, enable, disable, delete follow same pattern
-   * Note that userName only used for changeOwner
+   * enable, disable, delete, updateTtl follow same pattern
    * @param opName Name of operation.
-   * @param subscriptionId Id of subscription to update
-   * @param updatedValue new owner name for op changeOwner
+   * @param name Id of subscription to update
+   * @param ttlMinutes new value for updateTtl operation
    * @param securityContext Security context from client call
    * @return Response to be returned to the client.
    */
-  private Response postSubscriptionSingleUpdate(String opName, String subscriptionId, String updatedValue,
+  private Response postSubscriptionSingleUpdate(String opName, String owner, String name, String ttlMinutes,
                                                 SecurityContext securityContext)
   {
     // ------------------------- Retrieve and validate thread context -------------------------
@@ -963,18 +835,14 @@ public class SubscriptionResource
     // Trace this request.
     if (_log.isTraceEnabled())
     {
-      // NOTE: We deliberately do not check for blank. If empty string passed in we want to record it here.
-      if (updatedValue!=null)
-      {
-        ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(),
-                            "subscriptionId=" + subscriptionId, "userName=" + updatedValue);
-      }
+      if (OP_UPDATE_TTL.equals(opName))
+        ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "name="+name, "owner="+owner, "ttlMinutes="+ttlMinutes);
       else
-      {
-        ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(),
-                            "subscriptionId=" + subscriptionId);
-      }
+        ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "name="+name, "owner="+owner);
     }
+
+    // For owner use oboUser or string specified in optional query parameter
+    String subscrOwner =  StringUtils.isBlank(owner) ? rUser.getOboUserId() : owner;
 
     // ---------------------------- Make service call to update the subscription -------------------------------
     int changeCount;
@@ -982,25 +850,23 @@ public class SubscriptionResource
     try
     {
       if (OP_ENABLE.equals(opName))
-        changeCount = notificationsService.enableSubscription(rUser, subscriptionId);
+        changeCount = notificationsService.enableSubscription(rUser, subscrOwner, name);
       else if (OP_DISABLE.equals(opName))
-        changeCount = notificationsService.disableSubscription(rUser, subscriptionId);
+        changeCount = notificationsService.disableSubscription(rUser, subscrOwner, name);
       else if (OP_DELETE.equals(opName))
-        changeCount = notificationsService.deleteSubscription(rUser, subscriptionId);
-      else if (OP_CHANGEOWNER.equals(opName))
-        changeCount = notificationsService.changeSubscriptionOwner(rUser, subscriptionId, updatedValue);
+        changeCount = notificationsService.deleteSubscription(rUser, subscrOwner, name);
       else if (OP_UPDATE_TTL.equals(opName))
-        changeCount = notificationsService.updateSubscriptionTTL(rUser, subscriptionId, updatedValue);
+        changeCount = notificationsService.updateSubscriptionTTL(rUser, subscrOwner, name, ttlMinutes);
       else
       {
-        msg = ApiUtils.getMsgAuth("NTFAPI_OP_UNKNOWN", rUser, subscriptionId, opName);
+        msg = ApiUtils.getMsgAuth("NTFAPI_OP_UNKNOWN", rUser, subscrOwner, name, opName);
         _log.warn(msg);
         return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
       }
     }
     catch (NotFoundException e)
     {
-      msg = ApiUtils.getMsgAuth(NOT_FOUND, rUser, subscriptionId);
+      msg = ApiUtils.getMsgAuth(NOT_FOUND, rUser, subscrOwner, name);
       _log.warn(msg);
       return Response.status(Status.NOT_FOUND).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
@@ -1009,14 +875,14 @@ public class SubscriptionResource
       if (e.getMessage().contains(LIB_UNAUTH))
       {
         // IllegalStateException with msg containing NTF_UNAUTH indicates operation not authorized for apiUser - return 401
-        msg = ApiUtils.getMsgAuth(API_UNAUTH, rUser, subscriptionId, opName);
+        msg = ApiUtils.getMsgAuth(API_UNAUTH, rUser, subscrOwner, name, opName);
         _log.warn(msg);
         return Response.status(Status.UNAUTHORIZED).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
       }
       else
       {
         // IllegalStateException indicates resulting subscription would be invalid
-        msg = ApiUtils.getMsgAuth(UPDATE_ERR, rUser, subscriptionId, opName, e.getMessage());
+        msg = ApiUtils.getMsgAuth(UPDATE_ERR, rUser, subscrOwner, name, opName, e.getMessage());
         _log.error(msg);
         return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
       }
@@ -1024,13 +890,13 @@ public class SubscriptionResource
     catch (IllegalArgumentException e)
     {
       // IllegalArgumentException indicates somehow a bad argument made it this far
-      msg = ApiUtils.getMsgAuth(UPDATE_ERR, rUser, subscriptionId, opName, e.getMessage());
+      msg = ApiUtils.getMsgAuth(UPDATE_ERR, rUser, subscrOwner, name, opName, e.getMessage());
       _log.error(msg);
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
     catch (Exception e)
     {
-      msg = ApiUtils.getMsgAuth(UPDATE_ERR, rUser, subscriptionId, opName, e.getMessage());
+      msg = ApiUtils.getMsgAuth(UPDATE_ERR, rUser, subscrOwner, name, opName, e.getMessage());
       _log.error(msg, e);
       return Response.status(Status.INTERNAL_SERVER_ERROR).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
@@ -1042,37 +908,27 @@ public class SubscriptionResource
     count.changes = changeCount;
     RespChangeCount resp1 = new RespChangeCount(count);
     if (OP_DELETE.equals(opName))
-      return createSuccessResponse(Status.OK, ApiUtils.getMsgAuth("NTFAPI_SUBSCR_DELETED", rUser, subscriptionId), resp1);
+      return createSuccessResponse(Status.OK, ApiUtils.getMsgAuth("NTFAPI_SUBSCR_DELETED", rUser, subscrOwner, name), resp1);
     else
-      return createSuccessResponse(Status.OK, ApiUtils.getMsgAuth(UPDATED, rUser, subscriptionId, opName), resp1);
+      return createSuccessResponse(Status.OK, ApiUtils.getMsgAuth(UPDATED, rUser, subscrOwner, name, opName), resp1);
   }
 
   /**
    * Create a subscription from a ReqPostSubscription
    * Check for req == null should have already been done
    */
-  private static Subscription createSubscriptionFromPostRequest(String tenantId, ReqPostSubscription req, String rawJson)
+  private static Subscription createSubscriptionFromPostRequest(String tenantId, ReqPostSubscription req)
   {
-    // Create Subscription
-    return new Subscription(-1, tenantId, req.name, req.description, req.owner, req.enabled, req.typeFilter,
+    // If owner not specified fill in a default
+    String ownerStr = req.owner;
+    if (StringUtils.isBlank(ownerStr))  ownerStr = DEFAULT_OWNER;
+    return new Subscription(-1, tenantId, ownerStr, req.name, req.description, req.enabled, req.typeFilter,
                             req.subjectFilter, req.deliveryTargets, req.ttlMinutes, null, null, null, null);
   }
 
   /**
-   * Create a subscription from a ReqPutSubscription
-   */
-  private static Subscription createSubscriptionFromPutRequest(String tenantId, String id, ReqPutSubscription req, String rawJson)
-  {
-    // NOTE: Following attributes are not updatable and must be filled in on service side.
-    String owner = null;
-    boolean enabled = true;
-    return new Subscription(-1, tenantId, id, req.description, owner, enabled, req.typeFilter, req.subjectFilter,
-                            req.deliveryTargets, req.ttl, null, null, null, null);
-  }
-
-  /**
    * Fill in defaults and check constraints on Subscription attributes
-   * Check values. Id must be set.
+   * Check values. name and owner must be set.
    * Collect and report as many errors as possible so they can all be fixed before next attempt
    * NOTE: JsonSchema validation should handle some of these checks but we check here again just in case
    *
@@ -1090,7 +946,7 @@ public class SubscriptionResource
     if (!errMessages.isEmpty())
     {
       // Construct message reporting all errors
-      String allErrors = getListOfErrors(errMessages, rUser, RESOURCE_TYPE, subscription1.getName());
+      String allErrors = getListOfErrors(errMessages, rUser, RESOURCE_TYPE, subscription1.getOwner(), subscription1.getName());
       _log.error(allErrors);
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(allErrors, PRETTY)).build();
     }
@@ -1113,13 +969,16 @@ public class SubscriptionResource
    *  srchParms must be non-null
    *  One of srchParms.searchList or sqlSearchStr must be non-null
    */
-  private Response getSearchResponse(ResourceRequestUser rUser, String sqlSearchStr, SearchParameters srchParms)
+  private Response getSearchResponse(ResourceRequestUser rUser, String owner, String sqlSearchStr, SearchParameters srchParms)
           throws Exception
   {
     RespAbstract resp1;
     List<Subscription> subscriptions;
     int totalCount = -1;
     String itemCountStr;
+
+    // For owner use oboUser or string specified in optional query parameter
+    String subscrOwner =  StringUtils.isBlank(owner) ? rUser.getOboUserId() : owner;
 
     List<String> searchList = srchParms.getSearchList();
     List<String> selectList = srchParms.getSelectList();
@@ -1135,9 +994,9 @@ public class SubscriptionResource
     List<OrderBy> orderByList = srchParms.getOrderByList();
 
     if (StringUtils.isBlank(sqlSearchStr))
-      subscriptions = notificationsService.getSubscriptions(rUser, searchList, limit, orderByList, skip, startAfter);
+      subscriptions = notificationsService.getSubscriptions(rUser, subscrOwner, searchList, limit, orderByList, skip, startAfter);
     else
-      subscriptions = notificationsService.getSubscriptionsUsingSqlSearchStr(rUser, sqlSearchStr, limit, orderByList, skip,
+      subscriptions = notificationsService.getSubscriptionsUsingSqlSearchStr(rUser, subscrOwner, sqlSearchStr, limit, orderByList, skip,
                                                   startAfter);
     if (subscriptions == null) subscriptions = Collections.emptyList();
     itemCountStr = String.format(NTF_CNT_STR, subscriptions.size());
@@ -1146,7 +1005,7 @@ public class SubscriptionResource
     // If we need the count and there was a limit then we need to make a call
     if (computeTotal && limit > 0)
     {
-      totalCount = notificationsService.getSubscriptionsTotalCount(rUser, searchList, orderByList, startAfter);
+      totalCount = notificationsService.getSubscriptionsTotalCount(rUser, subscrOwner, searchList, orderByList, startAfter);
     }
 
     // ---------------------------- Success -------------------------------
