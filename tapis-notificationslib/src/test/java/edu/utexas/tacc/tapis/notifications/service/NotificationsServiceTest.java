@@ -278,17 +278,6 @@ public class NotificationsServiceTest
     Assert.assertNull(tmpSub, "Subscription not deleted. Subscription Id: " + subId);
   }
 
-  @Test
-  public void testSubscriptionExists() throws Exception
-  {
-    Subscription sub0 = subscriptions[10];
-    // If not there we should get false
-    Assert.assertFalse(svcImpl.checkForSubscription(rUser1, sub0.getName(), sub0.getOwner()));
-    // After creating we should get true
-    svcImpl.createSubscription(rUser1, sub0, scrubbedJson);
-    Assert.assertTrue(svcImpl.checkForSubscription(rUser1, sub0.getName(), sub0.getOwner()));
-  }
-
   // Check that if resource already exists we get an IllegalStateException when attempting to create
   @Test(expectedExceptions = {IllegalStateException.class},  expectedExceptionsMessageRegExp = "^NTFLIB_SUBSCR_EXISTS.*")
   public void testCreateSubscriptionAlreadyExists() throws Exception
@@ -296,7 +285,6 @@ public class NotificationsServiceTest
     // Create the subscription
     Subscription sub0 = subscriptions[11];
     svcImpl.createSubscription(rUser1, sub0, scrubbedJson);
-    Assert.assertTrue(svcImpl.checkForSubscription(rUser1, sub0.getName(), sub0.getOwner()));
     // Now attempt to create again, should get IllegalStateException with msg NTFLIB_SUBSCR_EXISTS
     svcImpl.createSubscription(rUser1, sub0, scrubbedJson);
   }
@@ -345,7 +333,7 @@ public class NotificationsServiceTest
     String fakeSubscriptionName = "AMissingSubscriptionName";
     boolean pass;
     // Make sure resource does not exist
-    Assert.assertFalse(svcImpl.checkForSubscription(rUser1, fakeSubscriptionName, owner1));
+    Assert.assertNull(svcImpl.getSubscription(rUser1, owner1, fakeSubscriptionName));
 
     // Get should return null
     Subscription tmpSub = svcImpl.getSubscription(rUser1, fakeSubscriptionName, owner1);
@@ -377,7 +365,7 @@ public class NotificationsServiceTest
   {
     OffsetDateTime eventTime = OffsetDateTime.now();
     Event event = new Event(tenantName, testUser1, eventSource1, eventType1, eventSubject1, seriesId1, eventTime.toString(),
-                            UUID.randomUUID());
+                            eventDataNull, UUID.randomUUID());
     System.out.println("Placing event on queue. Event: " + event);
     // Put an event on the queue as a message
     svcImpl.postEvent(rUser1, event);
@@ -392,7 +380,7 @@ public class NotificationsServiceTest
   {
     OffsetDateTime eventTime = OffsetDateTime.now();
     Event event = new Event(tenantName, testUser1, eventSource1, eventType1, eventSubject1, seriesId1, eventTime.toString(),
-                            UUID.randomUUID());
+                            eventDataNull, UUID.randomUUID());
     System.out.println("Placing event on queue. Event: " + event);
     // Put an event on the queue as a message
     svcImpl.postEvent(rUser1, event);

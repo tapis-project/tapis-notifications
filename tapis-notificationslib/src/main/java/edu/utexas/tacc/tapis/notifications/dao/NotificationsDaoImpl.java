@@ -80,10 +80,8 @@ public class NotificationsDaoImpl implements NotificationsDao
   // Local logger.
   private static final Logger _log = LoggerFactory.getLogger(NotificationsDao.class);
 
-  private static final String EMPTY_JSON = "{}";
   private static final int INVALID_SEQ_ID = -1;
 
-  public static final JsonElement EMPTY_JSON_ARRAY = TapisGsonUtils.getGson().fromJson("[]", JsonElement.class);
   public static final JsonElement EMPTY_JSON_ELEM = TapisGsonUtils.getGson().fromJson("{}", JsonElement.class);
 
   // Create a static Set of column names for table SUBSCRIPTIONS
@@ -167,15 +165,13 @@ public class NotificationsDaoImpl implements NotificationsDao
    * @throws IllegalStateException - if resource already exists
    */
   @Override
-  public boolean createSubscription(ResourceRequestUser rUser, Subscription subscr, Instant expiryI,
-                                    String changeDescription, String rawData)
+  public boolean createSubscription(ResourceRequestUser rUser, Subscription subscr, Instant expiryI)
           throws TapisException, IllegalStateException
   {
     String opName = "createSubscription";
     // ------------------------- Check Input -------------------------
     if (subscr == null) LibUtils.logAndThrowNullParmException(opName, "subscription");
     if (rUser == null) LibUtils.logAndThrowNullParmException(opName, "resourceRequestUser");
-    if (StringUtils.isBlank(changeDescription)) LibUtils.logAndThrowNullParmException(opName, "changeDescription");
     if (StringUtils.isBlank(subscr.getTenant())) LibUtils.logAndThrowNullParmException(opName, "tenant");
     if (StringUtils.isBlank(subscr.getOwner())) LibUtils.logAndThrowNullParmException(opName, "subscriptionOwner");
     if (StringUtils.isBlank(subscr.getName())) LibUtils.logAndThrowNullParmException(opName, "subscriptionName");
@@ -186,6 +182,9 @@ public class NotificationsDaoImpl implements NotificationsDao
 
     // Convert expiry from Instant to LocalDateTime
     LocalDateTime expiry = (expiryI == null) ? null :  LocalDateTime.ofInstant(expiryI, ZoneOffset.UTC);
+
+    // Extract attributes for convenience
+    String owner = subscr.getOwner();
 
     // ------------------------- Call SQL ----------------------------
     Connection conn = null;
@@ -232,9 +231,6 @@ public class NotificationsDaoImpl implements NotificationsDao
 
       if (seqId < 1) return false;
 
-      // Persist update record
-      addUpdate(db, rUser, subscr.getName(), seqId, SubscriptionOperation.create, changeDescription, rawData, subscr.getUuid());
-
       // Close out and commit
       LibUtils.closeAndCommitDB(conn, null, null);
     }
@@ -259,8 +255,7 @@ public class NotificationsDaoImpl implements NotificationsDao
    * @throws IllegalStateException - if resource already exists
    */
   @Override
-  public void patchSubscription(ResourceRequestUser rUser, String owner, String name, Subscription patchedSubscription,
-                          String changeDescription, String rawData)
+  public void patchSubscription(ResourceRequestUser rUser, String owner, String name, Subscription patchedSubscription)
           throws TapisException, IllegalStateException {
     String opName = "patchSubscription";
     // ------------------------- Check Input -------------------------
@@ -268,7 +263,6 @@ public class NotificationsDaoImpl implements NotificationsDao
     if (rUser == null) LibUtils.logAndThrowNullParmException(opName, "resourceRequestUser");
     // Pull out some values for convenience
     String tenant = rUser.getOboTenantId();
-    if (StringUtils.isBlank(changeDescription)) LibUtils.logAndThrowNullParmException(opName, "changeDescription");
     if (StringUtils.isBlank(tenant)) LibUtils.logAndThrowNullParmException(opName, "tenant");
     if (StringUtils.isBlank(owner)) LibUtils.logAndThrowNullParmException(opName, "subscriptionOwner");
     if (StringUtils.isBlank(name)) LibUtils.logAndThrowNullParmException(opName, "subscriptionName");
@@ -309,10 +303,6 @@ public class NotificationsDaoImpl implements NotificationsDao
       }
 
       int seqId = result.getValue(SUBSCRIPTIONS.SEQ_ID);
-
-      // Persist update record
-      addUpdate(db, rUser, name, seqId, SubscriptionOperation.modify, changeDescription, rawData,
-                patchedSubscription.getUuid());
 
       // Close out and commit
       LibUtils.closeAndCommitDB(conn, null, null);
@@ -355,9 +345,6 @@ public class NotificationsDaoImpl implements NotificationsDao
               .set(SUBSCRIPTIONS.UPDATED, TapisUtils.getUTCTimeNow())
               .where(SUBSCRIPTIONS.TENANT.eq(tenantId),SUBSCRIPTIONS.OWNER.eq(owner),SUBSCRIPTIONS.NAME.eq(name))
               .execute();
-      // Persist update record
-      String changeDescription = "{\"enabled\":" +  enabled + "}";
-      addUpdate(db, rUser, name, INVALID_SEQ_ID, subscriptionOp, changeDescription , null, getUUIDUsingDb(db, tenantId, name));
       // Close out and commit
       LibUtils.closeAndCommitDB(conn, null, null);
     }
@@ -402,10 +389,6 @@ public class NotificationsDaoImpl implements NotificationsDao
               .set(SUBSCRIPTIONS.UPDATED, TapisUtils.getUTCTimeNow())
               .where(SUBSCRIPTIONS.TENANT.eq(tenantId),SUBSCRIPTIONS.OWNER.eq(owner),SUBSCRIPTIONS.NAME.eq(name))
               .execute();
-      // Persist update record
-      String changeDescription = "{\"ttl\":" +  newTTL + ", \"expiry\":\"" + expiry + "\"}";
-      addUpdate(db, rUser, name, INVALID_SEQ_ID, SubscriptionOperation.updateTTL, changeDescription , null,
-                getUUIDUsingDb(db, tenantId, name));
       // Close out and commit
       LibUtils.closeAndCommitDB(conn, null, null);
     }
@@ -586,10 +569,11 @@ public class NotificationsDaoImpl implements NotificationsDao
    * @throws TapisException - on error
    */
   @Override
-  public int getSubscriptionsCount(String tenantId, List<String> searchList, ASTNode searchAST, Set<String> setOfIDs,
-                             List<OrderBy> orderByList, String startAfter)
+  public int getSubscriptionsCount(String tenantId, String owner, List<String> searchList, ASTNode searchAST,
+                                   Set<String> setOfIDs, List<OrderBy> orderByList, String startAfter)
           throws TapisException
   {
+    // TODO user owner
     // If no IDs in list then we are done.
     if (setOfIDs != null && setOfIDs.isEmpty()) return 0;
 
@@ -788,11 +772,12 @@ public class NotificationsDaoImpl implements NotificationsDao
    * @throws TapisException - on error
    */
   @Override
-  public List<Subscription> getSubscriptions(String tenantId, List<String> searchList, ASTNode searchAST,
+  public List<Subscription> getSubscriptions(String tenantId, String owner, List<String> searchList, ASTNode searchAST,
                                              Set<String> setOfIDs, int limit, List<OrderBy> orderByList,
                                              int skip, String startAfter)
           throws TapisException
   {
+    // TODO use owner
     // The result list should always be non-null.
     List<Subscription> retList = new ArrayList<>();
 
@@ -1053,37 +1038,6 @@ public class NotificationsDaoImpl implements NotificationsDao
       LibUtils.finalCloseDB(conn);
     }
     return retList;
-  }
-
-  /**
-   * Add an update record given the subscription Id and operation type
-   *
-   */
-  @Override
-  public void addUpdateRecord(ResourceRequestUser rUser, String id, SubscriptionOperation op, String changeDescription, String rawData)
-          throws TapisException
-  {
-    // ------------------------- Call SQL ----------------------------
-    Connection conn = null;
-    try
-    {
-      // Get a database connection.
-      conn = getConnection();
-      DSLContext db = DSL.using(conn);
-      addUpdate(db, rUser, id, INVALID_SEQ_ID, op, changeDescription, rawData, getUUIDUsingDb(db, rUser.getOboTenantId(), id));
-      // Close out and commit
-      LibUtils.closeAndCommitDB(conn, null, null);
-    }
-    catch (Exception e)
-    {
-      // Rollback transaction and throw an exception
-      LibUtils.rollbackDB(conn, e,"DB_INSERT_FAILURE", "subscription_updates");
-    }
-    finally
-    {
-      // Always return the connection back to the connection pool.
-      LibUtils.finalCloseDB(conn);
-    }
   }
 
   // -----------------------------------------------------------------------
@@ -1634,9 +1588,10 @@ public class NotificationsDaoImpl implements NotificationsDao
    * @throws TapisException - on error
    */
   @Override
-  public boolean createTestSequence(ResourceRequestUser rUser, String name)
+  public boolean createTestSequence(ResourceRequestUser rUser, String owner, String name)
           throws TapisException, IllegalStateException
   {
+    // TODO review how owner is used
     String opName = "createTestSequence";
     // ------------------------- Check Input -------------------------
     if (rUser == null) LibUtils.logAndThrowNullParmException(opName, "resourceRequestUser");
@@ -1644,7 +1599,7 @@ public class NotificationsDaoImpl implements NotificationsDao
 
     String oboTenant = rUser.getOboTenantId();
     String oboUser = rUser.getOboUserId();
-    Subscription subscription = getSubscription(oboTenant, name);
+    Subscription subscription = getSubscription(oboTenant, owner, name);
     if (subscription == null) return false;
 
     // ------------------------- Call SQL ----------------------------
@@ -1701,8 +1656,9 @@ public class NotificationsDaoImpl implements NotificationsDao
    * @throws TapisException - on error
    */
   @Override
-  public TestSequence getTestSequence(String tenantId, String name) throws TapisException
+  public TestSequence getTestSequence(String tenantId, String owner, String name) throws TapisException
   {
+    // TODO owner
     // Initialize result.
     TestSequence result = null;
 
@@ -1793,8 +1749,9 @@ public class NotificationsDaoImpl implements NotificationsDao
    * @throws TapisException - on error
    */
   @Override
-  public boolean checkForTestSequence(String tenantId, String name) throws TapisException
+  public boolean checkForTestSequence(String tenantId, String owner, String name) throws TapisException
   {
+    // TODO owner
     // Initialize result.
     boolean result = false;
 
@@ -1806,7 +1763,7 @@ public class NotificationsDaoImpl implements NotificationsDao
       conn = getConnection();
       DSLContext db = DSL.using(conn);
       // Run the sql
-      result = checkForTestSequence(db, tenantId, name);
+      result = checkForTestSequence(db, tenantId, owner, name);
       // Close out and commit
       LibUtils.closeAndCommitDB(conn, null, null);
     }
@@ -1880,45 +1837,6 @@ public class NotificationsDaoImpl implements NotificationsDao
       }
     }
     return ds;
-  }
-
-  /**
-   * Given an sql connection and basic info add a change history record
-   * If seqId <= 0 then seqId is fetched.
-   * NOTE: Both subscription tenant and user tenant are recorded. If a service makes an update on behalf of itself
-   *       the tenants will differ.
-   *
-   * @param db - Database connection
-   * @param rUser - ResourceRequestUser containing tenant, user and request info
-   * @param name - Id of the subscription being updated
-   * @param seqId - Sequence Id of subscription being updated
-   * @param op - Operation, such as create, modify, etc.
-   * @param changeDescription - JSON representing the update - with secrets scrubbed
-   * @param rawData - Text data supplied by client - secrets should be scrubbed
-   */
-  private void addUpdate(DSLContext db, ResourceRequestUser rUser, String name, int seqId,
-                         SubscriptionOperation op, String changeDescription, String rawData, UUID uuid)
-  {
-    String updJsonStr = (StringUtils.isBlank(changeDescription)) ? EMPTY_JSON : changeDescription;
-    if (seqId < 1)
-    {
-      seqId = db.selectFrom(SUBSCRIPTIONS)
-                .where(SUBSCRIPTIONS.TENANT.eq(rUser.getOboTenantId()),SUBSCRIPTIONS.OWNER.eq(owner),SUBSCRIPTIONS.NAME.eq(name))
-                .fetchOne(SUBSCRIPTIONS.SEQ_ID);
-    }
-    // Persist update record
-    db.insertInto(SUBSCRIPTION_UPDATES)
-            .set(SUBSCRIPTION_UPDATES.SUBSCRIPTION_SEQ_ID, seqId)
-            .set(SUBSCRIPTION_UPDATES.JWT_TENANT, rUser.getJwtTenantId())
-            .set(SUBSCRIPTION_UPDATES.JWT_USER, rUser.getJwtUserId())
-            .set(SUBSCRIPTION_UPDATES.OBO_TENANT, rUser.getOboTenantId())
-            .set(SUBSCRIPTION_UPDATES.OBO_USER, rUser.getOboUserId())
-            .set(SUBSCRIPTION_UPDATES.SUBSCRIPTION_ID, name)
-            .set(SUBSCRIPTION_UPDATES.OPERATION, op)
-            .set(SUBSCRIPTION_UPDATES.DESCRIPTION, TapisGsonUtils.getGson().fromJson(updJsonStr, JsonElement.class))
-            .set(SUBSCRIPTION_UPDATES.RAW_DATA, rawData)
-            .set(SUBSCRIPTION_UPDATES.UUID, uuid)
-            .execute();
   }
 
   /**

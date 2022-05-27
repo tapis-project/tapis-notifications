@@ -11,6 +11,7 @@ public final class ReqPostEvent
   public String subject;
   public String seriesId;
   public String time;
+  public String data;
   public String tenant;
   public String user;
   public String uuid;

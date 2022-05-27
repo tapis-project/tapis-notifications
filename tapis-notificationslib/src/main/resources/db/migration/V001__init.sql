@@ -70,25 +70,6 @@ COMMENT ON COLUMN subscriptions.enabled IS 'Indicates if subscription is current
 COMMENT ON COLUMN subscriptions.created IS 'UTC time for when record was created';
 COMMENT ON COLUMN subscriptions.updated IS 'UTC time for when record was last updated';
 
--- Subscription updates table
--- Track update requests for subscriptions
-CREATE TABLE subscription_updates
-(
-    seq_id SERIAL PRIMARY KEY,
-    subscription_seq_id INTEGER REFERENCES subscriptions(seq_id) ON DELETE CASCADE,
-    obo_tenant TEXT NOT NULL,
-    obo_user TEXT NOT NULL,
-    jwt_tenant TEXT NOT NULL,
-    jwt_user TEXT NOT NULL,
-    subscription_id TEXT NOT NULL,
-    operation TEXT NOT NULL,
-    description JSONB NOT NULL,
-    raw_data TEXT,
-    uuid UUID NOT NULL,
-    created TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc')
-);
-ALTER TABLE subscription_updates OWNER TO tapis_ntf;
-
 -- Notifications table
 -- In-flight notifications. A notification represents an event being delivered to a subscriber
 -- Note that event_uuid is needed to find all notifications associated with a specific event.

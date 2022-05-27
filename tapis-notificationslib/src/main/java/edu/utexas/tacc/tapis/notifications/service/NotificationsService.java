@@ -47,9 +47,6 @@ public interface NotificationsService
   int updateSubscriptionTTL(ResourceRequestUser rUser, String owner, String name, String newTTL)
           throws TapisException, TapisClientException, NotAuthorizedException, IllegalArgumentException, NotFoundException;
 
-  boolean checkForSubscription(ResourceRequestUser rUser, String owner, String name)
-          throws TapisException, TapisClientException, NotAuthorizedException;
-
   boolean isEnabled(ResourceRequestUser rUser, String owner, String name)
           throws TapisException, TapisClientException, NotAuthorizedException;
 

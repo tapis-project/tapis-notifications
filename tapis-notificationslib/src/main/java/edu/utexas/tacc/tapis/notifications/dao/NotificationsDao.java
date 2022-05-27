@@ -28,22 +28,16 @@ public interface NotificationsDao
   // -----------------------------------------------------------------------
   // ------------------------- Subscriptions -------------------------------
   // -----------------------------------------------------------------------
-  boolean createSubscription(ResourceRequestUser rUser, Subscription sub, Instant expiry, String createJsonStr,
-                             String scrubbedText)
+  boolean createSubscription(ResourceRequestUser rUser, Subscription sub, Instant expiry)
           throws TapisException, IllegalStateException;
 
-  void patchSubscription(ResourceRequestUser rUser, String owner, String name, Subscription patchedSubscription,
-                String updateJsonStr, String scrubbedText)
+  void patchSubscription(ResourceRequestUser rUser, String owner, String name, Subscription patchedSubscription)
           throws TapisException, IllegalStateException;
 
   void updateEnabled(ResourceRequestUser rUser, String tenantId, String owner, String name, boolean enabled)
           throws TapisException;
 
   void updateSubscriptionTTL(ResourceRequestUser rUser, String tenantId, String owner, String name, int newTTL, Instant newExpiry)
-          throws TapisException;
-
-  void addUpdateRecord(ResourceRequestUser rUser, String owner, String name, SubscriptionOperation op,
-                       String upd_json, String upd_text)
           throws TapisException;
 
   int deleteSubscription(String tenant, String owner, String name) throws TapisException;
