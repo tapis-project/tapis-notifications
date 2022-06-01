@@ -1,8 +1,8 @@
 package edu.utexas.tacc.tapis.notifications.model;
 
 /*
- * A Delivery represents an event that is being processed in order to determine matching subscribers and
- *   create one or more notifications for each subscriber.
+ * A Delivery represents an event that is being processed in order to determine matching subscriptions and
+ *   create one or more notifications for each subscription.
  * It contains the Event being processed and the message broker tag (rabbitmq deliveryTag).
  * The deliveryTag is used to acknowledge the message once all notifications have been generated and persisted.
  *

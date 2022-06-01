@@ -259,12 +259,20 @@ public final class DeliveryBucketManager implements Callable<String>
     String tenant = event.getTenant();
     UUID eventUuid = event.getUuid();
 
-    // For each deliveryMethod in a Subscription
+    // Add a notification for each deliveryTarget in each Subscription
+    // Note that we ultimately want to de-duplicate (based on deliveryTarget) in order to prevent a notification from
+    //   being sent to a deliveryTarget more than once.
+    // We do not de-duplicate here because we want to track the subscription associated with each deliveryTarget.
+    // We want to track associated subscription so that when a notification is in recovery we stop re-trying after
+    //   the associated subscription is deleted.
+    // TODO For de-duplication we simply delete all persisted matching notifications once there has been a
+    //   successful delivery. In this case matching means matching (event, deliveryTarget) independent of the
+    //   associated subscription.
     for (Subscription s : subscriptions)
     {
-      var deliveryMethods = s.getDeliveryTargets();
-      if (deliveryMethods == null || deliveryMethods.isEmpty()) continue;
-      for (DeliveryTarget dm : deliveryMethods)
+      var deliveryTargets = s.getDeliveryTargets();
+      if (deliveryTargets == null || deliveryTargets.isEmpty()) continue;
+      for (DeliveryTarget dm : deliveryTargets)
       {
         Instant created = TapisUtils.getUTCTimeNow().toInstant(ZoneOffset.UTC);
         notifList.add(new Notification(null, s.getSeqId(), tenant, s.getName(), bucketNum, eventUuid, event, dm, created));

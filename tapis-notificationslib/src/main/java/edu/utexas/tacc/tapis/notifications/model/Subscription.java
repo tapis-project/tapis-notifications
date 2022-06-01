@@ -3,11 +3,9 @@ package edu.utexas.tacc.tapis.notifications.model;
 import com.google.gson.JsonElement;
 import edu.utexas.tacc.tapis.notifications.utils.LibUtils;
 import edu.utexas.tacc.tapis.shared.utils.TapisGsonUtils;
-import edu.utexas.tacc.tapis.sharedapi.utils.TapisRestUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.apache.commons.lang3.StringUtils;
 
-import javax.ws.rs.core.Response;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,9 +29,8 @@ public final class Subscription
   // *********************** Constants **************************************
   // ************************************************************************
 
-  // Constants indicating uuid or seq_id is not relevant.
-  public static final int INVALID_SEQ_ID = -1;
-  public static final UUID INVALID_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
+  // Filter wildcard (SUBJECT field or one of the TYPE fields)
+  public static final String FILTER_WILDCARD = "*";
 
   // Allowed substitution variables
   public static final String APIUSERID_VAR = "${apiUserId}";
@@ -47,10 +44,8 @@ public final class Subscription
           Pattern.compile("^[a-z]+\\.[a-zA-Z]([a-zA-Z0-9]|[-_~])*\\.([a-zA-Z]([a-zA-Z0-9]|[-_~])*|\\*)$");
 
   // Default values
-  public static final String[] EMPTY_STR_ARRAY = new String[0];
   public static final String DEFAULT_OWNER = APIUSERID_VAR;
   public static final boolean DEFAULT_ENABLED = true;
-  private static final String EMPTY_JSON_OBJ = "{}";
   public static final JsonElement DEFAULT_DELIVERY_TARGETS = TapisGsonUtils.getGson().fromJson("[]", JsonElement.class);
   public static final int DEFAULT_TTL = 7*24*60; // One week in minutes
 

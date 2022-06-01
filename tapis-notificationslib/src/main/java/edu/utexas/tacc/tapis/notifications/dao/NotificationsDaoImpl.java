@@ -17,7 +17,6 @@ import javax.sql.DataSource;
 
 import com.google.gson.JsonElement;
 
-import edu.utexas.tacc.tapis.notifications.model.DeliveryTarget;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,6 +47,8 @@ import edu.utexas.tacc.tapis.shared.utils.TapisGsonUtils;
 import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisDBConnectionException;
 import edu.utexas.tacc.tapis.shareddb.datasource.TapisDataSource;
 
+import edu.utexas.tacc.tapis.notifications.model.DeliveryTarget;
+import edu.utexas.tacc.tapis.notifications.model.DeliveryTarget.DeliveryMethod;
 import edu.utexas.tacc.tapis.notifications.model.Notification;
 import edu.utexas.tacc.tapis.notifications.model.Subscription;
 import edu.utexas.tacc.tapis.notifications.model.Subscription.SubscriptionOperation;
@@ -78,8 +79,6 @@ public class NotificationsDaoImpl implements NotificationsDao
   /* ********************************************************************** */
   // Local logger.
   private static final Logger _log = LoggerFactory.getLogger(NotificationsDao.class);
-
-  private static final int INVALID_SEQ_ID = -1;
 
   public static final JsonElement EMPTY_JSON_ELEM = TapisGsonUtils.getGson().fromJson("{}", JsonElement.class);
 
@@ -1082,18 +1081,15 @@ public class NotificationsDaoImpl implements NotificationsDao
               NOTIFICATIONS.EVENT_UUID,
               NOTIFICATIONS.EVENT,
               NOTIFICATIONS.CREATED,
-              NOTIFICATIONS.DELIVERY_TARGET).values((UUID) null, null, null, null, null, null, null, null, null));
+              NOTIFICATIONS.DELIVERY_METHOD,
+              NOTIFICATIONS.DELIVERY_ADDRESS).values((UUID) null, null, null, null, null, null, null, null, null, null));
 
       // Put together all the records we will be inserting.
       for (Notification n : notifications)
       {
         DeliveryTarget dm =  n.getDeliveryTarget();
-        // Convert deliveryTarget to json
-        JsonElement deliveryTargetJson = EMPTY_JSON_ELEM;
-        if (dm != null) deliveryTargetJson = TapisGsonUtils.getGson().toJsonTree(dm);
-
         batch.bind(n.getUuid(), n.getSubscrSeqId(), tenant, n.getSubscriptionId(), bucketNum, eventUUID, eventJson,
-                   n.getCreated(), deliveryTargetJson);
+                   n.getCreated(), dm.getDeliveryMethod().name(), dm.getDeliveryAddress());
       }
 
       // Now execute the final batch statement
@@ -1309,9 +1305,6 @@ public class NotificationsDaoImpl implements NotificationsDao
     if (notification == null) LibUtils.logAndThrowNullParmException(opName, "notification");
 
     JsonElement eventJson = TapisGsonUtils.getGson().toJsonTree(notification.getEvent());
-    JsonElement deliveryTargetJson = EMPTY_JSON_ELEM;
-    if (notification.getDeliveryTarget() != null) deliveryTargetJson =
-            TapisGsonUtils.getGson().toJsonTree(notification.getDeliveryTarget());
 
     // ------------------------- Call SQL ----------------------------
     Connection conn = null;
@@ -1336,7 +1329,8 @@ public class NotificationsDaoImpl implements NotificationsDao
               .set(NOTIFICATIONS_RECOVERY.BUCKET_NUMBER, notification.getBucketNum())
               .set(NOTIFICATIONS_RECOVERY.EVENT_UUID, notification.getEvent().getUuid())
               .set(NOTIFICATIONS_RECOVERY.EVENT, eventJson)
-              .set(NOTIFICATIONS_RECOVERY.DELIVERY_TARGET, deliveryTargetJson)
+              .set(NOTIFICATIONS_RECOVERY.DELIVERY_METHOD, notification.getDeliveryTarget().getDeliveryMethod().name())
+              .set(NOTIFICATIONS_RECOVERY.DELIVERY_ADDRESS,notification.getDeliveryTarget().getDeliveryAddress())
               .set(NOTIFICATIONS_RECOVERY.ATTEMPT_COUNT, 0)
               .execute();
 
@@ -1353,10 +1347,11 @@ public class NotificationsDaoImpl implements NotificationsDao
   }
 
   /**
-   * Delete a notification from the main NOTIFICATIONS table
+   * Delete notifications from the main NOTIFICATIONS table
+   * Entries are considered matching based on (eventUuid, deliveryTarget)
    */
   @Override
-  public void deleteNotification(String tenant, Notification notification) throws TapisException
+  public void deleteNotificationsByDeliveryTarget(String tenant, Notification notification) throws TapisException
   {
     String opName = "deleteNotification";
     // ------------------------- Check Input -------------------------
@@ -1370,7 +1365,10 @@ public class NotificationsDaoImpl implements NotificationsDao
       conn = getConnection();
       DSLContext db = DSL.using(conn);
       db.deleteFrom(NOTIFICATIONS)
-            .where(NOTIFICATIONS.TENANT.eq(tenant), NOTIFICATIONS.UUID.eq(notification.getUuid()))
+            .where(NOTIFICATIONS.TENANT.eq(tenant),
+                   NOTIFICATIONS.EVENT_UUID.eq(notification.getEventUuid()),
+                   NOTIFICATIONS.DELIVERY_METHOD.eq(notification.getDeliveryTarget().getDeliveryMethod().name()),
+                   NOTIFICATIONS.DELIVERY_ADDRESS.eq(notification.getDeliveryTarget().getDeliveryAddress()))
             .execute();
       LibUtils.closeAndCommitDB(conn, null, null);
     }
@@ -2170,12 +2168,14 @@ public class NotificationsDaoImpl implements NotificationsDao
     // Convert JSONB columns to native types
     JsonElement eventJson = r.get(NOTIFICATIONS.EVENT);
     Event event = TapisGsonUtils.getGson().fromJson(eventJson, Event.class);
-    JsonElement dmJson = r.get(NOTIFICATIONS.DELIVERY_TARGET);
-    DeliveryTarget dm = TapisGsonUtils.getGson().fromJson(dmJson, DeliveryTarget.class);
+
+    // Build a DeliveryTarget based on 2 columns
+    DeliveryTarget dt = new DeliveryTarget(DeliveryMethod.valueOf(r.get(NOTIFICATIONS.DELIVERY_METHOD)),
+                                           r.get(NOTIFICATIONS.DELIVERY_ADDRESS));
 
     ntf = new Notification(r.get(NOTIFICATIONS.UUID), r.get(NOTIFICATIONS.SUBSCR_SEQ_ID), r.get(NOTIFICATIONS.TENANT),
                            r.get(NOTIFICATIONS.SUBSCR_NAME), r.get(NOTIFICATIONS.BUCKET_NUMBER),
-                           r.get(NOTIFICATIONS.EVENT_UUID), event, dm, created);
+                           r.get(NOTIFICATIONS.EVENT_UUID), event, dt, created);
     return ntf;
   }
 
@@ -2188,15 +2188,17 @@ public class NotificationsDaoImpl implements NotificationsDao
     // Convert LocalDateTime to Instant. Note that although "Local" is in the type, timestamps from the DB are in UTC.
     Instant created = r.get(NOTIFICATIONS_RECOVERY.CREATED).toInstant(ZoneOffset.UTC);
 
+    // Build a DeliveryTarget based on 2 columns
+    DeliveryTarget dt = new DeliveryTarget(DeliveryMethod.valueOf(r.get(NOTIFICATIONS_RECOVERY.DELIVERY_METHOD)),
+                                           r.get(NOTIFICATIONS_RECOVERY.DELIVERY_ADDRESS));
+
     // Convert JSONB columns to native types
     JsonElement eventJson = r.get(NOTIFICATIONS_RECOVERY.EVENT);
     Event event = TapisGsonUtils.getGson().fromJson(eventJson, Event.class);
-    JsonElement dmJson = r.get(NOTIFICATIONS_RECOVERY.DELIVERY_TARGET);
-    DeliveryTarget dm = TapisGsonUtils.getGson().fromJson(dmJson, DeliveryTarget.class);
 
     ntf = new Notification(r.get(NOTIFICATIONS_RECOVERY.UUID), r.get(NOTIFICATIONS_RECOVERY.SUBSCR_SEQ_ID),
             r.get(NOTIFICATIONS_RECOVERY.TENANT), r.get(NOTIFICATIONS_RECOVERY.SUBSCR_NAME),
-            r.get(NOTIFICATIONS_RECOVERY.BUCKET_NUMBER), r.get(NOTIFICATIONS_RECOVERY.EVENT_UUID), event, dm, created);
+            r.get(NOTIFICATIONS_RECOVERY.BUCKET_NUMBER), r.get(NOTIFICATIONS_RECOVERY.EVENT_UUID), event, dt, created);
     return ntf;
   }
 

@@ -264,14 +264,14 @@ public class NotificationsDaoTest
     // Check that they were persisted.
     List<Notification> tmpNotifications = dao.getNotificationsForEvent(tenantName, event1, bucketNum1);
     Assert.assertEquals(tmpNotifications.size(), notifications.size());
-    DeliveryTarget.DeliveryMethod dType = notifications.get(0).getDeliveryTarget().getDeliveryType();
+    DeliveryTarget.DeliveryMethod dType = notifications.get(0).getDeliveryTarget().getDeliveryMethod();
     for (Notification n : tmpNotifications)
     {
       System.out.println("Found notification: " + n);
       Assert.assertEquals(n.getBucketNum(), bucketNum1);
       Assert.assertEquals(n.getEvent().getUuid(), event1.getUuid());
       Assert.assertEquals(n.getSubscrSeqId(), tmpSub.getSeqId());
-      Assert.assertEquals(n.getDeliveryTarget().getDeliveryType(), dType);
+      Assert.assertEquals(n.getDeliveryTarget().getDeliveryMethod(), dType);
       Assert.assertNotNull(n.getCreated());
     }
 
@@ -284,12 +284,12 @@ public class NotificationsDaoTest
     Assert.assertEquals(tmpNtf.getSubscrSeqId(), tmpSub.getSeqId());
     Assert.assertNotNull(tmpNtf.getDeliveryTarget());
     Assert.assertFalse(StringUtils.isBlank(tmpNtf.getDeliveryTarget().getDeliveryAddress()));
-    Assert.assertNotNull(tmpNtf.getDeliveryTarget().getDeliveryType());
+    Assert.assertNotNull(tmpNtf.getDeliveryTarget().getDeliveryMethod());
     Assert.assertNotNull(tmpNtf.getCreated());
 
     // Check that we can delete one.
     ntf = tmpNotifications.get(0);
-    dao.deleteNotification(tenantName, ntf);
+    dao.deleteNotificationsByDeliveryTarget(tenantName, ntf);
     tmpNtf = dao.getNotification(tenantName, ntf.getUuid());
     Assert.assertNull(tmpNtf, "Notification not deleted");
 

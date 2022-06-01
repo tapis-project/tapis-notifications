@@ -50,6 +50,7 @@ import edu.utexas.tacc.tapis.notifications.model.Subscription.SubscriptionOperat
 import edu.utexas.tacc.tapis.notifications.model.TestSequence;
 import edu.utexas.tacc.tapis.notifications.utils.LibUtils;
 
+import static edu.utexas.tacc.tapis.notifications.model.Subscription.FILTER_WILDCARD;
 import static edu.utexas.tacc.tapis.shared.TapisConstants.NOTIFICATIONS_SERVICE;
 
 /*
@@ -79,9 +80,6 @@ public class NotificationsServiceImpl implements NotificationsService
 
   // NotAuthorizedException requires a Challenge, although it serves no purpose here.
   private static final String NO_CHALLENGE = "NoChallenge";
-
-  // Compiled regex for splitting around ":"
-  private static final Pattern COLON_SPLIT = Pattern.compile(":");
 
   // ************************************************************************
   // *********************** Enums ******************************************
@@ -976,6 +974,14 @@ public class NotificationsServiceImpl implements NotificationsService
   {
     // Make api level checks, i.e. checks that do not involve a dao or service call.
     List<String> errMessages = sub.checkAttributeRestrictions();
+
+    // Prevent a regular non-service user from creating a subscription using a wildcard for the subject filter.
+    // Although currently only services may create subscriptions we eventually want to allow users to create
+    //   subscriptions but guide them toward subscriptions that will not flood them with notifications
+    if (!rUser.isServiceRequest() && FILTER_WILDCARD.equals(sub.getSubjectFilter()))
+    {
+      errMessages.add(LibUtils.getMsg("NTFLIB_SUBSCR_SUBJ_ERR", sub.getOwner(), sub.getName(), sub.getTypeFilter()));
+    }
 
     // Now make checks that do require a dao or service call.
     // NOTE: Currently no such checks

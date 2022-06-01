@@ -3,7 +3,6 @@ package edu.utexas.tacc.tapis.notifications.dao;
 import edu.utexas.tacc.tapis.notifications.model.Event;
 import edu.utexas.tacc.tapis.notifications.model.Notification;
 import edu.utexas.tacc.tapis.notifications.model.Subscription;
-import edu.utexas.tacc.tapis.notifications.model.Subscription.SubscriptionOperation;
 import edu.utexas.tacc.tapis.notifications.model.TestSequence;
 import edu.utexas.tacc.tapis.search.parser.ASTNode;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
@@ -80,7 +79,7 @@ public interface NotificationsDao
 
   void deleteNotificationAndAddToRecovery(String tenant, Notification notification) throws TapisException;
 
-  void deleteNotification(String tenant, Notification notification) throws TapisException;
+  void deleteNotificationsByDeliveryTarget(String tenant, Notification notification) throws TapisException;
 
   UUID getLastEventUUID(int bucketNum) throws TapisException;
 

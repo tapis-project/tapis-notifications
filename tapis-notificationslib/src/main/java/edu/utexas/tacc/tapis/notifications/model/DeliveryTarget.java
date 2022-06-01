@@ -39,9 +39,7 @@ public final class DeliveryTarget
 //    }
 //  }
 //
-  public DeliveryMethod getDeliveryType() {
-    return deliveryMethod;
-  }
+  public DeliveryMethod getDeliveryMethod() { return deliveryMethod; }
 
   public String getDeliveryAddress() { return deliveryAddress; }
 

@@ -20,7 +20,7 @@ import org.jooq.ForeignKey;
 import org.jooq.Identity;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row13;
+import org.jooq.Row14;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -78,9 +78,14 @@ public class NotificationsRecovery extends TableImpl<NotificationsRecoveryRecord
     public final TableField<NotificationsRecoveryRecord, String> SUBSCR_NAME = createField(DSL.name("subscr_name"), SQLDataType.CLOB.nullable(false), this, "");
 
     /**
-     * The column <code>tapis_ntf.notifications_recovery.delivery_target</code>.
+     * The column <code>tapis_ntf.notifications_recovery.delivery_method</code>.
      */
-    public final TableField<NotificationsRecoveryRecord, JsonElement> DELIVERY_TARGET = createField(DSL.name("delivery_target"), SQLDataType.JSONB.nullable(false), this, "", new JSONBToJsonElementBinding());
+    public final TableField<NotificationsRecoveryRecord, String> DELIVERY_METHOD = createField(DSL.name("delivery_method"), SQLDataType.CLOB.nullable(false), this, "");
+
+    /**
+     * The column <code>tapis_ntf.notifications_recovery.delivery_address</code>.
+     */
+    public final TableField<NotificationsRecoveryRecord, String> DELIVERY_ADDRESS = createField(DSL.name("delivery_address"), SQLDataType.CLOB.nullable(false), this, "");
 
     /**
      * The column <code>tapis_ntf.notifications_recovery.event_uuid</code>.
@@ -211,11 +216,11 @@ public class NotificationsRecovery extends TableImpl<NotificationsRecoveryRecord
     }
 
     // -------------------------------------------------------------------------
-    // Row13 type methods
+    // Row14 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row13<Integer, Integer, java.util.UUID, String, String, JsonElement, java.util.UUID, JsonElement, Integer, Integer, LocalDateTime, LocalDateTime, LocalDateTime> fieldsRow() {
-        return (Row13) super.fieldsRow();
+    public Row14<Integer, Integer, java.util.UUID, String, String, String, String, java.util.UUID, JsonElement, Integer, Integer, LocalDateTime, LocalDateTime, LocalDateTime> fieldsRow() {
+        return (Row14) super.fieldsRow();
     }
 }

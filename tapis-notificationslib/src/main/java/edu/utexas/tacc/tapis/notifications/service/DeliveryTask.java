@@ -119,7 +119,7 @@ public final class DeliveryTask implements Callable<Notification>
 
     // Give up for now, log warning and add to recovery table
     String msg = LibUtils.getMsg("NTFLIB_DSP_DLVRY_FAIL", bucketNum, notification.getUuid(),
-                                 deliveryTarget.getDeliveryType(), deliveryTarget.getDeliveryAddress(), numAttempts);
+                                 deliveryTarget.getDeliveryMethod(), deliveryTarget.getDeliveryAddress(), numAttempts);
     log.warn(msg);
     addNotificationToRecovery();
     return null;
@@ -138,11 +138,11 @@ public final class DeliveryTask implements Callable<Notification>
     Event event = notification.getEvent();
     DeliveryTarget deliveryTarget =  notification.getDeliveryTarget();
 
-    log.debug(LibUtils.getMsg("NTFLIB_DSP_DLVRY", bucketNum, notification.getUuid(), deliveryTarget.getDeliveryType(),
+    log.debug(LibUtils.getMsg("NTFLIB_DSP_DLVRY", bucketNum, notification.getUuid(), deliveryTarget.getDeliveryMethod(),
             deliveryTarget.getDeliveryAddress(), event.getSource(), event.getType(),
             event.getSubject(), event.getData(), event.getSeriesId(), event.getTimestamp(), event.getUuid()));
     boolean deliveryStatus = false;
-    switch (deliveryTarget.getDeliveryType())
+    switch (deliveryTarget.getDeliveryMethod())
     {
       case WEBHOOK -> deliveryStatus = deliverByWebhook(notification);
       case EMAIL -> deliveryStatus = deliverByEmail(notification);
@@ -150,11 +150,15 @@ public final class DeliveryTask implements Callable<Notification>
     return deliveryStatus;
   }
 
+  /* ********************************************************************** */
+  /*                             Private Methods                            */
+  /* ********************************************************************** */
+
   /*
    * Send out the notification via Webhook
    * By default OkHttpClient has read and write timeouts of 1 second.
    */
-  public static boolean deliverByWebhook(Notification ntf) throws IOException
+  private static boolean deliverByWebhook(Notification ntf) throws IOException
   {
     boolean delivered = true;
     int bucketNum = ntf.getBucketNum();
@@ -174,7 +178,7 @@ public final class DeliveryTask implements Callable<Notification>
       if (response.code() != Status.OK.getStatusCode())
       {
         log.error(LibUtils.getMsg("NTFLIB_DSP_DLVRY_WH_FAIL_ERR", bucketNum, ntf.getUuid(),
-                deliveryTarget.getDeliveryType(), deliveryTarget.getDeliveryAddress(), response.code()));
+                deliveryTarget.getDeliveryMethod(), deliveryTarget.getDeliveryAddress(), response.code()));
         delivered = false;
       }
     }
@@ -184,7 +188,7 @@ public final class DeliveryTask implements Callable<Notification>
   /*
    * Send out the notification via email
    */
-  public static boolean deliverByEmail(Notification ntf) throws TapisException
+  private static boolean deliverByEmail(Notification ntf) throws TapisException
   {
     boolean delivered = true;
     DeliveryTarget deliveryTarget =  ntf.getDeliveryTarget();
@@ -207,20 +211,17 @@ public final class DeliveryTask implements Callable<Notification>
     return delivered;
   }
 
-  /* ********************************************************************** */
-  /*                             Private Methods                            */
-  /* ********************************************************************** */
-
   /*
-   * Notification has been delivered. Remove it from the table.
+   * Notification has been delivered. Remove all matching entries from the table.
+   * Entries are considered matching based on (eventUuid, deliveryTarget)
    */
   private Notification notificationDelivered()
   {
-    try { dao.deleteNotification(tenant, notification); }
+    try { dao.deleteNotificationsByDeliveryTarget(tenant, notification); }
     catch (TapisException e)
     {
       String msg = LibUtils.getMsg("NTFLIB_DSP_DLVRY_DEL_ERR", bucketNum, uuid,
-                             deliveryTarget.getDeliveryType(), deliveryTarget.getDeliveryAddress(), e.getMessage(), e);
+                             deliveryTarget.getDeliveryMethod(), deliveryTarget.getDeliveryAddress(), e.getMessage(), e);
       log.error(msg);
       return null;
     }
@@ -240,7 +241,7 @@ public final class DeliveryTask implements Callable<Notification>
     catch (TapisException e)
     {
       String msg = LibUtils.getMsg("NTFLIB_DSP_DLVRY_RCVR_ADD_ERR", bucketNum, notification.getUuid(),
-                                   deliveryTarget.getDeliveryType(), deliveryTarget.getDeliveryAddress(),
+                                   deliveryTarget.getDeliveryMethod(), deliveryTarget.getDeliveryAddress(),
                                    e.getMessage(), e);
       log.error(msg);
     }
