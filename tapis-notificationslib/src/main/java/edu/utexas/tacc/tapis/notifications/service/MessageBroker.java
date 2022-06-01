@@ -199,7 +199,7 @@ public final class MessageBroker
     if (log.isTraceEnabled())
     {
       log.trace(LibUtils.getMsgAuth("NTFLIB_EVENT_PUB", rUser, event.getSource(), event.getType(), event.getSubject(),
-                                    event.getSeriesId(), event.getTime(), event.getUuid()));
+                                    event.getData(), event.getSeriesId(), event.getTimestamp(), event.getUuid()));
     }
   }
 
@@ -274,7 +274,7 @@ public final class MessageBroker
         if (log.isTraceEnabled())
         {
           log.trace(LibUtils.getMsg("NTFLIB_EVENT_RCV", event.getTenant(), event.getSource(), event.getType(),
-                                    event.getSubject(), event.getSeriesId(), event.getTime(), event.getUuid()));
+                                    event.getSubject(), event.getData(), event.getSeriesId(), event.getTimestamp(), event.getUuid()));
         }
 
         // Create the Delivery object to be passed to the bucket manager.

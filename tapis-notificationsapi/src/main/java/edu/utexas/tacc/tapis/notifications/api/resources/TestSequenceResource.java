@@ -402,7 +402,7 @@ public class TestSequenceResource
     String subject = req.event.subject;
     String type = req.event.type;
     String seriesId = req.event.seriesId;
-    String time = req.event.time;
+    String time = req.event.timestamp;
     String eventUuidStr = req.event.uuid;
 
     // Tenant and user should both have values
@@ -443,7 +443,7 @@ public class TestSequenceResource
     // Create an Event from the request
     // TODO
     String data = null;
-    Event event = new Event(tenant, user, source, type, subject, seriesId, time, data, eventUuid);
+    Event event = new Event(source, type, subject, data, seriesId, time, tenant, user, eventUuid);
     // Create a notification from the request
     Notification notification = new Notification(notifUuid, -1, tenant, name, -1, eventUuid, event,
                                                  req.deliveryTarget, notifCreated);

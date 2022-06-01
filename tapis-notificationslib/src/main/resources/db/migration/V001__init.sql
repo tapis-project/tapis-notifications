@@ -55,7 +55,7 @@ CREATE TABLE subscriptions
     subject_filter TEXT NOT NULL,
     delivery_targets JSONB NOT NULL,
     ttlMinutes INTEGER NOT NULL DEFAULT -1,
-    uuid  UUID NOT NULL,
+    uuid  TEXT NOT NULL,
     expiry  TIMESTAMP WITHOUT TIME ZONE,
     created TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),
     updated TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),
@@ -134,4 +134,3 @@ CREATE TABLE notifications_tests
     UNIQUE (tenant,owner,subscr_name)
 );
 ALTER TABLE notifications_tests OWNER TO tapis_ntf;
-

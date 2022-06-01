@@ -1,6 +1,5 @@
 package edu.utexas.tacc.tapis.notifications.service;
 
-import com.google.gson.JsonObject;
 import edu.utexas.tacc.tapis.notifications.dao.NotificationsDao;
 import edu.utexas.tacc.tapis.notifications.dao.NotificationsDaoImpl;
 import edu.utexas.tacc.tapis.notifications.model.DeliveryTarget;
@@ -19,7 +18,6 @@ import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
 import org.glassfish.hk2.api.ServiceLocator;
 import org.glassfish.hk2.utilities.ServiceLocatorUtilities;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
-import org.jooq.tools.StringUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
@@ -364,8 +362,8 @@ public class NotificationsServiceTest
   public void testPostEventAndLeave() throws Exception
   {
     OffsetDateTime eventTime = OffsetDateTime.now();
-    Event event = new Event(tenantName, testUser1, eventSource1, eventType1, eventSubject1, seriesId1, eventTime.toString(),
-                            eventDataNull, UUID.randomUUID());
+    Event event = new Event(eventSource1, eventType1, eventSubject1, eventDataNull, seriesId1, eventTime.toString(),
+                            tenantName, testUser1, UUID.randomUUID());
     System.out.println("Placing event on queue. Event: " + event);
     // Put an event on the queue as a message
     svcImpl.postEvent(rUser1, event);
@@ -379,8 +377,8 @@ public class NotificationsServiceTest
   public void testPostReadEvent() throws Exception
   {
     OffsetDateTime eventTime = OffsetDateTime.now();
-    Event event = new Event(tenantName, testUser1, eventSource1, eventType1, eventSubject1, seriesId1, eventTime.toString(),
-                            eventDataNull, UUID.randomUUID());
+    Event event = new Event(eventSource1, eventType1, eventSubject1, eventDataNull, seriesId1, eventTime.toString(),
+                            tenantName, testUser1, UUID.randomUUID());
     System.out.println("Placing event on queue. Event: " + event);
     // Put an event on the queue as a message
     svcImpl.postEvent(rUser1, event);
@@ -413,7 +411,7 @@ public class NotificationsServiceTest
     Assert.assertEquals(event.getType(), tmpEvent.getType());
     Assert.assertEquals(event.getSubject(), tmpEvent.getSubject());
     Assert.assertEquals(event.getSeriesId(), tmpEvent.getSeriesId());
-    Assert.assertEquals(event.getTime(), tmpEvent.getTime());
+    Assert.assertEquals(event.getTimestamp(), tmpEvent.getTimestamp());
     Assert.assertEquals(event.getUuid(), tmpEvent.getUuid());
 //    System.out.println("Ack message");
 //    svcImpl.ackMsg(rUser1, deliverCallback);

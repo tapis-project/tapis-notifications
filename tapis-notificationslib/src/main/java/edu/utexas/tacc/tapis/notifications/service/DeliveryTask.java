@@ -140,7 +140,7 @@ public final class DeliveryTask implements Callable<Notification>
 
     log.debug(LibUtils.getMsg("NTFLIB_DSP_DLVRY", bucketNum, notification.getUuid(), deliveryTarget.getDeliveryType(),
             deliveryTarget.getDeliveryAddress(), event.getSource(), event.getType(),
-            event.getSubject(), event.getSeriesId(), event.getTime(), event.getUuid()));
+            event.getSubject(), event.getData(), event.getSeriesId(), event.getTimestamp(), event.getUuid()));
     boolean deliveryStatus = false;
     switch (deliveryTarget.getDeliveryType())
     {

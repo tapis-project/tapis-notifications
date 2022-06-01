@@ -777,11 +777,11 @@ public class NotificationsServiceImpl implements NotificationsService
     String eventType = TEST_EVENT_TYPE;
     String eventSubject = name;
     String eventSeriesId = null;
-    String eventTime = OffsetDateTime.now().toString();
+    String eventTimeStamp = OffsetDateTime.now().toString();
     String eventData = null;
     UUID eventUUID = UUID.randomUUID();
-    Event event = new Event(oboTenant, oboUser, eventSource, eventType, eventSubject, eventSeriesId, eventTime,
-                            eventData, eventUUID);
+    Event event = new Event(eventSource, eventType, eventSubject, eventData, eventSeriesId, eventTimeStamp,
+                            oboTenant, oboUser, eventUUID);
     MessageBroker.getInstance().publishEvent(rUser, event);
 
     return dao.getSubscription(oboTenant, name, oboUser);
