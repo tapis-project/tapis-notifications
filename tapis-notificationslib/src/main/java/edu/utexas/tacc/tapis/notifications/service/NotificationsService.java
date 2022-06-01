@@ -67,7 +67,7 @@ public interface NotificationsService
   // -----------------------------------------------------------------------
   // ------------------------- Events --------------------------------------
   // -----------------------------------------------------------------------
-  void postEvent(ResourceRequestUser rUser, Event event) throws IOException;
+  void publishEvent(ResourceRequestUser rUser, Event event) throws IOException, IllegalArgumentException, NotAuthorizedException;
 
   // -----------------------------------------------------------------------
   // ------------------------- Test Sequence -------------------------------

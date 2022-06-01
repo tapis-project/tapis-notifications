@@ -5,7 +5,6 @@ import java.util.List;
 import edu.utexas.tacc.tapis.notifications.model.DeliveryTarget;
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.DEFAULT_OWNER;
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.DEFAULT_ENABLED;
-import static edu.utexas.tacc.tapis.notifications.model.Subscription.DEFAULT_SUBJECT_FILTER;
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.DEFAULT_TTL;
 
 /*
@@ -18,7 +17,7 @@ public final class ReqPostSubscription
   public String owner = DEFAULT_OWNER;
   public boolean enabled = DEFAULT_ENABLED;
   public String typeFilter;
-  public String subjectFilter = DEFAULT_SUBJECT_FILTER;
+  public String subjectFilter;
   public List<DeliveryTarget> deliveryTargets;
   public int ttlMinutes = DEFAULT_TTL;
 }

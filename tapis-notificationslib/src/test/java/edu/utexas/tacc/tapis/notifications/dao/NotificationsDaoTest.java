@@ -169,10 +169,10 @@ public class NotificationsDaoTest
     // Enabled should start off true, then become false and finally true again.
     Subscription tmpSub = dao.getSubscription(sub0.getTenant(), sub0.getOwner(), sub0.getName());
     Assert.assertTrue(tmpSub.isEnabled());
-    dao.updateEnabled(rUser, tenantName, sub0.getOwner(), sub0.getName(), false);
+    dao.updateEnabled(tenantName, sub0.getOwner(), sub0.getName(), false);
     tmpSub = dao.getSubscription(sub0.getTenant(), sub0.getOwner(), sub0.getName());
     Assert.assertFalse(tmpSub.isEnabled());
-    dao.updateEnabled(rUser, tenantName, sub0.getOwner(), sub0.getName(), true);
+    dao.updateEnabled(tenantName, sub0.getOwner(), sub0.getName(), true);
     tmpSub = dao.getSubscription(sub0.getTenant(), sub0.getOwner(), sub0.getName());
     Assert.assertTrue(tmpSub.isEnabled());
 
@@ -195,7 +195,7 @@ public class NotificationsDaoTest
     // Interesting, storing and retrieving from DB truncates/rounds from nanoseconds to microseconds.
     System.out.println("Old Expiry: " + sub0.getExpiry());
     System.out.println("New Expiry: " + newExpiry);
-    dao.updateSubscriptionTTL(rUser, tenantName, sub0.getOwner(), sub0.getName(), ttl2, newExpiry);
+    dao.updateSubscriptionTTL(tenantName, sub0.getOwner(), sub0.getName(), ttl2, newExpiry);
     Subscription tmpSub = dao.getSubscription(sub0.getTenant(), sub0.getOwner(), sub0.getName());
     System.out.println("Got Expiry: " + tmpSub.getExpiry());
     LocalDateTime newExpiryLDT =  LocalDateTime.ofInstant(newExpiry, ZoneOffset.UTC);

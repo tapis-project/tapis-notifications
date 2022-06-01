@@ -185,7 +185,7 @@ public class EventResource
     // ---------------------------- Make service call to post the event -------------------------------
     try
     {
-      notificationsService.postEvent(rUser, event);
+      notificationsService.publishEvent(rUser, event);
     }
     catch (Exception e)
     {

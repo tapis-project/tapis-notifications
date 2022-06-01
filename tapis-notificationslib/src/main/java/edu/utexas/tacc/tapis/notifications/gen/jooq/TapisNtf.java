@@ -9,7 +9,6 @@ import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.Notifications;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.NotificationsLastEvent;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.NotificationsRecovery;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.NotificationsTests;
-import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.SubscriptionUpdates;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.Subscriptions;
 
 import java.util.Arrays;
@@ -60,11 +59,6 @@ public class TapisNtf extends SchemaImpl {
     public final NotificationsTests NOTIFICATIONS_TESTS = NotificationsTests.NOTIFICATIONS_TESTS;
 
     /**
-     * The table <code>tapis_ntf.subscription_updates</code>.
-     */
-    public final SubscriptionUpdates SUBSCRIPTION_UPDATES = SubscriptionUpdates.SUBSCRIPTION_UPDATES;
-
-    /**
      * The table <code>tapis_ntf.subscriptions</code>.
      */
     public final Subscriptions SUBSCRIPTIONS = Subscriptions.SUBSCRIPTIONS;
@@ -88,7 +82,6 @@ public class TapisNtf extends SchemaImpl {
             Sequences.NOTIFICATIONS_RECOVERY_SEQ_ID_SEQ,
             Sequences.NOTIFICATIONS_SEQ_ID_SEQ,
             Sequences.NOTIFICATIONS_TESTS_SEQ_ID_SEQ,
-            Sequences.SUBSCRIPTION_UPDATES_SEQ_ID_SEQ,
             Sequences.SUBSCRIPTIONS_SEQ_ID_SEQ);
     }
 
@@ -100,7 +93,6 @@ public class TapisNtf extends SchemaImpl {
             NotificationsLastEvent.NOTIFICATIONS_LAST_EVENT,
             NotificationsRecovery.NOTIFICATIONS_RECOVERY,
             NotificationsTests.NOTIFICATIONS_TESTS,
-            SubscriptionUpdates.SUBSCRIPTION_UPDATES,
             Subscriptions.SUBSCRIPTIONS);
     }
 }

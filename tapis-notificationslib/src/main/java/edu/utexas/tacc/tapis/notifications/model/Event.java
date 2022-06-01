@@ -33,7 +33,7 @@ public final class Event
 
   // Valid pattern for event type, must be 3 sections separated by a '.'
   // First section must contain a series of lower case letters and may not be empty
-  // Second and third sections must start alphabetic, contain only alphanumeric and 3 special characters: - _ ~ and may not be empty
+  // Second and third sections must start alphabetic, contain only alphanumeric or 3 special characters: - _ ~ and may not be empty
   private static final Pattern EVENT_TYPE_PATTERN =
           Pattern.compile("^[a-z]+\\.[a-zA-Z]([a-zA-Z0-9]|[-_~])*\\.[a-zA-Z]([a-zA-Z0-9]|[-_~])*$");
 

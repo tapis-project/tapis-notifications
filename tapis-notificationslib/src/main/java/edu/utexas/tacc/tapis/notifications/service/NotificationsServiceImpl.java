@@ -222,7 +222,7 @@ public class NotificationsServiceImpl implements NotificationsService
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
     if (subscription == null) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_NULL_INPUT", rUser));
 
-    // Only services may create subscriptions publish. Reject if not a service.
+    // Only services may create subscriptions. Reject if not a service.
     if (!rUser.isServiceRequest())
     {
       String msg = LibUtils.getMsgAuth("NTFLIB_SUBSCR_UNAUTH", rUser);
@@ -267,9 +267,6 @@ public class NotificationsServiceImpl implements NotificationsService
 
     // ---------------- Check constraints on Subscription attributes ------------------------
     validateSubscription(rUser, sub1);
-
-    // Construct Json string representing the Subscription about to be created
-    Subscription scrubbedSubscription = new Subscription(sub1);
 
     // Compute the expiry time from now
     Instant expiry = Subscription.computeExpiryFromNow(sub1.getTtlMinutes());
@@ -443,7 +440,7 @@ public class NotificationsServiceImpl implements NotificationsService
     }
 
     // ----------------- Make update --------------------
-    dao.updateSubscriptionTTL(rUser, oboTenant, owner, name, newTTL, Subscription.computeExpiryFromNow(newTTL));
+    dao.updateSubscriptionTTL(oboTenant, owner, name, newTTL, Subscription.computeExpiryFromNow(newTTL));
     return 1;
   }
 
@@ -671,23 +668,26 @@ public class NotificationsServiceImpl implements NotificationsService
   // -----------------------------------------------------------------------
 
   /**
-   * Post an Event to the queue.
+   * Post an Event to the queue. Only services may publish events.
+   * First field of type must match the service name.
    * @param rUser - ResourceRequestUser containing tenant, user and request info
    * @param event - Pre-populated Event object
    * @throws IOException - on error
+   * @throws IllegalArgumentException - if
    * @throws NotAuthorizedException - unauthorized
    */
   @Override
-  public void postEvent(ResourceRequestUser rUser, Event event) throws IOException, NotAuthorizedException
+  public void publishEvent(ResourceRequestUser rUser, Event event) throws IOException, IllegalArgumentException, NotAuthorizedException
   {
     // Check inputs
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
     if (event == null) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_NULL_INPUT_EVENT", rUser));
 
+    String msg;
     // Only services may publish. Reject if not a service.
     if (!rUser.isServiceRequest())
     {
-      String msg = LibUtils.getMsgAuth("NTFLIB_EVENT_UNAUTH", rUser);
+      msg = LibUtils.getMsgAuth("NTFLIB_EVENT_UNAUTH", rUser);
       log.warn(msg);
       throw new NotAuthorizedException(msg, NO_CHALLENGE);
     }
@@ -695,7 +695,9 @@ public class NotificationsServiceImpl implements NotificationsService
     // If first field of type is not the service name then reject
     if (!event.getType1().equals(rUser.getJwtUserId()))
     {
-      ????
+      msg = LibUtils.getMsgAuth("NTFLIB_EVENT_SVC_NOMATCH", rUser, event.getType(), rUser.getJwtUserId());
+      log.warn(msg);
+      throw new IllegalArgumentException(msg);
     }
 
     // Publish the event
@@ -796,7 +798,7 @@ public class NotificationsServiceImpl implements NotificationsService
     dao.createSubscription(rUser, sub1, expiry);
 
     // Persist the initial test sequence record
-    dao.createTestSequence(rUser, name, oboUser);
+    dao.createTestSequence(rUser, name);
 
     // Create and publish an event
     URI eventSource = new URI(baseServiceUrl);
@@ -934,9 +936,9 @@ public class NotificationsServiceImpl implements NotificationsService
 
     // ----------------- Make update --------------------
     if (op == SubscriptionOperation.enable)
-      dao.updateEnabled(rUser, oboTenant, owner, name, true);
+      dao.updateEnabled(oboTenant, owner, name, true);
     else
-      dao.updateEnabled(rUser, oboTenant, owner, name, false);
+      dao.updateEnabled(oboTenant, owner, name, false);
     return 1;
   }
 

@@ -34,10 +34,10 @@ public interface NotificationsDao
   void patchSubscription(ResourceRequestUser rUser, String owner, String name, Subscription patchedSubscription)
           throws TapisException, IllegalStateException;
 
-  void updateEnabled(ResourceRequestUser rUser, String tenantId, String owner, String name, boolean enabled)
+  void updateEnabled(String tenant, String owner, String name, boolean enabled)
           throws TapisException;
 
-  void updateSubscriptionTTL(ResourceRequestUser rUser, String tenantId, String owner, String name, int newTTL, Instant newExpiry)
+  void updateSubscriptionTTL(String tenant, String owner, String name, int newTTL, Instant newExpiry)
           throws TapisException;
 
   int deleteSubscription(String tenant, String owner, String name) throws TapisException;
@@ -97,13 +97,13 @@ public interface NotificationsDao
   // -----------------------------------------------------------------------
   // --------------------- Test Sequences ----------------------------------
   // -----------------------------------------------------------------------
-  boolean createTestSequence(ResourceRequestUser rUser, String owner, String name)
+  boolean createTestSequence(ResourceRequestUser rUser, String name)
           throws TapisException, IllegalStateException;
 
-  TestSequence getTestSequence(String tenantId, String owner, String name) throws TapisException;
+  TestSequence getTestSequence(String tenant, String owner, String name) throws TapisException;
 
   void addTestSequenceNotification(String tenant, String user, String subscrId, Notification notification)
           throws TapisException, IllegalStateException;
 
-  boolean checkForTestSequence(String tenantId, String owner, String name) throws TapisException;
+  boolean checkForTestSequence(String tenant, String owner, String name) throws TapisException;
 }

@@ -3,9 +3,11 @@ package edu.utexas.tacc.tapis.notifications.model;
 import com.google.gson.JsonElement;
 import edu.utexas.tacc.tapis.notifications.utils.LibUtils;
 import edu.utexas.tacc.tapis.shared.utils.TapisGsonUtils;
+import edu.utexas.tacc.tapis.sharedapi.utils.TapisRestUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.apache.commons.lang3.StringUtils;
 
+import javax.ws.rs.core.Response;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,8 +40,8 @@ public final class Subscription
 
   // Valid pattern for subscription typeFilter. Must be 3 sections separated by a '.'
   // First section must contain a series of lower case letters and may not be empty
-  // Second section must start alphabetic, contain only alphanumeric and 3 special characters: - _ ~ and may not be empty
-  // Third section must start alphabetic, contain only alphanumeric and 3 special characters: - _ ~ and may not be empty
+  // Second section must start alphabetic, contain only alphanumeric or 3 special characters: - _ ~ and may not be empty
+  // Third section must start alphabetic, contain only alphanumeric or 3 special characters: - _ ~ and may not be empty
   //    OR be single wildcard character '*'
   private static final Pattern SUBSCR_TYPE_FILTER_PATTERN =
           Pattern.compile("^[a-z]+\\.[a-zA-Z]([a-zA-Z0-9]|[-_~])*\\.([a-zA-Z]([a-zA-Z0-9]|[-_~])*|\\*)$");
@@ -331,12 +333,14 @@ public final class Subscription
 
   /**
    * Check for invalid attributes
-   *   id
+   *   name, typeFilter
    */
   private void checkAttrValidity(List<String> errMessages)
   {
     // Check that id is not empty and contains a valid pattern
     if (!StringUtils.isBlank(name) && !isValidName(name)) errMessages.add(LibUtils.getMsg(INVALID_STR_ATTR, NAME_FIELD, name));
+    // Validate the subscription type filter
+    if (!Subscription.isValidTypeFilter(typeFilter)) errMessages.add(LibUtils.getMsg("NTFLIB_SUBSCR_TYPE_ERR", name, typeFilter));
   }
 
   /**

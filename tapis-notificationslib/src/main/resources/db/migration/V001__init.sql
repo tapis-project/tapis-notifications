@@ -55,7 +55,7 @@ CREATE TABLE subscriptions
     subject_filter TEXT NOT NULL,
     delivery_targets JSONB NOT NULL,
     ttlMinutes INTEGER NOT NULL DEFAULT -1,
-    uuid  TEXT NOT NULL,
+    uuid UUID NOT NULL,
     expiry  TIMESTAMP WITHOUT TIME ZONE,
     created TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),
     updated TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),

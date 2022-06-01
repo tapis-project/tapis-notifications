@@ -55,44 +55,44 @@ public class SubscriptionsRecord extends UpdatableRecordImpl<SubscriptionsRecord
     }
 
     /**
-     * Setter for <code>tapis_ntf.subscriptions.name</code>. Unique name for the subscription
-     */
-    public void setName(String value) {
-        set(2, value);
-    }
-
-    /**
-     * Getter for <code>tapis_ntf.subscriptions.name</code>. Unique name for the subscription
-     */
-    public String getName() {
-        return (String) get(2);
-    }
-
-    /**
-     * Setter for <code>tapis_ntf.subscriptions.description</code>.
-     */
-    public void setDescription(String value) {
-        set(3, value);
-    }
-
-    /**
-     * Getter for <code>tapis_ntf.subscriptions.description</code>.
-     */
-    public String getDescription() {
-        return (String) get(3);
-    }
-
-    /**
      * Setter for <code>tapis_ntf.subscriptions.owner</code>. User name of owner
      */
     public void setOwner(String value) {
-        set(4, value);
+        set(2, value);
     }
 
     /**
      * Getter for <code>tapis_ntf.subscriptions.owner</code>. User name of owner
      */
     public String getOwner() {
+        return (String) get(2);
+    }
+
+    /**
+     * Setter for <code>tapis_ntf.subscriptions.name</code>. Name for the subscription. tenant+owner+name must be unique
+     */
+    public void setName(String value) {
+        set(3, value);
+    }
+
+    /**
+     * Getter for <code>tapis_ntf.subscriptions.name</code>. Name for the subscription. tenant+owner+name must be unique
+     */
+    public String getName() {
+        return (String) get(3);
+    }
+
+    /**
+     * Setter for <code>tapis_ntf.subscriptions.description</code>.
+     */
+    public void setDescription(String value) {
+        set(4, value);
+    }
+
+    /**
+     * Getter for <code>tapis_ntf.subscriptions.description</code>.
+     */
+    public String getDescription() {
         return (String) get(4);
     }
 
@@ -299,17 +299,17 @@ public class SubscriptionsRecord extends UpdatableRecordImpl<SubscriptionsRecord
 
     @Override
     public Field<String> field3() {
-        return Subscriptions.SUBSCRIPTIONS.NAME;
+        return Subscriptions.SUBSCRIPTIONS.OWNER;
     }
 
     @Override
     public Field<String> field4() {
-        return Subscriptions.SUBSCRIPTIONS.DESCRIPTION;
+        return Subscriptions.SUBSCRIPTIONS.NAME;
     }
 
     @Override
     public Field<String> field5() {
-        return Subscriptions.SUBSCRIPTIONS.OWNER;
+        return Subscriptions.SUBSCRIPTIONS.DESCRIPTION;
     }
 
     @Override
@@ -384,17 +384,17 @@ public class SubscriptionsRecord extends UpdatableRecordImpl<SubscriptionsRecord
 
     @Override
     public String component3() {
-        return getName();
+        return getOwner();
     }
 
     @Override
     public String component4() {
-        return getDescription();
+        return getName();
     }
 
     @Override
     public String component5() {
-        return getOwner();
+        return getDescription();
     }
 
     @Override
@@ -469,17 +469,17 @@ public class SubscriptionsRecord extends UpdatableRecordImpl<SubscriptionsRecord
 
     @Override
     public String value3() {
-        return getName();
+        return getOwner();
     }
 
     @Override
     public String value4() {
-        return getDescription();
+        return getName();
     }
 
     @Override
     public String value5() {
-        return getOwner();
+        return getDescription();
     }
 
     @Override
@@ -556,19 +556,19 @@ public class SubscriptionsRecord extends UpdatableRecordImpl<SubscriptionsRecord
 
     @Override
     public SubscriptionsRecord value3(String value) {
-        setName(value);
+        setOwner(value);
         return this;
     }
 
     @Override
     public SubscriptionsRecord value4(String value) {
-        setDescription(value);
+        setName(value);
         return this;
     }
 
     @Override
     public SubscriptionsRecord value5(String value) {
-        setOwner(value);
+        setDescription(value);
         return this;
     }
 
@@ -680,14 +680,14 @@ public class SubscriptionsRecord extends UpdatableRecordImpl<SubscriptionsRecord
     /**
      * Create a detached, initialised SubscriptionsRecord
      */
-    public SubscriptionsRecord(Integer seqId, String tenant, String name, String description, String owner, Boolean enabled, String typeFilter, String typeFilter1, String typeFilter2, String typeFilter3, String subjectFilter, JsonElement deliveryTargets, Integer ttlminutes, UUID uuid, LocalDateTime expiry, LocalDateTime created, LocalDateTime updated) {
+    public SubscriptionsRecord(Integer seqId, String tenant, String owner, String name, String description, Boolean enabled, String typeFilter, String typeFilter1, String typeFilter2, String typeFilter3, String subjectFilter, JsonElement deliveryTargets, Integer ttlminutes, UUID uuid, LocalDateTime expiry, LocalDateTime created, LocalDateTime updated) {
         super(Subscriptions.SUBSCRIPTIONS);
 
         setSeqId(seqId);
         setTenant(tenant);
+        setOwner(owner);
         setName(name);
         setDescription(description);
-        setOwner(owner);
         setEnabled(enabled);
         setTypeFilter(typeFilter);
         setTypeFilter1(typeFilter1);

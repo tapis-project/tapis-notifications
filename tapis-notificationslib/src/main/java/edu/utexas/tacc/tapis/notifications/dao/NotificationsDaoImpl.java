@@ -63,7 +63,6 @@ import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.Notifications
 
 import static edu.utexas.tacc.tapis.notifications.gen.jooq.Tables.NOTIFICATIONS_RECOVERY;
 import static edu.utexas.tacc.tapis.notifications.gen.jooq.Tables.SUBSCRIPTIONS;
-import static edu.utexas.tacc.tapis.notifications.gen.jooq.Tables.SUBSCRIPTION_UPDATES;
 import static edu.utexas.tacc.tapis.notifications.gen.jooq.Tables.NOTIFICATIONS;
 import static edu.utexas.tacc.tapis.notifications.gen.jooq.Tables.NOTIFICATIONS_LAST_EVENT;
 import static edu.utexas.tacc.tapis.notifications.gen.jooq.Tables.NOTIFICATIONS_TESTS;
@@ -323,7 +322,7 @@ public class NotificationsDaoImpl implements NotificationsDao
    * Update attribute enabled for a subscription given subscription owner, name and new value
    */
   @Override
-  public void updateEnabled(ResourceRequestUser rUser, String tenantId, String owner, String name, boolean enabled)
+  public void updateEnabled(String tenant, String owner, String name, boolean enabled)
           throws TapisException
   {
     String opName = "updateEnabled";
@@ -343,7 +342,7 @@ public class NotificationsDaoImpl implements NotificationsDao
       db.update(SUBSCRIPTIONS)
               .set(SUBSCRIPTIONS.ENABLED, enabled)
               .set(SUBSCRIPTIONS.UPDATED, TapisUtils.getUTCTimeNow())
-              .where(SUBSCRIPTIONS.TENANT.eq(tenantId),SUBSCRIPTIONS.OWNER.eq(owner),SUBSCRIPTIONS.NAME.eq(name))
+              .where(SUBSCRIPTIONS.TENANT.eq(tenant),SUBSCRIPTIONS.OWNER.eq(owner),SUBSCRIPTIONS.NAME.eq(name))
               .execute();
       // Close out and commit
       LibUtils.closeAndCommitDB(conn, null, null);
@@ -365,7 +364,7 @@ public class NotificationsDaoImpl implements NotificationsDao
    * Also update expiry since update of TTL should always include update of expiry
    */
   @Override
-  public void updateSubscriptionTTL(ResourceRequestUser rUser, String tenantId, String owner, String name,
+  public void updateSubscriptionTTL(String tenant, String owner, String name,
                                     int newTTL, Instant newExpiry)
           throws TapisException
   {
@@ -387,7 +386,7 @@ public class NotificationsDaoImpl implements NotificationsDao
               .set(SUBSCRIPTIONS.TTLMINUTES, newTTL)
               .set(SUBSCRIPTIONS.EXPIRY, expiry)
               .set(SUBSCRIPTIONS.UPDATED, TapisUtils.getUTCTimeNow())
-              .where(SUBSCRIPTIONS.TENANT.eq(tenantId),SUBSCRIPTIONS.OWNER.eq(owner),SUBSCRIPTIONS.NAME.eq(name))
+              .where(SUBSCRIPTIONS.TENANT.eq(tenant),SUBSCRIPTIONS.OWNER.eq(owner),SUBSCRIPTIONS.NAME.eq(name))
               .execute();
       // Close out and commit
       LibUtils.closeAndCommitDB(conn, null, null);
@@ -408,11 +407,11 @@ public class NotificationsDaoImpl implements NotificationsDao
    * Delete a subscription
    */
   @Override
-  public int deleteSubscription(String tenantId, String owner, String name) throws TapisException
+  public int deleteSubscription(String tenant, String owner, String name) throws TapisException
   {
     String opName = "deleteSubscription";
     // ------------------------- Check Input -------------------------
-    if (StringUtils.isBlank(tenantId)) LibUtils.logAndThrowNullParmException(opName, "tenant");
+    if (StringUtils.isBlank(tenant)) LibUtils.logAndThrowNullParmException(opName, "tenant");
     if (StringUtils.isBlank(name)) LibUtils.logAndThrowNullParmException(opName, "subscriptionName");
 
     // ------------------------- Call SQL ----------------------------
@@ -421,7 +420,7 @@ public class NotificationsDaoImpl implements NotificationsDao
     {
       conn = getConnection();
       DSLContext db = DSL.using(conn);
-      db.deleteFrom(SUBSCRIPTIONS).where(SUBSCRIPTIONS.TENANT.eq(tenantId),SUBSCRIPTIONS.OWNER.eq(owner),SUBSCRIPTIONS.NAME.eq(name)).execute();
+      db.deleteFrom(SUBSCRIPTIONS).where(SUBSCRIPTIONS.TENANT.eq(tenant),SUBSCRIPTIONS.OWNER.eq(owner),SUBSCRIPTIONS.NAME.eq(name)).execute();
       LibUtils.closeAndCommitDB(conn, null, null);
     }
     catch (Exception e)
@@ -443,7 +442,7 @@ public class NotificationsDaoImpl implements NotificationsDao
    * @throws TapisException - on error
    */
   @Override
-  public boolean checkForSubscription(String tenantId, String owner, String name) throws TapisException
+  public boolean checkForSubscription(String tenant, String owner, String name) throws TapisException
   {
     // Initialize result.
     boolean result = false;
@@ -456,14 +455,14 @@ public class NotificationsDaoImpl implements NotificationsDao
       conn = getConnection();
       DSLContext db = DSL.using(conn);
       // Run the sql
-      result = checkForSubscription(db, tenantId, owner, name);
+      result = checkForSubscription(db, tenant, owner, name);
       // Close out and commit
       LibUtils.closeAndCommitDB(conn, null, null);
     }
     catch (Exception e)
     {
       // Rollback transaction and throw an exception
-      LibUtils.rollbackDB(conn, e,"DB_SELECT_NAME_ERROR", "Subscription", tenantId, name, e.getMessage());
+      LibUtils.rollbackDB(conn, e,"DB_SELECT_NAME_ERROR", "Subscription", tenant, name, e.getMessage());
     }
     finally
     {
@@ -480,7 +479,7 @@ public class NotificationsDaoImpl implements NotificationsDao
    * @throws TapisException - on error
    */
   @Override
-  public boolean isEnabled(String tenantId, String owner, String name) throws TapisException {
+  public boolean isEnabled(String tenant, String owner, String name) throws TapisException {
     // Initialize result.
     boolean result = false;
     // ------------------------- Call SQL ----------------------------
@@ -492,7 +491,7 @@ public class NotificationsDaoImpl implements NotificationsDao
       DSLContext db = DSL.using(conn);
       // Run the sql
       Boolean b = db.selectFrom(SUBSCRIPTIONS)
-              .where(SUBSCRIPTIONS.TENANT.eq(tenantId),SUBSCRIPTIONS.OWNER.eq(owner),SUBSCRIPTIONS.NAME.eq(name))
+              .where(SUBSCRIPTIONS.TENANT.eq(tenant),SUBSCRIPTIONS.OWNER.eq(owner),SUBSCRIPTIONS.NAME.eq(name))
               .fetchOne(SUBSCRIPTIONS.ENABLED);
       if (b != null) result = b;
       // Close out and commit
@@ -501,7 +500,7 @@ public class NotificationsDaoImpl implements NotificationsDao
     catch (Exception e)
     {
       // Rollback transaction and throw an exception
-      LibUtils.rollbackDB(conn, e, "NTFLIB_DB_SELECT_ERROR", "Subscription", tenantId, name, e.getMessage());
+      LibUtils.rollbackDB(conn, e, "NTFLIB_DB_SELECT_ERROR", "Subscription", tenant, name, e.getMessage());
     }
     finally
     {
@@ -519,7 +518,7 @@ public class NotificationsDaoImpl implements NotificationsDao
    * @throws TapisException - on error
    */
   @Override
-  public Subscription getSubscription(String tenantId, String owner, String name) throws TapisException
+  public Subscription getSubscription(String tenant, String owner, String name) throws TapisException
   {
     // Initialize result.
     Subscription result = null;
@@ -532,7 +531,7 @@ public class NotificationsDaoImpl implements NotificationsDao
       conn = getConnection();
       DSLContext db = DSL.using(conn);
       SubscriptionsRecord r;
-      r = db.selectFrom(SUBSCRIPTIONS).where(SUBSCRIPTIONS.TENANT.eq(tenantId),SUBSCRIPTIONS.OWNER.eq(owner),SUBSCRIPTIONS.NAME.eq(name)).fetchOne();
+      r = db.selectFrom(SUBSCRIPTIONS).where(SUBSCRIPTIONS.TENANT.eq(tenant),SUBSCRIPTIONS.OWNER.eq(owner),SUBSCRIPTIONS.NAME.eq(name)).fetchOne();
       if (r == null) return null;
       else result = getSubscriptionFromRecord(r);
 
@@ -542,7 +541,7 @@ public class NotificationsDaoImpl implements NotificationsDao
     catch (Exception e)
     {
       // Rollback transaction and throw an exception
-      LibUtils.rollbackDB(conn, e, "NTFLIB_DB_SELECT_ERROR", "Subscription", tenantId, name, e.getMessage());
+      LibUtils.rollbackDB(conn, e, "NTFLIB_DB_SELECT_ERROR", "Subscription", tenant, name, e.getMessage());
     }
     finally
     {
@@ -559,7 +558,7 @@ public class NotificationsDaoImpl implements NotificationsDao
    * Conditions in searchList must be processed by SearchUtils.validateAndExtractSearchCondition(cond)
    *   prior to this call for proper validation and treatment of special characters.
    * WARNING: If both searchList and searchAST provided only searchList is used.
-   * @param tenantId - tenant name
+   * @param tenant - tenant name
    * @param searchList - optional list of conditions used for searching
    * @param searchAST - AST containing search conditions
    * @param setOfIDs - list of subscription IDs to consider. null indicates no restriction.
@@ -569,11 +568,10 @@ public class NotificationsDaoImpl implements NotificationsDao
    * @throws TapisException - on error
    */
   @Override
-  public int getSubscriptionsCount(String tenantId, String owner, List<String> searchList, ASTNode searchAST,
+  public int getSubscriptionsCount(String tenant, String owner, List<String> searchList, ASTNode searchAST,
                                    Set<String> setOfIDs, List<OrderBy> orderByList, String startAfter)
           throws TapisException
   {
-    // TODO user owner
     // If no IDs in list then we are done.
     if (setOfIDs != null && setOfIDs.isEmpty()) return 0;
 
@@ -613,8 +611,8 @@ public class NotificationsDaoImpl implements NotificationsDao
       }
     }
 
-    // Begin where condition for the query
-    Condition whereCondition = SUBSCRIPTIONS.TENANT.eq(tenantId);
+    // Begin where condition for the query. Must match tenant and owner
+    Condition whereCondition = SUBSCRIPTIONS.TENANT.eq(tenant).and(SUBSCRIPTIONS.OWNER.eq(owner));
 
     // Add searchList or searchAST to where condition
     if (searchList != null)
@@ -760,7 +758,7 @@ public class NotificationsDaoImpl implements NotificationsDao
    * Conditions in searchList must be processed by SearchUtils.validateAndExtractSearchCondition(cond)
    *   prior to this call for proper validation and treatment of special characters.
    * WARNING: If both searchList and searchAST provided only searchList is used.
-   * @param tenantId - tenant name
+   * @param tenant - tenant name
    * @param searchList - optional list of conditions used for searching
    * @param searchAST - AST containing search conditions
    * @param setOfIDs - list of subscription IDs to consider. null indicates no restriction.
@@ -772,12 +770,11 @@ public class NotificationsDaoImpl implements NotificationsDao
    * @throws TapisException - on error
    */
   @Override
-  public List<Subscription> getSubscriptions(String tenantId, String owner, List<String> searchList, ASTNode searchAST,
+  public List<Subscription> getSubscriptions(String tenant, String owner, List<String> searchList, ASTNode searchAST,
                                              Set<String> setOfIDs, int limit, List<OrderBy> orderByList,
                                              int skip, String startAfter)
           throws TapisException
   {
-    // TODO use owner
     // The result list should always be non-null.
     List<Subscription> retList = new ArrayList<>();
 
@@ -835,8 +832,8 @@ public class NotificationsDaoImpl implements NotificationsDao
       else orderFieldList.add(colOrderBy.desc());
     }
 
-    // Begin where condition for the query
-    Condition whereCondition = SUBSCRIPTIONS.TENANT.eq(tenantId);
+    // Begin where condition for the query. Must match tenant and owner
+    Condition whereCondition = SUBSCRIPTIONS.TENANT.eq(tenant).and(SUBSCRIPTIONS.OWNER.eq(owner));
 
     // Add searchList or searchAST to where condition
     if (searchList != null)
@@ -919,7 +916,7 @@ public class NotificationsDaoImpl implements NotificationsDao
   /**
    * getSubscriptionsForEvent
    * Retrieve all Subscriptions matching an event.
-   * Event must be non-null and have tenantId and type filled in.
+   * Event must be non-null and have tenant and type filled in.
    * If no subscriptions match or the event is null then return an empty list
    * @param event - Event to match
    * @return - list of Subscription objects
@@ -940,7 +937,7 @@ public class NotificationsDaoImpl implements NotificationsDao
     // Make sure the types are set
     event.setTypeFields();
 
-    String tenantId = event.getTenant();
+    String tenant = event.getTenant();
 
     // ------------------------- Build and execute SQL ----------------------------
     Connection conn = null;
@@ -953,12 +950,12 @@ public class NotificationsDaoImpl implements NotificationsDao
       Result<SubscriptionsRecord> results;
 
       // Build up the WHERE clause.
-      // WHERE tenant = '<tenantId>'
+      // WHERE tenant = '<tenant>'
       //    AND (type_filter1 = '<typeFilter1>' OR type_filter1 = '*')
       //    AND (type_filter2 = '<typeFilter2>' OR type_filter2 = '*')
       //    AND (type_filter3 = '<typeFilter3>' OR type_filter3 = '*')
       //    AND (subject_filter = '<subjectFilter>' OR subject_filter = '*')
-      Condition whereCondition = SUBSCRIPTIONS.TENANT.eq(tenantId);
+      Condition whereCondition = SUBSCRIPTIONS.TENANT.eq(tenant);
       Condition tmpCond = SUBSCRIPTIONS.TYPE_FILTER1.eq(event.getType1()).or(SUBSCRIPTIONS.TYPE_FILTER1.eq("*"));
       whereCondition = whereCondition.and(tmpCond);
       tmpCond = SUBSCRIPTIONS.TYPE_FILTER2.eq(event.getType2()).or(SUBSCRIPTIONS.TYPE_FILTER2.eq("*"));
@@ -1260,13 +1257,13 @@ public class NotificationsDaoImpl implements NotificationsDao
 
   /**
    * getNotification
-   * @param tenantId tenant
+   * @param tenant tenant
    * @param uuid - uuid of notification
    * @return object if found, null if not found
    * @throws TapisException - on error
    */
   @Override
-  public Notification getNotification(String tenantId, UUID uuid) throws TapisException
+  public Notification getNotification(String tenant, UUID uuid) throws TapisException
   {
     // Initialize result.
     Notification result = null;
@@ -1279,7 +1276,7 @@ public class NotificationsDaoImpl implements NotificationsDao
       conn = getConnection();
       DSLContext db = DSL.using(conn);
       NotificationsRecord r;
-      r = db.selectFrom(NOTIFICATIONS).where(NOTIFICATIONS.TENANT.eq(tenantId),NOTIFICATIONS.UUID.eq(uuid)).fetchOne();
+      r = db.selectFrom(NOTIFICATIONS).where(NOTIFICATIONS.TENANT.eq(tenant),NOTIFICATIONS.UUID.eq(uuid)).fetchOne();
       if (r == null) return null;
       else result = getNotificationFromRecord(r);
 
@@ -1289,7 +1286,7 @@ public class NotificationsDaoImpl implements NotificationsDao
     catch (Exception e)
     {
       // Rollback transaction and throw an exception
-      LibUtils.rollbackDB(conn, e, "NTFLIB_DB_SELECT_ERROR", "Notification", tenantId, uuid, e.getMessage());
+      LibUtils.rollbackDB(conn, e, "NTFLIB_DB_SELECT_ERROR", "Notification", tenant, uuid, e.getMessage());
     }
     finally
     {
@@ -1582,16 +1579,18 @@ public class NotificationsDaoImpl implements NotificationsDao
 
   /**
    * Create a test sequence record
+   * NOTE: For a test sequence oboUser is always the owner of the subscription.
    *
+   * @param rUser - ResourceRequestUser containing tenant, user and request info
+   * @param name - name of the subscription
    * @return true if created, false if subscription does not exist
    * @throws IllegalStateException - if resource already exists
    * @throws TapisException - on error
    */
   @Override
-  public boolean createTestSequence(ResourceRequestUser rUser, String owner, String name)
+  public boolean createTestSequence(ResourceRequestUser rUser, String name)
           throws TapisException, IllegalStateException
   {
-    // TODO review how owner is used
     String opName = "createTestSequence";
     // ------------------------- Check Input -------------------------
     if (rUser == null) LibUtils.logAndThrowNullParmException(opName, "resourceRequestUser");
@@ -1599,7 +1598,7 @@ public class NotificationsDaoImpl implements NotificationsDao
 
     String oboTenant = rUser.getOboTenantId();
     String oboUser = rUser.getOboUserId();
-    Subscription subscription = getSubscription(oboTenant, owner, name);
+    Subscription subscription = getSubscription(oboTenant, oboUser, name);
     if (subscription == null) return false;
 
     // ------------------------- Call SQL ----------------------------
@@ -1611,7 +1610,7 @@ public class NotificationsDaoImpl implements NotificationsDao
       DSLContext db = DSL.using(conn);
 
       // Check to see if resource exists. If yes then throw IllegalStateException
-      boolean doesExist = checkForTestSequence(db, oboTenant, name);
+      boolean doesExist = checkForTestSequence(db, oboTenant, oboUser, name);
       if (doesExist)
         throw new IllegalStateException(LibUtils.getMsgAuth("NTFLIB_TEST_EXISTS", rUser, name));
 
@@ -1650,15 +1649,15 @@ public class NotificationsDaoImpl implements NotificationsDao
 
   /**
    * getTestSequence
-   * @param tenantId - oboTenant
+   * @param oboTenant - oboTenant
+   * @param oboUser - oboUser (owner of subscription)
    * @param name - subscription name
    * @return TestSequence if found, null if not found
    * @throws TapisException - on error
    */
   @Override
-  public TestSequence getTestSequence(String tenantId, String owner, String name) throws TapisException
+  public TestSequence getTestSequence(String oboTenant, String oboUser, String name) throws TapisException
   {
-    // TODO owner
     // Initialize result.
     TestSequence result = null;
 
@@ -1669,7 +1668,7 @@ public class NotificationsDaoImpl implements NotificationsDao
       // Get a database connection.
       conn = getConnection();
       DSLContext db = DSL.using(conn);
-      result = getTestSequence(db, tenantId, name);
+      result = getTestSequence(db, oboTenant, oboUser, name);
 
       // Close out and commit
       LibUtils.closeAndCommitDB(conn, null, null);
@@ -1677,7 +1676,7 @@ public class NotificationsDaoImpl implements NotificationsDao
     catch (Exception e)
     {
       // Rollback transaction and throw an exception
-      LibUtils.rollbackDB(conn, e, "NTFLIB_DB_SELECT_ERROR", "TestSequence", tenantId, name, e.getMessage());
+      LibUtils.rollbackDB(conn, e, "NTFLIB_DB_SELECT_ERROR", "TestSequence", oboTenant, name, e.getMessage());
     }
     finally
     {
@@ -1694,14 +1693,14 @@ public class NotificationsDaoImpl implements NotificationsDao
    * @throws TapisException - on error
    */
   @Override
-  public void addTestSequenceNotification(String tenantId, String user, String subscrId, Notification notification)
+  public void addTestSequenceNotification(String tenant, String user, String subscrName, Notification notification)
           throws TapisException, IllegalStateException
   {
     String opName = "addTestSequenceNotification";
     // ------------------------- Check Input -------------------------
-    if (StringUtils.isBlank(tenantId)) LibUtils.logAndThrowNullParmException(opName, "tenant");
+    if (StringUtils.isBlank(tenant)) LibUtils.logAndThrowNullParmException(opName, "tenant");
     if (StringUtils.isBlank(user)) LibUtils.logAndThrowNullParmException(opName, "user");
-    if (StringUtils.isBlank(subscrId)) LibUtils.logAndThrowNullParmException(opName, "subscriptionName");
+    if (StringUtils.isBlank(subscrName)) LibUtils.logAndThrowNullParmException(opName, "subscriptionName");
     if (notification == null) LibUtils.logAndThrowNullParmException(opName, "notification");
     // ------------------------- Call SQL ----------------------------
     Connection conn = null;
@@ -1711,9 +1710,9 @@ public class NotificationsDaoImpl implements NotificationsDao
       conn = getConnection();
       DSLContext db = DSL.using(conn);
       // Get test sequence. If not found throw an exception
-      TestSequence testSequence = getTestSequence(db, tenantId, subscrId);
+      TestSequence testSequence = getTestSequence(db, tenant, user, subscrName);
       if (testSequence == null)
-        throw new IllegalStateException(LibUtils.getMsg("NTFLIB_TEST_NOT_FOUND", tenantId, user, opName, subscrId));
+        throw new IllegalStateException(LibUtils.getMsg("NTFLIB_TEST_NOT_FOUND", tenant, user, opName, subscrName));
       // Figure out the notificationsJson for the update
       JsonElement notificationsJson;
       var newNotifications = testSequence.getReceivedNotifications();
@@ -1724,7 +1723,7 @@ public class NotificationsDaoImpl implements NotificationsDao
               .set(NOTIFICATIONS_TESTS.NOTIFICATION_COUNT, newNotifications.size())
               .set(NOTIFICATIONS_TESTS.NOTIFICATIONS, notificationsJson)
               .set(NOTIFICATIONS_TESTS.UPDATED, TapisUtils.getUTCTimeNow())
-              .where(NOTIFICATIONS_TESTS.TENANT.eq(tenantId),NOTIFICATIONS_TESTS.SUBSCR_NAME.eq(subscrId))
+              .where(NOTIFICATIONS_TESTS.TENANT.eq(tenant),NOTIFICATIONS_TESTS.SUBSCR_NAME.eq(subscrName))
               .execute();
       // Close out and commit
       LibUtils.closeAndCommitDB(conn, null, null);
@@ -1743,15 +1742,15 @@ public class NotificationsDaoImpl implements NotificationsDao
 
   /**
    * checkForTestSequence
-   * @param tenantId - obo tenant
+   * @param oboTenant - obo tenant
+   * @param oboUser - obo user (owner)
    * @param name - subscription name
    * @return true if found else false
    * @throws TapisException - on error
    */
   @Override
-  public boolean checkForTestSequence(String tenantId, String owner, String name) throws TapisException
+  public boolean checkForTestSequence(String oboTenant, String oboUser, String name) throws TapisException
   {
-    // TODO owner
     // Initialize result.
     boolean result = false;
 
@@ -1763,14 +1762,14 @@ public class NotificationsDaoImpl implements NotificationsDao
       conn = getConnection();
       DSLContext db = DSL.using(conn);
       // Run the sql
-      result = checkForTestSequence(db, tenantId, owner, name);
+      result = checkForTestSequence(db, oboTenant, oboUser, name);
       // Close out and commit
       LibUtils.closeAndCommitDB(conn, null, null);
     }
     catch (Exception e)
     {
       // Rollback transaction and throw an exception
-      LibUtils.rollbackDB(conn, e,"DB_SELECT_NAME_ERROR", "Subscription", tenantId, name, e.getMessage());
+      LibUtils.rollbackDB(conn, e,"DB_SELECT_NAME_ERROR", "Subscription", oboTenant, name, e.getMessage());
     }
     finally
     {
@@ -1842,29 +1841,15 @@ public class NotificationsDaoImpl implements NotificationsDao
   /**
    * Given an sql connection check to see if specified subscription exists
    * @param db - jooq context
-   * @param tenantId - name of tenant
-   * @param owner subscription owner
+   * @param oboTenant - name of tenant
+   * @param oboUser obo user (subscription owner)
    * @param name - name of subscription
    * @return - true if subscription exists, else false
    */
-  private static boolean checkForSubscription(DSLContext db, String tenantId, String owner, String name)
+  private static boolean checkForSubscription(DSLContext db, String oboTenant, String oboUser, String name)
   {
-    return db.fetchExists(SUBSCRIPTIONS,SUBSCRIPTIONS.TENANT.eq(tenantId),SUBSCRIPTIONS.OWNER.eq(owner),
+    return db.fetchExists(SUBSCRIPTIONS,SUBSCRIPTIONS.TENANT.eq(oboTenant),SUBSCRIPTIONS.OWNER.eq(oboUser),
                                         SUBSCRIPTIONS.NAME.eq(name));
-  }
-
-  /**
-   * Get all subscription sequence IDs for specified tenant
-   * @param db - DB connection
-   * @param tenantId - tenant name
-   * @return list of sequence IDs
-   */
-  private static List<Integer> getAllSubscriptionSeqIdsInTenant(DSLContext db, String tenantId)
-  {
-    List<Integer> retList = new ArrayList<>();
-    if (db == null || StringUtils.isBlank(tenantId)) return retList;
-    retList = db.select(SUBSCRIPTIONS.SEQ_ID).from(SUBSCRIPTIONS).where(SUBSCRIPTIONS.TENANT.eq(tenantId)).fetchInto(Integer.class);
-    return retList;
   }
 
   /**
@@ -2133,21 +2118,6 @@ public class NotificationsDaoImpl implements NotificationsDao
   }
 
   /**
-   * Given an sql connection retrieve the subscription uuid.
-   * @param db - jooq context
-   * @param tenantId - name of tenant
-   * @param name - Id of subscription
-   * @return - uuid
-   */
-  private static UUID getUUIDUsingDb(DSLContext db, String tenantId, String owner, String name)
-  {
-    return db.selectFrom(SUBSCRIPTIONS)
-             .where(SUBSCRIPTIONS.TENANT.eq(tenantId),SUBSCRIPTIONS.OWNER.eq(owner),SUBSCRIPTIONS.NAME.eq(name))
-             .fetchOne(SUBSCRIPTIONS.UUID);
-  }
-
-
-  /**
    * Check items in select list against DB field names
    * @param selectList - list of items to check
    */
@@ -2186,21 +2156,6 @@ public class NotificationsDaoImpl implements NotificationsDao
             r.get(SUBSCRIPTIONS.TYPE_FILTER), r.get(SUBSCRIPTIONS.SUBJECT_FILTER), deliveryTargets,
             r.get(SUBSCRIPTIONS.TTLMINUTES), r.get(SUBSCRIPTIONS.UUID), expiry, created, updated);
     return subscription;
-  }
-
-  /**
-   * Given an sql connection retrieve the subscription sequence id.
-   * @param db - jooq context
-   * @param tenant - name of tenant
-   * @param name - Id of the subscription
-   * @return - sequence id
-   */
-  private static int getSubscriptionSeqIdUsingDb(DSLContext db, String tenant, String name)
-  {
-    Integer sid = db.selectFrom(SUBSCRIPTIONS).where(SUBSCRIPTIONS.TENANT.eq(tenant),SUBSCRIPTIONS.OWNER.eq(owner),SUBSCRIPTIONS.NAME.eq(name))
-            .fetchOne(SUBSCRIPTIONS.SEQ_ID);
-    if (sid == null) return 0;
-    else return sid;
   }
 
   /**
@@ -2248,30 +2203,33 @@ public class NotificationsDaoImpl implements NotificationsDao
   /**
    * Given an sql connection check to see if specified TestSequence exists
    * @param db - jooq context
-   * @param tenantId - name of tenant
-   * @param subscrId -  Id of the subscription (NOT the sequence Id)
+   * @param oboTenant - name of tenant
+   * @param oboUser - obo user (subscription owner)
+   * @param subscrName -  Name of the subscription
    * @return - true if test sequence exists, else false
    */
-  private static boolean checkForTestSequence(DSLContext db, String tenantId, String subscrId)
+  private static boolean checkForTestSequence(DSLContext db, String oboTenant, String oboUser, String subscrName)
   {
-    return db.fetchExists(NOTIFICATIONS_TESTS,NOTIFICATIONS_TESTS.TENANT.eq(tenantId),
-                          NOTIFICATIONS_TESTS.SUBSCR_NAME.eq(subscrId));
+    return db.fetchExists(NOTIFICATIONS_TESTS,NOTIFICATIONS_TESTS.TENANT.eq(oboTenant),
+                          NOTIFICATIONS_TESTS.OWNER.eq(oboUser), NOTIFICATIONS_TESTS.SUBSCR_NAME.eq(subscrName));
   }
 
   /**
    * Given an sql connection retrieve the test sequence.
    * return null if not found.
    * @param db - jooq context
-   * @param tenantId - name of tenant
-   * @param subscrId -  Id of the subscription (NOT the sequence Id)
+   * @param oboTenant - name of tenant, always oboTenant
+   * @param oboUser - owner, should always be oboUser
+   * @param subscrName -  Name of the subscription
    * @return - TestSequence or null if not found
    */
-  private static TestSequence getTestSequence(DSLContext db, String tenantId, String subscrId)
+  private static TestSequence getTestSequence(DSLContext db, String oboTenant, String oboUser, String subscrName)
   {
     TestSequence testSequence;
     NotificationsTestsRecord r;
-    r = db.selectFrom(NOTIFICATIONS_TESTS).where(NOTIFICATIONS_TESTS.TENANT.eq(tenantId),
-                                                 NOTIFICATIONS_TESTS.SUBSCR_NAME.eq(subscrId)).fetchOne();
+    r = db.selectFrom(NOTIFICATIONS_TESTS).where(NOTIFICATIONS_TESTS.TENANT.eq(oboTenant),
+                                                 NOTIFICATIONS_TESTS.OWNER.eq(oboUser),
+                                                 NOTIFICATIONS_TESTS.SUBSCR_NAME.eq(subscrName)).fetchOne();
     if (r == null) return null;
     else testSequence = getTestSequenceFromRecord(r);
 

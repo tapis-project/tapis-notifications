@@ -366,7 +366,7 @@ public class NotificationsServiceTest
                             tenantName, testUser1, UUID.randomUUID());
     System.out.println("Placing event on queue. Event: " + event);
     // Put an event on the queue as a message
-    svcImpl.postEvent(rUser1, event);
+    svcImpl.publishEvent(rUser1, event);
   }
 
   // Test posting an event to the queue and reading it back
@@ -381,7 +381,7 @@ public class NotificationsServiceTest
                             tenantName, testUser1, UUID.randomUUID());
     System.out.println("Placing event on queue. Event: " + event);
     // Put an event on the queue as a message
-    svcImpl.postEvent(rUser1, event);
+    svcImpl.publishEvent(rUser1, event);
 //    // Create a consumer to handle messages read from the queue
 //    DeliverCallback deliverCallback = (consumerTab, delivery) -> {
 //      String msg = new String(delivery.getBody(), StandardCharsets.UTF_8);

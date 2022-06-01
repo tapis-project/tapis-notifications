@@ -220,14 +220,6 @@ public class SubscriptionResource
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
 
-    // Validate the subscription type filter
-    if (!Subscription.isValidTypeFilter(req.typeFilter))
-    {
-      msg = ApiUtils.getMsgAuth("NTFAPI_SUBSCR_TYPE_ERR", rUser, req.name, req.typeFilter);
-      _log.error(msg);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
-    }
-
     // Create a subscription from the request
     Subscription subscription = createSubscriptionFromPostRequest(rUser.getOboTenantId(), req);
 
