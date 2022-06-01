@@ -221,6 +221,15 @@ public class NotificationsServiceImpl implements NotificationsService
     // Check inputs
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
     if (subscription == null) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_NULL_INPUT", rUser));
+
+    // Only services may create subscriptions publish. Reject if not a service.
+    if (!rUser.isServiceRequest())
+    {
+      String msg = LibUtils.getMsgAuth("NTFLIB_SUBSCR_UNAUTH", rUser);
+      log.warn(msg);
+      throw new NotAuthorizedException(msg, NO_CHALLENGE);
+    }
+
     // Trace the call
     log.trace(LibUtils.getMsgAuth("NTFLIB_CREATE_TRACE", rUser, scrubbedText));
     // Extract various names for convenience
@@ -666,13 +675,30 @@ public class NotificationsServiceImpl implements NotificationsService
    * @param rUser - ResourceRequestUser containing tenant, user and request info
    * @param event - Pre-populated Event object
    * @throws IOException - on error
+   * @throws NotAuthorizedException - unauthorized
    */
   @Override
-  public void postEvent(ResourceRequestUser rUser, Event event) throws IOException
+  public void postEvent(ResourceRequestUser rUser, Event event) throws IOException, NotAuthorizedException
   {
     // Check inputs
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
     if (event == null) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_NULL_INPUT_EVENT", rUser));
+
+    // Only services may publish. Reject if not a service.
+    if (!rUser.isServiceRequest())
+    {
+      String msg = LibUtils.getMsgAuth("NTFLIB_EVENT_UNAUTH", rUser);
+      log.warn(msg);
+      throw new NotAuthorizedException(msg, NO_CHALLENGE);
+    }
+
+    // If first field of type is not the service name then reject
+    if (!event.getType1().equals(rUser.getJwtUserId()))
+    {
+      ????
+    }
+
+    // Publish the event
     MessageBroker.getInstance().publishEvent(rUser, event);
   }
 

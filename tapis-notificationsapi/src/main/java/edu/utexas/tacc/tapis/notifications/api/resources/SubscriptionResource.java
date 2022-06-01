@@ -157,6 +157,7 @@ public class SubscriptionResource
                                      @Context SecurityContext securityContext)
   {
     String opName = "postSubscription";
+    String msg;
     // Note that although the following approximately 30 lines of code is very similar for many endpoints the slight
     //   variations and use of fetched data makes it difficult to refactor into common routines. Common routines
     //   might make the code even more complex and difficult to follow.
@@ -174,10 +175,17 @@ public class SubscriptionResource
     if (_log.isTraceEnabled())
       ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString());
 
+    // Only services may create subscriptions. Reject if not a service.
+    if (!rUser.isServiceRequest())
+    {
+      msg = ApiUtils.getMsgAuth("NTFAPI_SUBSCR_UNAUTH0", rUser);
+      _log.warn(msg);
+      return Response.status(Status.UNAUTHORIZED).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+    }
+
     // ------------------------- Extract and validate payload -------------------------
     // Read the payload into a string.
     String rawJson;
-    String msg;
     try { rawJson = IOUtils.toString(payloadStream, StandardCharsets.UTF_8); }
     catch (Exception e)
     {

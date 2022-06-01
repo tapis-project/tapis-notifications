@@ -36,13 +36,13 @@ public final class Subscription
   // Allowed substitution variables
   public static final String APIUSERID_VAR = "${apiUserId}";
 
-  public static final String PERMISSION_WILDCARD = "*";
-
-  // Valid pattern for type filter, must be 3 sections separated by a '.'
-  // Each section must contain a series of lower case letters or a '*'
-  // ^([a-z]+|\*)\.([a-z]+|\*)\.([a-z]+|\*)$
+  // Valid pattern for subscription typeFilter. Must be 3 sections separated by a '.'
+  // First section must contain a series of lower case letters and may not be empty
+  // Second section must start alphabetic, contain only alphanumeric and 3 special characters: - _ ~ and may not be empty
+  // Third section must start alphabetic, contain only alphanumeric and 3 special characters: - _ ~ and may not be empty
+  //    OR be single wildcard character '*'
   private static final Pattern SUBSCR_TYPE_FILTER_PATTERN =
-          Pattern.compile("^([a-z]+|\\*)\\.([a-z]+|\\*)\\.([a-z]+|\\*)$");
+          Pattern.compile("^[a-z]+\\.[a-zA-Z]([a-zA-Z0-9]|[-_~])*\\.([a-zA-Z]([a-zA-Z0-9]|[-_~])*|\\*)$");
 
   // Default values
   public static final String[] EMPTY_STR_ARRAY = new String[0];

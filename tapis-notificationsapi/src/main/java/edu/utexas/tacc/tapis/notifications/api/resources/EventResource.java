@@ -110,8 +110,8 @@ public class EventResource
       msg = ApiUtils.getMsgAuth("NTFAPI_EVENT_UNAUTH", rUser);
       _log.warn(msg);
       return Response.status(Status.UNAUTHORIZED).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
-
     }
+
     // ------------------------- Extract and validate payload -------------------------
     // Read the payload into a string.
     String rawJson;
@@ -173,6 +173,14 @@ public class EventResource
     // Create an Event from the request
     Event event = new Event(source, req.type, req.subject, req.data, req.seriesId, req.timestamp, rUser.getOboTenantId(), rUser.getOboUserId(),
                              UUID.randomUUID());
+
+    // If first field of type is not the service name then reject
+    if (!event.getType1().equals(rUser.getJwtUserId()))
+    {
+      msg = ApiUtils.getMsgAuth("NTFAPI_EVENT_TYPE_NOTSVC", rUser, req.source, req.type, req.subject, req.timestamp);
+      _log.warn(msg);
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+    }
 
     // ---------------------------- Make service call to post the event -------------------------------
     try
