@@ -7,8 +7,8 @@
   "additionalProperties": false,
   "properties": {
     "description": { "type": "string", "maxLength": 2048 },
-    "typeFilter": { "type": "string", "minLength": 5},
-    "subjectFilter": { "type": "string", "minLength": 1 },
+    "typeFilter": { "$ref": "resource:///edu/utexas/tacc/tapis/notifications/api/jsonschema/Definitions.json#/TypeFilterString" },
+    "subjectFilter": { "$ref": "resource:///edu/utexas/tacc/tapis/notifications/api/jsonschema/Definitions.json#/SubjectFilterString" },
     "deliveryTargets": { "$ref": "resource:///edu/utexas/tacc/tapis/notifications/api/jsonschema/Definitions.json#/DeliveryTargetList" }
   }
 }

@@ -1,16 +1,19 @@
 package edu.utexas.tacc.tapis.notifications.model;
 
-import com.google.gson.JsonElement;
-import edu.utexas.tacc.tapis.notifications.utils.LibUtils;
-import edu.utexas.tacc.tapis.shared.utils.TapisGsonUtils;
-import io.swagger.v3.oas.annotations.media.Schema;
-import org.apache.commons.lang3.StringUtils;
-
+import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 import java.util.regex.Pattern;
+import com.google.gson.JsonElement;
+
+import edu.utexas.tacc.tapis.notifications.utils.LibUtils;
+import edu.utexas.tacc.tapis.shared.utils.TapisGsonUtils;
+import edu.utexas.tacc.tapis.sharedapi.security.ResourceRequestUser;
+import io.swagger.v3.oas.annotations.media.Schema;
+import org.apache.commons.lang3.StringUtils;
 
 /*
  * Tapis Subscription
@@ -31,17 +34,10 @@ public final class Subscription
 
   // Filter wildcard (SUBJECT field or one of the TYPE fields)
   public static final String FILTER_WILDCARD = "*";
+  public static final String FILTER_WILDCARD_NAME = "ALL";
 
   // Allowed substitution variables
   public static final String APIUSERID_VAR = "${apiUserId}";
-
-  // Valid pattern for subscription typeFilter. Must be 3 sections separated by a '.'
-  // First section must contain a series of lower case letters and may not be empty
-  // Second section must start alphabetic, contain only alphanumeric or 3 special characters: - _ ~ and may not be empty
-  // Third section must start alphabetic, contain only alphanumeric or 3 special characters: - _ ~ and may not be empty
-  //    OR be single wildcard character '*'
-  private static final Pattern SUBSCR_TYPE_FILTER_PATTERN =
-          Pattern.compile("^[a-z]+\\.[a-zA-Z]([a-zA-Z0-9]|[-_~])*\\.([a-zA-Z]([a-zA-Z0-9]|[-_~])*|\\*)$");
 
   // Default values
   public static final String DEFAULT_OWNER = APIUSERID_VAR;
@@ -64,20 +60,32 @@ public final class Subscription
   public static final String CREATED_FIELD = "created";
   public static final String UPDATED_FIELD = "updated";
 
+  // Validation patterns
+  //NAME Must start alphanumeric and contain only alphanumeric and 4 special characters: - . _ ~
+  //Note that we allow starting with a number so we can use a UUID.
+  public static final String NAME_PATTERN = "^[a-zA-Z0-9]([a-zA-Z0-9]|[-\\._~])*";
+
+  // typeFilter must be 3 sections separated by a '.'
+  // First section must contain a series of lower case letters and may not be empty
+  // Second section must start alphabetic, contain only alphanumeric or 3 special characters: - _ ~ and may not be empty
+  //    OR be single wildcard character '*'
+  // Third section must start alphabetic, contain only alphanumeric or 3 special characters: - _ ~ and may not be empty
+  //    OR be single wildcard character '*'
+  private static final Pattern SUBSCR_TYPE_FILTER_PATTERN =
+          Pattern.compile("^[a-z]+\\.([a-zA-Z]([a-zA-Z0-9]|[-_~])*|\\*)\\.([a-zA-Z]([a-zA-Z0-9]|[-_~])*|\\*)$");
+
   // Message keys
   private static final String CREATE_MISSING_ATTR = "NTFLIB_CREATE_MISSING_ATTR";
   private static final String INVALID_STR_ATTR = "NTFLIB_INVALID_STR_ATTR";
   private static final String TOO_LONG_ATTR = "NTFLIB_TOO_LONG_ATTR";
 
-  // Validation patterns
-  //ID Must start alphanumeric and contain only alphanumeric and 4 special characters: - . _ ~
-  //Note that we allow starting with a number so we can use a UUID.
-  public static final String PATTERN_VALID_ID = "^[a-zA-Z0-9]([a-zA-Z0-9]|[-\\._~])*";
-
   // Validation constants
-  private static final Integer MAX_ID_LEN = 80;
+  private static final Integer MAX_NAME_LEN = 512;
   private static final Integer MAX_DESCRIPTION_LEN = 2048;
   private static final Integer MAX_USERNAME_LEN = 60;
+
+  // Max length of subjectFilter when generating a unique name
+  private static final int SUBJ_FILTER_IN_NAME_MAX = 40;
 
   // ************************************************************************
   // *********************** Enums ******************************************
@@ -88,40 +96,30 @@ public final class Subscription
   // ************************************************************************
   // *********************** Fields *****************************************
   // ************************************************************************
-  private int seqId;
-  private String tenant;
+  private final int seqId;
+  private final String tenant;
   private String owner;
-  private String name;
+  private final String name;
   private String description;
-  private boolean enabled;
+  private final boolean enabled;
   private String typeFilter;
   private String typeFilter1;
   private String typeFilter2;
   private String typeFilter3;
   private String subjectFilter;
   private List<DeliveryTarget> deliveryTargets;
-  private int ttlMinutes;
-  private UUID uuid;
-  private Instant expiry;
-  private Instant created; // UTC time for when record was created
-  private Instant updated; // UTC time for when record was last updated
+  private final int ttlMinutes;
+  private final UUID uuid;
+  private final Instant expiry;
+  private final Instant created; // UTC time for when record was created
+  private final Instant updated; // UTC time for when record was last updated
 
   // ************************************************************************
   // *********************** Constructors ***********************************
   // ************************************************************************
 
   /**
-   * Constructor using only required attributes.
-   */
-  public Subscription(String tf, String sf, List<DeliveryTarget> dmList1)
-  {
-    setTypeFilter(tf);
-    setSubjectFilter(sf);
-    deliveryTargets = dmList1;
-  }
-
-  /**
-   * Constructor using non-updatable attributes.
+   * Constructor for when the name has been filled in by the service.
    * Rather than exposing otherwise unnecessary setters we use a special constructor.
    */
   public Subscription(Subscription s, String tenant1, String owner1, String name1)
@@ -202,7 +200,7 @@ public final class Subscription
   {
     // Resolve owner if necessary. If empty or "${apiUserId}" then fill in with oboUser.
     // Note that for a user request oboUser and jwtUser are the same and for a service request we want oboUser here.
-    if (StringUtils.isBlank(owner) || owner.equalsIgnoreCase(APIUSERID_VAR)) setOwner(oboUser);
+    if (StringUtils.isBlank(owner) || owner.equalsIgnoreCase(APIUSERID_VAR)) owner = oboUser;
   }
 
   /**
@@ -237,6 +235,23 @@ public final class Subscription
     return Instant.ofEpochSecond(epochSecond);
   }
 
+  /*
+   * Build a descriptive unique name for a subscription
+   * Template is:
+   *   <jwtUser>~<owner>~<tenant>~<subjectFilter>~<random4>
+   * Wildcard subjectFilter is replaced with the string ALL
+   * subjectFilter is truncated to 40 characters
+   */
+  public String buildUniqueName(ResourceRequestUser rUser)
+  {
+    // Process subjectFilter as needed - replace wildcard, truncate
+    String sFilt = subjectFilter;
+    if (FILTER_WILDCARD.equals(sFilt)) sFilt = FILTER_WILDCARD_NAME;
+    if (sFilt.length() > SUBJ_FILTER_IN_NAME_MAX) sFilt = sFilt.substring(0, SUBJ_FILTER_IN_NAME_MAX);
+    String random4 = Random4Generator.generateString();
+    return String.format("%s~%s~%s~%s~%s", rUser.getJwtUserId(), owner, rUser.getOboTenantId(), sFilt, random4);
+  }
+
   // ************************************************************************
   // *********************** Accessors **************************************
   // ************************************************************************
@@ -254,7 +269,6 @@ public final class Subscription
   public void setDescription(String d) { description = d; }
 
   public boolean isEnabled() { return enabled; }
-  public void setEnabled(boolean b) { enabled = b; }
 
   public String getTypeFilter() { return typeFilter; }
   public void setTypeFilter(String s)
@@ -284,10 +298,8 @@ public final class Subscription
   }
 
   public int getTtlMinutes() { return ttlMinutes; }
-  public void setTtlMinutes(int i) { ttlMinutes = i; }
 
   public UUID getUuid() { return uuid; }
-  public void setUuid(UUID u) { uuid = u; }
 
   @Schema(type = "string")
   public Instant getExpiry() { return expiry; }
@@ -327,8 +339,7 @@ public final class Subscription
   }
 
   /**
-   * Check for invalid attributes
-   *   name, typeFilter
+   * Check for invalid attributes: name, typeFilter
    */
   private void checkAttrValidity(List<String> errMessages)
   {
@@ -349,9 +360,9 @@ public final class Subscription
       errMessages.add(LibUtils.getMsg(TOO_LONG_ATTR, OWNER_FIELD, MAX_USERNAME_LEN));
     }
 
-    if (!StringUtils.isBlank(name) && name.length() > MAX_ID_LEN)
+    if (!StringUtils.isBlank(name) && name.length() > MAX_NAME_LEN)
     {
-      errMessages.add(LibUtils.getMsg(TOO_LONG_ATTR, NAME_FIELD, MAX_ID_LEN));
+      errMessages.add(LibUtils.getMsg(TOO_LONG_ATTR, NAME_FIELD, MAX_NAME_LEN));
     }
 
     if (!StringUtils.isBlank(description) && description.length() > MAX_DESCRIPTION_LEN)
@@ -360,10 +371,26 @@ public final class Subscription
     }
   }
 
-
   /**
    * Validate a name string.
    * Must start alphabetic and contain only alphanumeric and 4 special characters: - . _ ~
    */
-  private boolean isValidName(String name) { return name.matches(PATTERN_VALID_ID); }
+  private boolean isValidName(String name) { return name.matches(NAME_PATTERN); }
+
+  /*
+   * Singleton class to create a sequence of 4 random alphanumeric characters
+   */
+  static final class Random4Generator
+  {
+    private static final String ALPHA = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    private static final String ALPHANUM = ALPHA + ALPHA.toLowerCase() + "0123456789";
+    private static final Random random = new SecureRandom();
+    private static final char[] FULL_SET = ALPHANUM.toCharArray();
+    static String generateString()
+    {
+      char[] buf = new char[4];
+      for (int i=0; i < 4; ++i) { buf[i] = FULL_SET[random.nextInt(FULL_SET.length)]; }
+      return new String(buf);
+    }
+  }
 }

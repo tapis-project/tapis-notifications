@@ -196,10 +196,8 @@ public class NotificationsDaoImpl implements NotificationsDao
       boolean doesExist = checkForSubscription(db, subscr.getTenant(), owner, subscr.getName());
       if (doesExist) throw new IllegalStateException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_EXISTS", rUser, owner, subscr.getName()));
 
-      // Generate uuid for the new resource
-      subscr.setUuid(UUID.randomUUID());
-
       // Insert the record
+      // Note: UUID.randomUUID() is used here to fill in the subscription uuid.
       Record record = db.insertInto(SUBSCRIPTIONS)
               .set(SUBSCRIPTIONS.TENANT, subscr.getTenant())
               .set(SUBSCRIPTIONS.OWNER, owner)
@@ -213,7 +211,7 @@ public class NotificationsDaoImpl implements NotificationsDao
               .set(SUBSCRIPTIONS.SUBJECT_FILTER, subscr.getSubjectFilter())
               .set(SUBSCRIPTIONS.DELIVERY_TARGETS, deliveryTargetsJson)
               .set(SUBSCRIPTIONS.TTLMINUTES, subscr.getTtlMinutes())
-              .set(SUBSCRIPTIONS.UUID, subscr.getUuid())
+              .set(SUBSCRIPTIONS.UUID, UUID.randomUUID())
               .set(SUBSCRIPTIONS.EXPIRY, expiry)
               .returningResult(SUBSCRIPTIONS.SEQ_ID)
               .fetchOne();
@@ -937,6 +935,7 @@ public class NotificationsDaoImpl implements NotificationsDao
     event.setTypeFields();
 
     String tenant = event.getTenant();
+    String wildcard = Subscription.FILTER_WILDCARD;
 
     // ------------------------- Build and execute SQL ----------------------------
     Connection conn = null;
@@ -955,13 +954,13 @@ public class NotificationsDaoImpl implements NotificationsDao
       //    AND (type_filter3 = '<typeFilter3>' OR type_filter3 = '*')
       //    AND (subject_filter = '<subjectFilter>' OR subject_filter = '*')
       Condition whereCondition = SUBSCRIPTIONS.TENANT.eq(tenant);
-      Condition tmpCond = SUBSCRIPTIONS.TYPE_FILTER1.eq(event.getType1()).or(SUBSCRIPTIONS.TYPE_FILTER1.eq("*"));
+      Condition tmpCond = SUBSCRIPTIONS.TYPE_FILTER1.eq(event.getType1()).or(SUBSCRIPTIONS.TYPE_FILTER1.eq(wildcard));
       whereCondition = whereCondition.and(tmpCond);
-      tmpCond = SUBSCRIPTIONS.TYPE_FILTER2.eq(event.getType2()).or(SUBSCRIPTIONS.TYPE_FILTER2.eq("*"));
+      tmpCond = SUBSCRIPTIONS.TYPE_FILTER2.eq(event.getType2()).or(SUBSCRIPTIONS.TYPE_FILTER2.eq(wildcard));
       whereCondition = whereCondition.and(tmpCond);
-      tmpCond = SUBSCRIPTIONS.TYPE_FILTER3.eq(event.getType3()).or(SUBSCRIPTIONS.TYPE_FILTER3.eq("*"));
+      tmpCond = SUBSCRIPTIONS.TYPE_FILTER3.eq(event.getType3()).or(SUBSCRIPTIONS.TYPE_FILTER3.eq(wildcard));
       whereCondition = whereCondition.and(tmpCond);
-      tmpCond = SUBSCRIPTIONS.SUBJECT_FILTER.eq(event.getSubject()).or(SUBSCRIPTIONS.SUBJECT_FILTER.eq("*"));
+      tmpCond = SUBSCRIPTIONS.SUBJECT_FILTER.eq(event.getSubject()).or(SUBSCRIPTIONS.SUBJECT_FILTER.eq(wildcard));
       whereCondition = whereCondition.and(tmpCond);
 
       results = db.selectFrom(SUBSCRIPTIONS).where(whereCondition).fetch();

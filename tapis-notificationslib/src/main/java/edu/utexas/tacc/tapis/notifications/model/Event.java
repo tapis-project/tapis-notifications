@@ -31,6 +31,9 @@ public final class Event
   /* ********************************************************************** */
   public static final String SPECVERSION = "1.0";
 
+  // Default values
+  public static final boolean DEFAULT_DELETE_SUBSCRIPTIONS_MATCHING_SUBJECT = false;
+
   // Valid pattern for event type, must be 3 sections separated by a '.'
   // First section must contain a series of lower case letters and may not be empty
   // Second and third sections must start alphabetic, contain only alphanumeric or 3 special characters: - _ ~ and may not be empty
@@ -48,6 +51,7 @@ public final class Event
   private final String data; // Data associated with the event.
   private final String seriesId; // Optional Id for grouping events from same source.
   private final String timestamp; // Timestamp of when the occurrence happened. RFC 3339 (ISO 8601)
+  private final boolean deleteSubscriptionsMatchingSubject;
   private final String tenant; // Tenant associated with the event
   private final String user; // User associated with the event
   private final UUID uuid;
@@ -60,7 +64,7 @@ public final class Event
   /*                           Constructors                                 */
   /* ********************************************************************** */
   public Event(URI source1, String type1, String subject1, String data1, String seriesId1, String timestamp1,
-               String tenant1, String user1, UUID uuid1)
+               boolean deleteSubscriptionsMatchingSubject1, String tenant1, String user1, UUID uuid1)
   {
     source = source1;
     type = type1;
@@ -68,6 +72,7 @@ public final class Event
     data = data1;
     seriesId = seriesId1;
     timestamp = timestamp1;
+    deleteSubscriptionsMatchingSubject = deleteSubscriptionsMatchingSubject1;
     tenant = tenant1;
     user = user1;
     uuid = uuid1;
@@ -83,6 +88,8 @@ public final class Event
   public String getData() { return data; }
   public String getSeriesId() { return seriesId; }
   public String getTimestamp() { return timestamp; }
+  public boolean getDeleteSubscriptionsMatchingSubject() { return deleteSubscriptionsMatchingSubject; }
+
   public String getTenant() { return tenant; }
   public String getUser() { return user; }
   public UUID getUuid() { return uuid; }

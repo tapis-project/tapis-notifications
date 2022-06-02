@@ -171,7 +171,8 @@ public class EventResource
     }
 
     // Create an Event from the request
-    Event event = new Event(source, req.type, req.subject, req.data, req.seriesId, req.timestamp, rUser.getOboTenantId(), rUser.getOboUserId(),
+    Event event = new Event(source, req.type, req.subject, req.data, req.seriesId, req.timestamp,
+                             req.deleteSubscriptionsMatchingSubject, rUser.getOboTenantId(), rUser.getOboUserId(),
                              UUID.randomUUID());
 
     // If first field of type is not the service name then reject

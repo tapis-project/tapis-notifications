@@ -233,35 +233,45 @@ public class NotificationsServiceImpl implements NotificationsService
     // Extract various names for convenience
     String oboTenant = rUser.getOboTenantId();
     String oboUser = rUser.getOboUserId();
-
-    // If necessary create a unique name for the subscription
-    // sub1 is the subscription object that will be passed to the dao layer.
-    Subscription sub1;
-// TODO   // If no name provided then fill in with something unique but descriptive
-//   include owner + subject(?) + ? + sequence number of some kind(?)
-//    if (StringUtils.isBlank(subscriptionName))
-//    {
-//      subscriptionName = UUID.randomUUID().toString();
-//      sub1 = new Subscription(subscription, oboTenant, subscriptionName);
-//    }
-//    else
-//    {
-//      sub1 = subscription;
-//    }
-    sub1 = subscription;
-    String name = sub1.getName();
+    String name = subscription.getName();
 
     // Resolve variables. Currently, this is only for owner which can be set to ${apiUserId}
-    // We need owner resolved before we check auth
+    // We need owner resolved before we call buildUniqueName() or call checkAuth()
     subscription.resolveVariables(oboUser);
     String owner = subscription.getOwner();
+
+    // If no name provided then fill in with something unique but descriptive
+    boolean isBuiltName = false;
+    if (StringUtils.isBlank(name))
+    {
+      name = subscription.buildUniqueName(rUser);
+      isBuiltName = true;
+
+    }
 
     // ------------------------- Check authorization -------------------------
     checkAuth(rUser, owner, name, op);
 
     // Check if subscription already exists
-    if (dao.checkForSubscription(oboTenant, owner, name))
-      throw new IllegalStateException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_EXISTS", rUser, owner, name));
+    // If we have built a semi-random unique name then we need to loop here and try different
+    //   names until we find a unique one or give up
+    // If not a built name then only one check is needed.
+    if (isBuiltName)
+    {
+      // TODO
+    }
+    else
+    {
+      if (dao.checkForSubscription(oboTenant, owner, name))
+        throw new IllegalStateException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_EXISTS", rUser, owner, name));
+    }
+
+    // sub1 is the subscription object that will be passed to the dao layer.
+    Subscription sub1;
+    if (isBuiltName)
+      sub1 = new Subscription(subscription, oboTenant, owner, name);
+    else
+      sub1 = subscription;
 
     // ---------------- Check constraints on Subscription attributes ------------------------
     validateSubscription(rUser, sub1);
@@ -805,9 +815,11 @@ public class NotificationsServiceImpl implements NotificationsService
     String eventSeriesId = null;
     String eventTimeStamp = OffsetDateTime.now().toString();
     String eventData = null;
+    boolean eventDeleteSubscriptionsMatchingSubject = false;
+
     UUID eventUUID = UUID.randomUUID();
     Event event = new Event(eventSource, eventType, eventSubject, eventData, eventSeriesId, eventTimeStamp,
-                            oboTenant, oboUser, eventUUID);
+                            eventDeleteSubscriptionsMatchingSubject,oboTenant, oboUser, eventUUID);
     MessageBroker.getInstance().publishEvent(rUser, event);
 
     return dao.getSubscription(oboTenant, name, oboUser);
@@ -1037,7 +1049,6 @@ public class NotificationsServiceImpl implements NotificationsService
     if (p.getTypeFilter() != null) sub1.setTypeFilter(p.getTypeFilter());
     if (p.getSubjectFilter() != null) sub1.setSubjectFilter(p.getSubjectFilter());
     if (p.getDeliveryMethods() != null) sub1.setDeliveryTargets(p.getDeliveryMethods());
-    if (p.getTtlMinutes() != null) sub1.setTtlMinutes(p.getTtlMinutes());
     return sub1;
   }
 
