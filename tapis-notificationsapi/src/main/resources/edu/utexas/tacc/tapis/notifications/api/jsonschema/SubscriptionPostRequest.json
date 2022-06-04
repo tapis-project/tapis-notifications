@@ -7,7 +7,7 @@
   "required": [ "typeFilter", "subjectFilter", "deliveryTargets" ],
   "additionalProperties": false,
   "properties": {
-    "name": { "type": ["string", "null"], "minLength": 1, "maxLength": 188 },
+    "name": { "$ref": "resource:///edu/utexas/tacc/tapis/notifications/api/jsonschema/Definitions.json#/SubscriptionNameNull" },
     "description": { "type": ["string", "null"], "maxLength": 2048 },
     "owner": { "$ref": "resource:///edu/utexas/tacc/tapis/notifications/api/jsonschema/Definitions.json#/UserName" },
     "enabled": { "type": "boolean", "default": true },

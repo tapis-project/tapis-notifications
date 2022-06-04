@@ -572,9 +572,8 @@ public class NotificationsDaoImpl implements NotificationsDao
     // If no IDs in list then we are done.
     if (setOfIDs != null && setOfIDs.isEmpty()) return 0;
 
-    // Ensure we have a non-null orderByList
-    List<OrderBy> tmpOrderByList = new ArrayList<>();
-    if (orderByList != null) tmpOrderByList = orderByList;
+    // Call private method to process orderByList
+    List<OrderBy> tmpOrderByList = getOrderByList(orderByList);
 
     // Determine the primary orderBy column (i.e. first in list). Used for startAfter
     String majorOrderByStr = null;
@@ -778,9 +777,8 @@ public class NotificationsDaoImpl implements NotificationsDao
     // If no IDs in list then we are done.
     if (setOfIDs != null && setOfIDs.isEmpty()) return retList;
 
-    // Ensure we have a non-null orderByList
-    List<OrderBy> tmpOrderByList = new ArrayList<>();
-    if (orderByList != null) tmpOrderByList = orderByList;
+    // Call private method to process orderByList
+    List<OrderBy> tmpOrderByList = getOrderByList(orderByList);
 
     // Determine the primary orderBy column (i.e. first in list). Used for startAfter
     String majorOrderByStr = null;
@@ -2254,5 +2252,26 @@ public class NotificationsDaoImpl implements NotificationsDao
                                     r.get(NOTIFICATIONS_TESTS.SUBSCR_NAME), r.get(NOTIFICATIONS_TESTS.NOTIFICATION_COUNT),
                                     notifications, created, updated);
     return testSequence;
+  }
+
+  /*
+   * If orderByList provided use it, else use default = created(asc), name(asc)
+   */
+  private static List<OrderBy> getOrderByList(List<OrderBy> orderByList)
+  {
+    // If orderByList not null then use it, else use the default orderByList
+    List<OrderBy> retList = new ArrayList<>();
+    if (orderByList != null)
+    {
+      retList = orderByList;
+    }
+    else
+    {
+      // If no orderByList provided, default to created(asc),name(asc)
+      retList = new ArrayList<>();
+      retList.add(new OrderBy(SUBSCRIPTIONS.CREATED.getName(), OrderByDir.ASC));
+      retList.add(new OrderBy(SUBSCRIPTIONS.NAME.getName(), OrderByDir.ASC));
+    }
+    return retList;
   }
 }

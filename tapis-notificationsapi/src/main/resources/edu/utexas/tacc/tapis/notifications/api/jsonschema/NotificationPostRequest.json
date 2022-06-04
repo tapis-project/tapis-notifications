@@ -8,7 +8,7 @@
   "properties": {
     "uuid": { "type": "string", "minLength": 1 },
     "tenant": { "type":  "string", "minLength": 1  },
-    "subscriptionName": { "type": "string", "minLength": 1  },
+    "subscriptionName": { "$ref": "resource:///edu/utexas/tacc/tapis/notifications/api/jsonschema/Definitions.json#/SubscriptionName"  },
     "deliveryTarget": { "$ref": "resource:///edu/utexas/tacc/tapis/notifications/api/jsonschema/Definitions.json#/DeliveryTarget" },
     "event": { "$ref": "resource:///edu/utexas/tacc/tapis/notifications/api/jsonschema/EventPostRequest.json" },
     "created": { "type":  "string", "format": "date-time" }

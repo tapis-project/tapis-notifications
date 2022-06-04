@@ -38,7 +38,6 @@ import edu.utexas.tacc.tapis.shared.security.ServiceClients;
 import edu.utexas.tacc.tapis.shared.security.ServiceContext;
 import edu.utexas.tacc.tapis.shared.TapisConstants;
 import edu.utexas.tacc.tapis.shared.threadlocal.OrderBy;
-import edu.utexas.tacc.tapis.shared.utils.TapisGsonUtils;
 import edu.utexas.tacc.tapis.sharedapi.security.ResourceRequestUser;
 
 import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
@@ -793,10 +792,6 @@ public class NotificationsServiceImpl implements NotificationsService
     sub1.resolveVariables(oboUser);
     validateSubscription(rUser, sub1);
 
-    // Construct Json string representing the Subscription about to be created
-    Subscription scrubbedSubscription = new Subscription(sub1);
-    String createJsonStr = TapisGsonUtils.getGson().toJson(scrubbedSubscription);
-
     // Compute the expiry time from now
     Instant expiry = Subscription.computeExpiryFromNow(sub1.getTtlMinutes());
 
@@ -829,7 +824,7 @@ public class NotificationsServiceImpl implements NotificationsService
    * Retrieve a test sequence
    *
    * @param rUser - ResourceRequestUser containing tenant, user and request info
-   * @param name - UUID of the subscription associated with the test sequence.
+   * @param name - Name of the subscription associated with the test sequence.
    */
   @Override
   public TestSequence getTestSequence(ResourceRequestUser rUser, String name)
@@ -856,7 +851,7 @@ public class NotificationsServiceImpl implements NotificationsService
    * Provided subscription must have been created using the beginTestSequence endpoint.
    *
    * @param rUser - ResourceRequestUser containing tenant, user and request info
-   * @param name - UUID of the subscription associated with the test sequence.
+   * @param name - Name of the subscription associated with the test sequence.
    * @return Number of items updated
    *
    * @throws TapisException - for Tapis related exceptions
@@ -1102,7 +1097,7 @@ public class NotificationsServiceImpl implements NotificationsService
   private void checkAuth(ResourceRequestUser rUser, String owner, String name, SubscriptionOperation op)
           throws TapisException, TapisClientException, NotAuthorizedException
   {
-    String oboUser =  rUser.getJwtUserId();
+    String oboUser =  rUser.getOboUserId();
 
     // All arguments must be provided else log an error and deny.
     if (StringUtils.isBlank(owner) || StringUtils.isBlank(name) || op == null)

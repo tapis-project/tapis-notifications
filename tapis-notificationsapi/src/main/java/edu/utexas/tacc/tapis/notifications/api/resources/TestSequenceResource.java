@@ -111,7 +111,7 @@ public class TestSequenceResource
   /**
    * Start a test sequence by creating a subscription and publishing an event.
    * The URL to the created subscription will be returned in the result.
-   * The Id for the subscription should be saved for future calls to other test endpoints.
+   * The name for the subscription should be saved for future calls to other test endpoints.
    *
    * @param subscriptionTTL - optional TTL for the auto-generated subscription
    * @param securityContext - user identity
@@ -400,22 +400,24 @@ public class TestSequenceResource
     String user = req.event.user;
     String sourceStr = req.event.source;
     String subject = req.event.subject;
+    String data = req.event.data;
     String type = req.event.type;
     String seriesId = req.event.seriesId;
-    String time = req.event.timestamp;
+    String timestamp = req.event.timestamp;
+    boolean deleteSubscriptionsMatchingSubject = req.event.deleteSubscriptionsMatchingSubject;
     String eventUuidStr = req.event.uuid;
 
     // Tenant and user should both have values
     if (StringUtils.isBlank(tenant) || StringUtils.isBlank(user))
     {
-      msg = ApiUtils.getMsg("NTFAPI_TEST_USR_ERR", tenant, user, sourceStr, type, subject, time, name);
+      msg = ApiUtils.getMsg("NTFAPI_TEST_USR_ERR", tenant, user, sourceStr, type, subject, timestamp, name);
       _log.error(msg);
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
     // Validate the event type
     if (!Event.isValidType(type))
     {
-      msg = ApiUtils.getMsg("NTFAPI_TEST_EVENT_TYPE_ERR", tenant, user, sourceStr, type, subject, time, name);
+      msg = ApiUtils.getMsg("NTFAPI_TEST_EVENT_TYPE_ERR", tenant, user, sourceStr, type, subject, timestamp, name);
       _log.error(msg);
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
@@ -425,7 +427,7 @@ public class TestSequenceResource
     try { source = new URI(sourceStr); }
     catch (URISyntaxException e)
     {
-      msg = ApiUtils.getMsg("NTFAPI_TEST_EVENT_SOURCE_ERR", tenant, user, sourceStr, type, subject, time, name, e.getMessage());
+      msg = ApiUtils.getMsg("NTFAPI_TEST_EVENT_SOURCE_ERR", tenant, user, sourceStr, type, subject, timestamp, name, e.getMessage());
       _log.error(msg);
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
@@ -441,9 +443,7 @@ public class TestSequenceResource
     }
 
     // Create an Event from the request
-    // TODO
-    String data = null;
-    Event event = new Event(source, type, subject, data, seriesId, time, tenant, user, eventUuid);
+    Event event = new Event(source, type, subject, data, seriesId, timestamp, deleteSubscriptionsMatchingSubject, tenant, user, eventUuid);
     // Create a notification from the request
     Notification notification = new Notification(notifUuid, -1, tenant, name, -1, eventUuid, event,
                                                  req.deliveryTarget, notifCreated);
@@ -462,7 +462,7 @@ public class TestSequenceResource
     }
     catch (Exception e)
     {
-      msg = ApiUtils.getMsg("NTFAPI_TEST_CB_ERR", tenant, user, sourceStr, type, subject, seriesId, time,
+      msg = ApiUtils.getMsg("NTFAPI_TEST_CB_ERR", tenant, user, sourceStr, type, subject, seriesId, timestamp,
                             name, e.getMessage());
       _log.error(msg);
       return Response.status(Status.INTERNAL_SERVER_ERROR).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();

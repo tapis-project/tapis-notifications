@@ -11,6 +11,7 @@ import edu.utexas.tacc.tapis.notifications.model.DeliveryTarget.DeliveryMethod;
 import edu.utexas.tacc.tapis.search.parser.ASTNode;
 import edu.utexas.tacc.tapis.shared.threadlocal.OrderBy;
 import edu.utexas.tacc.tapis.shared.utils.TapisGsonUtils;
+import edu.utexas.tacc.tapis.shared.utils.TapisUtils;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -38,9 +39,6 @@ public final class IntegrationUtils
   public static final String svcName = "notificationss";
   public static final String adminUser = "testadmin";
 
-  public static final String owner1 = "testuser1";
-  public static final String owner2 = "testuser2";
-  public static final String ownerNull = null;
   public static final String testUser0 = "testuser0";
   public static final String testUser1 = "testuser1";
   public static final String testUser2 = "testuser2";
@@ -121,9 +119,12 @@ public final class IntegrationUtils
   public static final String eventSubject1 = "640ad5a8-1a6e-4189-a334-c4c7226fb9ba-007";
   public static final String seriesId1 = "111a2228-1a6e-4189-a334-c4c722666666-007";
   public static final String eventDataNull = null;
+  public static final String eventTime = TapisUtils.getUTCTimeNow().toString();
+  public static final boolean eventDeleteSubscriptionsMatchingSubjectFalse = false;
 
   public static final Event event1 = new Event(eventSource1, eventType1, eventSubject1, eventDataNull, seriesId1,
-                                               OffsetDateTime.now().toString(), tenantName, testUser1, UUID.randomUUID());
+                                               eventTime, eventDeleteSubscriptionsMatchingSubjectFalse, tenantName,
+                                               testUser1, UUID.randomUUID());
 
   /**
    * Create an array of Subscription objects in memory
@@ -142,9 +143,9 @@ public final class IntegrationUtils
       // Suffix which should be unique for each item within each integration test
       String iStr = String.format("%03d", i+1);
       String suffix = key + "_" + iStr;
-      String subscrId = getSubscrName(key, i+1);
+      String subscrName = getSubscrName(key, i+1);
       // Constructor initializes all attributes
-      subscriptions[i] = new Subscription(-1, tenantName, owner1, subscrId, description1+suffix, isEnabledTrue,
+      subscriptions[i] = new Subscription(-1, tenantName, testUser1, subscrName, description1+suffix, isEnabledTrue,
                                           typeFilter1, subjectFilter1, dmList1, ttl1, uuidNull,
                                           expiryNull, createdNull, updatedNull);
     }

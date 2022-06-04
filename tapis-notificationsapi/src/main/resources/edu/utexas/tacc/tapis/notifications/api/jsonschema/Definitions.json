@@ -3,8 +3,9 @@
   "$schema": "https://json-schema.org/draft-07/schema#",
   "description": "Common definitions for requests",
   "additionalProperties": false,
-
   "UserName": { "type": "string", "minLength": 1, "maxLength": 60 },
+  "SubscriptionName": { "type": "string", "minLength": 1, "maxLength": 188 },
+  "SubscriptionNameNull": { "type": ["string", "null"], "minLength": 1, "maxLength": 188 },
   "typeFilterString": { "type": "string", "minLength": 5, "maxLength":  128 },
   "subjectFilterString": { "type": "string", "minLength": 1, "maxLength":  150 },
   "DeliveryMethod": { "type": "string", "enum": [ "WEBHOOK", "EMAIL" ] },
