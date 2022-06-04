@@ -95,6 +95,7 @@ public final class IntegrationUtils
   public static final String startAfterNull = null;
 
   // Search and sort
+  public static final boolean anyOwnerFalse = false;
   public static final List<String> searchListNull = null;
   public static final ASTNode searchASTNull = null;
   public static final Set<String> setOfIDsNull = null;

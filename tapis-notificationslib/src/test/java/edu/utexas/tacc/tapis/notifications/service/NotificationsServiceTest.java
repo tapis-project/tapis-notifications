@@ -202,7 +202,7 @@ public class NotificationsServiceTest
   {
     Subscription sub0 = subscriptions[5];
     svcImpl.createSubscription(rJobsSvc1, sub0, scrubbedJson);
-    List<Subscription> subscriptions = svcImpl.getSubscriptions(rJobsSvc1, sub0.getOwner(), null, -1, null, -1, null);
+    List<Subscription> subscriptions = svcImpl.getSubscriptions(rJobsSvc1, sub0.getOwner(), null, -1, null, -1, null, false);
     for (Subscription sub : subscriptions)
     {
       System.out.println("Found item with id: " + sub.getName());

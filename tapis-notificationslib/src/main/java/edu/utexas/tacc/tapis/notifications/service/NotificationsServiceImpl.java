@@ -10,7 +10,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.regex.Pattern;
 
 import javax.inject.Inject;
 import javax.ws.rs.NotAuthorizedException;
@@ -576,12 +575,13 @@ public class NotificationsServiceImpl implements NotificationsService
    * @param orderByList - orderBy entries for sorting, e.g. orderBy=created(desc).
    * @param skip - number of results to skip (may not be used with startAfter)
    * @param startAfter - where to start when sorting, e.g. limit=10&orderBy=id(asc)&startAfter=101 (may not be used with skip)
+   * @param anyOwner - If true retrieve all subscriptions owned by any user. owner will be ignored.
    * @return List of Subscription objects
    * @throws TapisException - for Tapis related exceptions
    */
   @Override
-  public List<Subscription> getSubscriptions(ResourceRequestUser rUser, String owner, List<String> searchList,
-                                             int limit, List<OrderBy> orderByList, int skip, String startAfter)
+  public List<Subscription> getSubscriptions(ResourceRequestUser rUser, String owner, List<String> searchList, int limit,
+                                             List<OrderBy> orderByList, int skip, String startAfter, boolean anyOwner)
           throws TapisException, TapisClientException
   {
     // Check inputs
@@ -611,12 +611,13 @@ public class NotificationsServiceImpl implements NotificationsService
     }
 
     // Get list of subscription names
-    // This is either all subscriptions (null) or a list of IDs.
-    Set<String> allowedIDs = prvtGetAllowedSubscriptionNames(rUser, owner);
+    // This is either all subscriptions (null) or a list of names.
+    // If anyOwner = true then no need to get allowedNames
+    Set<String> allowedNames = (anyOwner ? null : prvtGetAllowedSubscriptionNames(rUser, owner));
 
-    // Get all allowed subscriptions matching the search conditions
-    return dao.getSubscriptions(rUser.getOboTenantId(), owner, verifiedSearchList, null, allowedIDs, limit,
-                                orderByList, skip, startAfter);
+    // Get all subscriptions matching the search conditions
+    return dao.getSubscriptions(rUser.getOboTenantId(), owner, verifiedSearchList, null, allowedNames, limit,
+                                orderByList, skip, startAfter, anyOwner);
   }
 
   /**
@@ -633,14 +634,15 @@ public class NotificationsServiceImpl implements NotificationsService
                                                               int limit, List<OrderBy> orderByList, int skip, String startAfter)
           throws TapisException, TapisClientException
   {
+    boolean anyOwnerFalse = false;
     // Check inputs
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
     if (StringUtils.isBlank(owner))
       throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_ERROR_ARG", rUser, owner, "N/A", SubscriptionOperation.read));
 
     // If search string is empty delegate to getSubscriptions()
-    if (StringUtils.isBlank(sqlSearchStr)) return getSubscriptions(rUser, owner, null, limit, orderByList, skip, startAfter);
-
+    if (StringUtils.isBlank(sqlSearchStr)) return getSubscriptions(rUser, owner, null, limit, orderByList, skip,
+                                                                   startAfter, anyOwnerFalse);
 
     // Validate and parse the sql string into an abstract syntax tree (AST)
     // The activemq parser validates and parses the string into an AST but there does not appear to be a way
@@ -667,7 +669,8 @@ public class NotificationsServiceImpl implements NotificationsService
     Set<String> allowedIDs = prvtGetAllowedSubscriptionNames(rUser, owner);
 
     // Get all allowed subscriptions matching the search conditions
-    return dao.getSubscriptions(rUser.getOboTenantId(), owner, null, searchAST, allowedIDs, limit, orderByList, skip, startAfter);
+    return dao.getSubscriptions(rUser.getOboTenantId(), owner, null, searchAST, allowedIDs, limit, orderByList, skip,
+                                startAfter, anyOwnerFalse);
   }
 
   // -----------------------------------------------------------------------
@@ -1027,7 +1030,7 @@ public class NotificationsServiceImpl implements NotificationsService
     {
       return null;
     }
-    return dao.getSubscriptionIDsByOwner(rUser.getOboTenantId(), owner);
+    return dao.getSubscriptionNamesByOwner(rUser.getOboTenantId(), owner);
   }
 
   /**

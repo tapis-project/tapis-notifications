@@ -4,6 +4,7 @@ import javax.inject.Inject;
 import javax.servlet.ServletContext;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.PATCH;
@@ -116,7 +117,7 @@ public class SubscriptionResource
 
   // Top level summary attributes to be included by default in some cases.
   public static final List<String> SUMMARY_ATTRS =
-          new ArrayList<>(List.of(NAME_FIELD, OWNER_FIELD, TYPE_FILTER_FIELD, SUBJECT_FILTER_FIELD));
+          new ArrayList<>(List.of(OWNER_FIELD, NAME_FIELD, TYPE_FILTER_FIELD, SUBJECT_FILTER_FIELD));
 
   // ************************************************************************
   // *********************** Fields *****************************************
@@ -287,7 +288,7 @@ public class SubscriptionResource
   /**
    * Update selected attributes of a subscription
    * @param name name of the subscription
-   * @param owner subscription owner
+   * @param ownedBy subscription owner
    * @param payloadStream - request body
    * @param securityContext - user identity
    * @return response containing reference to updated object
@@ -297,7 +298,7 @@ public class SubscriptionResource
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   public Response patchSubscription(@PathParam("name") String name,
-                                    @QueryParam("owner") String owner,
+                                    @QueryParam("ownedBy") String ownedBy,
                                     InputStream payloadStream,
                                     @Context SecurityContext securityContext)
   {
@@ -314,7 +315,7 @@ public class SubscriptionResource
 
     // Trace this request.
     if (_log.isTraceEnabled())
-      ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "name="+name, "owner="+owner);
+      ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "name="+name, "ownedBy="+ownedBy);
 
     // ------------------------- Extract and validate payload -------------------------
     // Read the payload into a string.
@@ -364,7 +365,7 @@ public class SubscriptionResource
     // No secrets in PatchSubscription so no need to scrub
 
     // For owner use oboUser or string specified in optional query parameter
-    String subscrOwner =  StringUtils.isBlank(owner) ? rUser.getOboUserId() : owner;
+    String subscrOwner =  StringUtils.isBlank(ownedBy) ? rUser.getOboUserId() : ownedBy;
 
     // ---------------------------- Make service call to update the subscription -------------------------------
     try
@@ -419,7 +420,7 @@ public class SubscriptionResource
   /**
    * Enable a subscription
    * @param name - name of the subscription
-   * @param owner subscription owner
+   * @param ownedBy subscription owner
    * @param securityContext - user identity
    * @return - response with change count as the result
    */
@@ -428,16 +429,16 @@ public class SubscriptionResource
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   public Response enableSubscription(@PathParam("name") String name,
-                                     @QueryParam("owner") String owner,
+                                     @QueryParam("ownedBy") String ownedBy,
                                      @Context SecurityContext securityContext)
   {
-    return postSubscriptionSingleUpdate(OP_ENABLE, owner, name, null, securityContext);
+    return postSubscriptionSingleUpdate(OP_ENABLE, ownedBy, name, null, securityContext);
   }
 
   /**
    * Disable a subscription
    * @param name - name of the subscription
-   * @param owner subscription owner
+   * @param ownedBy subscription owner
    * @param securityContext - user identity
    * @return - response with change count as the result
    */
@@ -446,16 +447,16 @@ public class SubscriptionResource
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   public Response disableSubscription(@PathParam("name") String name,
-                                      @QueryParam("owner") String owner,
+                                      @QueryParam("ownedBy") String ownedBy,
                                       @Context SecurityContext securityContext)
   {
-    return postSubscriptionSingleUpdate(OP_DISABLE, owner, name, null, securityContext);
+    return postSubscriptionSingleUpdate(OP_DISABLE, ownedBy, name, null, securityContext);
   }
 
   /**
    * Delete a subscription
    * @param name - name of the subscription
-   * @param owner subscription owner
+   * @param ownedBy subscription owner
    * @param securityContext - user identity
    * @return - response with change count as the result
    */
@@ -464,16 +465,16 @@ public class SubscriptionResource
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   public Response deleteSubscription(@PathParam("name") String name,
-                                     @QueryParam("owner") String owner,
+                                     @QueryParam("ownedBy") String ownedBy,
                                      @Context SecurityContext securityContext)
   {
-    return postSubscriptionSingleUpdate(OP_DELETE, owner, name, null, securityContext);
+    return postSubscriptionSingleUpdate(OP_DELETE, ownedBy, name, null, securityContext);
   }
 
   /**
    * Update TTL for a subscription
    * @param name - name of the subscription
-   * @param owner subscription owner
+   * @param ownedBy subscription owner
    * @param securityContext - user identity
    * @return - response with change count as the result
    */
@@ -483,17 +484,17 @@ public class SubscriptionResource
   @Produces(MediaType.APPLICATION_JSON)
   public Response updateTTL(@PathParam("name") String name,
                             @PathParam("ttlMinutes") String ttlMinutes,
-                            @QueryParam("owner") String owner,
+                            @QueryParam("ownedBy") String ownedBy,
                             @Context SecurityContext securityContext)
   {
-    return postSubscriptionSingleUpdate(OP_UPDATE_TTL, owner, name, ttlMinutes, securityContext);
+    return postSubscriptionSingleUpdate(OP_UPDATE_TTL, ownedBy, name, ttlMinutes, securityContext);
   }
 
   /**
    * getSubscription
    * Retrieve a subscription
    * @param name - name of the subscription
-   * @param owner subscription owner
+   * @param ownedBy subscription owner
    * @param securityContext - user identity
    * @return Response with subscription object as the result
    */
@@ -502,7 +503,7 @@ public class SubscriptionResource
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   public Response getSubscription(@PathParam("name") String name,
-                                  @QueryParam("owner") String owner,
+                                  @QueryParam("ownedBy") String ownedBy,
                                   @Context SecurityContext securityContext)
   {
     String opName = "getSubscription";
@@ -517,12 +518,12 @@ public class SubscriptionResource
 
     // Trace this request.
     if (_log.isTraceEnabled())
-      ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "name="+name, "owner="+owner);
+      ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "name="+name, "ownedBy="+ownedBy);
 
     List<String> selectList = threadContext.getSearchParameters().getSelectList();
 
     // For owner use oboUser or string specified in optional query parameter
-    String subscrOwner =  StringUtils.isBlank(owner) ? rUser.getOboUserId() : owner;
+    String subscrOwner =  StringUtils.isBlank(ownedBy) ? rUser.getOboUserId() : ownedBy;
 
     Subscription subscription;
     try
@@ -555,14 +556,16 @@ public class SubscriptionResource
    * Retrieve all subscriptions accessible by requester and matching any search conditions provided.
    * NOTE: The query parameters search, limit, orderBy, skip, startAfter are all handled in the filter
    *       QueryParametersRequestFilter. No need to use @QueryParam here.
-   * @param owner subscription owner
+   * @param ownedBy - Use specified user in place of the requesting user. Leave null or blank to use requesting user.
+   * @param anyOwner - If true retrieve all subscriptions owned by any user. ownedBy will be ignored.
    * @param securityContext - user identity
    * @return - list of subscriptions accessible by requester and matching search conditions.
    */
   @GET
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  public Response getSubscriptions(@QueryParam("owner") String owner,
+  public Response getSubscriptions(@QueryParam("ownedBy") String ownedBy,
+                                   @QueryParam("anyOwner") @DefaultValue("false") boolean anyOwner,
                                    @Context SecurityContext securityContext)
   {
     String opName = "getSubscriptions";
@@ -577,7 +580,7 @@ public class SubscriptionResource
 
     // Trace this request.
     if (_log.isTraceEnabled())
-      ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "owner="+owner);
+      ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "ownedBy="+ownedBy, "anyOwner="+anyOwner);
 
     // ThreadContext designed to never return null for SearchParameters
     SearchParameters srchParms = threadContext.getSearchParameters();
@@ -586,7 +589,7 @@ public class SubscriptionResource
     Response successResponse;
     try
     {
-      successResponse = getSearchResponse(rUser, owner, null, srchParms);
+      successResponse = getSearchResponse(rUser, null, srchParms, ownedBy, anyOwner);
     }
     catch (Exception e)
     {
@@ -600,7 +603,7 @@ public class SubscriptionResource
   /**
    * searchSubscriptionsQueryParameters
    * Dedicated search endpoint for Subscription resource. Search conditions provided as query parameters.
-   * @param owner subscription owner
+   * @param ownedBy subscription owner
    * @param securityContext - user identity
    * @return - list of subscriptions accessible by requester and matching search conditions.
    */
@@ -608,7 +611,7 @@ public class SubscriptionResource
   @Path("search")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  public Response searchSubscriptionsQueryParameters(@QueryParam("owner") String owner,
+  public Response searchSubscriptionsQueryParameters(@QueryParam("ownedBy") String ownedBy,
                                                      @Context SecurityContext securityContext)
   {
     String opName = "searchSubscriptionsGet";
@@ -623,7 +626,7 @@ public class SubscriptionResource
 
     // Trace this request.
     if (_log.isTraceEnabled())
-      ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "owner="+owner);
+      ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "ownedBy="+ownedBy);
 
     // Create search list based on query parameters
     // Note that some validation is done for each condition but the back end will handle translating LIKE wildcard
@@ -648,7 +651,8 @@ public class SubscriptionResource
     Response successResponse;
     try
     {
-      successResponse = getSearchResponse(rUser, owner, null, srchParms);
+      boolean anyOwnerFalse = false;
+      successResponse = getSearchResponse(rUser, null, srchParms, ownedBy, anyOwnerFalse);
     }
     catch (Exception e)
     {
@@ -665,7 +669,7 @@ public class SubscriptionResource
    * searchSubscriptionsRequestBody
    * Dedicated search endpoint for Subscription resource. Search conditions provided in a request body.
    * Request body contains an array of strings that are concatenated to form the full SQL-like search string.
-   * @param owner subscription owner
+   * @param ownedBy subscription owner
    * @param payloadStream - request body@quer
    * @param securityContext - user identity
    * @return - list of subscriptions accessible by requester and matching search conditions.
@@ -674,7 +678,7 @@ public class SubscriptionResource
   @Path("search")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  public Response searchSubscriptionsRequestBody(@QueryParam("owner") String owner,
+  public Response searchSubscriptionsRequestBody(@QueryParam("ownedBy") String ownedBy,
                                                  InputStream payloadStream,
                                                  @Context SecurityContext securityContext)
   {
@@ -690,7 +694,7 @@ public class SubscriptionResource
 
     // Trace this request.
     if (_log.isTraceEnabled())
-      ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "owner="+owner);
+      ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "ownedBy="+ownedBy);
 
     // ------------------------- Extract and validate payload -------------------------
     // Read the payload into a string.
@@ -735,7 +739,8 @@ public class SubscriptionResource
     Response successResponse;
     try
     {
-      successResponse = getSearchResponse(rUser, owner, sqlSearchStr, srchParms);
+      boolean anyOwnerFalse = false;
+      successResponse = getSearchResponse(rUser, sqlSearchStr, srchParms, ownedBy, anyOwnerFalse);
     }
     catch (Exception e)
     {
@@ -752,7 +757,7 @@ public class SubscriptionResource
    * isEnabled
    * Check if subscription is enabled.
    * @param name - name of the subscription
-   * @param owner subscription owner
+   * @param ownedBy subscription owner
    * @param securityContext - user identity
    * @return Response with boolean result
    */
@@ -761,7 +766,7 @@ public class SubscriptionResource
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   public Response isEnabled(@PathParam("name") String name,
-                            @QueryParam("owner") String owner,
+                            @QueryParam("ownedBy") String ownedBy,
                             @Context SecurityContext securityContext)
   {
     String opName = "isEnabled";
@@ -776,10 +781,10 @@ public class SubscriptionResource
 
     // Trace this request.
     if (_log.isTraceEnabled())
-      ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "name="+name, "owner="+owner);
+      ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "name="+name, "ownedBy="+ownedBy);
 
     // For owner use oboUser or string specified in optional query parameter
-    String subscrOwner =  StringUtils.isBlank(owner) ? rUser.getOboUserId() : owner;
+    String subscrOwner =  StringUtils.isBlank(ownedBy) ? rUser.getOboUserId() : ownedBy;
 
     boolean isEnabled;
     try
@@ -819,7 +824,7 @@ public class SubscriptionResource
    * @param securityContext Security context from client call
    * @return Response to be returned to the client.
    */
-  private Response postSubscriptionSingleUpdate(String opName, String owner, String name, String ttlMinutes,
+  private Response postSubscriptionSingleUpdate(String opName, String ownedBy, String name, String ttlMinutes,
                                                 SecurityContext securityContext)
   {
     // ------------------------- Retrieve and validate thread context -------------------------
@@ -836,13 +841,13 @@ public class SubscriptionResource
     if (_log.isTraceEnabled())
     {
       if (OP_UPDATE_TTL.equals(opName))
-        ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "name="+name, "owner="+owner, "ttlMinutes="+ttlMinutes);
+        ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "name="+name, "ownedBy="+ownedBy, "ttlMinutes="+ttlMinutes);
       else
-        ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "name="+name, "owner="+owner);
+        ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "name="+name, "ownedBy="+ownedBy);
     }
 
     // For owner use oboUser or string specified in optional query parameter
-    String subscrOwner =  StringUtils.isBlank(owner) ? rUser.getOboUserId() : owner;
+    String subscrOwner =  StringUtils.isBlank(ownedBy) ? rUser.getOboUserId() : ownedBy;
 
     // ---------------------------- Make service call to update the subscription -------------------------------
     int changeCount;
@@ -969,7 +974,8 @@ public class SubscriptionResource
    *  srchParms must be non-null
    *  One of srchParms.searchList or sqlSearchStr must be non-null
    */
-  private Response getSearchResponse(ResourceRequestUser rUser, String owner, String sqlSearchStr, SearchParameters srchParms)
+  private Response getSearchResponse(ResourceRequestUser rUser, String sqlSearchStr, SearchParameters srchParms,
+                                     String ownedBy, boolean anyOwner)
           throws Exception
   {
     RespAbstract resp1;
@@ -978,7 +984,7 @@ public class SubscriptionResource
     String itemCountStr;
 
     // For owner use oboUser or string specified in optional query parameter
-    String subscrOwner =  StringUtils.isBlank(owner) ? rUser.getOboUserId() : owner;
+    String subscrOwner =  StringUtils.isBlank(ownedBy) ? rUser.getOboUserId() : ownedBy;
 
     List<String> searchList = srchParms.getSearchList();
     List<String> selectList = srchParms.getSelectList();
@@ -994,7 +1000,8 @@ public class SubscriptionResource
     List<OrderBy> orderByList = srchParms.getOrderByList();
 
     if (StringUtils.isBlank(sqlSearchStr))
-      subscriptions = notificationsService.getSubscriptions(rUser, subscrOwner, searchList, limit, orderByList, skip, startAfter);
+      subscriptions = notificationsService.getSubscriptions(rUser, subscrOwner, searchList, limit, orderByList, skip,
+                                                            startAfter, anyOwner);
     else
       subscriptions = notificationsService.getSubscriptionsUsingSqlSearchStr(rUser, subscrOwner, sqlSearchStr, limit, orderByList, skip,
                                                   startAfter);

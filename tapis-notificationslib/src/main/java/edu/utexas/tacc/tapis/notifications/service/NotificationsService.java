@@ -57,7 +57,7 @@ public interface NotificationsService
                         String startAfter) throws TapisException, TapisClientException;
 
   List<Subscription> getSubscriptions(ResourceRequestUser rUser, String owner, List<String> searchList, int limit,
-                    List<OrderBy> orderByList, int skip, String startAfter)
+                    List<OrderBy> orderByList, int skip, String startAfter, boolean anyOwner)
           throws TapisException, TapisClientException;
 
   List<Subscription> getSubscriptionsUsingSqlSearchStr(ResourceRequestUser rUser, String owner, String searchStr, int limit,

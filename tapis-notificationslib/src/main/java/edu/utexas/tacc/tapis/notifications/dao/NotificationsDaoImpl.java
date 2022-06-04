@@ -714,7 +714,7 @@ public class NotificationsDaoImpl implements NotificationsDao
    * @throws TapisException - on error
    */
   @Override
-  public Set<String> getSubscriptionIDsByOwner(String tenant, String owner) throws TapisException
+  public Set<String> getSubscriptionNamesByOwner(String tenant, String owner) throws TapisException
   {
     // The result list is always non-null.
     var idList = new HashSet<String>();
@@ -757,25 +757,26 @@ public class NotificationsDaoImpl implements NotificationsDao
    * @param tenant - tenant name
    * @param searchList - optional list of conditions used for searching
    * @param searchAST - AST containing search conditions
-   * @param setOfIDs - list of subscription IDs to consider. null indicates no restriction.
+   * @param setOfNames - list of subscription names to consider. null indicates no restriction.
    * @param limit - indicates maximum number of results to be included, -1 for unlimited
    * @param orderByList - orderBy entries for sorting, e.g. orderBy=created(desc).
    * @param skip - number of results to skip (may not be used with startAfter)
    * @param startAfter - where to start when sorting, e.g. limit=10&orderBy=id(asc)&startAfter=101 (may not be used with skip)
+   * @param anyOwner - do not include owner in filtering
    * @return - list of Subscription objects
    * @throws TapisException - on error
    */
   @Override
   public List<Subscription> getSubscriptions(String tenant, String owner, List<String> searchList, ASTNode searchAST,
-                                             Set<String> setOfIDs, int limit, List<OrderBy> orderByList,
-                                             int skip, String startAfter)
+                                             Set<String> setOfNames, int limit, List<OrderBy> orderByList,
+                                             int skip, String startAfter, boolean anyOwner)
           throws TapisException
   {
     // The result list should always be non-null.
     List<Subscription> retList = new ArrayList<>();
 
     // If no IDs in list then we are done.
-    if (setOfIDs != null && setOfIDs.isEmpty()) return retList;
+    if (setOfNames != null && setOfNames.isEmpty()) return retList;
 
     // Call private method to process orderByList
     List<OrderBy> tmpOrderByList = getOrderByList(orderByList);
@@ -827,8 +828,10 @@ public class NotificationsDaoImpl implements NotificationsDao
       else orderFieldList.add(colOrderBy.desc());
     }
 
-    // Begin where condition for the query. Must match tenant and owner
-    Condition whereCondition = SUBSCRIPTIONS.TENANT.eq(tenant).and(SUBSCRIPTIONS.OWNER.eq(owner));
+    // Begin where condition for the query.
+    Condition whereCondition;
+    if (anyOwner) whereCondition = SUBSCRIPTIONS.TENANT.eq(tenant);
+    else whereCondition = SUBSCRIPTIONS.TENANT.eq(tenant).and(SUBSCRIPTIONS.OWNER.eq(owner));
 
     // Add searchList or searchAST to where condition
     if (searchList != null)
@@ -852,7 +855,7 @@ public class NotificationsDaoImpl implements NotificationsDao
     }
 
     // Add IN condition for list of IDs
-    if (setOfIDs != null && !setOfIDs.isEmpty()) whereCondition = whereCondition.and(SUBSCRIPTIONS.NAME.in(setOfIDs));
+    if (setOfNames != null && !setOfNames.isEmpty()) whereCondition = whereCondition.and(SUBSCRIPTIONS.NAME.in(setOfNames));
 
     // ------------------------- Build and execute SQL ----------------------------
     Connection conn = null;

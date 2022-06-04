@@ -127,7 +127,7 @@ public class NotificationsDaoTest
     boolean itemCreated = dao.createSubscription(rUser, sub0, expiryNull);
     Assert.assertTrue(itemCreated, "Item not created, id: " + sub0.getName());
     List<Subscription> subscriptions = dao.getSubscriptions(tenantName, sub0.getOwner(), null, null, null,
-                                             DEFAULT_LIMIT, orderByListNull, DEFAULT_SKIP, startAfterNull);
+                                             DEFAULT_LIMIT, orderByListNull, DEFAULT_SKIP, startAfterNull, anyOwnerFalse);
     for (Subscription subscription : subscriptions)
     {
       System.out.println("Found item with id: " + subscription.getName());
@@ -150,7 +150,7 @@ public class NotificationsDaoTest
     subIdList.add(sub0.getName());
     // Get all subscriptions in list of seqIDs
     List<Subscription> subscriptions = dao.getSubscriptions(tenantName, sub0.getOwner(), null, null, subIdList,
-                                                            DEFAULT_LIMIT, orderByListNull, DEFAULT_SKIP, startAfterNull);
+                                                            DEFAULT_LIMIT, orderByListNull, DEFAULT_SKIP, startAfterNull, anyOwnerFalse);
     for (Subscription subscription : subscriptions) {
       System.out.println("Found item with id: " + subscription.getName());
       Assert.assertTrue(subIdList.contains(subscription.getName()));

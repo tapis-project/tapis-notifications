@@ -53,12 +53,12 @@ public interface NotificationsDao
 
   List<Subscription> getSubscriptions(String tenant, String owner, List<String> searchList, ASTNode searchAST,
                                       Set<String> names, int limit, List<OrderBy> orderByList, int skip,
-                                      String startAfter)
+                                      String startAfter, boolean anyOwner)
           throws TapisException;
 
   List<Subscription> getSubscriptionsForEvent(Event event) throws TapisException;
 
-  Set<String> getSubscriptionIDsByOwner(String tenant, String owner) throws TapisException;
+  Set<String> getSubscriptionNamesByOwner(String tenant, String owner) throws TapisException;
 
   Set<String> getSubscriptionIDs(String tenant) throws TapisException;
 
