@@ -1,11 +1,13 @@
 package edu.utexas.tacc.tapis.notifications.service;
 
+import edu.utexas.tacc.tapis.client.shared.exceptions.TapisClientException;
 import edu.utexas.tacc.tapis.notifications.dao.NotificationsDao;
 import edu.utexas.tacc.tapis.notifications.dao.NotificationsDaoImpl;
 import edu.utexas.tacc.tapis.notifications.model.DeliveryTarget;
 import edu.utexas.tacc.tapis.notifications.model.Event;
 import edu.utexas.tacc.tapis.notifications.model.PatchSubscription;
 import edu.utexas.tacc.tapis.notifications.model.Subscription;
+import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.shared.security.ServiceClients;
 import edu.utexas.tacc.tapis.shared.security.ServiceContext;
 import edu.utexas.tacc.tapis.shared.security.TenantManager;
@@ -24,11 +26,13 @@ import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
+import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
@@ -50,7 +54,7 @@ import static edu.utexas.tacc.tapis.notifications.IntegrationUtils.*;
 public class NotificationsServiceTest
 {
   private NotificationsServiceImpl svcImpl;
-  private ResourceRequestUser rJobsSvc1, rUser2, rUser5, rAdminUser, rFilesSvc;
+  private ResourceRequestUser rJobsSvc1, rJobsSvc2, rUser1, rUser2, rUser5, rAdminUser, rFilesSvc;
   // Test data
   private static final String testKey = "Svc";
   // Special case IDs that have caused problems.
@@ -68,7 +72,7 @@ public class NotificationsServiceTest
   private static final String testUser5 = "testuser5";
 
   // Create test definitions in memory
-  int numSubscriptions = 13;
+  int numSubscriptions = 19;
   Subscription[] subscriptions = IntegrationUtils.makeSubscriptions(numSubscriptions, testKey);
 
   @BeforeSuite
@@ -104,12 +108,15 @@ public class NotificationsServiceTest
                                          null, testUser2, tenantName, null, null, null));
     rJobsSvc1 = new ResourceRequestUser(new AuthenticatedUser(jobsSvcName, adminTenantName, TapisThreadContext.AccountType.service.name(),
                                       null, testUser1, tenantName, null, null, null));
+    rJobsSvc2 = new ResourceRequestUser(new AuthenticatedUser(jobsSvcName, adminTenantName, TapisThreadContext.AccountType.service.name(),
+            null, testUser2, tenantName, null, null, null));
+    rUser1 = new ResourceRequestUser(new AuthenticatedUser(testUser1, tenantName, TapisThreadContext.AccountType.user.name(),
+            null, testUser1, tenantName, null, null, null));
     rUser2 = new ResourceRequestUser(new AuthenticatedUser(testUser2, tenantName, TapisThreadContext.AccountType.user.name(),
                                       null, testUser2, tenantName, null, null, null));
     rUser5 = new ResourceRequestUser(new AuthenticatedUser(testUser5, tenantName, TapisThreadContext.AccountType.user.name(),
                                       null, testUser5, tenantName, null, null, null));
-
-        // Cleanup anything leftover from previous failed run
+    // Cleanup anything leftover from previous failed run
     tearDown();
   }
 
@@ -117,16 +124,23 @@ public class NotificationsServiceTest
   public void tearDown() throws Exception
   {
     System.out.println("Executing AfterSuite teardown for " + NotificationsServiceTest.class.getSimpleName());
-    //Remove all objects created by tests
+    // Remove all objects created by tests
+    // Since subscriptions are scoped by owner+name and we have various owners set after subscriptions[] is
+    //   is created we cannot use just owner+name from subscriptions[]
+    // Instead get all subscriptions matching a pattern and remove those.
+    // Since tests are run against a local DB this should be OK.
     String owner = subscriptions[0].getOwner();
-    for (int i = 0; i < numSubscriptions; i++)
+    var searchList = new ArrayList<String>();
+    searchList.add(String.format("name.like.%s_%s*", subscrIdPrefix, testKey));
+    List<Subscription> testSubscriptions = svcImpl.getSubscriptions(rJobsSvc1, owner, searchList, -1, null, -1,
+                                                                    null, anyOwnerTrue);
+    for (Subscription subsc : testSubscriptions)
     {
-      svcImpl.deleteSubscription(rJobsSvc1, owner, subscriptions[i].getName());
+      svcImpl.deleteSubscription(rJobsSvc1, subsc.getOwner(), subsc.getName());
     }
-    svcImpl.deleteSubscription(rJobsSvc1, owner, specialId1);
-
+    // Use subscription[0] to check we have cleaned up - this one should have original owner+name
     Subscription tmpSub = svcImpl.getSubscription(rAdminUser, owner, subscriptions[0].getName());
-    Assert.assertNull(tmpSub, "Subscription not deleted. Subscription Id: " + subscriptions[0].getName());
+    Assert.assertNull(tmpSub, "Subscription not deleted. Subscription: " + subscriptions[0].getName());
   }
 
   @BeforeTest
@@ -137,25 +151,47 @@ public class NotificationsServiceTest
   // -----------------------------------------------------------------------
   // ------------------------- Subscriptions -------------------------------
   // -----------------------------------------------------------------------
-  // Test creating a resource
+  // Test creating a subscription
   @Test
   public void testCreateSubscription() throws Exception
   {
     Subscription sub0 = subscriptions[0];
+    // Regular user should not be able to create a subscription
+    boolean pass = false;
+    try { svcImpl.createSubscription(rUser1, sub0, scrubbedJson); }
+    catch (NotAuthorizedException e)
+    {
+      pass = true;
+    }
+    Assert.assertTrue(pass);
+
+    // Service user should be able to create
     svcImpl.createSubscription(rJobsSvc1, sub0, scrubbedJson);
     Subscription tmpSub = svcImpl.getSubscription(rJobsSvc1, sub0.getOwner(), sub0.getName());
     Assert.assertNotNull(tmpSub, "Failed to create item: " + sub0.getName());
     System.out.println("Found item: " + sub0.getName());
   }
 
-  // Test retrieving a resource
+  // Test retrieving a subscription
   @Test
   public void testGetSubscription() throws Exception
   {
+    // Create and retrieve a subscription as the jobs service with oboUser = testuser1.
     Subscription sub0 = subscriptions[1];
     svcImpl.createSubscription(rJobsSvc1, sub0, scrubbedJson);
     Subscription tmpSub = svcImpl.getSubscription(rJobsSvc1, sub0.getOwner(), sub0.getName());
     checkCommonSubscriptionAttrs(sub0, tmpSub);
+    // should also be able to retrieve the subscription as testuser1
+    tmpSub = svcImpl.getSubscription(rUser1, sub0.getOwner(), sub0.getName());
+    checkCommonSubscriptionAttrs(sub0, tmpSub);
+    // should not be able to get the subscription as testuser2
+    boolean pass = false;
+    try { svcImpl.getSubscription(rUser2, sub0.getOwner(), sub0.getName()); }
+    catch (NotAuthorizedException e)
+    {
+      pass = true;
+    }
+    Assert.assertTrue(pass);
   }
 
   // Test update using PATCH
@@ -205,7 +241,7 @@ public class NotificationsServiceTest
     List<Subscription> subscriptions = svcImpl.getSubscriptions(rJobsSvc1, sub0.getOwner(), null, -1, null, -1, null, false);
     for (Subscription sub : subscriptions)
     {
-      System.out.println("Found item with id: " + sub.getName());
+      System.out.println("Found subscription: " + sub.getName());
     }
   }
 
@@ -215,30 +251,30 @@ public class NotificationsServiceTest
   {
     // Create the resource
     Subscription sub0 = subscriptions[9];
-    String subId = sub0.getName();
+    String subName = sub0.getName();
     String owner = sub0.getOwner();
     svcImpl.createSubscription(rJobsSvc1, sub0, scrubbedJson);
     // Enabled should start off true, then become false and finally true again.
-    Subscription tmpSub = svcImpl.getSubscription(rJobsSvc1, owner, subId);
+    Subscription tmpSub = svcImpl.getSubscription(rJobsSvc1, owner, subName);
     Assert.assertTrue(tmpSub.isEnabled());
-    Assert.assertTrue(svcImpl.isEnabled(rJobsSvc1, owner, subId));
-    int changeCount = svcImpl.disableSubscription(rJobsSvc1, owner, subId);
+    Assert.assertTrue(svcImpl.isEnabled(rJobsSvc1, owner, subName));
+    int changeCount = svcImpl.disableSubscription(rJobsSvc1, owner, subName);
     Assert.assertEquals(changeCount, 1, "Change count incorrect when updating.");
-    tmpSub = svcImpl.getSubscription(rJobsSvc1, owner, subId);
+    tmpSub = svcImpl.getSubscription(rJobsSvc1, owner, subName);
     Assert.assertFalse(tmpSub.isEnabled());
-    Assert.assertFalse(svcImpl.isEnabled(rJobsSvc1, owner, subId));
-    changeCount = svcImpl.enableSubscription(rJobsSvc1, owner, subId);
+    Assert.assertFalse(svcImpl.isEnabled(rJobsSvc1, owner, subName));
+    changeCount = svcImpl.enableSubscription(rJobsSvc1, owner, subName);
     Assert.assertEquals(changeCount, 1, "Change count incorrect when updating.");
-    tmpSub = svcImpl.getSubscription(rJobsSvc1, owner, subId);
+    tmpSub = svcImpl.getSubscription(rJobsSvc1, owner, subName);
     Assert.assertTrue(tmpSub.isEnabled());
-    Assert.assertTrue(svcImpl.isEnabled(rJobsSvc1, owner, subId));
+    Assert.assertTrue(svcImpl.isEnabled(rJobsSvc1, owner, subName));
 
     // Delete should remove the resource
     // Delete should return 1 and then 0
-    Assert.assertEquals(svcImpl.deleteSubscription(rJobsSvc1, owner, subId), 1);
-    Assert.assertEquals(svcImpl.deleteSubscription(rJobsSvc1, owner, subId), 0);
-    tmpSub = svcImpl.getSubscription(rJobsSvc1, owner, subId);
-    Assert.assertNull(tmpSub, "Subscription not deleted. Subscription Id: " + subId);
+    Assert.assertEquals(svcImpl.deleteSubscription(rJobsSvc1, owner, subName), 1);
+    Assert.assertEquals(svcImpl.deleteSubscription(rJobsSvc1, owner, subName), 0);
+    tmpSub = svcImpl.getSubscription(rJobsSvc1, owner, subName);
+    Assert.assertNull(tmpSub, "Subscription not deleted. Subscription: " + subName);
   }
 
   // Check that if resource already exists we get an IllegalStateException when attempting to create
@@ -258,12 +294,12 @@ public class NotificationsServiceTest
   {
     // Create the resource
     Subscription sub0 = subscriptions[12];
-    String subId = sub0.getName();
+    String subName = sub0.getName();
     String owner = sub0.getOwner();
     // Get the current time
     Instant now = Instant.now();
     svcImpl.createSubscription(rJobsSvc1, sub0, scrubbedJson);
-    Subscription tmpSub = svcImpl.getSubscription(rJobsSvc1, owner, subId);
+    Subscription tmpSub = svcImpl.getSubscription(rJobsSvc1, owner, subName);
     // Get and check the initial expiry.
     // TTL is in minutes so it should be ttl*60 seconds after the time of creation.
     // Check to the nearest second, i.e., assume it took much less than one second to create the subscription
@@ -276,15 +312,15 @@ public class NotificationsServiceTest
     // Update the TTL and make sure the expiry is also updated.
     String newTTLStr = "60";
     now = Instant.now();
-    svcImpl.updateSubscriptionTTL(rJobsSvc1, owner, subId, newTTLStr);
-    tmpSub = svcImpl.getSubscription(rJobsSvc1, owner, subId);
+    svcImpl.updateSubscriptionTTL(rJobsSvc1, owner, subName, newTTLStr);
+    tmpSub = svcImpl.getSubscription(rJobsSvc1, owner, subName);
     expiry = tmpSub.getExpiry();
     expirySeconds = expiry.truncatedTo(ChronoUnit.SECONDS).getEpochSecond() - now.truncatedTo(ChronoUnit.SECONDS).getEpochSecond();
     Assert.assertEquals(tmpSub.getTtlMinutes()*60L, expirySeconds);
 
     // Test that setting TTL to 0 results in expiry of null
-    svcImpl.updateSubscriptionTTL(rJobsSvc1, owner, subId, "0");
-    tmpSub = svcImpl.getSubscription(rJobsSvc1, owner, subId);
+    svcImpl.updateSubscriptionTTL(rJobsSvc1, owner, subName, "0");
+    tmpSub = svcImpl.getSubscription(rJobsSvc1, owner, subName);
     Assert.assertNull(tmpSub.getExpiry());
   }
 
@@ -313,6 +349,78 @@ public class NotificationsServiceTest
       pass = true;
     }
     Assert.assertTrue(pass);
+  }
+
+  /*
+   *TODO Test various use cases around having many subscriptions owned by different users.
+   * Many of these use cases are driven by the Jobs service (getBySubjectFilter, deleteBySubjectFilter, deleteByUUID).
+   * Create 6 subscriptions all with the same subjectFilter, 3 owned by testuser1 and 3 owned by testuser2
+   *  - Verify that Jobs service can get all subscriptions matching the subjectFilter.
+   *  - Verify that testuser1 and testuser2 see only 3 subscriptions
+   *  - Verify that Admin user can get subscriptions owned by another user.
+   *  - Verify that Jobs service can delete a subscription by UUID
+   *  - Verify that Jobs service can delete all subscriptions matching a subjectFilter.
+   */
+  @Test
+  public void testManySubscriptionsForJobsSvc() throws Exception
+  {
+    // Create 6 subscriptions, 3 owned by testuser1 and 3 owned by testuser2
+    Subscription sub1 = createSubscriptionSameSubjectFilter(rJobsSvc1, subscriptions[13]);
+    Subscription sub2 = createSubscriptionSameSubjectFilter(rJobsSvc1, subscriptions[14]);
+    Subscription sub3 = createSubscriptionSameSubjectFilter(rJobsSvc1, subscriptions[15]);
+    Subscription sub4 = createSubscriptionSameSubjectFilter(rJobsSvc2, subscriptions[16]);
+    Subscription sub5 = createSubscriptionSameSubjectFilter(rJobsSvc2, subscriptions[17]);
+    Subscription sub6 = createSubscriptionSameSubjectFilter(rJobsSvc2, subscriptions[18]);
+
+    // As Jobs service get all subscriptions matching subjectFilter. Owner should not matter
+    var searchBySubjectFilter = new ArrayList<String>();
+    searchBySubjectFilter.add(String.format("subject_filter.eq.%s", subjectFilter0));
+    List<Subscription> subscriptions = svcImpl.getSubscriptions(rJobsSvc1, sub1.getOwner(), searchBySubjectFilter, -1,
+                                                                null, -1, null, anyOwnerTrue);
+    Assert.assertNotNull(subscriptions);
+    Assert.assertFalse(subscriptions.isEmpty());
+    for (Subscription sub : subscriptions)
+      System.out.printf("As user: %s Found subscription: %s%n", rJobsSvc1.getJwtUserId(), sub.getName());
+    Assert.assertEquals(subscriptions.size(), 6);
+
+    // As testuser1 get all subscriptions matching subjectFilter. Should only have 3
+    subscriptions = svcImpl.getSubscriptions(rUser1, sub1.getOwner(), searchBySubjectFilter, -1, null, -1, null, anyOwnerFalse);
+    Assert.assertNotNull(subscriptions);
+    Assert.assertFalse(subscriptions.isEmpty());
+    for (Subscription sub : subscriptions)
+      System.out.printf("As user: %s Found subscription: %s%n", rUser1.getJwtUserId(), sub.getName());
+    Assert.assertEquals(subscriptions.size(), 3);
+
+    // As testuser2 get all subscriptions matching subjectFilter. Should only have 3
+    subscriptions = svcImpl.getSubscriptions(rUser2, sub1.getOwner(), searchBySubjectFilter, -1, null, -1, null, anyOwnerFalse);
+    Assert.assertNotNull(subscriptions);
+    Assert.assertFalse(subscriptions.isEmpty());
+    for (Subscription sub : subscriptions)
+      System.out.printf("As user: %s Found subscription: %s%n", rUser2.getJwtUserId(), sub.getName());
+    Assert.assertEquals(subscriptions.size(), 3);
+
+    // As admin user get all subscriptions owned by testuser1 and matching subjectFilter. Should only have 3
+    subscriptions = svcImpl.getSubscriptions(rAdminUser, sub1.getOwner(), searchBySubjectFilter, -1, null, -1, null, anyOwnerFalse);
+    Assert.assertNotNull(subscriptions);
+    Assert.assertFalse(subscriptions.isEmpty());
+    for (Subscription sub : subscriptions)
+      System.out.printf("As user: %s Found subscription: %s%n", rAdminUser.getJwtUserId(), sub.getName());
+    Assert.assertEquals(subscriptions.size(), 3);
+
+    // As Jobs service delete a subscription by UUID
+    // Delete should return 1 and then 0
+    Assert.assertEquals(svcImpl.deleteSubscriptionByUuid(rJobsSvc1, sub1.getUuid().toString()), 1);
+    Assert.assertEquals(svcImpl.deleteSubscriptionByUuid(rJobsSvc1, sub1.getUuid().toString()), 0);
+    Subscription tmpSub = svcImpl.getSubscription(rJobsSvc1, sub1.getOwner(), sub1.getName());
+    Assert.assertNull(tmpSub, "Subscription not deleted. Subscription: " + sub1.getName());
+
+    // As Jobs service delete all subscriptions for a subjectFilter
+    // Delete should return 5 and then 0
+    Assert.assertEquals(svcImpl.deleteSubscriptionsBySubject(rJobsSvc1, ownerNull, subjectFilter0, true), 5);
+    Assert.assertEquals(svcImpl.deleteSubscriptionsBySubject(rJobsSvc1, ownerEmpty, subjectFilter0, true), 0);
+    subscriptions = svcImpl.getSubscriptions(rJobsSvc1, sub1.getOwner(), searchBySubjectFilter, -1, null, -1, null, anyOwnerTrue);
+    Assert.assertNotNull(subscriptions);
+    Assert.assertTrue(subscriptions.isEmpty());
   }
 
   // -----------------------------------------------------------------------
@@ -420,5 +528,20 @@ public class NotificationsServiceTest
       Assert.assertTrue(addrSet.contains(dMethod.getDeliveryAddress()),
                         "List of addresses did not contain: " + dMethod.getDeliveryAddress());
     }
+  }
+
+  /*
+   * Create a subscription owned by rUser.getOboUser with a constant subjectFilter.
+   * Retrieve the subscription and return it.
+   */
+  private Subscription createSubscriptionSameSubjectFilter(ResourceRequestUser rUser, Subscription subscr)
+          throws TapisException, TapisClientException
+  {
+    subscr.setOwner(rUser.getOboUserId());
+    subscr.setSubjectFilter(subjectFilter0);
+    svcImpl.createSubscription(rJobsSvc1, subscr, scrubbedJson);
+    subscr = svcImpl.getSubscription(rJobsSvc1, subscr.getOwner(), subscr.getName());
+    Assert.assertNotNull(subscr);
+    return  subscr;
   }
 }

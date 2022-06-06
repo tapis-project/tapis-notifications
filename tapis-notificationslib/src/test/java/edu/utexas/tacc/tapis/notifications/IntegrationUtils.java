@@ -45,7 +45,7 @@ public final class IntegrationUtils
   public static final String testUser3 = "testuser3";
   public static final String testUser4 = "testuser4";
   public static final String apiUser = "testApiUser";
-  public static final String subscrIdPrefix = "TestSub";
+  public static final String subscrIdPrefix = "TestSubscr";
   public static final String description1 = "Subscription description 1";
   public static final String description2 = "Subscription description 2";
   public static final String typeFilter1 = "jobs.job.complete";
@@ -56,6 +56,7 @@ public final class IntegrationUtils
   public static final String typeFilter2_1 = "systems";
   public static final String typeFilter2_2 = "system";
   public static final String typeFilter2_3 = "create";
+  public static final String subjectFilter0 = "subject_filter_0";
   public static final String subjectFilter1 = "subject_filter_1";
   public static final String subjectFilter2 = "subject_filter_2";
   public static final String webhookUrlA1 = "https://my.fake.webhook/urlA1";
@@ -63,6 +64,9 @@ public final class IntegrationUtils
   public static final String emailAddressB1 = "my.fake.emailB1@my.example.com";
   public static final String emailAddressB2 = "my.fake.emailB2@my.example.com";
   public static final String scrubbedJson = "{}";
+
+  public static final String  ownerNull = null;
+  public static final String ownerEmpty = "";
 
   // Delivery Methods
   public static final DeliveryTarget dmA1 = new DeliveryTarget(DeliveryMethod.WEBHOOK, webhookUrlA1);
@@ -95,6 +99,7 @@ public final class IntegrationUtils
   public static final String startAfterNull = null;
 
   // Search and sort
+  public static final boolean anyOwnerTrue = true;
   public static final boolean anyOwnerFalse = false;
   public static final List<String> searchListNull = null;
   public static final ASTNode searchASTNull = null;

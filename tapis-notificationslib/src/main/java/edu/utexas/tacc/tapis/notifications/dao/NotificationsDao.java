@@ -41,11 +41,17 @@ public interface NotificationsDao
 
   int deleteSubscription(String tenant, String owner, String name) throws TapisException;
 
+  int deleteSubscriptionByUuid(String tenant, UUID uuid) throws TapisException;
+
+  int deleteSubscriptionsBySubject(String tenant, String owner, String subject, boolean anyOwner) throws TapisException;
+
   boolean checkForSubscription(String tenant, String owner, String name) throws TapisException;
 
   boolean isEnabled(String tenant, String owner, String name) throws TapisException;
 
   Subscription getSubscription(String tenant, String owner, String name) throws TapisException;
+
+  Subscription getSubscriptionByUuid(String tenant, UUID uuid) throws TapisException;
 
   int getSubscriptionsCount(String tenant, String owner, List<String> searchList, ASTNode searchAST,
                             Set<String> setOfIDs, List<OrderBy> orderByList, String startAfter)

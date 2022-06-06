@@ -15,16 +15,17 @@ import javax.inject.Inject;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 
+import org.apache.commons.lang3.StringUtils;
+import org.jvnet.hk2.annotations.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import edu.utexas.tacc.tapis.notifications.client.NotificationsClient;
 import edu.utexas.tacc.tapis.notifications.client.gen.model.TapisSubscription;
 import edu.utexas.tacc.tapis.notifications.model.DeliveryTarget;
 import edu.utexas.tacc.tapis.notifications.model.Notification;
 import edu.utexas.tacc.tapis.shared.threadlocal.TapisThreadContext;
 import edu.utexas.tacc.tapis.sharedapi.security.AuthenticatedUser;
-import org.apache.commons.lang3.StringUtils;
-import org.jvnet.hk2.annotations.Service;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import edu.utexas.tacc.tapis.client.shared.exceptions.TapisClientException;
 import edu.utexas.tacc.tapis.search.parser.ASTParser;
@@ -308,7 +309,7 @@ public class NotificationsServiceImpl implements NotificationsService
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
     if (patchSubscription == null) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_NULL_INPUT", rUser));
     if (StringUtils.isBlank(owner) || StringUtils.isBlank(name) || StringUtils.isBlank(scrubbedText))
-      throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_ERROR_ARG", rUser, owner, name, op));
+      throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_MISSING_ARG", rUser, owner, name, op));
     // Extract various names for convenience
     String oboTenant = rUser.getOboTenantId();
 
@@ -391,7 +392,7 @@ public class NotificationsServiceImpl implements NotificationsService
     // Check inputs
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
     if (StringUtils.isBlank(owner) || StringUtils.isBlank(name))
-      throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_ERROR_ARG", rUser, owner, name, op));
+      throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_MISSING_ARG", rUser, owner, name, op));
 
     // ------------------------- Check authorization -------------------------
     checkAuth(rUser, owner, name, op);
@@ -401,6 +402,73 @@ public class NotificationsServiceImpl implements NotificationsService
 
     // Delete the subscription
     return dao.deleteSubscription(rUser.getOboTenantId(), owner, name);
+  }
+
+  /**
+   * Delete a subscription given the UUID
+   * @param rUser - ResourceRequestUser containing tenant, user and request info
+   * @param uuidStr UUID of the subscription
+   * @return Number of items updated
+   *
+   * @throws TapisException - for Tapis related exceptions
+   * @throws IllegalArgumentException - invalid parameter passed in
+   * @throws NotAuthorizedException - unauthorized
+   */
+  @Override
+  public int deleteSubscriptionByUuid(ResourceRequestUser rUser, String uuidStr)
+          throws TapisException, IllegalArgumentException, NotAuthorizedException, TapisClientException
+  {
+    SubscriptionOperation op = SubscriptionOperation.delete;
+    // Check inputs
+    if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
+    if (StringUtils.isBlank(uuidStr))
+      throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_MISSING_ARG1", rUser, "uuid", op));
+
+    UUID uuid = UUID.fromString(uuidStr);
+
+    // Get the subscription. This will tell us if it exists and also allow us to get owner+name to check auth
+    Subscription subscr = dao.getSubscriptionByUuid(rUser.getOboTenantId(), uuid);
+    // If subscription does not exist then 0 changes
+    if (subscr == null) return 0;
+
+    // ------------------------- Check authorization -------------------------
+    checkAuth(rUser, subscr.getOwner(), subscr.getName(), op);
+
+    // Delete the subscription
+    return dao.deleteSubscriptionByUuid(rUser.getOboTenantId(), uuid);
+  }
+
+  /**
+   * Delete subscriptions matching a specific subjectFilter
+   * @param rUser - ResourceRequestUser containing tenant, user and request info
+   * @param subject specific subjectFilter for matching
+   * @param owner owner for matching (ignored if anyOwner == true)
+   * @param anyOwner - If true match for any owner. owner will be ignored.
+   * @return Number of items updated
+   *
+   * @throws TapisException - for Tapis related exceptions
+   * @throws IllegalArgumentException - invalid parameter passed in
+   * @throws NotAuthorizedException - unauthorized
+   */
+  @Override
+  public int deleteSubscriptionsBySubject(ResourceRequestUser rUser, String subject, String owner,
+                                          boolean anyOwner)
+          throws TapisException, IllegalArgumentException, NotAuthorizedException, TapisClientException
+  {
+    SubscriptionOperation op = SubscriptionOperation.delete;
+    // Check inputs
+    if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
+    if (StringUtils.isBlank(subject))
+      throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_MISSING_ARG1", rUser, "subjectFilter", op));
+
+    // Check auth. Only service may use anyOwner == true
+    if (!rUser.isServiceRequest() && anyOwner)
+    {
+      throw new NotAuthorizedException(LibUtils.getMsgAuth("NTFLIB_UNAUTH1", rUser, "deleteSubscriptionsBySubject"), NO_CHALLENGE);
+    }
+
+    // Delete the subscriptions
+    return dao.deleteSubscriptionsBySubject(rUser.getOboTenantId(), owner, subject, anyOwner);
   }
 
   /**
@@ -426,7 +494,7 @@ public class NotificationsServiceImpl implements NotificationsService
     // Check inputs
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
     if (StringUtils.isBlank(owner) || StringUtils.isBlank(name) || StringUtils.isBlank(newTTLStr))
-      throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_ERROR_ARG", rUser, owner, name, op));
+      throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_MISSING_ARG", rUser, owner, name, op));
     // Extract various names for convenience
     String oboTenant = rUser.getOboTenantId();
 
@@ -468,7 +536,7 @@ public class NotificationsServiceImpl implements NotificationsService
     // Check inputs
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
     if (StringUtils.isBlank(owner) || StringUtils.isBlank(name))
-      throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_ERROR_ARG", rUser, owner, name, op));
+      throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_MISSING_ARG", rUser, owner, name, op));
     // Extract various names for convenience
     String oboTenant = rUser.getOboTenantId();
 
@@ -500,7 +568,7 @@ public class NotificationsServiceImpl implements NotificationsService
     // Check inputs
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
     if (StringUtils.isBlank(owner) || StringUtils.isBlank(name))
-      throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_ERROR_ARG", rUser, owner, name, op));
+      throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_MISSING_ARG", rUser, owner, name, op));
     // Extract various names for convenience
     String oboTenant = rUser.getOboTenantId();
 
@@ -532,7 +600,7 @@ public class NotificationsServiceImpl implements NotificationsService
     // Check inputs
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
     if (StringUtils.isBlank(owner))
-      throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_ERROR_ARG", rUser, owner, "N/A", SubscriptionOperation.read));
+      throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_MISSING_ARG1", rUser, "owner", SubscriptionOperation.read));
 
     // Build verified list of search conditions
     var verifiedSearchList = new ArrayList<String>();
@@ -557,19 +625,19 @@ public class NotificationsServiceImpl implements NotificationsService
 
     // Get allowed list of subscription names
     // This is either all subscriptions (null) or a list of names.
-    Set<String> allowedIDs = prvtGetAllowedSubscriptionNames(rUser, owner);
+    Set<String> allowedNames = prvtGetAllowedSubscriptionNames(rUser, owner);
 
     // If none are allowed we know count is 0
-    if (allowedIDs != null && allowedIDs.isEmpty()) return 0;
+    if (allowedNames != null && allowedNames.isEmpty()) return 0;
 
     // Count all allowed resources matching the search conditions
-    return dao.getSubscriptionsCount(rUser.getOboTenantId(), owner, verifiedSearchList, null, allowedIDs, orderByList, startAfter);
+    return dao.getSubscriptionsCount(rUser.getOboTenantId(), owner, verifiedSearchList, null, allowedNames, orderByList, startAfter);
   }
 
   /**
    * Get all subscriptions
    * @param rUser - ResourceRequestUser containing tenant, user and request info
-   * @param owner subscription owner
+   * @param owner owner to use for search (ignored if anyOwner == true).
    * @param searchList - optional list of conditions used for searching
    * @param limit - indicates maximum number of results to be included, -1 for unlimited
    * @param orderByList - orderBy entries for sorting, e.g. orderBy=created(desc).
@@ -587,7 +655,13 @@ public class NotificationsServiceImpl implements NotificationsService
     // Check inputs
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
     if (StringUtils.isBlank(owner))
-      throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_ERROR_ARG", rUser, owner, "N/A", SubscriptionOperation.read));
+      throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_MISSING_ARG1", rUser, "owner", SubscriptionOperation.read));
+
+    // Check auth. Only service may use anyOwner == true
+    if (!rUser.isServiceRequest() && anyOwner)
+    {
+      throw new NotAuthorizedException(LibUtils.getMsgAuth("NTFLIB_UNAUTH1", rUser, "getSubscriptions"), NO_CHALLENGE);
+    }
 
     // Build verified list of search conditions
     var verifiedSearchList = new ArrayList<String>();
@@ -612,7 +686,7 @@ public class NotificationsServiceImpl implements NotificationsService
 
     // Get list of subscription names
     // This is either all subscriptions (null) or a list of names.
-    // If anyOwner = true then no need to get allowedNames
+    // If anyOwner == true then no need to get allowedNames
     Set<String> allowedNames = (anyOwner ? null : prvtGetAllowedSubscriptionNames(rUser, owner));
 
     // Get all subscriptions matching the search conditions
@@ -638,7 +712,7 @@ public class NotificationsServiceImpl implements NotificationsService
     // Check inputs
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
     if (StringUtils.isBlank(owner))
-      throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_ERROR_ARG", rUser, owner, "N/A", SubscriptionOperation.read));
+      throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_MISSING_ARG1", rUser, "owner", SubscriptionOperation.read));
 
     // If search string is empty delegate to getSubscriptions()
     if (StringUtils.isBlank(sqlSearchStr)) return getSubscriptions(rUser, owner, null, limit, orderByList, skip,
@@ -837,7 +911,7 @@ public class NotificationsServiceImpl implements NotificationsService
     // Check inputs
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
     if (StringUtils.isBlank(name))
-      throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_ERROR_ARG", rUser, rUser.getOboUserId(), name, op));
+      throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_MISSING_ARG", rUser, rUser.getOboUserId(), name, op));
     // Extract various names for convenience
     String oboTenant = rUser.getOboTenantId();
     String oboUser = rUser.getOboUserId();
@@ -869,7 +943,7 @@ public class NotificationsServiceImpl implements NotificationsService
     // Check inputs
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
     if (StringUtils.isBlank(name))
-      throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_ERROR_ARG", rUser, rUser.getOboUserId(), name, op));
+      throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_MISSING_ARG", rUser, rUser.getOboUserId(), name, op));
     // Extract various names for convenience
     String oboTenant = rUser.getOboTenantId();
     String oboUser = rUser.getOboUserId();
@@ -931,7 +1005,7 @@ public class NotificationsServiceImpl implements NotificationsService
     // Check inputs
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
     if (StringUtils.isBlank(owner) || StringUtils.isBlank(name))
-      throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_ERROR_ARG", rUser, owner, name, op));
+      throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_MISSING_ARG", rUser, owner, name, op));
     // Extract various names for convenience
     String oboTenant = rUser.getOboTenantId();
 

@@ -44,6 +44,12 @@ public interface NotificationsService
   int deleteSubscription(ResourceRequestUser rUser, String owner, String name)
           throws TapisException, TapisClientException, NotAuthorizedException, IllegalArgumentException;
 
+  int deleteSubscriptionByUuid(ResourceRequestUser rUser, String uuid)
+          throws TapisException, TapisClientException, NotAuthorizedException, IllegalArgumentException;
+
+  int deleteSubscriptionsBySubject(ResourceRequestUser rUser, String owner, String subjectFilter, boolean anyOwner)
+          throws TapisException, TapisClientException, NotAuthorizedException, IllegalArgumentException;
+
   int updateSubscriptionTTL(ResourceRequestUser rUser, String owner, String name, String newTTL)
           throws TapisException, TapisClientException, NotAuthorizedException, IllegalArgumentException, NotFoundException;
 

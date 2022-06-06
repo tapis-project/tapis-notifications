@@ -432,6 +432,78 @@ public class NotificationsDaoImpl implements NotificationsDao
   }
 
   /**
+   * Delete a subscription given the UUID
+   */
+  @Override
+  public int deleteSubscriptionByUuid(String tenant, UUID uuid) throws TapisException
+  {
+    String opName = "deleteSubscriptionByUuid";
+    // ------------------------- Check Input -------------------------
+    if (StringUtils.isBlank(tenant)) LibUtils.logAndThrowNullParmException(opName, "tenant");
+    if (uuid == null) LibUtils.logAndThrowNullParmException(opName, "uuid");
+
+    // ------------------------- Call SQL ----------------------------
+    Connection conn = null;
+    try
+    {
+      conn = getConnection();
+      DSLContext db = DSL.using(conn);
+      db.deleteFrom(SUBSCRIPTIONS).where(SUBSCRIPTIONS.TENANT.eq(tenant),SUBSCRIPTIONS.UUID.eq(uuid)).execute();
+      LibUtils.closeAndCommitDB(conn, null, null);
+    }
+    catch (Exception e)
+    {
+      LibUtils.rollbackDB(conn, e,"DB_DELETE_FAILURE", "subscriptions");
+    }
+    finally
+    {
+      LibUtils.finalCloseDB(conn);
+    }
+    return 1;
+  }
+
+  /**
+   * Delete subscriptions by subject
+   */
+  @Override
+  public int deleteSubscriptionsBySubject(String tenant, String owner, String subject, boolean anyOwner) throws TapisException
+  {
+    String opName = "deleteSubscriptionsBySubject";
+    // ------------------------- Check Input -------------------------
+    if (StringUtils.isBlank(tenant)) LibUtils.logAndThrowNullParmException(opName, "tenant");
+    if (StringUtils.isBlank(subject)) LibUtils.logAndThrowNullParmException(opName, "subject");
+
+    int count = 0;
+
+    // ------------------------- Call SQL ----------------------------
+    Connection conn = null;
+    try
+    {
+      conn = getConnection();
+      DSLContext db = DSL.using(conn);
+
+      // Construct where condition
+      Condition whereCondition;
+      if (anyOwner) whereCondition = SUBSCRIPTIONS.TENANT.eq(tenant);
+      else whereCondition = SUBSCRIPTIONS.TENANT.eq(tenant).and(SUBSCRIPTIONS.OWNER.eq(owner));
+      whereCondition = whereCondition.and(SUBSCRIPTIONS.SUBJECT_FILTER.eq(subject));
+
+      // Execute
+      count = db.deleteFrom(SUBSCRIPTIONS).where(whereCondition).execute();
+      LibUtils.closeAndCommitDB(conn, null, null);
+    }
+    catch (Exception e)
+    {
+      LibUtils.rollbackDB(conn, e,"DB_DELETE_FAILURE", "subscriptions");
+    }
+    finally
+    {
+      LibUtils.finalCloseDB(conn);
+    }
+    return count;
+  }
+
+  /**
    * checkForSubscription
    * @param owner - subscription owner
    * @param name - subscription name
@@ -549,6 +621,46 @@ public class NotificationsDaoImpl implements NotificationsDao
   }
 
   /**
+   * getSubscriptionByUuid
+   * @param uuid - subscription name
+   * @return Subscription object if found, null if not found
+   * @throws TapisException - on error
+   */
+  @Override
+  public Subscription getSubscriptionByUuid(String tenant, UUID uuid) throws TapisException
+  {
+    // Initialize result.
+    Subscription result = null;
+
+    // ------------------------- Call SQL ----------------------------
+    Connection conn = null;
+    try
+    {
+      // Get a database connection.
+      conn = getConnection();
+      DSLContext db = DSL.using(conn);
+      SubscriptionsRecord r;
+      r = db.selectFrom(SUBSCRIPTIONS).where(SUBSCRIPTIONS.TENANT.eq(tenant),SUBSCRIPTIONS.UUID.eq(uuid)).fetchOne();
+      if (r == null) return null;
+      else result = getSubscriptionFromRecord(r);
+
+      // Close out and commit
+      LibUtils.closeAndCommitDB(conn, null, null);
+    }
+    catch (Exception e)
+    {
+      // Rollback transaction and throw an exception
+      LibUtils.rollbackDB(conn, e, "NTFLIB_DB_SELECT_ERROR", "Subscription", tenant, uuid, e.getMessage());
+    }
+    finally
+    {
+      // Always return the connection back to the connection pool.
+      LibUtils.finalCloseDB(conn);
+    }
+    return result;
+  }
+
+  /**
    * getSubscriptionsCount
    * Count all Subscriptions matching various search and sort criteria.
    *     Search conditions given as a list of strings or an abstract syntax tree (AST).
@@ -558,7 +670,7 @@ public class NotificationsDaoImpl implements NotificationsDao
    * @param tenant - tenant name
    * @param searchList - optional list of conditions used for searching
    * @param searchAST - AST containing search conditions
-   * @param setOfIDs - list of subscription IDs to consider. null indicates no restriction.
+   * @param setOfNames - list of subscription names to consider. null indicates no restriction.
    * @param orderByList - orderBy entries for sorting, e.g. orderBy=created(desc).
    * @param startAfter - where to start when sorting, e.g. orderBy=id(asc)&startAfter=101 (may not be used with skip)
    * @return - count of Subscription objects
@@ -566,11 +678,11 @@ public class NotificationsDaoImpl implements NotificationsDao
    */
   @Override
   public int getSubscriptionsCount(String tenant, String owner, List<String> searchList, ASTNode searchAST,
-                                   Set<String> setOfIDs, List<OrderBy> orderByList, String startAfter)
+                                   Set<String> setOfNames, List<OrderBy> orderByList, String startAfter)
           throws TapisException
   {
     // If no IDs in list then we are done.
-    if (setOfIDs != null && setOfIDs.isEmpty()) return 0;
+    if (setOfNames != null && setOfNames.isEmpty()) return 0;
 
     // Call private method to process orderByList
     List<OrderBy> tmpOrderByList = getOrderByList(orderByList);
@@ -632,7 +744,7 @@ public class NotificationsDaoImpl implements NotificationsDao
     }
 
     // Add IN condition for list of IDs
-    if (setOfIDs != null && !setOfIDs.isEmpty()) whereCondition = whereCondition.and(SUBSCRIPTIONS.NAME.in(setOfIDs));
+    if (setOfNames != null && !setOfNames.isEmpty()) whereCondition = whereCondition.and(SUBSCRIPTIONS.NAME.in(setOfNames));
 
     // ------------------------- Build and execute SQL ----------------------------
     int count = 0;
@@ -755,6 +867,7 @@ public class NotificationsDaoImpl implements NotificationsDao
    *   prior to this call for proper validation and treatment of special characters.
    * WARNING: If both searchList and searchAST provided only searchList is used.
    * @param tenant - tenant name
+   * @param owner - owner for matching. Ignored if anyOwner == true
    * @param searchList - optional list of conditions used for searching
    * @param searchAST - AST containing search conditions
    * @param setOfNames - list of subscription names to consider. null indicates no restriction.

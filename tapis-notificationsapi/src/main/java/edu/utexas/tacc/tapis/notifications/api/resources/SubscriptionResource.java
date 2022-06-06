@@ -176,14 +176,6 @@ public class SubscriptionResource
     if (_log.isTraceEnabled())
       ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString());
 
-    // Only services may create subscriptions. Reject if not a service.
-    if (!rUser.isServiceRequest())
-    {
-      msg = ApiUtils.getMsgAuth("NTFAPI_SUBSCR_UNAUTH0", rUser);
-      _log.warn(msg);
-      return Response.status(Status.UNAUTHORIZED).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
-    }
-
     // ------------------------- Extract and validate payload -------------------------
     // Read the payload into a string.
     String rawJson;
