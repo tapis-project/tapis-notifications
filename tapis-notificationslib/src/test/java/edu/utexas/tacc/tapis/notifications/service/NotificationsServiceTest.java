@@ -35,6 +35,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static edu.utexas.tacc.tapis.notifications.IntegrationUtils.*;
@@ -136,7 +137,7 @@ public class NotificationsServiceTest
                                                                     null, anyOwnerTrue);
     for (Subscription subsc : testSubscriptions)
     {
-      svcImpl.deleteSubscription(rJobsSvc1, subsc.getOwner(), subsc.getName());
+      svcImpl.deleteSubscription(rAdminUser, subsc.getOwner(), subsc.getName());
     }
     // Use subscription[0] to check we have cleaned up - this one should have original owner+name
     Subscription tmpSub = svcImpl.getSubscription(rAdminUser, owner, subscriptions[0].getName());
@@ -364,13 +365,15 @@ public class NotificationsServiceTest
   @Test
   public void testManySubscriptionsForJobsSvc() throws Exception
   {
+    var nameSet1 = new HashSet<String>();
+    var nameSet2 = new HashSet<String>();
     // Create 6 subscriptions, 3 owned by testuser1 and 3 owned by testuser2
-    Subscription sub1 = createSubscriptionSameSubjectFilter(rJobsSvc1, subscriptions[13]);
-    Subscription sub2 = createSubscriptionSameSubjectFilter(rJobsSvc1, subscriptions[14]);
-    Subscription sub3 = createSubscriptionSameSubjectFilter(rJobsSvc1, subscriptions[15]);
-    Subscription sub4 = createSubscriptionSameSubjectFilter(rJobsSvc2, subscriptions[16]);
-    Subscription sub5 = createSubscriptionSameSubjectFilter(rJobsSvc2, subscriptions[17]);
-    Subscription sub6 = createSubscriptionSameSubjectFilter(rJobsSvc2, subscriptions[18]);
+    Subscription sub1 = createSubscriptionSameSubjectFilter(rJobsSvc1, subscriptions[13], nameSet1);
+    Subscription sub2 = createSubscriptionSameSubjectFilter(rJobsSvc1, subscriptions[14], nameSet1);
+    Subscription sub3 = createSubscriptionSameSubjectFilter(rJobsSvc1, subscriptions[15], nameSet1);
+    Subscription sub4 = createSubscriptionSameSubjectFilter(rJobsSvc2, subscriptions[16], nameSet2);
+    Subscription sub5 = createSubscriptionSameSubjectFilter(rJobsSvc2, subscriptions[17], nameSet2);
+    Subscription sub6 = createSubscriptionSameSubjectFilter(rJobsSvc2, subscriptions[18], nameSet2);
 
     // As Jobs service get all subscriptions matching subjectFilter. Owner should not matter
     var searchBySubjectFilter = new ArrayList<String>();
@@ -380,32 +383,53 @@ public class NotificationsServiceTest
     Assert.assertNotNull(subscriptions);
     Assert.assertFalse(subscriptions.isEmpty());
     for (Subscription sub : subscriptions)
+    {
       System.out.printf("As user: %s Found subscription: %s%n", rJobsSvc1.getJwtUserId(), sub.getName());
+      Assert.assertTrue(nameSet1.contains(sub.getName()) || nameSet2.contains(sub.getName()));
+    }
     Assert.assertEquals(subscriptions.size(), 6);
 
     // As testuser1 get all subscriptions matching subjectFilter. Should only have 3
-    subscriptions = svcImpl.getSubscriptions(rUser1, sub1.getOwner(), searchBySubjectFilter, -1, null, -1, null, anyOwnerFalse);
+    subscriptions = svcImpl.getSubscriptions(rUser1, rUser1.getJwtUserId(), searchBySubjectFilter, -1, null, -1, null, anyOwnerFalse);
     Assert.assertNotNull(subscriptions);
     Assert.assertFalse(subscriptions.isEmpty());
     for (Subscription sub : subscriptions)
+    {
       System.out.printf("As user: %s Found subscription: %s%n", rUser1.getJwtUserId(), sub.getName());
+      Assert.assertTrue(nameSet1.contains(sub.getName()));
+    }
     Assert.assertEquals(subscriptions.size(), 3);
 
     // As testuser2 get all subscriptions matching subjectFilter. Should only have 3
-    subscriptions = svcImpl.getSubscriptions(rUser2, sub1.getOwner(), searchBySubjectFilter, -1, null, -1, null, anyOwnerFalse);
+    subscriptions = svcImpl.getSubscriptions(rUser2, rUser2.getJwtUserId(), searchBySubjectFilter, -1, null, -1, null, anyOwnerFalse);
     Assert.assertNotNull(subscriptions);
     Assert.assertFalse(subscriptions.isEmpty());
     for (Subscription sub : subscriptions)
+    {
       System.out.printf("As user: %s Found subscription: %s%n", rUser2.getJwtUserId(), sub.getName());
+      Assert.assertTrue(nameSet2.contains(sub.getName()));
+    }
     Assert.assertEquals(subscriptions.size(), 3);
 
-    // As admin user get all subscriptions owned by testuser1 and matching subjectFilter. Should only have 3
-    subscriptions = svcImpl.getSubscriptions(rAdminUser, sub1.getOwner(), searchBySubjectFilter, -1, null, -1, null, anyOwnerFalse);
+    // As admin user get all subscriptions owned by testuser2 and matching subjectFilter. Should only have 3
+    subscriptions = svcImpl.getSubscriptions(rAdminUser, rUser2.getJwtUserId(), searchBySubjectFilter, -1, null, -1, null, anyOwnerFalse);
     Assert.assertNotNull(subscriptions);
     Assert.assertFalse(subscriptions.isEmpty());
     for (Subscription sub : subscriptions)
+    {
       System.out.printf("As user: %s Found subscription: %s%n", rAdminUser.getJwtUserId(), sub.getName());
+      Assert.assertTrue(nameSet2.contains(sub.getName()));
+    }
     Assert.assertEquals(subscriptions.size(), 3);
+
+    // As testuser2 when passing in testuser1 as owner should get auth denied
+    boolean pass = false;
+    try { svcImpl.getSubscriptions(rUser2, rUser1.getJwtUserId(), searchBySubjectFilter, -1, null, -1, null, anyOwnerFalse); }
+    catch (NotAuthorizedException e)
+    {
+      pass = true;
+    }
+    Assert.assertTrue(pass);
 
     // As Jobs service delete a subscription by UUID
     // Delete should return 1 and then 0
@@ -534,14 +558,15 @@ public class NotificationsServiceTest
    * Create a subscription owned by rUser.getOboUser with a constant subjectFilter.
    * Retrieve the subscription and return it.
    */
-  private Subscription createSubscriptionSameSubjectFilter(ResourceRequestUser rUser, Subscription subscr)
+  private Subscription createSubscriptionSameSubjectFilter(ResourceRequestUser rSvc, Subscription subscr, Set<String> nameSet)
           throws TapisException, TapisClientException
   {
-    subscr.setOwner(rUser.getOboUserId());
+    subscr.setOwner(rSvc.getOboUserId());
     subscr.setSubjectFilter(subjectFilter0);
-    svcImpl.createSubscription(rJobsSvc1, subscr, scrubbedJson);
-    subscr = svcImpl.getSubscription(rJobsSvc1, subscr.getOwner(), subscr.getName());
+    svcImpl.createSubscription(rSvc, subscr, scrubbedJson);
+    subscr = svcImpl.getSubscription(rSvc, subscr.getOwner(), subscr.getName());
     Assert.assertNotNull(subscr);
+    nameSet.add(subscr.getName());
     return  subscr;
   }
 }

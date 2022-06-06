@@ -451,7 +451,7 @@ public class NotificationsServiceImpl implements NotificationsService
    * @throws NotAuthorizedException - unauthorized
    */
   @Override
-  public int deleteSubscriptionsBySubject(ResourceRequestUser rUser, String subject, String owner,
+  public int deleteSubscriptionsBySubject(ResourceRequestUser rUser, String owner, String subject,
                                           boolean anyOwner)
           throws TapisException, IllegalArgumentException, NotAuthorizedException, TapisClientException
   {
@@ -657,10 +657,20 @@ public class NotificationsServiceImpl implements NotificationsService
     if (StringUtils.isBlank(owner))
       throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_MISSING_ARG1", rUser, "owner", SubscriptionOperation.read));
 
-    // Check auth. Only service may use anyOwner == true
-    if (!rUser.isServiceRequest() && anyOwner)
+    // Check auth. Let service always pass
+    // For user request:
+    //   User may not use anyOwner == true
+    //   User may only search for subscriptions they own unless they are an admin
+    if (!rUser.isServiceRequest())
     {
-      throw new NotAuthorizedException(LibUtils.getMsgAuth("NTFLIB_UNAUTH1", rUser, "getSubscriptions"), NO_CHALLENGE);
+      if (anyOwner)
+      {
+        throw new NotAuthorizedException(LibUtils.getMsgAuth("NTFLIB_UNAUTH1", rUser, "getSubscriptions"), NO_CHALLENGE);
+      }
+      else if (!rUser.getJwtUserId().equals(owner) && !hasAdminRole(rUser))
+      {
+        throw new NotAuthorizedException(LibUtils.getMsgAuth("NTFLIB_UNAUTH2", rUser, owner, "getSubscriptions"), NO_CHALLENGE);
+      }
     }
 
     // Build verified list of search conditions
