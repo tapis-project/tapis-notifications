@@ -36,6 +36,9 @@ public final class Subscription
   public static final String FILTER_WILDCARD = "*";
   public static final String FILTER_WILDCARD_NAME = "ALL";
 
+  // Maximum number of attempts allowed when attempting to create a unique name
+  public static final int MAX_GEN_NAME_TRIES = 100;
+
   // Allowed substitution variables
   public static final String APIUSERID_VAR = "${apiUserId}";
 
@@ -119,12 +122,12 @@ public final class Subscription
   // ************************************************************************
 
   /**
-   * Constructor for when the name has been filled in by the service.
+   * Constructor for when the name has been or is to be filled in by the service.
    * Rather than exposing otherwise unnecessary setters we use a special constructor.
    */
   public Subscription(Subscription s, String tenant1, String owner1, String name1)
   {
-    if (s==null || StringUtils.isBlank(tenant1) || StringUtils.isBlank(owner1) || StringUtils.isBlank(name1))
+    if (s==null || StringUtils.isBlank(tenant1) || StringUtils.isBlank(owner1))
       throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT"));
     seqId = s.getSeqId();
     tenant = tenant1;

@@ -50,6 +50,7 @@ import edu.utexas.tacc.tapis.notifications.model.TestSequence;
 import edu.utexas.tacc.tapis.notifications.utils.LibUtils;
 
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.FILTER_WILDCARD;
+import static edu.utexas.tacc.tapis.notifications.model.Subscription.MAX_GEN_NAME_TRIES;
 import static edu.utexas.tacc.tapis.shared.TapisConstants.NOTIFICATIONS_SERVICE;
 
 /*
@@ -245,24 +246,29 @@ public class NotificationsServiceImpl implements NotificationsService
     {
       name = subscription.buildUniqueName(rUser);
       isBuiltName = true;
-
     }
 
-    // ------------------------- Check authorization -------------------------
-    checkAuth(rUser, owner, name, op);
-
-    // Check if subscription already exists
-    // If we have built a semi-random unique name then we need to loop here and try different
+    // If we have built a random unique name then we need to loop here and try different
     //   names until we find a unique one or give up
-    // If not a built name then only one check is needed.
     if (isBuiltName)
     {
-      // TODO
+      // We were not given a name. Generate a unique random name.
+      // On the very unlikely chance the owner+name exists we keep trying up to 100 times before giving up
+      for (int i = 1; i <= MAX_GEN_NAME_TRIES; i++)
+      {
+        if (!dao.checkForSubscription(oboTenant, owner, name)) break;
+        name = subscription.buildUniqueName(rUser);
+      }
+      // Although extremely unlikely we may not have been able to find a unique name.
+      if (dao.checkForSubscription(oboTenant, owner, name))
+        throw new IllegalStateException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_UNIQ_FAIL", rUser, owner, name, MAX_GEN_NAME_TRIES));
     }
     else
     {
+      // We were given a name. Make sure it does not yet exists and user is authorized to create it.
       if (dao.checkForSubscription(oboTenant, owner, name))
         throw new IllegalStateException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_EXISTS", rUser, owner, name));
+      checkAuth(rUser, owner, name, op);
     }
 
     // sub1 is the subscription object that will be passed to the dao layer.

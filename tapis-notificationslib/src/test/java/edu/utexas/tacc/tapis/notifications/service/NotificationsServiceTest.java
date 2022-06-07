@@ -173,6 +173,20 @@ public class NotificationsServiceTest
     System.out.println("Found item: " + sub0.getName());
   }
 
+  // Test creating a subscription without specifying a name.
+  // Service should create the subscription with a name matching a specific pattern
+  @Test
+  public void testCreateSubscriptionAutoName() throws Exception
+  {
+    // Create in-memory subscription with name = null.
+    Subscription sub0 = new Subscription(subscriptions[0], tenantName, subscriptions[0].getOwner(), null);
+    String subscrName = svcImpl.createSubscription(rJobsSvc1, sub0, scrubbedJson);
+    Assert.assertFalse(subscrName.isBlank());
+    Subscription tmpSub = svcImpl.getSubscriptionByName(rJobsSvc1, sub0.getOwner(), subscrName);
+    Assert.assertNotNull(tmpSub, "Failed to create subscription with unique name: " + subscrName);
+    System.out.println("Found subscription with unique name: " + tmpSub.getName());
+  }
+
   // Test retrieving a subscription
   @Test
   public void testGetSubscription() throws Exception
