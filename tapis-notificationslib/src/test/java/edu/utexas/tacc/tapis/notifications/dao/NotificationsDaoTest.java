@@ -61,7 +61,7 @@ public class NotificationsDaoTest
     //Remove all objects created by tests
     for (int i = 0; i < numSubscriptions; i++)
     {
-      dao.deleteSubscription(tenantName, subscriptions[i].getOwner(), subscriptions[i].getName());
+      dao.deleteSubscriptionByName(tenantName, subscriptions[i].getOwner(), subscriptions[i].getName());
     }
     Assert.assertFalse(dao.checkForSubscription(tenantName, subscriptions[0].getOwner(), subscriptions[0].getName()),
                        "Subscription not deleted. Subscription id: " + subscriptions[0].getName());
@@ -88,7 +88,7 @@ public class NotificationsDaoTest
     Subscription sub0 = subscriptions[1];
     boolean itemCreated = dao.createSubscription(rUser, sub0, expiryNull);
     Assert.assertTrue(itemCreated, "Item not created, id: " + sub0.getName());
-    Subscription tmpSub = dao.getSubscription(sub0.getTenant(), sub0.getOwner(), sub0.getName());
+    Subscription tmpSub = dao.getSubscriptionByName(sub0.getTenant(), sub0.getOwner(), sub0.getName());
     Assert.assertNotNull(tmpSub, "Failed to create item: " + sub0.getName());
     System.out.println("Found item: " + sub0.getName());
     Assert.assertEquals(tmpSub.getName(), sub0.getName());
@@ -167,19 +167,19 @@ public class NotificationsDaoTest
     Assert.assertTrue(itemCreated, "Item not created, id: " + sub0.getName());
     System.out.println("Created item, id: " + sub0.getName() + " enabled: " + sub0.isEnabled());
     // Enabled should start off true, then become false and finally true again.
-    Subscription tmpSub = dao.getSubscription(sub0.getTenant(), sub0.getOwner(), sub0.getName());
+    Subscription tmpSub = dao.getSubscriptionByName(sub0.getTenant(), sub0.getOwner(), sub0.getName());
     Assert.assertTrue(tmpSub.isEnabled());
     dao.updateEnabled(tenantName, sub0.getOwner(), sub0.getName(), false);
-    tmpSub = dao.getSubscription(sub0.getTenant(), sub0.getOwner(), sub0.getName());
+    tmpSub = dao.getSubscriptionByName(sub0.getTenant(), sub0.getOwner(), sub0.getName());
     Assert.assertFalse(tmpSub.isEnabled());
     dao.updateEnabled(tenantName, sub0.getOwner(), sub0.getName(), true);
-    tmpSub = dao.getSubscription(sub0.getTenant(), sub0.getOwner(), sub0.getName());
+    tmpSub = dao.getSubscriptionByName(sub0.getTenant(), sub0.getOwner(), sub0.getName());
     Assert.assertTrue(tmpSub.isEnabled());
 
     // Deleted should remove the item
-    dao.deleteSubscription(tenantName, sub0.getOwner(), sub0.getName());
+    dao.deleteSubscriptionByName(tenantName, sub0.getOwner(), sub0.getName());
     Assert.assertFalse(dao.checkForSubscription(sub0.getTenant(), sub0.getOwner(), sub0.getName()),"Subscription not deleted. Subscription id: " + sub0.getName());
-    tmpSub = dao.getSubscription(sub0.getTenant(), sub0.getOwner(), sub0.getName());
+    tmpSub = dao.getSubscriptionByName(sub0.getTenant(), sub0.getOwner(), sub0.getName());
     Assert.assertNull(tmpSub);
   }
 
@@ -196,7 +196,7 @@ public class NotificationsDaoTest
     System.out.println("Old Expiry: " + sub0.getExpiry());
     System.out.println("New Expiry: " + newExpiry);
     dao.updateSubscriptionTTL(tenantName, sub0.getOwner(), sub0.getName(), ttl2, newExpiry);
-    Subscription tmpSub = dao.getSubscription(sub0.getTenant(), sub0.getOwner(), sub0.getName());
+    Subscription tmpSub = dao.getSubscriptionByName(sub0.getTenant(), sub0.getOwner(), sub0.getName());
     System.out.println("Got Expiry: " + tmpSub.getExpiry());
     LocalDateTime newExpiryLDT =  LocalDateTime.ofInstant(newExpiry, ZoneOffset.UTC);
     LocalDateTime gotExpiryLDT =  LocalDateTime.ofInstant(tmpSub.getExpiry(), ZoneOffset.UTC);
@@ -236,7 +236,7 @@ public class NotificationsDaoTest
       pass = true;
     }
     Assert.assertTrue(pass);
-    Assert.assertNull(dao.getSubscription(tenantName, fakeOwner, fakeSubscriptionName));
+    Assert.assertNull(dao.getSubscriptionByName(tenantName, fakeOwner, fakeSubscriptionName));
   }
 
   // ******************************************************************
@@ -251,7 +251,7 @@ public class NotificationsDaoTest
     Subscription sub0 = subscriptions[8];
     boolean itemCreated = dao.createSubscription(rUser, sub0, expiryNull);
     Assert.assertTrue(itemCreated, "Subscription not created, id: " + sub0.getName());
-    Subscription tmpSub = dao.getSubscription(sub0.getTenant(), sub0.getOwner(), sub0.getName());
+    Subscription tmpSub = dao.getSubscriptionByName(sub0.getTenant(), sub0.getOwner(), sub0.getName());
     Assert.assertNotNull(tmpSub, "Failed to create subscription: " + sub0.getName());
 
     // Create test notifications

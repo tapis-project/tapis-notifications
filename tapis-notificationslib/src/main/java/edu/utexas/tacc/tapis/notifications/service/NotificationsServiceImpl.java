@@ -182,7 +182,7 @@ public class NotificationsServiceImpl implements NotificationsService
       name = subscription.getName();
       log.debug(LibUtils.getMsg("NTFLIB_DSP_CHECK_BEGIN", owner, name));
       waitForTestSequenceStart(tenantName, owner, name);
-      dao.deleteSubscription(tenantName, owner, name);
+      dao.deleteSubscriptionByName(tenantName, owner, name);
       log.debug(LibUtils.getMsg("NTFLIB_DSP_CHECK_END", owner, name));
     }
     catch (Exception e)
@@ -321,7 +321,7 @@ public class NotificationsServiceImpl implements NotificationsService
       throw new NotFoundException(LibUtils.getMsgAuth("NTFLIB_VER_NOT_FOUND", rUser, owner, name));
 
     // Retrieve the subscription being patched and create fully populated Subscription with changes merged in
-    Subscription origSubscription = dao.getSubscription(oboTenant, owner, name);
+    Subscription origSubscription = dao.getSubscriptionByName(oboTenant, owner, name);
     Subscription patchedSubscription = createPatchedSubscription(origSubscription, patchSubscription);
 
     // ---------------- Check constraints on Subscription attributes ------------------------
@@ -385,7 +385,7 @@ public class NotificationsServiceImpl implements NotificationsService
    * @throws NotAuthorizedException - unauthorized
    */
   @Override
-  public int deleteSubscription(ResourceRequestUser rUser, String owner, String name)
+  public int deleteSubscriptionByName(ResourceRequestUser rUser, String owner, String name)
           throws TapisException, IllegalArgumentException, NotAuthorizedException, TapisClientException
   {
     SubscriptionOperation op = SubscriptionOperation.delete;
@@ -401,7 +401,7 @@ public class NotificationsServiceImpl implements NotificationsService
     if (!dao.checkForSubscription(rUser.getOboTenantId(), owner, name)) return 0;
 
     // Delete the subscription
-    return dao.deleteSubscription(rUser.getOboTenantId(), owner, name);
+    return dao.deleteSubscriptionByName(rUser.getOboTenantId(), owner, name);
   }
 
   /**
@@ -453,7 +453,7 @@ public class NotificationsServiceImpl implements NotificationsService
   @Override
   public int deleteSubscriptionsBySubject(ResourceRequestUser rUser, String owner, String subject,
                                           boolean anyOwner)
-          throws TapisException, IllegalArgumentException, NotAuthorizedException, TapisClientException
+          throws TapisException, IllegalArgumentException, NotAuthorizedException
   {
     SubscriptionOperation op = SubscriptionOperation.delete;
     // Check inputs
@@ -551,8 +551,8 @@ public class NotificationsServiceImpl implements NotificationsService
   }
 
   /**
-   * getSubscription
-   * Retrieve a subscription.
+   * getSubscription by name
+   *
    * @param rUser - ResourceRequestUser containing tenant, user and request info
    * @param owner subscription owner
    * @param name - Name of the subscription
@@ -561,7 +561,7 @@ public class NotificationsServiceImpl implements NotificationsService
    * @throws NotAuthorizedException - unauthorized
    */
   @Override
-  public Subscription getSubscription(ResourceRequestUser rUser, String owner, String name)
+  public Subscription getSubscriptionByName(ResourceRequestUser rUser, String owner, String name)
           throws TapisException, NotAuthorizedException, TapisClientException
   {
     SubscriptionOperation op = SubscriptionOperation.read;
@@ -578,8 +578,36 @@ public class NotificationsServiceImpl implements NotificationsService
     // ------------------------- Check authorization -------------------------
     checkAuth(rUser, owner, name, op);
 
-    Subscription result = dao.getSubscription(oboTenant, owner, name);
+    Subscription result = dao.getSubscriptionByName(oboTenant, owner, name);
     return result;
+  }
+
+  /**
+   * getSubscription by UUID
+   *
+   * @param rUser - ResourceRequestUser containing tenant, user and request info
+   * @param uuidStr - UUID of the subscription
+   * @return populated instance of an Subscription or null if not found or user not authorized.
+   * @throws TapisException - for Tapis related exceptions
+   * @throws NotAuthorizedException - unauthorized
+   */
+  @Override
+  public Subscription getSubscriptionByUuid(ResourceRequestUser rUser, String uuidStr)
+          throws TapisException, NotAuthorizedException, TapisClientException
+  {
+    SubscriptionOperation op = SubscriptionOperation.read;
+    // Check inputs
+    if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
+    if (StringUtils.isBlank(uuidStr))
+      throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_MISSING_ARG", rUser, "N/A", uuidStr, op));
+    UUID uuid = UUID.fromString(uuidStr);
+    // Get the subscription. This will tell us if it exists and also allow us to get owner+name to check auth
+    Subscription subscr = dao.getSubscriptionByUuid(rUser.getOboTenantId(), uuid);
+    // If subscription does not exist then return null
+    if (subscr == null) return null;
+    // ------------------------- Check authorization -------------------------
+    checkAuth(rUser, subscr.getOwner(), subscr.getName(), op);
+    return subscr;
   }
 
   /**
@@ -640,7 +668,7 @@ public class NotificationsServiceImpl implements NotificationsService
    * @param owner owner to use for search (ignored if anyOwner == true).
    * @param searchList - optional list of conditions used for searching
    * @param limit - indicates maximum number of results to be included, -1 for unlimited
-   * @param orderByList - orderBy entries for sorting, e.g. orderBy=created(desc).
+   * @param orderByList - orderBy entries for sorting, e.g. orderBy=created(desc). Default is created(asc),name(asc).
    * @param skip - number of results to skip (may not be used with startAfter)
    * @param startAfter - where to start when sorting, e.g. limit=10&orderBy=id(asc)&startAfter=101 (may not be used with skip)
    * @param anyOwner - If true retrieve all subscriptions owned by any user. owner will be ignored.
@@ -904,7 +932,7 @@ public class NotificationsServiceImpl implements NotificationsService
                             eventDeleteSubscriptionsMatchingSubject,oboTenant, oboUser, eventUUID);
     MessageBroker.getInstance().publishEvent(rUser, event);
 
-    return dao.getSubscription(oboTenant, name, oboUser);
+    return dao.getSubscriptionByName(oboTenant, name, oboUser);
   }
 
   /**
@@ -971,7 +999,7 @@ public class NotificationsServiceImpl implements NotificationsService
       throw new TapisException(LibUtils.getMsgAuth("NTFLIB_TEST_DEL_NOT_SEQ", rUser, name, oboUser));
     }
     // Delete the subscription, the cascade should delete all events, so we are done
-    return dao.deleteSubscription(oboTenant, name, oboUser);
+    return dao.deleteSubscriptionByName(oboTenant, name, oboUser);
   }
 
   /**

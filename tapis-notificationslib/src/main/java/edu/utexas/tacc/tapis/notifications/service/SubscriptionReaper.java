@@ -36,7 +36,7 @@ public final class SubscriptionReaper
       log.info(LibUtils.getMsg("NTFLIB_DSP_REAPER_COUNT", expiredSubscriptions.size()));
       for (Subscription s : expiredSubscriptions)
       {
-        dao.deleteSubscription(s.getTenant(), s.getOwner(), s.getName());
+        dao.deleteSubscriptionByName(s.getTenant(), s.getOwner(), s.getName());
       }
     }
     catch (Exception e)

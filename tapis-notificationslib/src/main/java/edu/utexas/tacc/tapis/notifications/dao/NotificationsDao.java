@@ -39,7 +39,7 @@ public interface NotificationsDao
   void updateSubscriptionTTL(String tenant, String owner, String name, int newTTL, Instant newExpiry)
           throws TapisException;
 
-  int deleteSubscription(String tenant, String owner, String name) throws TapisException;
+  int deleteSubscriptionByName(String tenant, String owner, String name) throws TapisException;
 
   int deleteSubscriptionByUuid(String tenant, UUID uuid) throws TapisException;
 
@@ -49,7 +49,7 @@ public interface NotificationsDao
 
   boolean isEnabled(String tenant, String owner, String name) throws TapisException;
 
-  Subscription getSubscription(String tenant, String owner, String name) throws TapisException;
+  Subscription getSubscriptionByName(String tenant, String owner, String name) throws TapisException;
 
   Subscription getSubscriptionByUuid(String tenant, UUID uuid) throws TapisException;
 

@@ -110,7 +110,8 @@ public class SubscriptionResource
   private static final String OP_ENABLE = "enableSubscription";
   private static final String OP_DISABLE = "disableSubscription";
   private static final String OP_UPDATE_TTL = "updateTTL";
-  private static final String OP_DELETE = "deleteSubscription";
+  private static final String OP_DELETE_BY_NAME = "deleteSubscriptionByName";
+  private static final String OP_DELETE_BY_UUID = "deleteSubscriptionByUuid";
 
   // Always return a nicely formatted response
   private static final boolean PRETTY = true;
@@ -286,15 +287,15 @@ public class SubscriptionResource
    * @return response containing reference to updated object
    */
   @PATCH
-  @Path("{name}")
+  @Path("byName/{name}")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  public Response patchSubscription(@PathParam("name") String name,
+  public Response patchSubscriptionByName(@PathParam("name") String name,
                                     @QueryParam("ownedBy") String ownedBy,
                                     InputStream payloadStream,
                                     @Context SecurityContext securityContext)
   {
-    String opName = "patchSubscription";
+    String opName = "patchSubscriptionByName";
     // ------------------------- Retrieve and validate thread context -------------------------
     TapisThreadContext threadContext = TapisThreadLocal.tapisThreadContext.get();
     // Check that we have all we need from the context, the jwtTenantId and jwtUserId
@@ -446,21 +447,37 @@ public class SubscriptionResource
   }
 
   /**
-   * Delete a subscription
+   * Delete a subscription by name
    * @param name - name of the subscription
    * @param ownedBy subscription owner
    * @param securityContext - user identity
    * @return - response with change count as the result
    */
   @DELETE
-  @Path("{name}")
+  @Path("byName/{name}")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  public Response deleteSubscription(@PathParam("name") String name,
-                                     @QueryParam("ownedBy") String ownedBy,
-                                     @Context SecurityContext securityContext)
+  public Response deleteSubscriptionByName(@PathParam("name") String name,
+                                           @QueryParam("ownedBy") String ownedBy,
+                                           @Context SecurityContext securityContext)
   {
-    return postSubscriptionSingleUpdate(OP_DELETE, ownedBy, name, null, securityContext);
+    return postSubscriptionSingleUpdate(OP_DELETE_BY_NAME, ownedBy, name, null, securityContext);
+  }
+
+  /**
+   * Delete a subscription by uuid
+   * @param uuid - UUID of the subscription
+   * @param securityContext - user identity
+   * @return - response with change count as the result
+   */
+  @DELETE
+  @Path("byUuid/{uuid}")
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response deleteSubscriptionByUuid(@PathParam("uuid") String uuid,
+                                           @Context SecurityContext securityContext)
+  {
+    return postSubscriptionSingleUpdate(OP_DELETE_BY_UUID, null, uuid, null, securityContext);
   }
 
   /**
@@ -483,7 +500,72 @@ public class SubscriptionResource
   }
 
   /**
-   * getSubscription
+   * Delete all subscriptions whose subjectFilter matches a specific subject.
+   * @param subject - subject for matching
+   * @param ownedBy - Use specified user in place of the requesting user. Leave null or blank to use requesting user.
+   * @param anyOwner - If true delete all matching subscriptions owned by any user. ownedBy will be ignored.
+   * @param securityContext - user identity
+   * @return - response with change count as the result
+   */
+  @DELETE
+  @Path("bySubject/{subject}")
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response deleteSubscriptionsBySubject(@PathParam("subject") String subject,
+                                               @QueryParam("ownedBy") String ownedBy,
+                                               @QueryParam("anyOwner") @DefaultValue("false") boolean anyOwner,
+                                               @Context SecurityContext securityContext)
+  {
+    String opName = "deleteSubscriptionsBySubject";
+    // Check that we have all we need from the context, the jwtTenantId and jwtUserId
+    // Utility method returns null if all OK and appropriate error response if there was a problem.
+    TapisThreadContext threadContext = TapisThreadLocal.tapisThreadContext.get();
+    Response resp = ApiUtils.checkContext(threadContext, PRETTY);
+    if (resp != null) return resp;
+
+    // Create a user that collects together tenant, user and request information needed by the service call
+    ResourceRequestUser rUser = new ResourceRequestUser((AuthenticatedUser) securityContext.getUserPrincipal());
+
+    // Trace this request.
+    if (_log.isTraceEnabled())
+      ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "subject="+subject, "ownedBy="+ownedBy, "anyOwner="+anyOwner);
+
+    // For owner use oboUser or string specified in optional query parameter
+    String subscrOwner =  StringUtils.isBlank(ownedBy) ? rUser.getOboUserId() : ownedBy;
+
+    String msg;
+    int changeCount;
+    // ---------------------------- Make service call to delete subscriptions -------------------------------
+    try
+    {
+      changeCount = notificationsService.deleteSubscriptionsBySubject(rUser, subscrOwner, subject, anyOwner);
+    }
+    catch (IllegalArgumentException e)
+    {
+      // IllegalArgumentException indicates somehow a bad argument made it this far
+      msg = ApiUtils.getMsgAuth("NTFAPI_SUBSCR_DEL_BY_SUBJ_ERROR", rUser, subscrOwner, subject, opName, e.getMessage());
+      _log.error(msg);
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+    }
+    catch (Exception e)
+    {
+      msg = ApiUtils.getMsgAuth("NTFAPI_SUBSCR_DEL_BY_SUBJ_ERROR", rUser, subscrOwner, subject, opName, e.getMessage());
+      _log.error(msg, e);
+      return Response.status(Status.INTERNAL_SERVER_ERROR).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+    }
+
+    // ---------------------------- Success -------------------------------
+    ResultChangeCount count = new ResultChangeCount();
+    count.changes = changeCount;
+    RespChangeCount resp1 = new RespChangeCount(count);
+    msg = ApiUtils.getMsgAuth("NTFAPI_SUBSCR_DELETED_BY_SUBJ", rUser, subject, changeCount);
+    return createSuccessResponse(Status.OK, msg, resp1);
+
+
+  }
+
+  /**
+   * getSubscriptionByName
    * Retrieve a subscription
    * @param name - name of the subscription
    * @param ownedBy subscription owner
@@ -491,14 +573,14 @@ public class SubscriptionResource
    * @return Response with subscription object as the result
    */
   @GET
-  @Path("{name}")
+  @Path("byName/{name}")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  public Response getSubscription(@PathParam("name") String name,
-                                  @QueryParam("ownedBy") String ownedBy,
-                                  @Context SecurityContext securityContext)
+  public Response getSubscriptionByName(@PathParam("name") String name,
+                                        @QueryParam("ownedBy") String ownedBy,
+                                        @Context SecurityContext securityContext)
   {
-    String opName = "getSubscription";
+    String opName = "getSubscriptionByName";
     // Check that we have all we need from the context, the jwtTenantId and jwtUserId
     // Utility method returns null if all OK and appropriate error response if there was a problem.
     TapisThreadContext threadContext = TapisThreadLocal.tapisThreadContext.get(); // Local thread context
@@ -520,7 +602,7 @@ public class SubscriptionResource
     Subscription subscription;
     try
     {
-      subscription = notificationsService.getSubscription(rUser, subscrOwner, name);
+      subscription = notificationsService.getSubscriptionByName(rUser, subscrOwner, name);
     }
     catch (Exception e)
     {
@@ -541,6 +623,62 @@ public class SubscriptionResource
     // Success means we retrieved the subscription information.
     RespSubscription resp1 = new RespSubscription(subscription, selectList);
     return createSuccessResponse(Status.OK, MsgUtils.getMsg(TAPIS_FOUND, "Subscription", name), resp1);
+  }
+
+  /**
+   * getSubscriptionByUuid
+   * Retrieve a subscription
+   * @param uuid - UUID of the subscription
+   * @param securityContext - user identity
+   * @return Response with subscription object as the result
+   */
+  @GET
+  @Path("byUuid/{uuid}")
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response getSubscriptionByUuid(@PathParam("uuid") String uuid,
+                                        @Context SecurityContext securityContext)
+  {
+    String opName = "getSubscriptionByUuid";
+    // Check that we have all we need from the context, the jwtTenantId and jwtUserId
+    // Utility method returns null if all OK and appropriate error response if there was a problem.
+    TapisThreadContext threadContext = TapisThreadLocal.tapisThreadContext.get(); // Local thread context
+    Response resp = ApiUtils.checkContext(threadContext, PRETTY);
+    if (resp != null) return resp;
+
+    // Create a user that collects together tenant, user and request information needed by the service call
+    ResourceRequestUser rUser = new ResourceRequestUser((AuthenticatedUser) securityContext.getUserPrincipal());
+
+    // Trace this request.
+    if (_log.isTraceEnabled())
+      ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "uuid="+uuid);
+
+    List<String> selectList = threadContext.getSearchParameters().getSelectList();
+
+    Subscription subscription;
+    try
+    {
+      subscription = notificationsService.getSubscriptionByUuid(rUser, uuid);
+    }
+    catch (Exception e)
+    {
+      String msg = ApiUtils.getMsgAuth("NTFAPI_GET_BY_UUID_ERROR", rUser, uuid, e.getMessage());
+      _log.error(msg, e);
+      return Response.status(TapisRestUtils.getStatus(e)).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+    }
+
+    // Resource was not found.
+    if (subscription == null)
+    {
+      String msg = ApiUtils.getMsgAuth("NTFAPI_NOT_FOUND_BY_UUID", rUser, uuid);
+      _log.warn(msg);
+      return Response.status(Status.NOT_FOUND).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+    }
+
+    // ---------------------------- Success -------------------------------
+    // Success means we retrieved the subscription information.
+    RespSubscription resp1 = new RespSubscription(subscription, selectList);
+    return createSuccessResponse(Status.OK, MsgUtils.getMsg(TAPIS_FOUND, "Subscription", uuid), resp1);
   }
 
   /**
@@ -850,8 +988,10 @@ public class SubscriptionResource
         changeCount = notificationsService.enableSubscription(rUser, subscrOwner, name);
       else if (OP_DISABLE.equals(opName))
         changeCount = notificationsService.disableSubscription(rUser, subscrOwner, name);
-      else if (OP_DELETE.equals(opName))
-        changeCount = notificationsService.deleteSubscription(rUser, subscrOwner, name);
+      else if (OP_DELETE_BY_NAME.equals(opName))
+        changeCount = notificationsService.deleteSubscriptionByName(rUser, subscrOwner, name);
+      else if (OP_DELETE_BY_UUID.equals(opName))
+        changeCount = notificationsService.deleteSubscriptionByUuid(rUser, name);
       else if (OP_UPDATE_TTL.equals(opName))
         changeCount = notificationsService.updateSubscriptionTTL(rUser, subscrOwner, name, ttlMinutes);
       else
@@ -904,7 +1044,7 @@ public class SubscriptionResource
     ResultChangeCount count = new ResultChangeCount();
     count.changes = changeCount;
     RespChangeCount resp1 = new RespChangeCount(count);
-    if (OP_DELETE.equals(opName))
+    if (OP_DELETE_BY_NAME.equals(opName))
       return createSuccessResponse(Status.OK, ApiUtils.getMsgAuth("NTFAPI_SUBSCR_DELETED", rUser, subscrOwner, name), resp1);
     else
       return createSuccessResponse(Status.OK, ApiUtils.getMsgAuth(UPDATED, rUser, subscrOwner, name, opName), resp1);

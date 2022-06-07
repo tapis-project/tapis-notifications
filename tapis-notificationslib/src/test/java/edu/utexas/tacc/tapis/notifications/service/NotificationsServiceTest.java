@@ -137,10 +137,10 @@ public class NotificationsServiceTest
                                                                     null, anyOwnerTrue);
     for (Subscription subsc : testSubscriptions)
     {
-      svcImpl.deleteSubscription(rAdminUser, subsc.getOwner(), subsc.getName());
+      svcImpl.deleteSubscriptionByName(rAdminUser, subsc.getOwner(), subsc.getName());
     }
     // Use subscription[0] to check we have cleaned up - this one should have original owner+name
-    Subscription tmpSub = svcImpl.getSubscription(rAdminUser, owner, subscriptions[0].getName());
+    Subscription tmpSub = svcImpl.getSubscriptionByName(rAdminUser, owner, subscriptions[0].getName());
     Assert.assertNull(tmpSub, "Subscription not deleted. Subscription: " + subscriptions[0].getName());
   }
 
@@ -168,7 +168,7 @@ public class NotificationsServiceTest
 
     // Service user should be able to create
     svcImpl.createSubscription(rJobsSvc1, sub0, scrubbedJson);
-    Subscription tmpSub = svcImpl.getSubscription(rJobsSvc1, sub0.getOwner(), sub0.getName());
+    Subscription tmpSub = svcImpl.getSubscriptionByName(rJobsSvc1, sub0.getOwner(), sub0.getName());
     Assert.assertNotNull(tmpSub, "Failed to create item: " + sub0.getName());
     System.out.println("Found item: " + sub0.getName());
   }
@@ -180,14 +180,14 @@ public class NotificationsServiceTest
     // Create and retrieve a subscription as the jobs service with oboUser = testuser1.
     Subscription sub0 = subscriptions[1];
     svcImpl.createSubscription(rJobsSvc1, sub0, scrubbedJson);
-    Subscription tmpSub = svcImpl.getSubscription(rJobsSvc1, sub0.getOwner(), sub0.getName());
+    Subscription tmpSub = svcImpl.getSubscriptionByName(rJobsSvc1, sub0.getOwner(), sub0.getName());
     checkCommonSubscriptionAttrs(sub0, tmpSub);
     // should also be able to retrieve the subscription as testuser1
-    tmpSub = svcImpl.getSubscription(rUser1, sub0.getOwner(), sub0.getName());
+    tmpSub = svcImpl.getSubscriptionByName(rUser1, sub0.getOwner(), sub0.getName());
     checkCommonSubscriptionAttrs(sub0, tmpSub);
     // should not be able to get the subscription as testuser2
     boolean pass = false;
-    try { svcImpl.getSubscription(rUser2, sub0.getOwner(), sub0.getName()); }
+    try { svcImpl.getSubscriptionByName(rUser2, sub0.getOwner(), sub0.getName()); }
     catch (NotAuthorizedException e)
     {
       pass = true;
@@ -205,7 +205,7 @@ public class NotificationsServiceTest
     String owner = sub0.getOwner();
     String createText = "{\"testPatch\": \"0-createFull\"}";
     svcImpl.createSubscription(rJobsSvc1, sub0, createText);
-    Subscription tmpSub = svcImpl.getSubscription(rJobsSvc1, owner, name);
+    Subscription tmpSub = svcImpl.getSubscriptionByName(rJobsSvc1, owner, name);
     // Get last updated timestamp
     LocalDateTime updated = LocalDateTime.ofInstant(tmpSub.getUpdated(), ZoneOffset.UTC);
     String updatedStr1 = TapisUtils.getSQLStringFromUTCTime(updated);
@@ -217,7 +217,7 @@ public class NotificationsServiceTest
     PatchSubscription patchSubscriptionFull = IntegrationUtils.makePatchSubscriptionFull();
     // Update using patchSubscription
     svcImpl.patchSubscription(rJobsSvc1, owner, name, patchSubscriptionFull, patchFullText);
-    Subscription tmpSubFull = svcImpl.getSubscription(rJobsSvc1, owner, name);
+    Subscription tmpSubFull = svcImpl.getSubscriptionByName(rJobsSvc1, owner, name);
     // Get last updated timestamp
     updated = LocalDateTime.ofInstant(tmpSubFull.getUpdated(), ZoneOffset.UTC);
     String updatedStr2 = TapisUtils.getSQLStringFromUTCTime(updated);
@@ -256,25 +256,25 @@ public class NotificationsServiceTest
     String owner = sub0.getOwner();
     svcImpl.createSubscription(rJobsSvc1, sub0, scrubbedJson);
     // Enabled should start off true, then become false and finally true again.
-    Subscription tmpSub = svcImpl.getSubscription(rJobsSvc1, owner, subName);
+    Subscription tmpSub = svcImpl.getSubscriptionByName(rJobsSvc1, owner, subName);
     Assert.assertTrue(tmpSub.isEnabled());
     Assert.assertTrue(svcImpl.isEnabled(rJobsSvc1, owner, subName));
     int changeCount = svcImpl.disableSubscription(rJobsSvc1, owner, subName);
     Assert.assertEquals(changeCount, 1, "Change count incorrect when updating.");
-    tmpSub = svcImpl.getSubscription(rJobsSvc1, owner, subName);
+    tmpSub = svcImpl.getSubscriptionByName(rJobsSvc1, owner, subName);
     Assert.assertFalse(tmpSub.isEnabled());
     Assert.assertFalse(svcImpl.isEnabled(rJobsSvc1, owner, subName));
     changeCount = svcImpl.enableSubscription(rJobsSvc1, owner, subName);
     Assert.assertEquals(changeCount, 1, "Change count incorrect when updating.");
-    tmpSub = svcImpl.getSubscription(rJobsSvc1, owner, subName);
+    tmpSub = svcImpl.getSubscriptionByName(rJobsSvc1, owner, subName);
     Assert.assertTrue(tmpSub.isEnabled());
     Assert.assertTrue(svcImpl.isEnabled(rJobsSvc1, owner, subName));
 
     // Delete should remove the resource
     // Delete should return 1 and then 0
-    Assert.assertEquals(svcImpl.deleteSubscription(rJobsSvc1, owner, subName), 1);
-    Assert.assertEquals(svcImpl.deleteSubscription(rJobsSvc1, owner, subName), 0);
-    tmpSub = svcImpl.getSubscription(rJobsSvc1, owner, subName);
+    Assert.assertEquals(svcImpl.deleteSubscriptionByName(rJobsSvc1, owner, subName), 1);
+    Assert.assertEquals(svcImpl.deleteSubscriptionByName(rJobsSvc1, owner, subName), 0);
+    tmpSub = svcImpl.getSubscriptionByName(rJobsSvc1, owner, subName);
     Assert.assertNull(tmpSub, "Subscription not deleted. Subscription: " + subName);
   }
 
@@ -300,7 +300,7 @@ public class NotificationsServiceTest
     // Get the current time
     Instant now = Instant.now();
     svcImpl.createSubscription(rJobsSvc1, sub0, scrubbedJson);
-    Subscription tmpSub = svcImpl.getSubscription(rJobsSvc1, owner, subName);
+    Subscription tmpSub = svcImpl.getSubscriptionByName(rJobsSvc1, owner, subName);
     // Get and check the initial expiry.
     // TTL is in minutes so it should be ttl*60 seconds after the time of creation.
     // Check to the nearest second, i.e., assume it took much less than one second to create the subscription
@@ -314,14 +314,14 @@ public class NotificationsServiceTest
     String newTTLStr = "60";
     now = Instant.now();
     svcImpl.updateSubscriptionTTL(rJobsSvc1, owner, subName, newTTLStr);
-    tmpSub = svcImpl.getSubscription(rJobsSvc1, owner, subName);
+    tmpSub = svcImpl.getSubscriptionByName(rJobsSvc1, owner, subName);
     expiry = tmpSub.getExpiry();
     expirySeconds = expiry.truncatedTo(ChronoUnit.SECONDS).getEpochSecond() - now.truncatedTo(ChronoUnit.SECONDS).getEpochSecond();
     Assert.assertEquals(tmpSub.getTtlMinutes()*60L, expirySeconds);
 
     // Test that setting TTL to 0 results in expiry of null
     svcImpl.updateSubscriptionTTL(rJobsSvc1, owner, subName, "0");
-    tmpSub = svcImpl.getSubscription(rJobsSvc1, owner, subName);
+    tmpSub = svcImpl.getSubscriptionByName(rJobsSvc1, owner, subName);
     Assert.assertNull(tmpSub.getExpiry());
   }
 
@@ -333,14 +333,14 @@ public class NotificationsServiceTest
     String fakeSubscriptionName = "AMissingSubscriptionName";
     boolean pass;
     // Make sure resource does not exist
-    Assert.assertNull(svcImpl.getSubscription(rJobsSvc1, testUser1, fakeSubscriptionName));
+    Assert.assertNull(svcImpl.getSubscriptionByName(rJobsSvc1, testUser1, fakeSubscriptionName));
 
     // Get should return null
-    Subscription tmpSub = svcImpl.getSubscription(rJobsSvc1, testUser1, fakeSubscriptionName);
+    Subscription tmpSub = svcImpl.getSubscriptionByName(rJobsSvc1, testUser1, fakeSubscriptionName);
     Assert.assertNull(tmpSub, "Subscription not null for non-existent subscription");
 
     // Delete should return 0
-    Assert.assertEquals(svcImpl.deleteSubscription(rJobsSvc1, testUser1, fakeSubscriptionName), 0);
+    Assert.assertEquals(svcImpl.deleteSubscriptionByName(rJobsSvc1, testUser1, fakeSubscriptionName), 0);
 
     // isEnabled check should throw a NotFound exception
     pass = false;
@@ -353,7 +353,7 @@ public class NotificationsServiceTest
   }
 
   /*
-   *TODO Test various use cases around having many subscriptions owned by different users.
+   * Test various use cases around having many subscriptions owned by different users.
    * Many of these use cases are driven by the Jobs service (getBySubjectFilter, deleteBySubjectFilter, deleteByUUID).
    * Create 6 subscriptions all with the same subjectFilter, 3 owned by testuser1 and 3 owned by testuser2
    *  - Verify that Jobs service can get all subscriptions matching the subjectFilter.
@@ -435,7 +435,7 @@ public class NotificationsServiceTest
     // Delete should return 1 and then 0
     Assert.assertEquals(svcImpl.deleteSubscriptionByUuid(rJobsSvc1, sub1.getUuid().toString()), 1);
     Assert.assertEquals(svcImpl.deleteSubscriptionByUuid(rJobsSvc1, sub1.getUuid().toString()), 0);
-    Subscription tmpSub = svcImpl.getSubscription(rJobsSvc1, sub1.getOwner(), sub1.getName());
+    Subscription tmpSub = svcImpl.getSubscriptionByName(rJobsSvc1, sub1.getOwner(), sub1.getName());
     Assert.assertNull(tmpSub, "Subscription not deleted. Subscription: " + sub1.getName());
 
     // As Jobs service delete all subscriptions for a subjectFilter
@@ -564,7 +564,7 @@ public class NotificationsServiceTest
     subscr.setOwner(rSvc.getOboUserId());
     subscr.setSubjectFilter(subjectFilter0);
     svcImpl.createSubscription(rSvc, subscr, scrubbedJson);
-    subscr = svcImpl.getSubscription(rSvc, subscr.getOwner(), subscr.getName());
+    subscr = svcImpl.getSubscriptionByName(rSvc, subscr.getOwner(), subscr.getName());
     Assert.assertNotNull(subscr);
     nameSet.add(subscr.getName());
     return  subscr;

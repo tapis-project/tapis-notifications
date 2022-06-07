@@ -41,14 +41,14 @@ public interface NotificationsService
   int disableSubscription(ResourceRequestUser rUser, String owner, String name)
           throws TapisException, TapisClientException, NotAuthorizedException, IllegalStateException, IllegalArgumentException, NotFoundException;
 
-  int deleteSubscription(ResourceRequestUser rUser, String owner, String name)
+  int deleteSubscriptionByName(ResourceRequestUser rUser, String owner, String name)
           throws TapisException, TapisClientException, NotAuthorizedException, IllegalArgumentException;
 
   int deleteSubscriptionByUuid(ResourceRequestUser rUser, String uuid)
           throws TapisException, TapisClientException, NotAuthorizedException, IllegalArgumentException;
 
-  int deleteSubscriptionsBySubject(ResourceRequestUser rUser, String owner, String subjectFilter, boolean anyOwner)
-          throws TapisException, TapisClientException, NotAuthorizedException, IllegalArgumentException;
+  int deleteSubscriptionsBySubject(ResourceRequestUser rUser, String owner, String subject, boolean anyOwner)
+          throws TapisException, NotAuthorizedException, IllegalArgumentException;
 
   int updateSubscriptionTTL(ResourceRequestUser rUser, String owner, String name, String newTTL)
           throws TapisException, TapisClientException, NotAuthorizedException, IllegalArgumentException, NotFoundException;
@@ -56,7 +56,10 @@ public interface NotificationsService
   boolean isEnabled(ResourceRequestUser rUser, String owner, String name)
           throws TapisException, TapisClientException, NotAuthorizedException;
 
-  Subscription getSubscription(ResourceRequestUser rUser, String owner, String name)
+  Subscription getSubscriptionByName(ResourceRequestUser rUser, String owner, String name)
+          throws TapisException, TapisClientException, NotAuthorizedException;
+
+  Subscription getSubscriptionByUuid(ResourceRequestUser rUser, String uuid)
           throws TapisException, TapisClientException, NotAuthorizedException;
 
   int getSubscriptionsTotalCount(ResourceRequestUser rUser, String owner, List<String> searchList, List<OrderBy> orderByList,

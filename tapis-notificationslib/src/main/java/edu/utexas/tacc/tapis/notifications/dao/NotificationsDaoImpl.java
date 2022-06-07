@@ -404,7 +404,7 @@ public class NotificationsDaoImpl implements NotificationsDao
    * Delete a subscription
    */
   @Override
-  public int deleteSubscription(String tenant, String owner, String name) throws TapisException
+  public int deleteSubscriptionByName(String tenant, String owner, String name) throws TapisException
   {
     String opName = "deleteSubscription";
     // ------------------------- Check Input -------------------------
@@ -587,7 +587,7 @@ public class NotificationsDaoImpl implements NotificationsDao
    * @throws TapisException - on error
    */
   @Override
-  public Subscription getSubscription(String tenant, String owner, String name) throws TapisException
+  public Subscription getSubscriptionByName(String tenant, String owner, String name) throws TapisException
   {
     // Initialize result.
     Subscription result = null;
@@ -1709,7 +1709,7 @@ public class NotificationsDaoImpl implements NotificationsDao
 
     String oboTenant = rUser.getOboTenantId();
     String oboUser = rUser.getOboUserId();
-    Subscription subscription = getSubscription(oboTenant, oboUser, name);
+    Subscription subscription = getSubscriptionByName(oboTenant, oboUser, name);
     if (subscription == null) return false;
 
     // ------------------------- Call SQL ----------------------------
