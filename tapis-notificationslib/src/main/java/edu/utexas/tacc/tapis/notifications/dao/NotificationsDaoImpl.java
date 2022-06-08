@@ -1201,7 +1201,7 @@ public class NotificationsDaoImpl implements NotificationsDao
       for (Notification n : notifications)
       {
         DeliveryTarget dm =  n.getDeliveryTarget();
-        batch.bind(n.getUuid(), n.getSubscrSeqId(), tenant, n.getSubscriptionId(), bucketNum, eventUUID, eventJson,
+        batch.bind(n.getUuid(), n.getSubscrSeqId(), tenant, n.getSubscriptionName(), bucketNum, eventUUID, eventJson,
                    n.getCreated(), dm.getDeliveryMethod().name(), dm.getDeliveryAddress());
       }
 
@@ -1438,7 +1438,7 @@ public class NotificationsDaoImpl implements NotificationsDao
               .set(NOTIFICATIONS_RECOVERY.UUID, notification.getUuid())
               .set(NOTIFICATIONS_RECOVERY.SUBSCR_SEQ_ID, notification.getSubscrSeqId())
               .set(NOTIFICATIONS_RECOVERY.TENANT, tenant)
-              .set(NOTIFICATIONS_RECOVERY.SUBSCR_NAME, notification.getSubscriptionId())
+              .set(NOTIFICATIONS_RECOVERY.SUBSCR_NAME, notification.getSubscriptionName())
               .set(NOTIFICATIONS_RECOVERY.BUCKET_NUMBER, notification.getBucketNum())
               .set(NOTIFICATIONS_RECOVERY.EVENT_UUID, notification.getEvent().getUuid())
               .set(NOTIFICATIONS_RECOVERY.EVENT, eventJson)

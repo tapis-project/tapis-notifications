@@ -225,7 +225,7 @@ public class TestSequenceResource
     // Resource was not found.
     if (testSequence == null)
     {
-      String msg = ApiUtils.getMsgAuth("NTFAPI_NOT_FOUND", rUser, name);
+      String msg = ApiUtils.getMsgAuth("NTFAPI_NOT_FOUND", rUser, rUser.getOboUserId(), name);
       _log.warn(msg);
       return Response.status(Status.NOT_FOUND).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }

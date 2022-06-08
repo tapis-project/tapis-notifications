@@ -101,9 +101,9 @@ public class NotificationsApplication extends ResourceConfig
         @Override
         protected void configure() {
           bind(NotificationsServiceImpl.class).to(NotificationsService.class); // Used in Resource classes for most service calls
-          bind(NotificationsServiceImpl.class).to(NotificationsServiceImpl.class); // Used in NotificationsResource for checkDB
+          bind(NotificationsServiceImpl.class).to(NotificationsServiceImpl.class); // Used in GeneralResource for checkDB
           bind(NotificationsDaoImpl.class).to(NotificationsDao.class); // Used in service impl
-          bindFactory(ServiceContextFactory.class).to(ServiceContext.class); // Used in service impl and NotificationsResource
+          bindFactory(ServiceContextFactory.class).to(ServiceContext.class); // Used in service impl and GeneralResource
           bindFactory(ServiceClientsFactory.class).to(ServiceClients.class); // Used in service impl
         }
       });

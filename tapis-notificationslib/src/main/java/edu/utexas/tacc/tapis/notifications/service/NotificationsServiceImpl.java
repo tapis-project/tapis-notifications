@@ -891,7 +891,7 @@ public class NotificationsServiceImpl implements NotificationsService
     }
 
     // Build the callback delivery method
-    // Example https://dev.develop.tapis.io/v3/notifications/test/callback/<subscriptionId>
+    // Example https://dev.develop.tapis.io/v3/notifications/test/callback/<subscriptionName>
     String callbackStr = String.format("%s/test/callback/%s", baseServiceUrl, name);
     DeliveryTarget dm = new DeliveryTarget(DeliveryTarget.DeliveryMethod.WEBHOOK, callbackStr);
     var dmList = Collections.singletonList(dm);
@@ -938,7 +938,7 @@ public class NotificationsServiceImpl implements NotificationsService
                             eventDeleteSubscriptionsMatchingSubject,oboTenant, oboUser, eventUUID);
     MessageBroker.getInstance().publishEvent(rUser, event);
 
-    return dao.getSubscriptionByName(oboTenant, name, oboUser);
+    return dao.getSubscriptionByName(oboTenant, oboUser, name);
   }
 
   /**
@@ -963,7 +963,7 @@ public class NotificationsServiceImpl implements NotificationsService
     // ------------------------- Check authorization -------------------------
     checkAuth(rUser, oboUser, name, op);
 
-    TestSequence result = dao.getTestSequence(oboTenant, name, oboUser);
+    TestSequence result = dao.getTestSequence(oboTenant, oboUser, name);
     return result;
   }
 

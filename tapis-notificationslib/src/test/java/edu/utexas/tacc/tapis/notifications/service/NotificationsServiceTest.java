@@ -135,13 +135,26 @@ public class NotificationsServiceTest
     searchList.add(String.format("name.like.%s_%s*", subscrIdPrefix, testKey));
     List<Subscription> testSubscriptions = svcImpl.getSubscriptions(rJobsSvc1, owner, searchList, -1, null, -1,
                                                                     null, anyOwnerTrue);
+    int count;
     for (Subscription subsc : testSubscriptions)
     {
-      svcImpl.deleteSubscriptionByName(rAdminUser, subsc.getOwner(), subsc.getName());
+      count = svcImpl.deleteSubscriptionByName(rAdminUser, subsc.getOwner(), subsc.getName());
+      if (count > 0)   System.out.println("Deleted subscription: " + subsc.getName());
     }
     // Use subscription[0] to check we have cleaned up - this one should have original owner+name
     Subscription tmpSub = svcImpl.getSubscriptionByName(rAdminUser, owner, subscriptions[0].getName());
     Assert.assertNull(tmpSub, "Subscription not deleted. Subscription: " + subscriptions[0].getName());
+
+    // Cleanup subscriptions with auto-generated names
+    // jobs~testuser1~dev~subject_filter_1~Zk5p
+    searchList = new ArrayList<String>();
+    searchList.add("name.like.jobs\\~testuser1\\~dev\\~subject_filter_1*");
+    testSubscriptions = svcImpl.getSubscriptions(rJobsSvc1, owner, searchList, -1, null, -1, null, anyOwnerTrue);
+    for (Subscription subsc : testSubscriptions)
+    {
+      count = svcImpl.deleteSubscriptionByName(rAdminUser, subsc.getOwner(), subsc.getName());
+      if (count > 0)   System.out.println("Deleted subscription: " + subsc.getName());
+    }
   }
 
   @BeforeTest

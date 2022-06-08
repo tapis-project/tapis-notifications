@@ -190,8 +190,8 @@ public class NotificationsDaoTest
     Subscription sub0 = subscriptions[7];
     Instant newExpiry = Instant.now();
     boolean itemCreated = dao.createSubscription(rUser, sub0, expiryNull);
-    System.out.println("Created item with subscriptionId: " + sub0.getName());
-    Assert.assertTrue(itemCreated, "Item not created, id: " + sub0.getName());
+    System.out.println("Created item with subscriptionName: " + sub0.getName());
+    Assert.assertTrue(itemCreated, "Item not created, name: " + sub0.getName());
     // Interesting, storing and retrieving from DB truncates/rounds from nanoseconds to microseconds.
     System.out.println("Old Expiry: " + sub0.getExpiry());
     System.out.println("New Expiry: " + newExpiry);

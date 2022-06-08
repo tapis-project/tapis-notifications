@@ -24,7 +24,7 @@ public final class Notification
 {
   private final UUID uuid; // Used as primary key in DB
   private final String tenant;
-  private final String subscriptionId;
+  private final String subscriptionName;
   private final UUID eventUuid; // Needed to find all notifications associated with a specific event.
 
   // What and how to deliver the notification to the recipient
@@ -49,7 +49,7 @@ public final class Notification
     uuid = (uuid1 != null) ? uuid1 : UUID.randomUUID();
     subscrSeqId = subscrSeqId1;
     tenant = tenant1;
-    subscriptionId = subscrId1;
+    subscriptionName = subscrId1;
     bucketNum = bucketNum1;
     eventUuid = eventUuid1;
     event = event1;
@@ -58,7 +58,7 @@ public final class Notification
   }
 
   public String getTenant() { return tenant; }
-  public String getSubscriptionId() { return subscriptionId; }
+  public String getSubscriptionName() { return subscriptionName; }
   public UUID getEventUuid() { return eventUuid; }
   public Event getEvent() { return event; }
   public DeliveryTarget getDeliveryTarget() { return deliveryTarget; }

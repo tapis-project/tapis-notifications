@@ -32,7 +32,7 @@ public final class TestSequence
   private transient final int seqId;
   private final String tenant;
   private final String owner;
-  private final String subscriptionId;
+  private final String subscriptionName;
   private final int notificationCount;
   private final List<Notification> receivedNotifications;
   private final Instant created; // UTC time for when record was created
@@ -46,13 +46,13 @@ public final class TestSequence
    * Constructor taking all attributes.
    * If receivedEvents is null an empty list will be created.
    */
-  public TestSequence(int seqId1, String tenant1, String owner1, String subscriptionId1, int notifCount1,
+  public TestSequence(int seqId1, String tenant1, String owner1, String subscriptionName1, int notifCount1,
                       List<Notification> rnList1, Instant created1, Instant updated1)
   {
     seqId = seqId1;
     tenant = tenant1;
     owner = owner1;
-    subscriptionId = subscriptionId1;
+    subscriptionName = subscriptionName1;
     notificationCount = notifCount1;
     receivedNotifications = (rnList1 == null) ? new ArrayList<>() : new ArrayList<>(rnList1);
     created = created1;
@@ -70,7 +70,7 @@ public final class TestSequence
   public int getSeqId() { return seqId; }
   public String getTenant() { return tenant; }
   public String getOwner() { return owner; }
-  public String getSubscriptionId() { return subscriptionId; }
+  public String getSubscriptionName() { return subscriptionName; }
   public int getNotificationCount() { return notificationCount; }
   public List<Notification> getReceivedNotifications() { return new ArrayList<>(receivedNotifications); }
 
