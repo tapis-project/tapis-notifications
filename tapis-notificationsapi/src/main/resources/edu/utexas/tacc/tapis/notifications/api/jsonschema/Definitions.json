@@ -6,8 +6,8 @@
   "UserName": { "type": "string", "minLength": 1, "maxLength": 60 },
   "SubscriptionName": { "type": "string", "minLength": 1, "maxLength": 188 },
   "SubscriptionNameNull": { "type": ["string", "null"], "minLength": 1, "maxLength": 188 },
-  "typeFilterString": { "type": "string", "minLength": 5, "maxLength":  128 },
-  "subjectFilterString": { "type": "string", "minLength": 1, "maxLength":  150 },
+  "TypeFilterString": { "type": "string", "minLength": 5, "maxLength":  128 },
+  "SubjectFilterString": { "type": "string", "minLength": 1, "maxLength":  150 },
   "DeliveryMethod": { "type": "string", "enum": [ "WEBHOOK", "EMAIL" ] },
   "DeliveryTargetList": {
     "type": "array",
