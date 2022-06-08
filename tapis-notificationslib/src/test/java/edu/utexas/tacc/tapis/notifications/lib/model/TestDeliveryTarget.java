@@ -1,28 +1,24 @@
 package edu.utexas.tacc.tapis.notifications.lib.model;
 
 
-import edu.utexas.tacc.tapis.notifications.model.DeliveryMethod;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import javax.validation.ValidationException;
-
-//import edu.utexas.tacc.tapis.notifications.model.DeliveryMethod.DeliveryMethodEnum;
+//import edu.utexas.tacc.tapis.notifications.model.DeliveryTarget.DeliveryMethodEnum;
 
 @Test
-public class TestDeliveryMethod
+public class TestDeliveryTarget
 {
 //    @Test
 //    public void testBuilderBadEmail() {
 //        Assert.assertThrows(ValidationException.class, ()-> {
-//                   DeliveryMethod method = new DeliveryMethod(DeliveryMethodEnum.EMAIL, "badddddd");
+//                   DeliveryTarget method = new DeliveryTarget(DeliveryMethodEnum.EMAIL, "badddddd");
 //        });
 //    }
 //
 //    @Test
 //    public void testBuilderGoodEmail() {
 //
-//        DeliveryMethod method = new DeliveryMethod(
+//        DeliveryTarget method = new DeliveryTarget(
 //            DeliveryMethodEnum.EMAIL,
 //            "test@test.com"
 //        );
@@ -34,13 +30,13 @@ public class TestDeliveryMethod
 //    public void testBuildNoWebhookURL()
 //    {
 //        Assert.assertThrows(ValidationException.class, ()->{
-//            DeliveryMethod meth  = new DeliveryMethod(DeliveryMethodEnum.WEBHOOK, "baaaadurl");
+//            DeliveryTarget meth  = new DeliveryTarget(DeliveryMethodEnum.WEBHOOK, "baaaadurl");
 //        });
 //    }
 //
 //    @Test
 //    public void testBuildGoodURL() {
-//        DeliveryMethod method = new DeliveryMethod(
+//        DeliveryTarget method = new DeliveryTarget(
 //            DeliveryMethodEnum.WEBHOOK,
 //            "http://goodURL.edu");
 //

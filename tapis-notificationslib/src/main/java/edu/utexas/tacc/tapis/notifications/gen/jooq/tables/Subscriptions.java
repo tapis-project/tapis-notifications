@@ -20,7 +20,7 @@ import org.jooq.ForeignKey;
 import org.jooq.Identity;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row18;
+import org.jooq.Row17;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -63,19 +63,19 @@ public class Subscriptions extends TableImpl<SubscriptionsRecord> {
     public final TableField<SubscriptionsRecord, String> TENANT = createField(DSL.name("tenant"), SQLDataType.CLOB.nullable(false), this, "Tenant name associated with the subscription");
 
     /**
-     * The column <code>tapis_ntf.subscriptions.id</code>. Unique name for the subscription
+     * The column <code>tapis_ntf.subscriptions.owner</code>. User name of owner
      */
-    public final TableField<SubscriptionsRecord, String> ID = createField(DSL.name("id"), SQLDataType.CLOB.nullable(false), this, "Unique name for the subscription");
+    public final TableField<SubscriptionsRecord, String> OWNER = createField(DSL.name("owner"), SQLDataType.CLOB.nullable(false), this, "User name of owner");
+
+    /**
+     * The column <code>tapis_ntf.subscriptions.name</code>. Name for the subscription. tenant+owner+name must be unique
+     */
+    public final TableField<SubscriptionsRecord, String> NAME = createField(DSL.name("name"), SQLDataType.CLOB.nullable(false), this, "Name for the subscription. tenant+owner+name must be unique");
 
     /**
      * The column <code>tapis_ntf.subscriptions.description</code>.
      */
     public final TableField<SubscriptionsRecord, String> DESCRIPTION = createField(DSL.name("description"), SQLDataType.CLOB, this, "");
-
-    /**
-     * The column <code>tapis_ntf.subscriptions.owner</code>. User name of owner
-     */
-    public final TableField<SubscriptionsRecord, String> OWNER = createField(DSL.name("owner"), SQLDataType.CLOB.nullable(false), this, "User name of owner");
 
     /**
      * The column <code>tapis_ntf.subscriptions.enabled</code>. Indicates if subscription is currently active and available for use
@@ -85,42 +85,37 @@ public class Subscriptions extends TableImpl<SubscriptionsRecord> {
     /**
      * The column <code>tapis_ntf.subscriptions.type_filter</code>.
      */
-    public final TableField<SubscriptionsRecord, String> TYPE_FILTER = createField(DSL.name("type_filter"), SQLDataType.CLOB.nullable(false).defaultValue(DSL.field("'*.*.*'::text", SQLDataType.CLOB)), this, "");
+    public final TableField<SubscriptionsRecord, String> TYPE_FILTER = createField(DSL.name("type_filter"), SQLDataType.CLOB.nullable(false), this, "");
 
     /**
      * The column <code>tapis_ntf.subscriptions.type_filter1</code>.
      */
-    public final TableField<SubscriptionsRecord, String> TYPE_FILTER1 = createField(DSL.name("type_filter1"), SQLDataType.CLOB.nullable(false).defaultValue(DSL.field("'*'::text", SQLDataType.CLOB)), this, "");
+    public final TableField<SubscriptionsRecord, String> TYPE_FILTER1 = createField(DSL.name("type_filter1"), SQLDataType.CLOB.nullable(false), this, "");
 
     /**
      * The column <code>tapis_ntf.subscriptions.type_filter2</code>.
      */
-    public final TableField<SubscriptionsRecord, String> TYPE_FILTER2 = createField(DSL.name("type_filter2"), SQLDataType.CLOB.nullable(false).defaultValue(DSL.field("'*'::text", SQLDataType.CLOB)), this, "");
+    public final TableField<SubscriptionsRecord, String> TYPE_FILTER2 = createField(DSL.name("type_filter2"), SQLDataType.CLOB.nullable(false), this, "");
 
     /**
      * The column <code>tapis_ntf.subscriptions.type_filter3</code>.
      */
-    public final TableField<SubscriptionsRecord, String> TYPE_FILTER3 = createField(DSL.name("type_filter3"), SQLDataType.CLOB.nullable(false).defaultValue(DSL.field("'*'::text", SQLDataType.CLOB)), this, "");
+    public final TableField<SubscriptionsRecord, String> TYPE_FILTER3 = createField(DSL.name("type_filter3"), SQLDataType.CLOB.nullable(false), this, "");
 
     /**
      * The column <code>tapis_ntf.subscriptions.subject_filter</code>.
      */
-    public final TableField<SubscriptionsRecord, String> SUBJECT_FILTER = createField(DSL.name("subject_filter"), SQLDataType.CLOB.nullable(false).defaultValue(DSL.field("'*'::text", SQLDataType.CLOB)), this, "");
+    public final TableField<SubscriptionsRecord, String> SUBJECT_FILTER = createField(DSL.name("subject_filter"), SQLDataType.CLOB.nullable(false), this, "");
 
     /**
-     * The column <code>tapis_ntf.subscriptions.delivery_methods</code>.
+     * The column <code>tapis_ntf.subscriptions.delivery_targets</code>.
      */
-    public final TableField<SubscriptionsRecord, JsonElement> DELIVERY_METHODS = createField(DSL.name("delivery_methods"), SQLDataType.JSONB.nullable(false), this, "", new JSONBToJsonElementBinding());
+    public final TableField<SubscriptionsRecord, JsonElement> DELIVERY_TARGETS = createField(DSL.name("delivery_targets"), SQLDataType.JSONB.nullable(false), this, "", new JSONBToJsonElementBinding());
 
     /**
-     * The column <code>tapis_ntf.subscriptions.ttl</code>.
+     * The column <code>tapis_ntf.subscriptions.ttlminutes</code>.
      */
-    public final TableField<SubscriptionsRecord, Integer> TTL = createField(DSL.name("ttl"), SQLDataType.INTEGER.nullable(false).defaultValue(DSL.field("'-1'::integer", SQLDataType.INTEGER)), this, "");
-
-    /**
-     * The column <code>tapis_ntf.subscriptions.notes</code>.
-     */
-    public final TableField<SubscriptionsRecord, JsonElement> NOTES = createField(DSL.name("notes"), SQLDataType.JSONB.nullable(false), this, "", new JSONBToJsonElementBinding());
+    public final TableField<SubscriptionsRecord, Integer> TTLMINUTES = createField(DSL.name("ttlminutes"), SQLDataType.INTEGER.nullable(false).defaultValue(DSL.field("'-1'::integer", SQLDataType.INTEGER)), this, "");
 
     /**
      * The column <code>tapis_ntf.subscriptions.uuid</code>.
@@ -192,7 +187,7 @@ public class Subscriptions extends TableImpl<SubscriptionsRecord> {
 
     @Override
     public List<UniqueKey<SubscriptionsRecord>> getKeys() {
-        return Arrays.<UniqueKey<SubscriptionsRecord>>asList(Keys.SUBSCRIPTIONS_PKEY, Keys.SUBSCRIPTIONS_TENANT_ID_KEY);
+        return Arrays.<UniqueKey<SubscriptionsRecord>>asList(Keys.SUBSCRIPTIONS_PKEY, Keys.SUBSCRIPTIONS_TENANT_OWNER_NAME_KEY);
     }
 
     @Override
@@ -222,11 +217,11 @@ public class Subscriptions extends TableImpl<SubscriptionsRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row18 type methods
+    // Row17 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row18<Integer, String, String, String, String, Boolean, String, String, String, String, String, JsonElement, Integer, JsonElement, java.util.UUID, LocalDateTime, LocalDateTime, LocalDateTime> fieldsRow() {
-        return (Row18) super.fieldsRow();
+    public Row17<Integer, String, String, String, String, Boolean, String, String, String, String, String, JsonElement, Integer, java.util.UUID, LocalDateTime, LocalDateTime, LocalDateTime> fieldsRow() {
+        return (Row17) super.fieldsRow();
     }
 }

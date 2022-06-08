@@ -90,6 +90,7 @@ public class EventResource
   public Response postEvent(InputStream payloadStream, @Context SecurityContext securityContext)
   {
     String opName = "postEvent";
+    String msg;
     // ------------------------- Retrieve and validate thread context -------------------------
     TapisThreadContext threadContext = TapisThreadLocal.tapisThreadContext.get();
     // Check that we have all we need from the context, the jwtTenantId and jwtUserId
@@ -103,10 +104,17 @@ public class EventResource
     // Trace this request.
     if (_log.isTraceEnabled()) ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString());
 
+    // Only services may publish. Reject if not a service.
+    if (!rUser.isServiceRequest())
+    {
+      msg = ApiUtils.getMsgAuth("NTFAPI_EVENT_UNAUTH", rUser);
+      _log.warn(msg);
+      return Response.status(Status.UNAUTHORIZED).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+    }
+
     // ------------------------- Extract and validate payload -------------------------
     // Read the payload into a string.
     String rawJson;
-    String msg;
     try { rawJson = IOUtils.toString(payloadStream, StandardCharsets.UTF_8); }
     catch (Exception e)
     {
@@ -144,7 +152,7 @@ public class EventResource
     // Validate the event type
     if (!Event.isValidType(req.type))
     {
-      msg = ApiUtils.getMsgAuth("NTFAPI_EVENT_TYPE_ERR", rUser, req.source, req.type, req.subject, req.time);
+      msg = ApiUtils.getMsgAuth("NTFAPI_EVENT_TYPE_ERR", rUser, req.source, req.type, req.subject, req.timestamp);
       _log.error(msg);
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
@@ -157,24 +165,33 @@ public class EventResource
     }
     catch (URISyntaxException e)
     {
-      msg = ApiUtils.getMsgAuth("NTFAPI_EVENT_SOURCE_ERR", rUser, req.source, req.type, req.subject, req.time, e.getMessage());
+      msg = ApiUtils.getMsgAuth("NTFAPI_EVENT_SOURCE_ERR", rUser, req.source, req.type, req.subject, req.timestamp, e.getMessage());
       _log.error(msg);
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
 
     // Create an Event from the request
-    Event event = new Event(rUser.getOboTenantId(), rUser.getOboUserId(), source, req.type, req.subject, req.seriesId,
-                            req.time, UUID.randomUUID());
+    Event event = new Event(source, req.type, req.subject, req.data, req.seriesId, req.timestamp,
+                             req.deleteSubscriptionsMatchingSubject, rUser.getOboTenantId(), rUser.getOboUserId(),
+                             UUID.randomUUID());
+
+    // If first field of type is not the service name then reject
+    if (!event.getType1().equals(rUser.getJwtUserId()))
+    {
+      msg = ApiUtils.getMsgAuth("NTFAPI_EVENT_TYPE_NOTSVC", rUser, req.source, req.type, req.subject, req.timestamp);
+      _log.warn(msg);
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+    }
 
     // ---------------------------- Make service call to post the event -------------------------------
     try
     {
-      notificationsService.postEvent(rUser, event);
+      notificationsService.publishEvent(rUser, event);
     }
     catch (Exception e)
     {
       msg = ApiUtils.getMsgAuth("NTFAPI_EVENT_POST_ERR", rUser, req.source, req.type, req.subject, req.seriesId,
-                                req.time, e.getMessage());
+                                req.timestamp, e.getMessage());
       _log.error(msg);
       return Response.status(Status.INTERNAL_SERVER_ERROR).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }

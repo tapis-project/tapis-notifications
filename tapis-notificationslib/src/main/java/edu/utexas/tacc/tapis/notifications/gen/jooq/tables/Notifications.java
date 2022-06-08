@@ -20,7 +20,7 @@ import org.jooq.ForeignKey;
 import org.jooq.Identity;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row10;
+import org.jooq.Row11;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -58,14 +58,14 @@ public class Notifications extends TableImpl<NotificationsRecord> {
     public final TableField<NotificationsRecord, Integer> SEQ_ID = createField(DSL.name("seq_id"), SQLDataType.INTEGER.nullable(false).identity(true), this, "");
 
     /**
-     * The column <code>tapis_ntf.notifications.uuid</code>.
-     */
-    public final TableField<NotificationsRecord, java.util.UUID> UUID = createField(DSL.name("uuid"), SQLDataType.UUID.nullable(false), this, "");
-
-    /**
      * The column <code>tapis_ntf.notifications.subscr_seq_id</code>.
      */
     public final TableField<NotificationsRecord, Integer> SUBSCR_SEQ_ID = createField(DSL.name("subscr_seq_id"), SQLDataType.INTEGER, this, "");
+
+    /**
+     * The column <code>tapis_ntf.notifications.uuid</code>.
+     */
+    public final TableField<NotificationsRecord, java.util.UUID> UUID = createField(DSL.name("uuid"), SQLDataType.UUID.nullable(false), this, "");
 
     /**
      * The column <code>tapis_ntf.notifications.tenant</code>.
@@ -73,14 +73,19 @@ public class Notifications extends TableImpl<NotificationsRecord> {
     public final TableField<NotificationsRecord, String> TENANT = createField(DSL.name("tenant"), SQLDataType.CLOB.nullable(false), this, "");
 
     /**
-     * The column <code>tapis_ntf.notifications.subscr_id</code>.
+     * The column <code>tapis_ntf.notifications.subscr_name</code>.
      */
-    public final TableField<NotificationsRecord, String> SUBSCR_ID = createField(DSL.name("subscr_id"), SQLDataType.CLOB.nullable(false), this, "");
+    public final TableField<NotificationsRecord, String> SUBSCR_NAME = createField(DSL.name("subscr_name"), SQLDataType.CLOB.nullable(false), this, "");
 
     /**
      * The column <code>tapis_ntf.notifications.delivery_method</code>.
      */
-    public final TableField<NotificationsRecord, JsonElement> DELIVERY_METHOD = createField(DSL.name("delivery_method"), SQLDataType.JSONB.nullable(false), this, "", new JSONBToJsonElementBinding());
+    public final TableField<NotificationsRecord, String> DELIVERY_METHOD = createField(DSL.name("delivery_method"), SQLDataType.CLOB.nullable(false), this, "");
+
+    /**
+     * The column <code>tapis_ntf.notifications.delivery_address</code>.
+     */
+    public final TableField<NotificationsRecord, String> DELIVERY_ADDRESS = createField(DSL.name("delivery_address"), SQLDataType.CLOB.nullable(false), this, "");
 
     /**
      * The column <code>tapis_ntf.notifications.event_uuid</code>.
@@ -196,11 +201,11 @@ public class Notifications extends TableImpl<NotificationsRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row10 type methods
+    // Row11 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row10<Integer, java.util.UUID, Integer, String, String, JsonElement, java.util.UUID, JsonElement, Integer, LocalDateTime> fieldsRow() {
-        return (Row10) super.fieldsRow();
+    public Row11<Integer, Integer, java.util.UUID, String, String, String, String, java.util.UUID, JsonElement, Integer, LocalDateTime> fieldsRow() {
+        return (Row11) super.fieldsRow();
     }
 }

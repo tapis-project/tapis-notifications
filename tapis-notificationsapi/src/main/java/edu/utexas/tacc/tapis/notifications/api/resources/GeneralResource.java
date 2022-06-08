@@ -35,13 +35,13 @@ import edu.utexas.tacc.tapis.notifications.utils.LibUtils;
  *  NOTE: For OpenAPI spec please see file NotificationsAPI.yaml located in repo openapi-notifications
  */
 @Path("/v3/notifications")
-public class NotificationsResource
+public class GeneralResource
 {
   /* **************************************************************************** */
   /*                                   Constants                                  */
   /* **************************************************************************** */
   // Local logger.
-  private static final Logger _log = LoggerFactory.getLogger(NotificationsResource.class);
+  private static final Logger _log = LoggerFactory.getLogger(GeneralResource.class);
 
   /* **************************************************************************** */
   /*                                    Fields                                    */

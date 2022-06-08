@@ -6,18 +6,17 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+import edu.utexas.tacc.tapis.notifications.model.DeliveryTarget;
 import edu.utexas.tacc.tapis.shared.utils.TapisGsonUtils;
 
-import edu.utexas.tacc.tapis.notifications.model.DeliveryMethod;
 import edu.utexas.tacc.tapis.notifications.model.Subscription;
 
 import static edu.utexas.tacc.tapis.notifications.api.resources.SubscriptionResource.SUMMARY_ATTRS;
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.CREATED_FIELD;
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.DESCRIPTION_FIELD;
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.ENABLED_FIELD;
-import static edu.utexas.tacc.tapis.notifications.model.Subscription.ID_FIELD;
+import static edu.utexas.tacc.tapis.notifications.model.Subscription.NAME_FIELD;
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.TTL_FIELD;
-import static edu.utexas.tacc.tapis.notifications.model.Subscription.NOTES_FIELD;
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.OWNER_FIELD;
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.TENANT_FIELD;
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.UPDATED_FIELD;
@@ -25,7 +24,7 @@ import static edu.utexas.tacc.tapis.notifications.model.Subscription.EXPIRY_FIEL
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.UUID_FIELD;
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.TYPE_FILTER_FIELD;
 import static edu.utexas.tacc.tapis.notifications.model.Subscription.SUBJECT_FILTER_FIELD;
-import static edu.utexas.tacc.tapis.notifications.model.Subscription.DELIVERY_METHODS_FIELD;
+import static edu.utexas.tacc.tapis.notifications.model.Subscription.DELIVERY_TARGETS_FIELD;
 
 /*
   Classes representing a subscription result to be returned
@@ -35,15 +34,14 @@ public final class TapisSubscriptionDTO
   private static final Gson gson = TapisGsonUtils.getGson();
 
   public String tenant;
-  public String id;
+  public String name;
   public String description;
   public String owner;
   public boolean enabled;
   public String typeFilter;
   public String subjectFilter;
-  public List<DeliveryMethod> deliveryMethods;
-  public int ttl;
-  public Object notes;
+  public List<DeliveryTarget> deliveryTargets;
+  public int ttlMinutes;
   public UUID uuid;
   public Instant expiry;
   public Instant created;
@@ -52,15 +50,14 @@ public final class TapisSubscriptionDTO
   public TapisSubscriptionDTO(Subscription s)
   {
     tenant = s.getTenant();
-    id = s.getId();
+    name = s.getName();
     description = s.getDescription();
     owner = s.getOwner();
     enabled = s.isEnabled();
     typeFilter = s.getTypeFilter();
     subjectFilter = s.getSubjectFilter();
-    deliveryMethods = s.getDeliveryMethods();
-    ttl = s.getTtl();
-    notes = s.getNotes();
+    deliveryTargets = s.getDeliveryTargets();
+    ttlMinutes = s.getTtlMinutes();
     uuid = s.getUuid();
     expiry = s.getExpiry();
     created = s.getCreated();
@@ -90,7 +87,7 @@ public final class TapisSubscriptionDTO
 
     // Include specified list of attributes
     // If ID not in list we add it anyway.
-    if (!selectList.contains(ID_FIELD)) addDisplayField(retObj, ID_FIELD);
+    if (!selectList.contains(NAME_FIELD)) addDisplayField(retObj, NAME_FIELD);
     for (String attrName : selectList)
     {
       addDisplayField(retObj, attrName);
@@ -126,21 +123,17 @@ public final class TapisSubscriptionDTO
     String jsonStr;
     switch (attrName) {
       case TENANT_FIELD -> jsonObject.addProperty(TENANT_FIELD, tenant);
-      case ID_FIELD -> jsonObject.addProperty(ID_FIELD, id);
+      case NAME_FIELD -> jsonObject.addProperty(NAME_FIELD, name);
       case DESCRIPTION_FIELD ->jsonObject.addProperty(DESCRIPTION_FIELD, description);
       case OWNER_FIELD -> jsonObject.addProperty(OWNER_FIELD, owner);
       case ENABLED_FIELD -> jsonObject.addProperty(ENABLED_FIELD, Boolean.toString(enabled));
       case TYPE_FILTER_FIELD -> jsonObject.addProperty(TYPE_FILTER_FIELD, typeFilter);
       case SUBJECT_FILTER_FIELD -> jsonObject.addProperty(SUBJECT_FILTER_FIELD, subjectFilter);
-      case DELIVERY_METHODS_FIELD -> {
-        jsonStr = gson.toJson(deliveryMethods);
-        jsonObject.add(DELIVERY_METHODS_FIELD, gson.fromJson(jsonStr, JsonObject.class));
+      case DELIVERY_TARGETS_FIELD -> {
+        jsonStr = gson.toJson(deliveryTargets);
+        jsonObject.add(DELIVERY_TARGETS_FIELD, gson.fromJson(jsonStr, JsonObject.class));
       }
-      case TTL_FIELD -> jsonObject.addProperty(TTL_FIELD, ttl);
-      case NOTES_FIELD -> {
-        jsonStr = gson.toJson(notes);
-        jsonObject.add(NOTES_FIELD, gson.fromJson(jsonStr, JsonObject.class));
-      }
+      case TTL_FIELD -> jsonObject.addProperty(TTL_FIELD, ttlMinutes);
       case UUID_FIELD -> jsonObject.addProperty(UUID_FIELD, uuid.toString());
       case EXPIRY_FIELD -> jsonObject.addProperty(EXPIRY_FIELD, expiry.toString());
       case CREATED_FIELD -> jsonObject.addProperty(CREATED_FIELD, created.toString());

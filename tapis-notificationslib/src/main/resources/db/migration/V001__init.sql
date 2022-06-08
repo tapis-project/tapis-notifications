@@ -44,51 +44,31 @@ CREATE TABLE subscriptions
 (
     seq_id  SERIAL PRIMARY KEY,
     tenant  TEXT NOT NULL,
-    id      TEXT NOT NULL,
-    description TEXT,
     owner   TEXT NOT NULL,
+    name      TEXT NOT NULL,
+    description TEXT,
     enabled  BOOLEAN NOT NULL DEFAULT true,
-    type_filter TEXT NOT NULL DEFAULT '*.*.*',
-    type_filter1 TEXT NOT NULL DEFAULT '*',
-    type_filter2 TEXT NOT NULL DEFAULT '*',
-    type_filter3 TEXT NOT NULL DEFAULT '*',
-    subject_filter TEXT NOT NULL DEFAULT '*',
-    delivery_methods JSONB NOT NULL,
-    ttl INTEGER NOT NULL DEFAULT -1,
-    notes JSONB NOT NULL,
-    uuid  UUID NOT NULL,
+    type_filter TEXT NOT NULL,
+    type_filter1 TEXT NOT NULL,
+    type_filter2 TEXT NOT NULL,
+    type_filter3 TEXT NOT NULL,
+    subject_filter TEXT NOT NULL,
+    delivery_targets JSONB NOT NULL,
+    ttlMinutes INTEGER NOT NULL DEFAULT -1,
+    uuid UUID NOT NULL,
     expiry  TIMESTAMP WITHOUT TIME ZONE,
     created TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),
     updated TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),
-    UNIQUE (tenant,id)
+    UNIQUE (tenant,owner,name)
 );
 ALTER TABLE subscriptions OWNER TO tapis_ntf;
 COMMENT ON COLUMN subscriptions.seq_id IS 'Subscription sequence id';
 COMMENT ON COLUMN subscriptions.tenant IS 'Tenant name associated with the subscription';
-COMMENT ON COLUMN subscriptions.id IS 'Unique name for the subscription';
 COMMENT ON COLUMN subscriptions.owner IS 'User name of owner';
+COMMENT ON COLUMN subscriptions.name IS 'Name for the subscription. tenant+owner+name must be unique';
 COMMENT ON COLUMN subscriptions.enabled IS 'Indicates if subscription is currently active and available for use';
 COMMENT ON COLUMN subscriptions.created IS 'UTC time for when record was created';
 COMMENT ON COLUMN subscriptions.updated IS 'UTC time for when record was last updated';
-
--- Subscription updates table
--- Track update requests for subscriptions
-CREATE TABLE subscription_updates
-(
-    seq_id SERIAL PRIMARY KEY,
-    subscription_seq_id INTEGER REFERENCES subscriptions(seq_id) ON DELETE CASCADE,
-    obo_tenant TEXT NOT NULL,
-    obo_user TEXT NOT NULL,
-    jwt_tenant TEXT NOT NULL,
-    jwt_user TEXT NOT NULL,
-    subscription_id TEXT NOT NULL,
-    operation TEXT NOT NULL,
-    description JSONB NOT NULL,
-    raw_data TEXT,
-    uuid UUID NOT NULL,
-    created TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc')
-);
-ALTER TABLE subscription_updates OWNER TO tapis_ntf;
 
 -- Notifications table
 -- In-flight notifications. A notification represents an event being delivered to a subscriber
@@ -96,11 +76,12 @@ ALTER TABLE subscription_updates OWNER TO tapis_ntf;
 CREATE TABLE notifications
 (
     seq_id SERIAL PRIMARY KEY,
-    uuid UUID NOT NULL,
     subscr_seq_id INTEGER REFERENCES subscriptions(seq_id) ON DELETE CASCADE,
+    uuid UUID NOT NULL,
     tenant TEXT NOT NULL,
-    subscr_id TEXT NOT NULL,
-    delivery_method JSONB NOT NULL,
+    subscr_name TEXT NOT NULL,
+    delivery_method TEXT NOT NULL,
+    delivery_address TEXT NOT NULL,
     event_uuid UUID NOT NULL,
     event JSONB NOT NULL,
     bucket_number INTEGER NOT NULL DEFAULT 0,
@@ -113,14 +94,15 @@ ALTER TABLE notifications OWNER TO tapis_ntf;
 CREATE TABLE notifications_recovery
 (
     seq_id SERIAL PRIMARY KEY,
-    uuid UUID NOT NULL,
     subscr_seq_id INTEGER REFERENCES subscriptions(seq_id) ON DELETE CASCADE,
+    uuid UUID NOT NULL,
     tenant TEXT NOT NULL,
-    subscr_id TEXT NOT NULL,
-    bucket_number INTEGER NOT NULL DEFAULT 0,
+    subscr_name TEXT NOT NULL,
+    delivery_method TEXT NOT NULL,
+    delivery_address TEXT NOT NULL,
     event_uuid UUID NOT NULL,
     event JSONB NOT NULL,
-    delivery_method JSONB NOT NULL,
+    bucket_number INTEGER NOT NULL DEFAULT 0,
     attempt_count INTEGER NOT NULL DEFAULT 0,
     last_attempt TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),
     created TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),
@@ -145,12 +127,12 @@ CREATE TABLE notifications_tests
     seq_id SERIAL PRIMARY KEY,
     subscr_seq_id INTEGER REFERENCES subscriptions(seq_id) ON DELETE CASCADE,
     tenant TEXT NOT NULL,
-    subscr_id TEXT NOT NULL,
     owner  TEXT NOT NULL,
+    subscr_name TEXT NOT NULL,
     notification_count INTEGER NOT NULL DEFAULT 0,
     notifications JSONB NOT NULL,
     created TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),
-    updated TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc')
+    updated TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),
+    UNIQUE (tenant,owner,subscr_name)
 );
 ALTER TABLE notifications_tests OWNER TO tapis_ntf;
-

@@ -2,15 +2,16 @@ package edu.utexas.tacc.tapis.notifications;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import edu.utexas.tacc.tapis.notifications.model.DeliveryMethod;
+import edu.utexas.tacc.tapis.notifications.model.DeliveryTarget;
 import edu.utexas.tacc.tapis.notifications.model.Event;
 import edu.utexas.tacc.tapis.notifications.model.Notification;
 import edu.utexas.tacc.tapis.notifications.model.PatchSubscription;
 import edu.utexas.tacc.tapis.notifications.model.Subscription;
-import edu.utexas.tacc.tapis.notifications.model.DeliveryMethod.DeliveryType;
+import edu.utexas.tacc.tapis.notifications.model.DeliveryTarget.DeliveryMethod;
 import edu.utexas.tacc.tapis.search.parser.ASTNode;
 import edu.utexas.tacc.tapis.shared.threadlocal.OrderBy;
 import edu.utexas.tacc.tapis.shared.utils.TapisGsonUtils;
+import edu.utexas.tacc.tapis.shared.utils.TapisUtils;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -38,16 +39,13 @@ public final class IntegrationUtils
   public static final String svcName = "notificationss";
   public static final String adminUser = "testadmin";
 
-  public static final String owner1 = "testuser1";
-  public static final String owner2 = "testuser2";
-  public static final String ownerNull = null;
   public static final String testUser0 = "testuser0";
   public static final String testUser1 = "testuser1";
   public static final String testUser2 = "testuser2";
   public static final String testUser3 = "testuser3";
   public static final String testUser4 = "testuser4";
   public static final String apiUser = "testApiUser";
-  public static final String subscrIdPrefix = "TestSub";
+  public static final String subscrIdPrefix = "TestSubscr";
   public static final String description1 = "Subscription description 1";
   public static final String description2 = "Subscription description 2";
   public static final String typeFilter1 = "jobs.job.complete";
@@ -58,25 +56,25 @@ public final class IntegrationUtils
   public static final String typeFilter2_1 = "systems";
   public static final String typeFilter2_2 = "system";
   public static final String typeFilter2_3 = "create";
+  public static final String subjectFilter0 = "subject_filter_0";
   public static final String subjectFilter1 = "subject_filter_1";
   public static final String subjectFilter2 = "subject_filter_2";
   public static final String webhookUrlA1 = "https://my.fake.webhook/urlA1";
   public static final String webhookUrlA2 = "https://my.fake.webhook/urlA2";
   public static final String emailAddressB1 = "my.fake.emailB1@my.example.com";
   public static final String emailAddressB2 = "my.fake.emailB2@my.example.com";
-  public static final Object notes1 = TapisGsonUtils.getGson().fromJson("{\"project\": \"myproj1\", \"testdata\": \"abc1\"}", JsonObject.class);
-  public static final Object notes2 = TapisGsonUtils.getGson().fromJson("{\"project\": \"myproj2\", \"testdata\": \"abc2\"}", JsonObject.class);
-  public static final JsonObject notesObj1 = (JsonObject) notes1;
-  public static final Object notesNull = null;
   public static final String scrubbedJson = "{}";
 
+  public static final String  ownerNull = null;
+  public static final String ownerEmpty = "";
+
   // Delivery Methods
-  public static final DeliveryMethod dmA1 = new DeliveryMethod(DeliveryType.WEBHOOK, webhookUrlA1);
-  public static final DeliveryMethod dmB1 = new DeliveryMethod(DeliveryType.EMAIL, emailAddressB1);
-  public static final List<DeliveryMethod> dmList1 = new ArrayList<>(List.of(dmA1, dmB1));
-  public static final DeliveryMethod dmA2 = new DeliveryMethod(DeliveryType.WEBHOOK, webhookUrlA2);
-  public static final DeliveryMethod dmB2 = new DeliveryMethod(DeliveryType.EMAIL, emailAddressB2);
-  public static final List<DeliveryMethod> dmList2 = new ArrayList<>(List.of(dmA2, dmB2));
+  public static final DeliveryTarget dmA1 = new DeliveryTarget(DeliveryMethod.WEBHOOK, webhookUrlA1);
+  public static final DeliveryTarget dmB1 = new DeliveryTarget(DeliveryMethod.EMAIL, emailAddressB1);
+  public static final List<DeliveryTarget> dmList1 = new ArrayList<>(List.of(dmA1, dmB1));
+  public static final DeliveryTarget dmA2 = new DeliveryTarget(DeliveryMethod.WEBHOOK, webhookUrlA2);
+  public static final DeliveryTarget dmB2 = new DeliveryTarget(DeliveryMethod.EMAIL, emailAddressB2);
+  public static final List<DeliveryTarget> dmList2 = new ArrayList<>(List.of(dmA2, dmB2));
 
   public static final int ttl1 = 1000;
   public static final int ttl2 = 2000;
@@ -101,6 +99,8 @@ public final class IntegrationUtils
   public static final String startAfterNull = null;
 
   // Search and sort
+  public static final boolean anyOwnerTrue = true;
+  public static final boolean anyOwnerFalse = false;
   public static final List<String> searchListNull = null;
   public static final ASTNode searchASTNull = null;
   public static final Set<String> setOfIDsNull = null;
@@ -124,9 +124,13 @@ public final class IntegrationUtils
   public static final String eventType1 = "jobs.job.complete";
   public static final String eventSubject1 = "640ad5a8-1a6e-4189-a334-c4c7226fb9ba-007";
   public static final String seriesId1 = "111a2228-1a6e-4189-a334-c4c722666666-007";
+  public static final String eventDataNull = null;
+  public static final String eventTime = TapisUtils.getUTCTimeNow().toString();
+  public static final boolean eventDeleteSubscriptionsMatchingSubjectFalse = false;
 
-  public static final Event event1 = new Event(tenantName, testUser1, eventSource1, eventType1, eventSubject1, seriesId1,
-                                               OffsetDateTime.now().toString(), UUID.randomUUID());
+  public static final Event event1 = new Event(eventSource1, eventType1, eventSubject1, eventDataNull, seriesId1,
+                                               eventTime, eventDeleteSubscriptionsMatchingSubjectFalse, tenantName,
+                                               testUser1, UUID.randomUUID());
 
   /**
    * Create an array of Subscription objects in memory
@@ -145,25 +149,13 @@ public final class IntegrationUtils
       // Suffix which should be unique for each item within each integration test
       String iStr = String.format("%03d", i+1);
       String suffix = key + "_" + iStr;
-      String subscrId = getSubscrName(key, i+1);
+      String subscrName = getSubscrName(key, i+1);
       // Constructor initializes all attributes
-      subscriptions[i] = new Subscription(-1, tenantName, subscrId, description1+suffix, owner1, isEnabledTrue,
-                                          typeFilter1, subjectFilter1, dmList1, ttl1, notes1, uuidNull,
+      subscriptions[i] = new Subscription(-1, tenantName, testUser1, subscrName, description1+suffix, isEnabledTrue,
+                                          typeFilter1, subjectFilter1, dmList1, ttl1, uuidNull,
                                           expiryNull, createdNull, updatedNull);
     }
     return subscriptions;
-  }
-
-  /**
-   * Create a Subscription in memory for use in testing the PUT operation.
-   * All updatable attributes are modified.
-   */
-  public static Subscription makePutSubscriptionFull(Subscription sub)
-  {
-    Subscription putSubscr = new Subscription(sub.getSeqId(), tenantName, sub.getId(), description2,
-                       sub.getOwner(), sub.isEnabled(), typeFilter2, subjectFilter2,
-                       dmList2, ttl2, notes2, null, null, null, null);
-    return putSubscr;
   }
 
   /**
@@ -172,7 +164,7 @@ public final class IntegrationUtils
    */
   public static PatchSubscription makePatchSubscriptionFull()
   {
-    return new PatchSubscription(description2, typeFilter2, subjectFilter2, dmList2, ttl2, notes2);
+    return new PatchSubscription(description2, typeFilter2, subjectFilter2, dmList2, ttl2);
   }
 
   public static String getSubscrName(String key, int idx)
@@ -197,7 +189,7 @@ public final class IntegrationUtils
       String iStr = String.format("%03d", i+1);
       String suffix = key + "_" + iStr;
       String dmAddress = suffix + ".fake.person@example.com";
-      DeliveryMethod dm = new DeliveryMethod(DeliveryType.EMAIL, dmAddress);
+      DeliveryTarget dm = new DeliveryTarget(DeliveryMethod.EMAIL, dmAddress);
       Notification ntf = new Notification(null, subscrSeqId, tenantName, subscrId, bucketNum1, eventUuid, event1, dm,
                                           createdNull);
       notifications.add(ntf);

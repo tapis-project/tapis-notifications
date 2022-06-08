@@ -18,7 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
-import edu.utexas.tacc.tapis.notifications.model.DeliveryMethod;
+import edu.utexas.tacc.tapis.notifications.model.DeliveryTarget;
 import edu.utexas.tacc.tapis.notifications.utils.LibUtils;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.shared.utils.TapisUtils;
@@ -259,15 +259,23 @@ public final class DeliveryBucketManager implements Callable<String>
     String tenant = event.getTenant();
     UUID eventUuid = event.getUuid();
 
-    // For each deliveryMethod in a Subscription
+    // Add a notification for each deliveryTarget in each Subscription
+    // Note that we ultimately want to de-duplicate (based on deliveryTarget) in order to prevent a notification from
+    //   being sent to a deliveryTarget more than once.
+    // We do not de-duplicate here because we want to track the subscription associated with each deliveryTarget.
+    // We want to track associated subscription so that when a notification is in recovery we stop re-trying after
+    //   the associated subscription is deleted.
+    // TODO For de-duplication we simply delete all persisted matching notifications once there has been a
+    //   successful delivery. In this case matching means matching (event, deliveryTarget) independent of the
+    //   associated subscription.
     for (Subscription s : subscriptions)
     {
-      var deliveryMethods = s.getDeliveryMethods();
-      if (deliveryMethods == null || deliveryMethods.isEmpty()) continue;
-      for (DeliveryMethod dm : deliveryMethods)
+      var deliveryTargets = s.getDeliveryTargets();
+      if (deliveryTargets == null || deliveryTargets.isEmpty()) continue;
+      for (DeliveryTarget dm : deliveryTargets)
       {
         Instant created = TapisUtils.getUTCTimeNow().toInstant(ZoneOffset.UTC);
-        notifList.add(new Notification(null, s.getSeqId(), tenant, s.getId(), bucketNum, eventUuid, event, dm, created));
+        notifList.add(new Notification(null, s.getSeqId(), tenant, s.getName(), bucketNum, eventUuid, event, dm, created));
       }
     }
     // Persist all notifications and update the last_event table in a single transaction.
@@ -294,7 +302,7 @@ public final class DeliveryBucketManager implements Callable<String>
     // Add a delivery task for each notification
     for (Notification ntf : notifications)
     {
-      log.debug(LibUtils.getMsg("NTFLIB_DSP_BUCKET_DLVRY1", bucketNum, ntf.getEventUuid(), ntf.getDeliveryMethod()));
+      log.debug(LibUtils.getMsg("NTFLIB_DSP_BUCKET_DLVRY1", bucketNum, ntf.getEventUuid(), ntf.getDeliveryTarget()));
       // Create a delivery task and submit it to the executor service.
       Future<Notification> future = deliveryTaskExecService.submit(new DeliveryTask(dao, ntf));
       // Add the task to the list
@@ -333,7 +341,7 @@ public final class DeliveryBucketManager implements Callable<String>
             {
               // Make a blocking call to get the return value of the future.
               Notification ret = f.get();
-              log.debug(LibUtils.getMsg("NTFLIB_DSP_BUCKET_DLVRY3", bucketNum, eventUuid, ret.getDeliveryMethod()));
+              log.debug(LibUtils.getMsg("NTFLIB_DSP_BUCKET_DLVRY3", bucketNum, eventUuid, ret.getDeliveryTarget()));
               deliveryTaskReturns.put(f, ret);
             }
             catch (InterruptedException e)

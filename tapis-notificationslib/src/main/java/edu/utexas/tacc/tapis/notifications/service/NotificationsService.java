@@ -32,54 +32,51 @@ public interface NotificationsService
   String createSubscription(ResourceRequestUser rUser, Subscription subscription, String scrubbedText)
           throws TapisException, TapisClientException, NotAuthorizedException, IllegalStateException, IllegalArgumentException;
 
-  void patchSubscription(ResourceRequestUser rUser, String subscriptionId, PatchSubscription patchSubscription, String scrubbedText)
+  void patchSubscription(ResourceRequestUser rUser, String owner, String name, PatchSubscription patchSubscription, String scrubbedText)
           throws TapisException, TapisClientException, NotAuthorizedException, IllegalStateException, IllegalArgumentException, NotFoundException;
 
-  void putSubscription(ResourceRequestUser rUser, Subscription putSubscription, String scrubbedText)
+  int enableSubscription(ResourceRequestUser rUser, String owner, String name)
           throws TapisException, TapisClientException, NotAuthorizedException, IllegalStateException, IllegalArgumentException, NotFoundException;
 
-  int enableSubscription(ResourceRequestUser rUser, String subscriptionId)
+  int disableSubscription(ResourceRequestUser rUser, String owner, String name)
           throws TapisException, TapisClientException, NotAuthorizedException, IllegalStateException, IllegalArgumentException, NotFoundException;
 
-  int disableSubscription(ResourceRequestUser rUser, String subscriptionId)
-          throws TapisException, TapisClientException, NotAuthorizedException, IllegalStateException, IllegalArgumentException, NotFoundException;
-
-  int deleteSubscription(ResourceRequestUser rUser, String subscriptionId)
+  int deleteSubscriptionByName(ResourceRequestUser rUser, String owner, String name)
           throws TapisException, TapisClientException, NotAuthorizedException, IllegalArgumentException;
 
-  int changeSubscriptionOwner(ResourceRequestUser rUser, String subscriptionId, String newOwnerName)
+  int deleteSubscriptionByUuid(ResourceRequestUser rUser, String uuid)
+          throws TapisException, TapisClientException, NotAuthorizedException, IllegalArgumentException;
+
+  int deleteSubscriptionsBySubject(ResourceRequestUser rUser, String owner, String subject, boolean anyOwner)
+          throws TapisException, NotAuthorizedException, IllegalArgumentException;
+
+  int updateSubscriptionTTL(ResourceRequestUser rUser, String owner, String name, String newTTL)
           throws TapisException, TapisClientException, NotAuthorizedException, IllegalArgumentException, NotFoundException;
 
-  int updateSubscriptionTTL(ResourceRequestUser rUser, String subscriptionId, String newTTL)
-          throws TapisException, TapisClientException, NotAuthorizedException, IllegalArgumentException, NotFoundException;
-
-  boolean checkForSubscription(ResourceRequestUser rUser, String subscriptionId)
+  boolean isEnabled(ResourceRequestUser rUser, String owner, String name)
           throws TapisException, TapisClientException, NotAuthorizedException;
 
-  boolean isEnabled(ResourceRequestUser rUser, String subscriptionId)
+  Subscription getSubscriptionByName(ResourceRequestUser rUser, String owner, String name)
           throws TapisException, TapisClientException, NotAuthorizedException;
 
-  Subscription getSubscription(ResourceRequestUser rUser, String subscriptionId)
+  Subscription getSubscriptionByUuid(ResourceRequestUser rUser, String uuid)
           throws TapisException, TapisClientException, NotAuthorizedException;
 
-  int getSubscriptionsTotalCount(ResourceRequestUser rUser, List<String> searchList, List<OrderBy> orderByList,
+  int getSubscriptionsTotalCount(ResourceRequestUser rUser, String owner, List<String> searchList, List<OrderBy> orderByList,
                         String startAfter) throws TapisException, TapisClientException;
 
-  List<Subscription> getSubscriptions(ResourceRequestUser rUser, List<String> searchList, int limit,
-                    List<OrderBy> orderByList, int skip, String startAfter)
+  List<Subscription> getSubscriptions(ResourceRequestUser rUser, String owner, List<String> searchList, int limit,
+                    List<OrderBy> orderByList, int skip, String startAfter, boolean anyOwner)
           throws TapisException, TapisClientException;
 
-  List<Subscription> getSubscriptionsUsingSqlSearchStr(ResourceRequestUser rUser, String searchStr, int limit,
+  List<Subscription> getSubscriptionsUsingSqlSearchStr(ResourceRequestUser rUser, String owner, String searchStr, int limit,
                                      List<OrderBy> orderByList, int skip, String startAfter)
           throws TapisException, TapisClientException;
-
-  String getSubscriptionOwner(ResourceRequestUser rUser, String subscriptionId)
-          throws TapisException, TapisClientException, NotAuthorizedException;
 
   // -----------------------------------------------------------------------
   // ------------------------- Events --------------------------------------
   // -----------------------------------------------------------------------
-  void postEvent(ResourceRequestUser rUser, Event event) throws IOException;
+  void publishEvent(ResourceRequestUser rUser, Event event) throws IOException, IllegalArgumentException, NotAuthorizedException;
 
   // -----------------------------------------------------------------------
   // ------------------------- Test Sequence -------------------------------
@@ -87,12 +84,12 @@ public interface NotificationsService
   Subscription beginTestSequence(ResourceRequestUser rUser, String baseServiceUrl, String subscriptionTTL)
           throws TapisException, IOException, URISyntaxException, IllegalStateException, IllegalArgumentException;
 
-  TestSequence getTestSequence(ResourceRequestUser rUser, String subscriptionId)
+  TestSequence getTestSequence(ResourceRequestUser rUser, String name)
           throws TapisException, TapisClientException;
 
-  int deleteTestSequence(ResourceRequestUser rUser, String subscriptionId)
+  int deleteTestSequence(ResourceRequestUser rUser, String name)
           throws TapisException, TapisClientException, NotAuthorizedException;
 
-  void recordTestNotification(String tenant, String user, String subscriptionId, Notification notification)
+  void recordTestNotification(String tenant, String user, String name, Notification notification)
           throws TapisException, IllegalStateException;
 }

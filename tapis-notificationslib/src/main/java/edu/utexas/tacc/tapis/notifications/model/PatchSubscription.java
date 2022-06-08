@@ -17,9 +17,8 @@ public final class PatchSubscription
   private final String description;
   private final String typeFilter;
   private final String subjectFilter;
-  private final List<DeliveryMethod> deliveryMethods;
-  private final Integer ttl;
-  private Object notes; // Not final since may require special handling and need to be updated. See AppResource.java
+  private final List<DeliveryTarget> deliveryTargets;
+  private final Integer ttlMinutes;
 
   // ************************************************************************
   // *********************** Constructors ***********************************
@@ -29,14 +28,13 @@ public final class PatchSubscription
    * Constructor setting all attributes.
    */
   public PatchSubscription(String description1, String typeFilter1, String subjectFilter1,
-                           List<DeliveryMethod> dMList1, Integer ttl1, Object notes1)
+                           List<DeliveryTarget> dMList1, Integer ttl1)
   {
     description = description1;
     typeFilter = typeFilter1;
     subjectFilter = subjectFilter1;
-    ttl = ttl1;
-    deliveryMethods = (dMList1 == null) ? null : new ArrayList<>(dMList1);
-    notes = notes1;
+    ttlMinutes = ttl1;
+    deliveryTargets = (dMList1 == null) ? null : new ArrayList<>(dMList1);
   }
 
   // ************************************************************************
@@ -45,13 +43,9 @@ public final class PatchSubscription
   public String getDescription() { return description; }
   public String getTypeFilter() { return typeFilter; }
   public String getSubjectFilter() { return subjectFilter; }
-  public List<DeliveryMethod> getDeliveryMethods()
+  public List<DeliveryTarget> getDeliveryMethods()
   {
-    return (deliveryMethods == null) ? null : new ArrayList<>(deliveryMethods);
+    return (deliveryTargets == null) ? null : new ArrayList<>(deliveryTargets);
   }
-  public Integer getTtl() { return ttl; }
-  public Object getNotes() {
-    return notes;
-  }
-  public void setNotes(Object o) { notes = o; }
+  public Integer getTtlMinutes() { return ttlMinutes; }
 }

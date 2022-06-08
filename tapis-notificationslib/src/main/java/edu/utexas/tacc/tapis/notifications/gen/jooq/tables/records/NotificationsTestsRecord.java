@@ -68,30 +68,30 @@ public class NotificationsTestsRecord extends UpdatableRecordImpl<NotificationsT
     }
 
     /**
-     * Setter for <code>tapis_ntf.notifications_tests.subscr_id</code>.
-     */
-    public void setSubscrId(String value) {
-        set(3, value);
-    }
-
-    /**
-     * Getter for <code>tapis_ntf.notifications_tests.subscr_id</code>.
-     */
-    public String getSubscrId() {
-        return (String) get(3);
-    }
-
-    /**
      * Setter for <code>tapis_ntf.notifications_tests.owner</code>.
      */
     public void setOwner(String value) {
-        set(4, value);
+        set(3, value);
     }
 
     /**
      * Getter for <code>tapis_ntf.notifications_tests.owner</code>.
      */
     public String getOwner() {
+        return (String) get(3);
+    }
+
+    /**
+     * Setter for <code>tapis_ntf.notifications_tests.subscr_name</code>.
+     */
+    public void setSubscrName(String value) {
+        set(4, value);
+    }
+
+    /**
+     * Getter for <code>tapis_ntf.notifications_tests.subscr_name</code>.
+     */
+    public String getSubscrName() {
         return (String) get(4);
     }
 
@@ -191,12 +191,12 @@ public class NotificationsTestsRecord extends UpdatableRecordImpl<NotificationsT
 
     @Override
     public Field<String> field4() {
-        return NotificationsTests.NOTIFICATIONS_TESTS.SUBSCR_ID;
+        return NotificationsTests.NOTIFICATIONS_TESTS.OWNER;
     }
 
     @Override
     public Field<String> field5() {
-        return NotificationsTests.NOTIFICATIONS_TESTS.OWNER;
+        return NotificationsTests.NOTIFICATIONS_TESTS.SUBSCR_NAME;
     }
 
     @Override
@@ -236,12 +236,12 @@ public class NotificationsTestsRecord extends UpdatableRecordImpl<NotificationsT
 
     @Override
     public String component4() {
-        return getSubscrId();
+        return getOwner();
     }
 
     @Override
     public String component5() {
-        return getOwner();
+        return getSubscrName();
     }
 
     @Override
@@ -281,12 +281,12 @@ public class NotificationsTestsRecord extends UpdatableRecordImpl<NotificationsT
 
     @Override
     public String value4() {
-        return getSubscrId();
+        return getOwner();
     }
 
     @Override
     public String value5() {
-        return getOwner();
+        return getSubscrName();
     }
 
     @Override
@@ -329,13 +329,13 @@ public class NotificationsTestsRecord extends UpdatableRecordImpl<NotificationsT
 
     @Override
     public NotificationsTestsRecord value4(String value) {
-        setSubscrId(value);
+        setOwner(value);
         return this;
     }
 
     @Override
     public NotificationsTestsRecord value5(String value) {
-        setOwner(value);
+        setSubscrName(value);
         return this;
     }
 
@@ -391,14 +391,14 @@ public class NotificationsTestsRecord extends UpdatableRecordImpl<NotificationsT
     /**
      * Create a detached, initialised NotificationsTestsRecord
      */
-    public NotificationsTestsRecord(Integer seqId, Integer subscrSeqId, String tenant, String subscrId, String owner, Integer notificationCount, JsonElement notifications, LocalDateTime created, LocalDateTime updated) {
+    public NotificationsTestsRecord(Integer seqId, Integer subscrSeqId, String tenant, String owner, String subscrName, Integer notificationCount, JsonElement notifications, LocalDateTime created, LocalDateTime updated) {
         super(NotificationsTests.NOTIFICATIONS_TESTS);
 
         setSeqId(seqId);
         setSubscrSeqId(subscrSeqId);
         setTenant(tenant);
-        setSubscrId(subscrId);
         setOwner(owner);
+        setSubscrName(subscrName);
         setNotificationCount(notificationCount);
         setNotifications(notifications);
         setCreated(created);

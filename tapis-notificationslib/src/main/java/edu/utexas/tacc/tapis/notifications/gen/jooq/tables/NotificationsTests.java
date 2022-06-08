@@ -68,14 +68,14 @@ public class NotificationsTests extends TableImpl<NotificationsTestsRecord> {
     public final TableField<NotificationsTestsRecord, String> TENANT = createField(DSL.name("tenant"), SQLDataType.CLOB.nullable(false), this, "");
 
     /**
-     * The column <code>tapis_ntf.notifications_tests.subscr_id</code>.
-     */
-    public final TableField<NotificationsTestsRecord, String> SUBSCR_ID = createField(DSL.name("subscr_id"), SQLDataType.CLOB.nullable(false), this, "");
-
-    /**
      * The column <code>tapis_ntf.notifications_tests.owner</code>.
      */
     public final TableField<NotificationsTestsRecord, String> OWNER = createField(DSL.name("owner"), SQLDataType.CLOB.nullable(false), this, "");
+
+    /**
+     * The column <code>tapis_ntf.notifications_tests.subscr_name</code>.
+     */
+    public final TableField<NotificationsTestsRecord, String> SUBSCR_NAME = createField(DSL.name("subscr_name"), SQLDataType.CLOB.nullable(false), this, "");
 
     /**
      * The column <code>tapis_ntf.notifications_tests.notification_count</code>.
@@ -147,7 +147,7 @@ public class NotificationsTests extends TableImpl<NotificationsTestsRecord> {
 
     @Override
     public List<UniqueKey<NotificationsTestsRecord>> getKeys() {
-        return Arrays.<UniqueKey<NotificationsTestsRecord>>asList(Keys.NOTIFICATIONS_TESTS_PKEY);
+        return Arrays.<UniqueKey<NotificationsTestsRecord>>asList(Keys.NOTIFICATIONS_TESTS_PKEY, Keys.NOTIFICATIONS_TESTS_TENANT_OWNER_SUBSCR_NAME_KEY);
     }
 
     @Override

@@ -1,7 +1,6 @@
 package edu.utexas.tacc.tapis.notifications.dao;
 
-import com.google.gson.JsonObject;
-import edu.utexas.tacc.tapis.notifications.model.DeliveryMethod;
+import edu.utexas.tacc.tapis.notifications.model.DeliveryTarget;
 import edu.utexas.tacc.tapis.notifications.model.Notification;
 import edu.utexas.tacc.tapis.shared.threadlocal.TapisThreadContext;
 import edu.utexas.tacc.tapis.sharedapi.security.AuthenticatedUser;
@@ -62,10 +61,10 @@ public class NotificationsDaoTest
     //Remove all objects created by tests
     for (int i = 0; i < numSubscriptions; i++)
     {
-      dao.deleteSubscription(tenantName, subscriptions[i].getId());
+      dao.deleteSubscriptionByName(tenantName, subscriptions[i].getOwner(), subscriptions[i].getName());
     }
-    Assert.assertFalse(dao.checkForSubscription(tenantName, subscriptions[0].getId()),
-                       "Subscription not deleted. Subscription id: " + subscriptions[0].getId());
+    Assert.assertFalse(dao.checkForSubscription(tenantName, subscriptions[0].getOwner(), subscriptions[0].getName()),
+                       "Subscription not deleted. Subscription id: " + subscriptions[0].getName());
   }
 
 
@@ -78,8 +77,8 @@ public class NotificationsDaoTest
   public void testCreateSubscription() throws Exception
   {
     Subscription sub0 = subscriptions[0];
-    boolean itemCreated = dao.createSubscription(rUser, sub0, expiryNull, gson.toJson(sub0), scrubbedJson);
-    Assert.assertTrue(itemCreated, "Item not created, id: " + sub0.getId());
+    boolean itemCreated = dao.createSubscription(rUser, sub0, expiryNull);
+    Assert.assertTrue(itemCreated, "Item not created, id: " + sub0.getName());
   }
 
   // Test retrieving a single item
@@ -87,12 +86,12 @@ public class NotificationsDaoTest
   public void testGetSubscription() throws Exception
   {
     Subscription sub0 = subscriptions[1];
-    boolean itemCreated = dao.createSubscription(rUser, sub0, expiryNull, gson.toJson(sub0), scrubbedJson);
-    Assert.assertTrue(itemCreated, "Item not created, id: " + sub0.getId());
-    Subscription tmpSub = dao.getSubscription(sub0.getTenant(), sub0.getId());
-    Assert.assertNotNull(tmpSub, "Failed to create item: " + sub0.getId());
-    System.out.println("Found item: " + sub0.getId());
-    Assert.assertEquals(tmpSub.getId(), sub0.getId());
+    boolean itemCreated = dao.createSubscription(rUser, sub0, expiryNull);
+    Assert.assertTrue(itemCreated, "Item not created, id: " + sub0.getName());
+    Subscription tmpSub = dao.getSubscriptionByName(sub0.getTenant(), sub0.getOwner(), sub0.getName());
+    Assert.assertNotNull(tmpSub, "Failed to create item: " + sub0.getName());
+    System.out.println("Found item: " + sub0.getName());
+    Assert.assertEquals(tmpSub.getName(), sub0.getName());
     Assert.assertEquals(tmpSub.getDescription(), sub0.getDescription());
     Assert.assertEquals(tmpSub.getOwner(), sub0.getOwner());
     Assert.assertEquals(tmpSub.getTypeFilter(), sub0.getTypeFilter());
@@ -100,26 +99,18 @@ public class NotificationsDaoTest
     Assert.assertEquals(tmpSub.getTypeFilter2(), sub0.getTypeFilter2());
     Assert.assertEquals(tmpSub.getTypeFilter3(), sub0.getTypeFilter3());
     Assert.assertEquals(tmpSub.getSubjectFilter(), sub0.getSubjectFilter());
-    Assert.assertEquals(tmpSub.getTtl(), sub0.getTtl());
+    Assert.assertEquals(tmpSub.getTtlMinutes(), sub0.getTtlMinutes());
     Assert.assertNull(tmpSub.getExpiry());
 
-    // Verify notes
-    JsonObject obj = (JsonObject) tmpSub.getNotes();
-    Assert.assertNotNull(obj, "Notes object was null");
-    Assert.assertTrue(obj.has("project"));
-    Assert.assertEquals(obj.get("project").getAsString(), notesObj1.get("project").getAsString());
-    Assert.assertTrue(obj.has("testdata"));
-    Assert.assertEquals(obj.get("testdata").getAsString(), notesObj1.get("testdata").getAsString());
-
-    // Verify delivery methods
-    List<DeliveryMethod> origDMs = sub0.getDeliveryMethods();
-    List<DeliveryMethod> deliveryMethods = tmpSub.getDeliveryMethods();
-    Assert.assertNotNull(origDMs, "Orig deliveryMethods was null");
-    Assert.assertNotNull(deliveryMethods, "Fetched deliveryMethods was null");
-    Assert.assertEquals(deliveryMethods.size(), origDMs.size());
+    // Verify delivery targets
+    List<DeliveryTarget> origDMs = sub0.getDeliveryTargets();
+    List<DeliveryTarget> deliveryTargets = tmpSub.getDeliveryTargets();
+    Assert.assertNotNull(origDMs, "Orig deliveryTargets was null");
+    Assert.assertNotNull(deliveryTargets, "Fetched deliveryTargets was null");
+    Assert.assertEquals(deliveryTargets.size(), origDMs.size());
     var dmAddrsFound = new ArrayList<String>();
-    for (DeliveryMethod dmFound : deliveryMethods) {dmAddrsFound.add(dmFound.getDeliveryAddress());}
-    for (DeliveryMethod dmSeedItem : origDMs)
+    for (DeliveryTarget dmFound : deliveryTargets) {dmAddrsFound.add(dmFound.getDeliveryAddress());}
+    for (DeliveryTarget dmSeedItem : origDMs)
     {
       Assert.assertTrue(dmAddrsFound.contains(dmSeedItem.getDeliveryAddress()),
               "List of delivery methods did not contain a method with address: " + dmSeedItem.getDeliveryAddress());
@@ -133,13 +124,13 @@ public class NotificationsDaoTest
   public void testGetSubscriptions() throws Exception
   {
     Subscription sub0 = subscriptions[2];
-    boolean itemCreated = dao.createSubscription(rUser, sub0, expiryNull, gson.toJson(sub0), scrubbedJson);
-    Assert.assertTrue(itemCreated, "Item not created, id: " + sub0.getId());
-    List<Subscription> subscriptions = dao.getSubscriptions(tenantName, null, null, null, DEFAULT_LIMIT, orderByListNull,
-                                                            DEFAULT_SKIP, startAfterNull);
+    boolean itemCreated = dao.createSubscription(rUser, sub0, expiryNull);
+    Assert.assertTrue(itemCreated, "Item not created, id: " + sub0.getName());
+    List<Subscription> subscriptions = dao.getSubscriptions(tenantName, sub0.getOwner(), null, null, null,
+                                             DEFAULT_LIMIT, orderByListNull, DEFAULT_SKIP, startAfterNull, anyOwnerFalse);
     for (Subscription subscription : subscriptions)
     {
-      System.out.println("Found item with id: " + subscription.getId());
+      System.out.println("Found item with id: " + subscription.getName());
     }
   }
 
@@ -150,19 +141,19 @@ public class NotificationsDaoTest
     var subIdList = new HashSet<String>();
     // Create 2 subscriptions
     Subscription sub0 = subscriptions[3];
-    boolean itemCreated = dao.createSubscription(rUser, sub0, expiryNull, gson.toJson(sub0), scrubbedJson);
-    Assert.assertTrue(itemCreated, "Item not created, id: " + sub0.getId());
-    subIdList.add(sub0.getId());
+    boolean itemCreated = dao.createSubscription(rUser, sub0, expiryNull);
+    Assert.assertTrue(itemCreated, "Item not created, id: " + sub0.getName());
+    subIdList.add(sub0.getName());
     sub0 = subscriptions[4];
-    itemCreated = dao.createSubscription(rUser, sub0, expiryNull, gson.toJson(sub0), scrubbedJson);
-    Assert.assertTrue(itemCreated, "Item not created, id: " + sub0.getId());
-    subIdList.add(sub0.getId());
+    itemCreated = dao.createSubscription(rUser, sub0, expiryNull);
+    Assert.assertTrue(itemCreated, "Item not created, id: " + sub0.getName());
+    subIdList.add(sub0.getName());
     // Get all subscriptions in list of seqIDs
-    List<Subscription> subscriptions = dao.getSubscriptions(tenantName, null, null, subIdList, DEFAULT_LIMIT,
-                                                            orderByListNull, DEFAULT_SKIP, startAfterNull);
+    List<Subscription> subscriptions = dao.getSubscriptions(tenantName, sub0.getOwner(), null, null, subIdList,
+                                                            DEFAULT_LIMIT, orderByListNull, DEFAULT_SKIP, startAfterNull, anyOwnerFalse);
     for (Subscription subscription : subscriptions) {
-      System.out.println("Found item with id: " + subscription.getId());
-      Assert.assertTrue(subIdList.contains(subscription.getId()));
+      System.out.println("Found item with id: " + subscription.getName());
+      Assert.assertTrue(subIdList.contains(subscription.getName()));
     }
     Assert.assertEquals(subIdList.size(), subscriptions.size());
   }
@@ -172,37 +163,24 @@ public class NotificationsDaoTest
   public void testEnableDisableDeleteSubscription() throws Exception
   {
     Subscription sub0 = subscriptions[5];
-    boolean itemCreated = dao.createSubscription(rUser, sub0, expiryNull, gson.toJson(sub0), scrubbedJson);
-    Assert.assertTrue(itemCreated, "Item not created, id: " + sub0.getId());
-    System.out.println("Created item, id: " + sub0.getId() + " enabled: " + sub0.isEnabled());
+    boolean itemCreated = dao.createSubscription(rUser, sub0, expiryNull);
+    Assert.assertTrue(itemCreated, "Item not created, id: " + sub0.getName());
+    System.out.println("Created item, id: " + sub0.getName() + " enabled: " + sub0.isEnabled());
     // Enabled should start off true, then become false and finally true again.
-    Subscription tmpSub = dao.getSubscription(sub0.getTenant(), sub0.getId());
+    Subscription tmpSub = dao.getSubscriptionByName(sub0.getTenant(), sub0.getOwner(), sub0.getName());
     Assert.assertTrue(tmpSub.isEnabled());
-    dao.updateEnabled(rUser, tenantName, sub0.getId(), false);
-    tmpSub = dao.getSubscription(sub0.getTenant(), sub0.getId());
+    dao.updateEnabled(tenantName, sub0.getOwner(), sub0.getName(), false);
+    tmpSub = dao.getSubscriptionByName(sub0.getTenant(), sub0.getOwner(), sub0.getName());
     Assert.assertFalse(tmpSub.isEnabled());
-    dao.updateEnabled(rUser, tenantName, sub0.getId(), true);
-    tmpSub = dao.getSubscription(sub0.getTenant(), sub0.getId());
+    dao.updateEnabled(tenantName, sub0.getOwner(), sub0.getName(), true);
+    tmpSub = dao.getSubscriptionByName(sub0.getTenant(), sub0.getOwner(), sub0.getName());
     Assert.assertTrue(tmpSub.isEnabled());
 
     // Deleted should remove the item
-    dao.deleteSubscription(tenantName, sub0.getId());
-    Assert.assertFalse(dao.checkForSubscription(sub0.getTenant(), sub0.getId()),"Subscription not deleted. Subscription id: " + sub0.getId());
-    tmpSub = dao.getSubscription(sub0.getTenant(), sub0.getId());
+    dao.deleteSubscriptionByName(tenantName, sub0.getOwner(), sub0.getName());
+    Assert.assertFalse(dao.checkForSubscription(sub0.getTenant(), sub0.getOwner(), sub0.getName()),"Subscription not deleted. Subscription id: " + sub0.getName());
+    tmpSub = dao.getSubscriptionByName(sub0.getTenant(), sub0.getOwner(), sub0.getName());
     Assert.assertNull(tmpSub);
-  }
-
-  // Test change subscription owner
-  @Test
-  public void testChangeSubscriptionOwner() throws Exception
-  {
-    Subscription sub0 = subscriptions[6];
-    boolean itemCreated = dao.createSubscription(rUser, sub0, expiryNull, gson.toJson(sub0), scrubbedJson);
-    System.out.println("Created item with subscriptionId: " + sub0.getId());
-    Assert.assertTrue(itemCreated, "Item not created, id: " + sub0.getId());
-    dao.updateSubscriptionOwner(rUser, tenantName, sub0.getId(), "newOwner");
-    Subscription tmpSubscription = dao.getSubscription(sub0.getTenant(), sub0.getId());
-    Assert.assertEquals(tmpSubscription.getOwner(), "newOwner");
   }
 
   // Test update TTL
@@ -211,14 +189,14 @@ public class NotificationsDaoTest
   {
     Subscription sub0 = subscriptions[7];
     Instant newExpiry = Instant.now();
-    boolean itemCreated = dao.createSubscription(rUser, sub0, expiryNull, gson.toJson(sub0), scrubbedJson);
-    System.out.println("Created item with subscriptionId: " + sub0.getId());
-    Assert.assertTrue(itemCreated, "Item not created, id: " + sub0.getId());
+    boolean itemCreated = dao.createSubscription(rUser, sub0, expiryNull);
+    System.out.println("Created item with subscriptionName: " + sub0.getName());
+    Assert.assertTrue(itemCreated, "Item not created, name: " + sub0.getName());
     // Interesting, storing and retrieving from DB truncates/rounds from nanoseconds to microseconds.
     System.out.println("Old Expiry: " + sub0.getExpiry());
     System.out.println("New Expiry: " + newExpiry);
-    dao.updateSubscriptionTTL(rUser, tenantName, sub0.getId(), ttl2, newExpiry);
-    Subscription tmpSub = dao.getSubscription(sub0.getTenant(), sub0.getId());
+    dao.updateSubscriptionTTL(tenantName, sub0.getOwner(), sub0.getName(), ttl2, newExpiry);
+    Subscription tmpSub = dao.getSubscriptionByName(sub0.getTenant(), sub0.getOwner(), sub0.getName());
     System.out.println("Got Expiry: " + tmpSub.getExpiry());
     LocalDateTime newExpiryLDT =  LocalDateTime.ofInstant(newExpiry, ZoneOffset.UTC);
     LocalDateTime gotExpiryLDT =  LocalDateTime.ofInstant(tmpSub.getExpiry(), ZoneOffset.UTC);
@@ -229,7 +207,7 @@ public class NotificationsDaoTest
     LocalDateTime gotExpiryLDTms = gotExpiryLDT.truncatedTo(ChronoUnit.MILLIS);
     System.out.println("New ExpiryLDTms: " + newExpiryLDTms);
     System.out.println("Got ExpiryLDTms: " + gotExpiryLDTms);
-    Assert.assertEquals(tmpSub.getTtl(), ttl2);
+    Assert.assertEquals(tmpSub.getTtlMinutes(), ttl2);
     Assert.assertEquals(gotExpiryLDTms, newExpiryLDTms);
   }
 
@@ -242,14 +220,15 @@ public class NotificationsDaoTest
   public void testMissingSubscription() throws Exception
   {
     String fakeSubscriptionName = "AMissingSubscriptionName";
+    String fakeOwner = "owner";
     Subscription patchedSubscription =
-            new Subscription(1, tenantName, fakeSubscriptionName, "description", "owner", isEnabledTrue,
-                             typeFilter1, subjectFilter1, dmList1, ttl1, notes1, uuidNull, expiryNull, createdNull, updatedNull);
+            new Subscription(1, tenantName, fakeOwner, fakeSubscriptionName, "description", isEnabledTrue,
+                             typeFilter1, subjectFilter1, dmList1, ttl1, uuidNull, expiryNull, createdNull, updatedNull);
     // Make sure subscription does not exist
-    Assert.assertFalse(dao.checkForSubscription(tenantName, fakeSubscriptionName));
+    Assert.assertFalse(dao.checkForSubscription(tenantName, fakeOwner, fakeSubscriptionName));
     // update should throw not found exception
     boolean pass = false;
-    try { dao.patchSubscription(rUser, fakeSubscriptionName, patchedSubscription, scrubbedJson, null); }
+    try { dao.patchSubscription(rUser, fakeOwner, fakeSubscriptionName, patchedSubscription); }
     catch (IllegalStateException e)
     {
       System.out.println("Exception msg: " + e.getMessage());
@@ -257,8 +236,7 @@ public class NotificationsDaoTest
       pass = true;
     }
     Assert.assertTrue(pass);
-    Assert.assertNull(dao.getSubscription(tenantName, fakeSubscriptionName));
-    Assert.assertNull(dao.getSubscriptionOwner(tenantName, fakeSubscriptionName));
+    Assert.assertNull(dao.getSubscriptionByName(tenantName, fakeOwner, fakeSubscriptionName));
   }
 
   // ******************************************************************
@@ -271,13 +249,13 @@ public class NotificationsDaoTest
   {
     // Create a Subscription to be referenced by notifications
     Subscription sub0 = subscriptions[8];
-    boolean itemCreated = dao.createSubscription(rUser, sub0, expiryNull, gson.toJson(sub0), scrubbedJson);
-    Assert.assertTrue(itemCreated, "Subscription not created, id: " + sub0.getId());
-    Subscription tmpSub = dao.getSubscription(sub0.getTenant(), sub0.getId());
-    Assert.assertNotNull(tmpSub, "Failed to create subscription: " + sub0.getId());
+    boolean itemCreated = dao.createSubscription(rUser, sub0, expiryNull);
+    Assert.assertTrue(itemCreated, "Subscription not created, id: " + sub0.getName());
+    Subscription tmpSub = dao.getSubscriptionByName(sub0.getTenant(), sub0.getOwner(), sub0.getName());
+    Assert.assertNotNull(tmpSub, "Failed to create subscription: " + sub0.getName());
 
     // Create test notifications
-    var notifications = IntegrationUtils.makeNotifications(numNotifications, testKey, tmpSub.getSeqId(), tmpSub.getId());
+    var notifications = IntegrationUtils.makeNotifications(numNotifications, testKey, tmpSub.getSeqId(), tmpSub.getName());
 
     // Persist test notifications
     boolean b = dao.persistNotificationsAndUpdateLastEvent(tenantName, event1, bucketNum1, notifications);
@@ -286,14 +264,14 @@ public class NotificationsDaoTest
     // Check that they were persisted.
     List<Notification> tmpNotifications = dao.getNotificationsForEvent(tenantName, event1, bucketNum1);
     Assert.assertEquals(tmpNotifications.size(), notifications.size());
-    DeliveryMethod.DeliveryType dType = notifications.get(0).getDeliveryMethod().getDeliveryType();
+    DeliveryTarget.DeliveryMethod dType = notifications.get(0).getDeliveryTarget().getDeliveryMethod();
     for (Notification n : tmpNotifications)
     {
       System.out.println("Found notification: " + n);
       Assert.assertEquals(n.getBucketNum(), bucketNum1);
       Assert.assertEquals(n.getEvent().getUuid(), event1.getUuid());
       Assert.assertEquals(n.getSubscrSeqId(), tmpSub.getSeqId());
-      Assert.assertEquals(n.getDeliveryMethod().getDeliveryType(), dType);
+      Assert.assertEquals(n.getDeliveryTarget().getDeliveryMethod(), dType);
       Assert.assertNotNull(n.getCreated());
     }
 
@@ -304,14 +282,14 @@ public class NotificationsDaoTest
     Assert.assertEquals(tmpNtf.getBucketNum(), bucketNum1);
     Assert.assertEquals(tmpNtf.getEvent().getUuid(), event1.getUuid());
     Assert.assertEquals(tmpNtf.getSubscrSeqId(), tmpSub.getSeqId());
-    Assert.assertNotNull(tmpNtf.getDeliveryMethod());
-    Assert.assertFalse(StringUtils.isBlank(tmpNtf.getDeliveryMethod().getDeliveryAddress()));
-    Assert.assertNotNull(tmpNtf.getDeliveryMethod().getDeliveryType());
+    Assert.assertNotNull(tmpNtf.getDeliveryTarget());
+    Assert.assertFalse(StringUtils.isBlank(tmpNtf.getDeliveryTarget().getDeliveryAddress()));
+    Assert.assertNotNull(tmpNtf.getDeliveryTarget().getDeliveryMethod());
     Assert.assertNotNull(tmpNtf.getCreated());
 
     // Check that we can delete one.
     ntf = tmpNotifications.get(0);
-    dao.deleteNotification(tenantName, ntf);
+    dao.deleteNotificationsByDeliveryTarget(tenantName, ntf);
     tmpNtf = dao.getNotification(tenantName, ntf.getUuid());
     Assert.assertNull(tmpNtf, "Notification not deleted");
 
