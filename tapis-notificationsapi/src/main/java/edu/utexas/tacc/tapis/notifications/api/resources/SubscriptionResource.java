@@ -949,7 +949,7 @@ public class SubscriptionResource
   /**
    * enable, disable, delete, updateTtl follow same pattern
    * @param opName Name of operation.
-   * @param name Id of subscription to update
+   * @param name Name or uuid of subscription to update/delete
    * @param ttlMinutes new value for updateTtl operation
    * @param securityContext Security context from client call
    * @return Response to be returned to the client.
@@ -1044,7 +1044,7 @@ public class SubscriptionResource
     ResultChangeCount count = new ResultChangeCount();
     count.changes = changeCount;
     RespChangeCount resp1 = new RespChangeCount(count);
-    if (OP_DELETE_BY_NAME.equals(opName))
+    if (OP_DELETE_BY_NAME.equals(opName) || OP_DELETE_BY_UUID.equals(opName))
       return createSuccessResponse(Status.OK, ApiUtils.getMsgAuth("NTFAPI_SUBSCR_DELETED", rUser, subscrOwner, name), resp1);
     else
       return createSuccessResponse(Status.OK, ApiUtils.getMsgAuth(UPDATED, rUser, subscrOwner, name, opName), resp1);

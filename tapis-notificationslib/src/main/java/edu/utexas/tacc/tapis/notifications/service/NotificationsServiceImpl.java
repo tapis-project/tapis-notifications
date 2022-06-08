@@ -438,7 +438,8 @@ public class NotificationsServiceImpl implements NotificationsService
     if (subscr == null) return 0;
 
     // ------------------------- Check authorization -------------------------
-    checkAuth(rUser, subscr.getOwner(), subscr.getName(), op);
+    // If user request then check that user is owner. For service request always allowed
+    if (!rUser.isServiceRequest()) checkAuth(rUser, subscr.getOwner(), subscr.getName(), op);
 
     // Delete the subscription
     return dao.deleteSubscriptionByUuid(rUser.getOboTenantId(), uuid);
@@ -612,7 +613,8 @@ public class NotificationsServiceImpl implements NotificationsService
     // If subscription does not exist then return null
     if (subscr == null) return null;
     // ------------------------- Check authorization -------------------------
-    checkAuth(rUser, subscr.getOwner(), subscr.getName(), op);
+    // If user request then check that user is owner. For service request always allowed
+    if (!rUser.isServiceRequest()) checkAuth(rUser, subscr.getOwner(), subscr.getName(), op);
     return subscr;
   }
 
