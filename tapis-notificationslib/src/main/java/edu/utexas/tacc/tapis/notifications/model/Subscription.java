@@ -334,7 +334,6 @@ public final class Subscription
   private void checkAttrRequired(List<String> errMessages)
   {
     if (StringUtils.isBlank(owner)) errMessages.add(LibUtils.getMsg(CREATE_MISSING_ATTR, OWNER_FIELD));
-    if (StringUtils.isBlank(name)) errMessages.add(LibUtils.getMsg(CREATE_MISSING_ATTR, NAME_FIELD));
     if (StringUtils.isBlank(typeFilter)) errMessages.add(LibUtils.getMsg(CREATE_MISSING_ATTR, TYPE_FILTER_FIELD));
     if (StringUtils.isBlank(subjectFilter)) errMessages.add(LibUtils.getMsg(CREATE_MISSING_ATTR, SUBJECT_FILTER_FIELD));
     if (deliveryTargets == null) errMessages.add(LibUtils.getMsg(CREATE_MISSING_ATTR, DELIVERY_TARGETS_FIELD));

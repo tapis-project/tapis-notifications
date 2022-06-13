@@ -93,7 +93,7 @@ public class GeneralResource
   }
 
   /**
-   * Lightweight non-authenticated ready check endpoint.
+   * Non-authenticated ready check endpoint.
    * Note that no JWT is required on this call and CallSiteToggle is used to limit logging.
    * Based on similar method in tapis-securityapi.../SecurityResource
    *
@@ -101,6 +101,8 @@ public class GeneralResource
    *    - retrieve tenants map
    *    - get a service JWT
    *    - connect to the DB and verify and that main service table exists
+   *    - check that message broker is available
+   *    - check that dispatch worker is ready by running a test sequence which delivers a notification via WEBHOOK.
    *
    * It's intended as the endpoint that monitoring applications can use to check
    * whether the application is ready to accept traffic.  In particular, kubernetes
@@ -131,7 +133,9 @@ public class GeneralResource
     // Get the current check count.
     long checkNum = _readyCheckCount.incrementAndGet();
 
+    // =========================================
     // Check that we can get tenants list
+    // =========================================
     Exception readyCheckException = checkTenants();
     if (readyCheckException != null)
     {
@@ -151,7 +155,9 @@ public class GeneralResource
       if (checkTenantsOK.toggleOn()) _log.info(ApiUtils.getMsg("NTFAPI_READYCHECK_TENANTS_ERRTOGGLE_CLEARED"));
     }
 
+    // =========================================
     // Check that we have a service JWT
+    // =========================================
     readyCheckException = checkJWT();
     if (readyCheckException != null)
     {
@@ -171,7 +177,9 @@ public class GeneralResource
       if (checkJWTOK.toggleOn()) _log.info(ApiUtils.getMsg("NTFAPI_READYCHECK_JWT_ERRTOGGLE_CLEARED"));
     }
 
+    // =========================================
     // Check that we can connect to the DB
+    // =========================================
     readyCheckException = checkDB();
     if (readyCheckException != null)
     {
@@ -191,7 +199,9 @@ public class GeneralResource
       if (checkDBOK.toggleOn()) _log.info(ApiUtils.getMsg("NTFAPI_READYCHECK_DB_ERRTOGGLE_CLEARED"));
     }
 
+    // =============================================
     //  Check that message broker is available
+    // =============================================
     readyCheckException = checkMessageBroker();
     if (readyCheckException != null)
     {
@@ -211,7 +221,9 @@ public class GeneralResource
       if (checkMQOK.toggleOn()) _log.info(ApiUtils.getMsg("NTFAPI_READYCHECK_MQ_ERRTOGGLE_CLEARED"));
     }
 
+    // ====================================================================================
     //Check that the dispatcher is ready by executing a test via TestSequence support.
+    // ====================================================================================
     readyCheckException = checkDispatcher();
     if (readyCheckException != null)
     {
