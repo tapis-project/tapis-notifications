@@ -171,6 +171,7 @@ public final class DeliveryBucketManager implements Callable<String>
   private void processDelivery(Delivery delivery) throws IOException, TapisException
   {
     Event event = delivery.getEvent();
+    event.setTypeFields();
 
     log.debug(LibUtils.getMsg("NTFLIB_DSP_BUCKET_EVENT", bucketNum, delivery.getDeliveryTag(), event));
 

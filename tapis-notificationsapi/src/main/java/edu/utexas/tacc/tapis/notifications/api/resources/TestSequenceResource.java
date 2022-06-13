@@ -423,14 +423,7 @@ public class TestSequenceResource
     }
 
     // Extract the event source from the request making sure it is a URI
-    URI source;
-    try { source = new URI(sourceStr); }
-    catch (URISyntaxException e)
-    {
-      msg = ApiUtils.getMsg("NTFAPI_TEST_EVENT_SOURCE_ERR", tenant, user, sourceStr, type, subject, timestamp, name, e.getMessage());
-      _log.error(msg);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
-    }
+    String source = TapisConstants.SERVICE_NAME_NOTIFICATIONS;
 
     // Extract the event UUID from the request making sure it is a UUID
     UUID eventUuid;

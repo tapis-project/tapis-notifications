@@ -45,7 +45,7 @@ public final class Event
   /* ********************************************************************** */
 
   private static final String specversion = SPECVERSION;
-  private final URI source; // Context in which event happened. Required
+  private final String source; // Context in which event happened. Required
   private final String type; // Type of event related to originating occurrence. Required
   private final String subject; // Subject of event in context of event producer.
   private final String data; // Data associated with the event.
@@ -63,7 +63,7 @@ public final class Event
   /* ********************************************************************** */
   /*                           Constructors                                 */
   /* ********************************************************************** */
-  public Event(URI source1, String type1, String subject1, String data1, String seriesId1, String timestamp1,
+  public Event(String source1, String type1, String subject1, String data1, String seriesId1, String timestamp1,
                boolean deleteSubscriptionsMatchingSubject1, String tenant1, String user1, UUID uuid1)
   {
     source = source1;
@@ -82,7 +82,7 @@ public final class Event
   /* ********************************************************************** */
   /*                               Accessors                                */
   /* ********************************************************************** */
-  public URI getSource() { return source; }
+  public String getSource() { return source; }
   public String getType() { return type; }
   public String getSubject() { return subject; }
   public String getData() { return data; }

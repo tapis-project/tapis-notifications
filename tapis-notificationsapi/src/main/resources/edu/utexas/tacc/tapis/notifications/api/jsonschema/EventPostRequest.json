@@ -6,7 +6,7 @@
   "type": "object",
   "required": [ "source", "type", "timestamp" ],
   "properties": {
-    "source": { "type": "string", "format": "uri", "minLength": 1 },
+    "source": { "type": "string", "minLength": 1 },
     "type": { "type": "string", "minLength": 5, "maxLength": 128 },
     "subject": { "type": ["string", "null"] },
     "data": { "type":  ["string", "null"] },

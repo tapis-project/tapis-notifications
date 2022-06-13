@@ -112,15 +112,15 @@ public final class IntegrationUtils
 
   // Events
   public static final int bucketNum1 = 1;
-  public static final URI eventSource1;
-  static
-  {
-    URI eventSource;
-    try { eventSource = new URI("https://dev.develop.tapis.io/v3/jobs");
-    }
-    catch (URISyntaxException e) { eventSource = null; e.printStackTrace(); }
-    eventSource1 = eventSource;
-  }
+  public static final String eventSource1 = "Jobs";
+//  static
+//  {
+//    URI eventSource;
+//    try { eventSource = new URI("https://dev.develop.tapis.io/v3/jobs");
+//    }
+//    catch (URISyntaxException e) { eventSource = null; e.printStackTrace(); }
+//    eventSource1 = eventSource;
+//  }
   public static final String eventType1 = "jobs.job.complete";
   public static final String eventSubject1 = "640ad5a8-1a6e-4189-a334-c4c7226fb9ba-007";
   public static final String seriesId1 = "111a2228-1a6e-4189-a334-c4c722666666-007";

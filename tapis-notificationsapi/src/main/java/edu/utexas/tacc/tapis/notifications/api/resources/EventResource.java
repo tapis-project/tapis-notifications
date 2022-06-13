@@ -6,6 +6,7 @@ import edu.utexas.tacc.tapis.notifications.api.requests.ReqPostEvent;
 import edu.utexas.tacc.tapis.notifications.api.utils.ApiUtils;
 import edu.utexas.tacc.tapis.notifications.model.Event;
 import edu.utexas.tacc.tapis.notifications.service.NotificationsService;
+import edu.utexas.tacc.tapis.shared.TapisConstants;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisJSONException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import edu.utexas.tacc.tapis.shared.schema.JsonValidator;
@@ -158,18 +159,7 @@ public class EventResource
     }
 
     // Extract the source from the request making sure it is a URI
-    URI source;
-    try
-    {
-      source = new URI(req.source);
-    }
-    catch (URISyntaxException e)
-    {
-      msg = ApiUtils.getMsgAuth("NTFAPI_EVENT_SOURCE_ERR", rUser, req.source, req.type, req.subject, req.timestamp, e.getMessage());
-      _log.error(msg);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
-    }
-
+    String source = TapisConstants.SERVICE_NAME_NOTIFICATIONS;
     // Create an Event from the request
     Event event = new Event(source, req.type, req.subject, req.data, req.seriesId, req.timestamp,
                              req.deleteSubscriptionsMatchingSubject, rUser.getOboTenantId(), rUser.getOboUserId(),
