@@ -927,7 +927,7 @@ public class NotificationsServiceImpl implements NotificationsService
     dao.createTestSequence(rUser, name);
 
     // Create and publish an event
-    URI eventSource = new URI(baseServiceUrl);
+    String eventSource = TapisConstants.SERVICE_NAME_NOTIFICATIONS;
     String eventType = TEST_EVENT_TYPE;
     String eventSubject = name;
     String eventSeriesId = null;
