@@ -1051,6 +1051,10 @@ public class NotificationsDaoImpl implements NotificationsDao
     String tenant = event.getTenant();
     String wildcard = Subscription.FILTER_WILDCARD;
 
+    // Log details of what we are trying to match
+    _log.debug(LibUtils.getMsg("NTFLIB_DB_EVENT_SUBSCR", tenant, event.getType(), event.getType1(), event.getType2(),
+                               event.getType3(), event.getSubject(), event.getUuid()));
+
     // ------------------------- Build and execute SQL ----------------------------
     Connection conn = null;
     try
