@@ -76,7 +76,9 @@ public interface NotificationsService
   // -----------------------------------------------------------------------
   // ------------------------- Events --------------------------------------
   // -----------------------------------------------------------------------
-  void publishEvent(ResourceRequestUser rUser, Event event) throws IOException, IllegalArgumentException, NotAuthorizedException;
+  void publishEvent(ResourceRequestUser rUser, String source, String type, String subject, String data,
+                    String seriesId, String timestamp, boolean deleteSubscriptionMatchingSubject, String tenant)
+          throws IOException, IllegalArgumentException, NotAuthorizedException;
 
   // -----------------------------------------------------------------------
   // ------------------------- Test Sequence -------------------------------
