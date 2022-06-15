@@ -28,14 +28,13 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.SecurityContext;
 import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
@@ -81,6 +80,7 @@ public class EventResource
 
   /**
    * Post an event to the queue
+   * @param tenant Set the tenant associated with the event. Only for services. By default, oboTenant is used.
    * @param payloadStream - request body
    * @param securityContext - user identity
    * @return response containing reference to created object
@@ -88,7 +88,9 @@ public class EventResource
   @POST
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  public Response postEvent(InputStream payloadStream, @Context SecurityContext securityContext)
+  public Response postEvent(InputStream payloadStream,
+                            @QueryParam("tenant") String tenant,
+                            @Context SecurityContext securityContext)
   {
     String opName = "postEvent";
     String msg;
@@ -104,14 +106,6 @@ public class EventResource
 
     // Trace this request.
     if (_log.isTraceEnabled()) ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString());
-
-    // Only services may publish. Reject if not a service.
-    if (!rUser.isServiceRequest())
-    {
-      msg = ApiUtils.getMsgAuth("NTFAPI_EVENT_UNAUTH", rUser);
-      _log.warn(msg);
-      return Response.status(Status.UNAUTHORIZED).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
-    }
 
     // ------------------------- Extract and validate payload -------------------------
     // Read the payload into a string.
@@ -150,33 +144,11 @@ public class EventResource
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
 
-    // Validate the event type
-    if (!Event.isValidType(req.type))
-    {
-      msg = ApiUtils.getMsgAuth("NTFAPI_EVENT_TYPE_ERR", rUser, req.source, req.type, req.subject, req.timestamp);
-      _log.error(msg);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
-    }
-
-    // Extract the source from the request making sure it is a URI
-    String source = TapisConstants.SERVICE_NAME_NOTIFICATIONS;
-    // Create an Event from the request
-    Event event = new Event(source, req.type, req.subject, req.data, req.seriesId, req.timestamp,
-                             req.deleteSubscriptionsMatchingSubject, rUser.getOboTenantId(), rUser.getOboUserId(),
-                             UUID.randomUUID());
-
-    // If first field of type is not the service name then reject
-    if (!event.getType1().equals(rUser.getJwtUserId()))
-    {
-      msg = ApiUtils.getMsgAuth("NTFAPI_EVENT_TYPE_NOTSVC", rUser, req.source, req.type, req.subject, req.timestamp);
-      _log.warn(msg);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
-    }
-
     // ---------------------------- Make service call to post the event -------------------------------
     try
     {
-      notificationsService.publishEvent(rUser, event);
+      notificationsService.publishEvent(rUser, req.source, req.type, req.subject, req.data, req.seriesId, req.timestamp,
+                                        req.deleteSubscriptionsMatchingSubject, tenant);
     }
     catch (Exception e)
     {

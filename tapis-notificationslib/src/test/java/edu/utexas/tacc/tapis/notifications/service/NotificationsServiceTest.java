@@ -479,7 +479,7 @@ public class NotificationsServiceTest
   // -----------------------------------------------------------------------
 
   // Test posting an event to the queue
-  // NOTE: Event is left on the queue so it can be processed later.
+  // NOTE: Event is left on the queue, so it can be processed later.
   //       This method is useful for manually testing the processing of an event when the
   //       NotificationApplication and DispatchApplication have been started up.
   @Test(enabled = false)
@@ -489,7 +489,8 @@ public class NotificationsServiceTest
                             eventDeleteSubscriptionsMatchingSubjectFalse, tenantName, testUser1, UUID.randomUUID());
     System.out.println("Placing event on queue. Event: " + event);
     // Put an event on the queue as a message
-    svcImpl.publishEvent(rJobsSvc1, event);
+    svcImpl.publishEvent(rJobsSvc1, eventSource1, eventType1, eventSubject1, eventDataNull, seriesId1, eventTime,
+                         eventDeleteSubscriptionsMatchingSubjectFalse, tenantName);
   }
 
   // Test posting an event to the queue and reading it back
@@ -503,7 +504,8 @@ public class NotificationsServiceTest
                             eventDeleteSubscriptionsMatchingSubjectFalse, tenantName, testUser1, UUID.randomUUID());
     System.out.println("Placing event on queue. Event: " + event);
     // Put an event on the queue as a message
-    svcImpl.publishEvent(rJobsSvc1, event);
+    svcImpl.publishEvent(rJobsSvc1, eventSource1, eventType1, eventSubject1, eventDataNull, seriesId1, eventTime,
+                         eventDeleteSubscriptionsMatchingSubjectFalse, tenantName);
 //    // Create a consumer to handle messages read from the queue
 //    DeliverCallback deliverCallback = (consumerTab, delivery) -> {
 //      String msg = new String(delivery.getBody(), StandardCharsets.UTF_8);

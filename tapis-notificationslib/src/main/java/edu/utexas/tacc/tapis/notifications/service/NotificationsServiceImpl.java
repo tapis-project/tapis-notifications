@@ -1,7 +1,6 @@
 package edu.utexas.tacc.tapis.notifications.service;
 
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -801,17 +800,28 @@ public class NotificationsServiceImpl implements NotificationsService
    * Post an Event to the queue. Only services may publish events.
    * First field of type must match the service name.
    * @param rUser - ResourceRequestUser containing tenant, user and request info
-   * @param event - Pre-populated Event object
+   * @param source - Event attribute
+   * @param type - Event attribute
+   * @param subject - Event attribute
+   * @param data - Event attribute
+   * @param seriesId Event attribute
+   * @param timestamp - Event attribute
+   * @param deleteSubscriptionsMatchingSubject - Event attribute
+   * @param tenant - Set the tenant. Only for services. By default, oboTenant is used.
    * @throws IOException - on error
-   * @throws IllegalArgumentException - if
+   * @throws IllegalArgumentException - if missing required arg or invalid arg
    * @throws NotAuthorizedException - unauthorized
    */
   @Override
-  public void publishEvent(ResourceRequestUser rUser, Event event) throws IOException, IllegalArgumentException, NotAuthorizedException
+  public void publishEvent(ResourceRequestUser rUser, String source, String type, String subject, String data,
+                           String seriesId, String timestamp, boolean deleteSubscriptionsMatchingSubject, String tenant)
+          throws IOException, IllegalArgumentException, NotAuthorizedException
   {
     // Check inputs
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
-    if (event == null) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_NULL_INPUT_EVENT", rUser));
+    if (StringUtils.isBlank(source)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_NULL_INPUT_EVENT_ATTR", rUser, "source"));
+    if (StringUtils.isBlank(type)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_NULL_INPUT_EVENT_ATTR", rUser, "type"));
+    if (StringUtils.isBlank(timestamp)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_NULL_INPUT_EVENT_ATTR", rUser, "timestamp"));
 
     String msg;
     // Only services may publish. Reject if not a service.
@@ -822,13 +832,33 @@ public class NotificationsServiceImpl implements NotificationsService
       throw new NotAuthorizedException(msg, NO_CHALLENGE);
     }
 
-    // If first field of type is not the service name then reject
-    if (!event.getType1().equals(rUser.getJwtUserId()))
+    // Determine the tenant. Only services may set the tenant. By default, oboTenant is used.
+    if (!StringUtils.isBlank(tenant) && !rUser.isServiceRequest())
     {
-      msg = LibUtils.getMsgAuth("NTFLIB_EVENT_SVC_NOMATCH", rUser, event.getType(), rUser.getJwtUserId());
+      msg = LibUtils.getMsgAuth("NTFLIB_EVENT_UNAUTH", rUser);
+      log.warn(msg);
+      throw new NotAuthorizedException(msg, NO_CHALLENGE);
+    }
+    String tenantId = StringUtils.isBlank(tenant) ? rUser.getOboTenantId() : tenant;
+
+    // If first field of type is not the service name then reject
+    if (!type.equals(rUser.getJwtUserId()))
+    {
+      msg = LibUtils.getMsgAuth("NTFLIB_EVENT_SVC_NOMATCH", rUser, type, rUser.getJwtUserId());
       log.warn(msg);
       throw new IllegalArgumentException(msg);
     }
+
+    // Validate the event type
+    if (!Event.isValidType(type))
+    {
+      msg = LibUtils.getMsgAuth("NTFLIB_EVENT_TYPE_ERR", rUser, source, type, subject, timestamp);
+      log.warn(msg);
+    }
+
+    // Create an Event from the request
+    Event event = new Event(source, type, subject, data, seriesId, timestamp, deleteSubscriptionsMatchingSubject,
+                            tenantId, rUser.getOboUserId(), UUID.randomUUID());
 
     // Publish the event
     MessageBroker.getInstance().publishEvent(rUser, event);
@@ -937,7 +967,7 @@ public class NotificationsServiceImpl implements NotificationsService
 
     UUID eventUUID = UUID.randomUUID();
     Event event = new Event(eventSource, eventType, eventSubject, eventData, eventSeriesId, eventTimeStamp,
-                            eventDeleteSubscriptionsMatchingSubject,oboTenant, oboUser, eventUUID);
+                            eventDeleteSubscriptionsMatchingSubject, oboTenant, oboUser, eventUUID);
     MessageBroker.getInstance().publishEvent(rUser, event);
 
     return dao.getSubscriptionByName(oboTenant, oboUser, name);
