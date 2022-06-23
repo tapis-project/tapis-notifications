@@ -15,13 +15,17 @@ This job will:
 * Deploy to **DEV** environment
 * Push the merged *local* changes to the *dev* branch.
 
+To move docker images from **DEV** to **STAGING** run the following jenkins job:
+* TapisJava->2_Release->promote-dev-to-staging
+
+To move docker images from **STAGING** to **PROD** run the following jenkins job:
+* TapisJava->2_Release->promote-staging-to-prod-ver
+
 ## General Design
 
 The basic model of the Notification Event is based on the CloudEvents spec
 
 [CloudEvents](https://github.com/cloudevents/spec/blob/v1.0.1/spec.md)
-
-
 
 
 ## Setup the database
