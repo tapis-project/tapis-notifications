@@ -188,7 +188,6 @@ public class NotificationsServiceImpl implements NotificationsService
     catch (Exception e)
     {
       String msg = LibUtils.getMsg("NTFLIB_DSP_CHECK_ERR", owner, name, e.getMessage());
-      log.warn(msg);
       retValue = new TapisException(msg, e);
     }
     return retValue;
@@ -223,7 +222,6 @@ public class NotificationsServiceImpl implements NotificationsService
     if (!rUser.isServiceRequest())
     {
       String msg = LibUtils.getMsgAuth("NTFLIB_SUBSCR_UNAUTH", rUser);
-      log.warn(msg);
       throw new NotAuthorizedException(msg, NO_CHALLENGE);
     }
 
@@ -653,7 +651,6 @@ public class NotificationsServiceImpl implements NotificationsService
       catch (Exception e)
       {
         String msg = LibUtils.getMsgAuth("NTFLIB_SEARCH_ERROR", rUser, e.getMessage());
-        log.error(msg, e);
         throw new IllegalArgumentException(msg);
       }
     }
@@ -724,7 +721,6 @@ public class NotificationsServiceImpl implements NotificationsService
       catch (Exception e)
       {
         String msg = LibUtils.getMsgAuth("NTFLIB_SEARCH_ERROR", rUser, e.getMessage());
-        log.error(msg, e);
         throw new IllegalArgumentException(msg);
       }
     }
@@ -779,7 +775,6 @@ public class NotificationsServiceImpl implements NotificationsService
     catch (Exception e)
     {
       String msg = LibUtils.getMsgAuth("NTFLIB_SEARCH_ERROR", rUser, e.getMessage());
-      log.error(msg, e);
       throw new IllegalArgumentException(msg);
     }
 
@@ -828,7 +823,6 @@ public class NotificationsServiceImpl implements NotificationsService
     if (!rUser.isServiceRequest())
     {
       msg = LibUtils.getMsgAuth("NTFLIB_EVENT_UNAUTH", rUser);
-      log.warn(msg);
       throw new NotAuthorizedException(msg, NO_CHALLENGE);
     }
 
@@ -836,29 +830,27 @@ public class NotificationsServiceImpl implements NotificationsService
     if (!StringUtils.isBlank(tenant) && !rUser.isServiceRequest())
     {
       msg = LibUtils.getMsgAuth("NTFLIB_EVENT_UNAUTH", rUser);
-      log.warn(msg);
       throw new NotAuthorizedException(msg, NO_CHALLENGE);
     }
     String tenantId = StringUtils.isBlank(tenant) ? rUser.getOboTenantId() : tenant;
-
-    // If first field of type is not the service name then reject
-    if (!type.equals(rUser.getJwtUserId()))
-    {
-      msg = LibUtils.getMsgAuth("NTFLIB_EVENT_SVC_NOMATCH", rUser, type, rUser.getJwtUserId());
-      log.warn(msg);
-      throw new IllegalArgumentException(msg);
-    }
 
     // Validate the event type
     if (!Event.isValidType(type))
     {
       msg = LibUtils.getMsgAuth("NTFLIB_EVENT_TYPE_ERR", rUser, source, type, subject, timestamp);
-      log.warn(msg);
+      throw new IllegalArgumentException(msg);
     }
 
     // Create an Event from the request
     Event event = new Event(source, type, subject, data, seriesId, timestamp, deleteSubscriptionsMatchingSubject,
-                            tenantId, rUser.getOboUserId(), UUID.randomUUID());
+            tenantId, rUser.getOboUserId(), UUID.randomUUID());
+
+    // If first field of type is not the service name then reject
+    if (!event.getType1().equals(rUser.getJwtUserId()))
+    {
+      msg = LibUtils.getMsgAuth("NTFLIB_EVENT_SVC_NOMATCH", rUser, type, rUser.getJwtUserId());
+      throw new IllegalArgumentException(msg);
+    }
 
     // Publish the event
     MessageBroker.getInstance().publishEvent(rUser, event);
@@ -1151,7 +1143,6 @@ public class NotificationsServiceImpl implements NotificationsService
     {
       // Construct message reporting all errors
       String allErrors = getListOfErrors(rUser, sub.getOwner(), sub.getName(), errMessages);
-      log.error(allErrors);
       throw new IllegalStateException(allErrors);
     }
   }
@@ -1256,7 +1247,6 @@ public class NotificationsServiceImpl implements NotificationsService
     if (StringUtils.isBlank(owner) || StringUtils.isBlank(name) || op == null)
     {
       String msg = LibUtils.getMsgAuth("NTFLIB_AUTH_NULL_ARG", rUser, owner, name, op);
-      log.error(msg);
       throw new NotAuthorizedException(msg, NO_CHALLENGE);
     }
     switch(op) {
