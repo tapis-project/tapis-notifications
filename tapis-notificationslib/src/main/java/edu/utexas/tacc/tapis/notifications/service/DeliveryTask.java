@@ -174,8 +174,9 @@ public final class DeliveryTask implements Callable<Notification>
     // Use try-with-resources to auto-close the response.
     try (Response response = call.execute())
     {
-      // If response status code is not 200 assume delivery failed.
-      if (response.code() != Status.OK.getStatusCode())
+      // If response status code is not in the 200s assume delivery failed.
+      int httpCode = response.code();
+      if (httpCode < 200 || httpCode >= 300)
       {
         log.error(LibUtils.getMsg("NTFLIB_DSP_DLVRY_WH_FAIL_ERR", bucketNum, ntf.getUuid(),
                 deliveryTarget.getDeliveryMethod(), deliveryTarget.getDeliveryAddress(), response.code()));
