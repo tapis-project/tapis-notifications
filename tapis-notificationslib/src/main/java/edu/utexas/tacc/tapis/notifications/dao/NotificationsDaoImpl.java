@@ -1071,7 +1071,7 @@ public class NotificationsDaoImpl implements NotificationsDao
       //    AND (type_filter2 = '<typeFilter2>' OR type_filter2 = '*')
       //    AND (type_filter3 = '<typeFilter3>' OR type_filter3 = '*')
       //    AND (subject_filter = '<subjectFilter>' OR subject_filter = '*')
-      Condition whereCondition = SUBSCRIPTIONS.TENANT.eq(tenant);
+      Condition whereCondition = SUBSCRIPTIONS.TENANT.eq(tenant).and(SUBSCRIPTIONS.ENABLED.eq(true));
       Condition tmpCond = SUBSCRIPTIONS.TYPE_FILTER1.eq(event.getType1()).or(SUBSCRIPTIONS.TYPE_FILTER1.eq(wildcard));
       whereCondition = whereCondition.and(tmpCond);
       tmpCond = SUBSCRIPTIONS.TYPE_FILTER2.eq(event.getType2()).or(SUBSCRIPTIONS.TYPE_FILTER2.eq(wildcard));
