@@ -25,14 +25,14 @@ import edu.utexas.tacc.tapis.shared.security.TenantManager;
 import edu.utexas.tacc.tapis.shared.TapisConstants;
 import edu.utexas.tacc.tapis.shared.utils.TapisUtils;
 import edu.utexas.tacc.tapis.sharedapi.jaxrs.filters.JWTValidateRequestFilter;
+import edu.utexas.tacc.tapis.sharedapi.providers.ApiExceptionMapper;
 import edu.utexas.tacc.tapis.sharedapi.providers.ObjectMapperContextResolver;
-import edu.utexas.tacc.tapis.sharedapi.providers.TapisExceptionMapper;
 import edu.utexas.tacc.tapis.sharedapi.providers.ValidationExceptionMapper;
 
 /*
  * Main startup class for the web application. Uses Jersey and Grizzly frameworks.
  *   Performs setup for HK2 dependency injection.
- *   Register packages and features for Jersey.
+ *   Register classes and features for Jersey.
  *   Gets runtime parameters from the environment.
  *   Initializes the service:
  *     Init service context.
@@ -64,13 +64,8 @@ public class NotificationsApplication extends ResourceConfig
     register(ObjectMapperContextResolver.class);
 
     // Register classes needed for returning a standard Tapis response for non-Tapis exceptions.
-    register(TapisExceptionMapper.class);
+    register(ApiExceptionMapper.class);
     register(ValidationExceptionMapper.class);
-
-    // We specify what packages JAX-RS should recursively scan to find annotations. By setting the value to the
-    // top-level directory in all projects, we can use JAX-RS annotations in any tapis class. In particular, the filter
-    // classes in tapis-shared-api will be discovered whenever that project is included as a maven dependency.
-    packages("edu.utexas.tacc.tapis");
 
     // Set the application name. Note that this has no impact on base URL
     setApplicationName(TapisConstants.SERVICE_NAME_NOTIFICATIONS);
