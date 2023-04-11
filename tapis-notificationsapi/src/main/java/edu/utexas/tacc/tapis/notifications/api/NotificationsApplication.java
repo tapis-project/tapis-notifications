@@ -3,6 +3,10 @@ package edu.utexas.tacc.tapis.notifications.api;
 import java.net.URI;
 import javax.ws.rs.ApplicationPath;
 
+import edu.utexas.tacc.tapis.notifications.api.resources.EventResource;
+import edu.utexas.tacc.tapis.notifications.api.resources.GeneralResource;
+import edu.utexas.tacc.tapis.notifications.api.resources.SubscriptionResource;
+import edu.utexas.tacc.tapis.notifications.api.resources.TestSequenceResource;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.hk2.api.ServiceLocator;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
@@ -66,6 +70,15 @@ public class NotificationsApplication extends ResourceConfig
     // Register classes needed for returning a standard Tapis response for non-Tapis exceptions.
     register(ApiExceptionMapper.class);
     register(ValidationExceptionMapper.class);
+
+    //JWT validation
+    register(JWTValidateRequestFilter.class);
+
+    //Our APIs
+    register(GeneralResource.class);
+    register(SubscriptionResource.class);
+    register(EventResource.class);
+    register(TestSequenceResource.class);
 
     // Set the application name. Note that this has no impact on base URL
     setApplicationName(TapisConstants.SERVICE_NAME_NOTIFICATIONS);

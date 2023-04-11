@@ -135,13 +135,19 @@ public class GeneralResource
     // Get the current check count.
     long checkNum = _readyCheckCount.incrementAndGet();
 
+    // Keep track of status for each check
+    var statusMsgSB = new StringBuilder();
+
     // =========================================
     // Check that we can get tenants list
     // =========================================
+    statusMsgSB.append("CheckTenants:");
     Exception readyCheckException = checkTenants();
     if (readyCheckException != null)
     {
-      RespBasic r = new RespBasic("Readiness tenants check failed. Check number: " + checkNum);
+      statusMsgSB.append("FAIL");
+      RespBasic r = new RespBasic(String.format("Readiness tenants check failed. Check number: %s %s ",
+                                                checkNum, statusMsgSB));
       String msg = MsgUtils.getMsg("TAPIS_NOT_READY", "Notifications Service");
       // We failed so set the log limiter check.
       if (checkTenantsOK.toggleOff())
@@ -153,6 +159,7 @@ public class GeneralResource
     }
     else
     {
+      statusMsgSB.append("PASS");
       // We succeeded so clear the log limiter check.
       if (checkTenantsOK.toggleOn()) _log.info(ApiUtils.getMsg("NTFAPI_READYCHECK_TENANTS_ERRTOGGLE_CLEARED"));
     }
@@ -160,10 +167,13 @@ public class GeneralResource
     // =========================================
     // Check that we have a service JWT
     // =========================================
+    statusMsgSB.append(" CheckJWT:");
     readyCheckException = checkJWT();
     if (readyCheckException != null)
     {
-      RespBasic r = new RespBasic("Readiness JWT check failed. Check number: " + checkNum);
+      statusMsgSB.append("FAIL");
+      RespBasic r = new RespBasic(String.format("Readiness JWT check failed. Check number: %s %s ",
+                                  checkNum, statusMsgSB));
       String msg = MsgUtils.getMsg("TAPIS_NOT_READY", "Notifications Service");
       // We failed so set the log limiter check.
       if (checkJWTOK.toggleOff())
@@ -175,6 +185,7 @@ public class GeneralResource
     }
     else
     {
+      statusMsgSB.append("PASS");
       // We succeeded so clear the log limiter check.
       if (checkJWTOK.toggleOn()) _log.info(ApiUtils.getMsg("NTFAPI_READYCHECK_JWT_ERRTOGGLE_CLEARED"));
     }
@@ -182,10 +193,13 @@ public class GeneralResource
     // =========================================
     // Check that we can connect to the DB
     // =========================================
+    statusMsgSB.append(" CheckDB:");
     readyCheckException = checkDB();
     if (readyCheckException != null)
     {
-      RespBasic r = new RespBasic("Readiness DB check failed. Check number: " + checkNum);
+      statusMsgSB.append("FAIL");
+      RespBasic r = new RespBasic(String.format("Readiness DB check failed. Check number: %s %s ",
+                                                checkNum, statusMsgSB));
       String msg = MsgUtils.getMsg("TAPIS_NOT_READY", "Notifications Service");
       // We failed so set the log limiter check.
       if (checkDBOK.toggleOff())
@@ -197,6 +211,7 @@ public class GeneralResource
     }
     else
     {
+      statusMsgSB.append("PASS");
       // We succeeded so clear the log limiter check.
       if (checkDBOK.toggleOn()) _log.info(ApiUtils.getMsg("NTFAPI_READYCHECK_DB_ERRTOGGLE_CLEARED"));
     }
@@ -204,10 +219,13 @@ public class GeneralResource
     // =============================================
     //  Check that message broker is available
     // =============================================
+    statusMsgSB.append(" CheckMessageBroker:");
     readyCheckException = checkMessageBroker();
     if (readyCheckException != null)
     {
-      RespBasic r = new RespBasic("Readiness MessageBroker check failed. Check number: " + checkNum);
+      statusMsgSB.append("FAIL");
+      RespBasic r = new RespBasic(String.format("Readiness MessageBroker check failed. Check number: %s %s ",
+                                                checkNum, statusMsgSB));
       String msg = MsgUtils.getMsg("TAPIS_NOT_READY", "Notifications Service");
       // We failed so set the log limiter check.
       if (checkMQOK.toggleOff())
@@ -219,6 +237,7 @@ public class GeneralResource
     }
     else
     {
+      statusMsgSB.append("PASS");
       // We succeeded so clear the log limiter check.
       if (checkMQOK.toggleOn()) _log.info(ApiUtils.getMsg("NTFAPI_READYCHECK_MQ_ERRTOGGLE_CLEARED"));
     }
@@ -226,10 +245,13 @@ public class GeneralResource
     // ====================================================================================
     //Check that the dispatcher is ready by executing a test via TestSequence support.
     // ====================================================================================
+    statusMsgSB.append(" CheckDispatcher:");
     readyCheckException = checkDispatcher();
     if (readyCheckException != null)
     {
-      RespBasic r = new RespBasic("Readiness Dispatcher check failed. Check number: " + checkNum);
+      statusMsgSB.append("FAIL");
+      RespBasic r = new RespBasic(String.format("Readiness Dispatcher check failed. Check number: %s %s ",
+                                                checkNum, statusMsgSB));
       String msg = MsgUtils.getMsg("TAPIS_NOT_READY", "Notifications Service");
       // We failed so set the log limiter check.
       if (checkDispatcherOK.toggleOff())
@@ -241,13 +263,14 @@ public class GeneralResource
     }
     else
     {
+      statusMsgSB.append("PASS");
       // We succeeded so clear the log limiter check.
       if (checkDispatcherOK.toggleOn()) _log.info(ApiUtils.getMsg("NTFAPI_READYCHECK_DSP_ERRTOGGLE_CLEARED"));
     }
 
     // ---------------------------- Success -------------------------------
     // Create the response payload.
-    RespBasic resp = new RespBasic("Ready check passed. Count: " + checkNum);
+    RespBasic resp = new RespBasic(String.format("Ready check passed. Count: %s %s", checkNum, statusMsgSB));
     // Manually create a success response with git info included in version
     resp.status = RESPONSE_STATUS.success.name();
     resp.message = MsgUtils.getMsg("TAPIS_READY", "Notifications Service");
