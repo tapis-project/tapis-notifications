@@ -9,15 +9,16 @@ You may also reference live-docs based on the openapi specification here:
 https://tapis-project.github.io/live-docs
 
 ---------------------------------------------------------------------------
-## 1.3.1 - 2023-04-10
+## 1.3.1 - 2023-04-11
 
-Bug fix.
+Incremental improvements and bug fixes.
 
 ### New features:
-- None.
+- Improve readycheck logging.
 
 ### Bug fixes:
 - Use of TapisExceptionMapper can lead to invalid http return status codes. Use ApiExceptionMapper instead.
+- Fix issue with readycheck.
 
 ---------------------------------------------------------------------------
 ## 1.3.0 - 2023-02-24
