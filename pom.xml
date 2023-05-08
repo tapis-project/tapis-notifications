@@ -12,8 +12,8 @@
     <!-- is the only place it exists.-->
     <relativePath/>
   </parent>
-  <artifactId>notifications</artifactId>
-  <version>1.3.1</version>
+  <artifactId>tapis-notifications</artifactId>
+  <version>1.3.2</version>
   <packaging>pom</packaging>
 
   <name>TACC Tapis Notifications Parent POM</name>
