@@ -243,7 +243,7 @@ public class GeneralResource
     }
 
     // ====================================================================================
-    //Check that the dispatcher is ready by executing a test via TestSequence support.
+    // Check that the dispatcher is ready by executing a test via TestSequence support.
     // ====================================================================================
     statusMsgSB.append(" CheckDispatcher:");
     readyCheckException = checkDispatcher();

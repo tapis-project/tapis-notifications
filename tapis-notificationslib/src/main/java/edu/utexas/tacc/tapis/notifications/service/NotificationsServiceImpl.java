@@ -172,7 +172,7 @@ public class NotificationsServiceImpl implements NotificationsService
       ntfClient = serviceClients.getClient(userName, tenantName, NotificationsClient.class);
       // Must add Content-Type header
       ntfClient.addDefaultHeader("Content-Type", "application/json");
-      // If running in local test mode then reset the base url so we can talk to ourselves locally
+      // If running in local test mode then reset the base url, so we can talk to ourselves locally
       if (RuntimeParameters.getInstance().isLocalTest())
       {
         ntfClient.setBasePath("http://localhost:8080");
