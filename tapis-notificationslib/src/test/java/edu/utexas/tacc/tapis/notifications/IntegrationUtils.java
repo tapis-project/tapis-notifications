@@ -1,7 +1,6 @@
 package edu.utexas.tacc.tapis.notifications;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import edu.utexas.tacc.tapis.notifications.model.DeliveryTarget;
 import edu.utexas.tacc.tapis.notifications.model.Event;
 import edu.utexas.tacc.tapis.notifications.model.Notification;
@@ -13,10 +12,7 @@ import edu.utexas.tacc.tapis.shared.threadlocal.OrderBy;
 import edu.utexas.tacc.tapis.shared.utils.TapisGsonUtils;
 import edu.utexas.tacc.tapis.shared.utils.TapisUtils;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.time.Instant;
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -59,8 +55,8 @@ public final class IntegrationUtils
   public static final String subjectFilter0 = "subject_filter_0";
   public static final String subjectFilter1 = "subject_filter_1";
   public static final String subjectFilter2 = "subject_filter_2";
-  public static final String webhookUrlA1 = "https://my.fake.webhook/urlA1";
-  public static final String webhookUrlA2 = "https://my.fake.webhook/urlA2";
+  public static final String webhookUrlA1 = "https://my.fake.webhook.org/urlA1";
+  public static final String webhookUrlA2 = "https://my.fake.webhook.org/urlA2";
   public static final String emailAddressB1 = "my.fake.emailB1@my.example.com";
   public static final String emailAddressB2 = "my.fake.emailB2@my.example.com";
   public static final String scrubbedJson = "{}";
@@ -69,12 +65,12 @@ public final class IntegrationUtils
   public static final String ownerEmpty = "";
 
   // Delivery Methods
-  public static final DeliveryTarget dmA1 = new DeliveryTarget(DeliveryMethod.WEBHOOK, webhookUrlA1);
-  public static final DeliveryTarget dmB1 = new DeliveryTarget(DeliveryMethod.EMAIL, emailAddressB1);
-  public static final List<DeliveryTarget> dmList1 = new ArrayList<>(List.of(dmA1, dmB1));
-  public static final DeliveryTarget dmA2 = new DeliveryTarget(DeliveryMethod.WEBHOOK, webhookUrlA2);
-  public static final DeliveryTarget dmB2 = new DeliveryTarget(DeliveryMethod.EMAIL, emailAddressB2);
-  public static final List<DeliveryTarget> dmList2 = new ArrayList<>(List.of(dmA2, dmB2));
+  public static final DeliveryTarget dtA1 = new DeliveryTarget(DeliveryMethod.WEBHOOK, webhookUrlA1);
+  public static final DeliveryTarget dtB1 = new DeliveryTarget(DeliveryMethod.EMAIL, emailAddressB1);
+  public static final List<DeliveryTarget> dtList1 = new ArrayList<>(List.of(dtA1, dtB1));
+  public static final DeliveryTarget dtA2 = new DeliveryTarget(DeliveryMethod.WEBHOOK, webhookUrlA2);
+  public static final DeliveryTarget dtB2 = new DeliveryTarget(DeliveryMethod.EMAIL, emailAddressB2);
+  public static final List<DeliveryTarget> dtList2 = new ArrayList<>(List.of(dtA2, dtB2));
 
   public static final int ttl1 = 1000;
   public static final int ttl2 = 2000;
@@ -152,7 +148,7 @@ public final class IntegrationUtils
       String subscrName = getSubscrName(key, i+1);
       // Constructor initializes all attributes
       subscriptions[i] = new Subscription(-1, tenantName, testUser1, subscrName, description1+suffix, isEnabledTrue,
-                                          typeFilter1, subjectFilter1, dmList1, ttl1, uuidNull,
+                                          typeFilter1, subjectFilter1, dtList1, ttl1, uuidNull,
                                           expiryNull, createdNull, updatedNull);
     }
     return subscriptions;
@@ -164,7 +160,7 @@ public final class IntegrationUtils
    */
   public static PatchSubscription makePatchSubscriptionFull()
   {
-    return new PatchSubscription(description2, typeFilter2, subjectFilter2, dmList2, ttl2);
+    return new PatchSubscription(description2, typeFilter2, subjectFilter2, dtList2, ttl2);
   }
 
   public static String getSubscrName(String key, int idx)

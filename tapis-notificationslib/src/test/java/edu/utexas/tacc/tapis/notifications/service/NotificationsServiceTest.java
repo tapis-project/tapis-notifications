@@ -4,6 +4,7 @@ import edu.utexas.tacc.tapis.client.shared.exceptions.TapisClientException;
 import edu.utexas.tacc.tapis.notifications.dao.NotificationsDao;
 import edu.utexas.tacc.tapis.notifications.dao.NotificationsDaoImpl;
 import edu.utexas.tacc.tapis.notifications.model.DeliveryTarget;
+import edu.utexas.tacc.tapis.notifications.model.DeliveryTarget.DeliveryMethod;
 import edu.utexas.tacc.tapis.notifications.model.Event;
 import edu.utexas.tacc.tapis.notifications.model.PatchSubscription;
 import edu.utexas.tacc.tapis.notifications.model.Subscription;
@@ -255,7 +256,7 @@ public class NotificationsServiceTest
     sub0.setDescription(description2);
     sub0.setTypeFilter(typeFilter2);
     sub0.setSubjectFilter(subjectFilter2);
-    sub0.setDeliveryTargets(dmList2);
+    sub0.setDeliveryTargets(dtList2);
     //Check common attributes:
     checkCommonSubscriptionAttrs(sub0, tmpSubFull);
   }
@@ -472,6 +473,62 @@ public class NotificationsServiceTest
     subscriptions = svcImpl.getSubscriptions(rJobsSvc1, sub1.getOwner(), searchBySubjectFilter, -1, null, -1, null, anyOwnerTrue);
     Assert.assertNotNull(subscriptions);
     Assert.assertTrue(subscriptions.isEmpty());
+  }
+
+  // Check DeliveryTarget validation
+  @Test
+  public void testDeliveryTargetValidation() throws Exception
+  {
+    // Check positive
+    String domain;
+    domain = DeliveryTarget.validateTargetAndExtractDomain(DeliveryMethod.EMAIL, "abc@example1.com");
+    Assert.assertEquals(domain, "example1.com");
+    domain = DeliveryTarget.validateTargetAndExtractDomain(DeliveryMethod.WEBHOOK, "http://example2.com/test");
+    Assert.assertEquals(domain, "example2.com");
+    domain = DeliveryTarget.validateTargetAndExtractDomain(DeliveryMethod.WEBHOOK, "https://www.fakeorg.org/test");
+    Assert.assertEquals(domain, "www.fakeorg.org");
+    domain = DeliveryTarget.validateTargetAndExtractDomain(DeliveryMethod.WEBHOOK, "http://localhost");
+    Assert.assertEquals(domain, "localhost");
+    domain = DeliveryTarget.validateTargetAndExtractDomain(DeliveryMethod.WEBHOOK, "http://127.0.0.1/test_it");
+    Assert.assertEquals(domain, "127.0.0.1");
+
+    // Check negative
+    boolean pass = false;
+    try { DeliveryTarget.validateTargetAndExtractDomain(DeliveryMethod.EMAIL, null); }
+    catch (IllegalArgumentException e) { pass = true; }
+    Assert.assertTrue(pass);
+    pass = false;
+    try { DeliveryTarget.validateTargetAndExtractDomain(DeliveryMethod.EMAIL, ""); }
+    catch (IllegalArgumentException e) { pass = true; }
+    Assert.assertTrue(pass);
+    pass = false;
+    try { DeliveryTarget.validateTargetAndExtractDomain(DeliveryMethod.EMAIL, "abc"); }
+    catch (IllegalArgumentException e) { pass = true; }
+    Assert.assertTrue(pass);
+    pass = false;
+    try { DeliveryTarget.validateTargetAndExtractDomain(DeliveryMethod.EMAIL, "abc@"); }
+    catch (IllegalArgumentException e) { pass = true; }
+    Assert.assertTrue(pass);
+    pass = false;
+    try { DeliveryTarget.validateTargetAndExtractDomain(DeliveryMethod.EMAIL, "@example.com"); }
+    catch (IllegalArgumentException e) { pass = true; }
+    Assert.assertTrue(pass);
+    pass = false;
+    try { DeliveryTarget.validateTargetAndExtractDomain(DeliveryMethod.EMAIL, "abc@example com"); }
+    catch (IllegalArgumentException e) { pass = true; }
+    Assert.assertTrue(pass);
+    pass = false;
+    try { DeliveryTarget.validateTargetAndExtractDomain(DeliveryMethod.WEBHOOK, "abc"); }
+    catch (IllegalArgumentException e) { pass = true; }
+    Assert.assertTrue(pass);
+    pass = false;
+    try { DeliveryTarget.validateTargetAndExtractDomain(DeliveryMethod.WEBHOOK, "abc.com"); }
+    catch (IllegalArgumentException e) { pass = true; }
+    Assert.assertTrue(pass);
+    pass = false;
+    try { DeliveryTarget.validateTargetAndExtractDomain(DeliveryMethod.WEBHOOK, "/abc"); }
+    catch (IllegalArgumentException e) { pass = true; }
+    Assert.assertTrue(pass);
   }
 
   // -----------------------------------------------------------------------

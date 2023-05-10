@@ -262,7 +262,7 @@ public class NotificationsServiceImpl implements NotificationsService
     }
     else
     {
-      // We were given a name. Make sure it does not yet exists and user is authorized to create it.
+      // We were given a name. Make sure it does not yet exist and user is authorized to create it.
       if (dao.checkForSubscription(oboTenant, owner, name))
         throw new IllegalStateException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_EXISTS", rUser, owner, name));
       checkAuth(rUser, owner, name, op);
@@ -1135,8 +1135,29 @@ public class NotificationsServiceImpl implements NotificationsService
       errMessages.add(LibUtils.getMsg("NTFLIB_SUBSCR_SUBJ_ERR", sub.getOwner(), sub.getName(), sub.getTypeFilter()));
     }
 
-    // Now make checks that do require a dao or service call.
-    // NOTE: Currently no such checks
+    // Validate delivery targets. Must have at least 1.
+    var targets = sub.getDeliveryTargets();
+    if (targets == null || targets.isEmpty())
+    {
+      errMessages.add(LibUtils.getMsg("NTFLIB_SUBSCR_NO_DT"));
+    }
+    else
+    {
+      // Since the subscription and it's delivery targets may have been created using reflection based on incoming json,
+      // it is possible validation never happened because the constructor was never called.
+      // Normally validation is done in the constructor.
+      for (DeliveryTarget target : targets)
+      {
+        try
+        {
+          DeliveryTarget.validateTargetAndExtractDomain(target.getDeliveryMethod(), target.getDeliveryAddress());
+        }
+        catch (IllegalArgumentException e)
+        {
+          errMessages.add(e.getMessage());
+        }
+      }
+    }
 
     // If validation failed throw an exception
     if (!errMessages.isEmpty())

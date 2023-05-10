@@ -223,7 +223,7 @@ public class NotificationsDaoTest
     String fakeOwner = "owner";
     Subscription patchedSubscription =
             new Subscription(1, tenantName, fakeOwner, fakeSubscriptionName, "description", isEnabledTrue,
-                             typeFilter1, subjectFilter1, dmList1, ttl1, uuidNull, expiryNull, createdNull, updatedNull);
+                             typeFilter1, subjectFilter1, dtList1, ttl1, uuidNull, expiryNull, createdNull, updatedNull);
     // Make sure subscription does not exist
     Assert.assertFalse(dao.checkForSubscription(tenantName, fakeOwner, fakeSubscriptionName));
     // update should throw not found exception

@@ -19,7 +19,7 @@
     "additionalProperties": false,
     "properties": {
       "deliveryMethod": { "$ref": "#/DeliveryMethod" },
-      "deliveryAddress": { "type": "string" }
+      "deliveryAddress": { "type": "string", "minLength": 3 }
       }
   }
 }

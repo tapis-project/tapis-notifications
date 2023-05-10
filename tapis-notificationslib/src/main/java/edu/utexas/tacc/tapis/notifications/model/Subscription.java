@@ -65,7 +65,7 @@ public final class Subscription
 
   // Validation patterns
   //NAME Must start alphanumeric and contain only alphanumeric and 4 special characters: - . _ ~
-  //Note that we allow starting with a number so we can use a UUID.
+  //Note that we allow starting with a number, so we can use a UUID.
   public static final String NAME_PATTERN = "^[a-zA-Z0-9]([a-zA-Z0-9]|[-\\._~])*";
 
   // typeFilter must be 3 sections separated by a '.'
@@ -337,7 +337,7 @@ public final class Subscription
     if (StringUtils.isBlank(typeFilter)) errMessages.add(LibUtils.getMsg(CREATE_MISSING_ATTR, TYPE_FILTER_FIELD));
     if (StringUtils.isBlank(subjectFilter)) errMessages.add(LibUtils.getMsg(CREATE_MISSING_ATTR, SUBJECT_FILTER_FIELD));
     if (deliveryTargets == null) errMessages.add(LibUtils.getMsg(CREATE_MISSING_ATTR, DELIVERY_TARGETS_FIELD));
-    if (deliveryTargets != null && deliveryTargets.isEmpty()) errMessages.add(LibUtils.getMsg("NTFLIB_NO_DT"));
+    if (deliveryTargets != null && deliveryTargets.isEmpty()) errMessages.add(LibUtils.getMsg("NTFLIB_SUBSCR_NO_DT"));
   }
 
   /**
