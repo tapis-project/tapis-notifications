@@ -8,15 +8,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
+import edu.utexas.tacc.tapis.shared.utils.ThrottleMap;
 import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
 import edu.utexas.tacc.tapis.notifications.model.DeliveryTarget;
 import edu.utexas.tacc.tapis.notifications.utils.LibUtils;
@@ -51,6 +48,13 @@ public final class DeliveryBucketManager implements Callable<String>
   // How long to pause on error (in minutes)
   private static final int BUCKET_ERR_PAUSE_INTERVAL = 10;
 
+  // Throttle settings.
+  private static final String THROTTLEMAP_NAME = "NtfWebhookThrottleMap";
+  private static final int    THROTTLE_SECONDS = 5; // Sliding window size
+  private static final int    THROTTLE_LIMIT   = 10; // Max calls in window
+  private static final int    CONNECT_DELAY_MS    = 4000; // Minimum delay
+  private static final int    CONNECT_MAX_SKEW_MS = 4000; // Max skew for randomized re-try delay
+
   /* ********************************************************************** */
   /*                                 Fields                                 */
   /* ********************************************************************** */
@@ -70,6 +74,9 @@ public final class DeliveryBucketManager implements Callable<String>
   // ExecutorService and future for the long-running background recovery task
   private final ExecutorService recoveryExecService = Executors.newSingleThreadExecutor();
   private Future<String> recoveryTaskFuture;
+
+  // Map used to throttle the number of webhook call attempts issued to a host.
+  private static final ThrottleMap callThrottles = initConnectThrottles();
 
   /* ********************************************************************** */
   /*                             Constructors                               */
@@ -148,7 +155,7 @@ public final class DeliveryBucketManager implements Callable<String>
       catch (Exception e)
       {
         // Main processing loop has thrown an exception that we might be able to recover from, e.g. the DB is down.
-        // Most likely this is IOException or TapisException, but catch all exceptions so we can keep going.
+        // Most likely this is IOException or TapisException, but catch all exceptions, so we can keep going.
         // Pause for a while before resuming operations. If pause interrupted then we are done.
         log.error(LibUtils.getMsg("NTFLIB_DSP_BUCKET_ERR", bucketNum, BUCKET_ERR_PAUSE_INTERVAL, e.getMessage()), e);
         done = pauseProcessing();
@@ -159,6 +166,48 @@ public final class DeliveryBucketManager implements Callable<String>
     stopRecoveryTask();
     log.info(LibUtils.getMsg("NTFLIB_DSP_BUCKET_STOP", bucketNum, Thread.currentThread().getId(), Thread.currentThread().getName()));
     return SHUTDOWN_MSG;
+  }
+
+  /* Delay connections when too many have recently taken place for a host.
+   * NOTE: Code and comments copied on 5/8/2023 from repo: github.com/tapis-project/tapis-shared-java
+   *       File tapis-shared-lib/src/main/java/edu/utexas/tacc/tapis/shared/ssh/apache/SSHConnection.java
+   * This works best for occasional spikes in SSH connection requests, but is less
+   * effective if a large number of requests occur over an extended period.
+   *
+   * The implementation simply delays a connection attempt CONNECT_DELAY_MS +
+   * random(CONNECT_MAX_SKEW_MS) milliseconds.  This approach smoothes out
+   * spikes but ultimately attempts every connection after a short delay.
+   *
+   * This approach has known limitations.  Say, for example, 1000 connection
+   * requests occur nearly at once and 8 connections are allowed in a sliding
+   * window of 4 seconds.  There will be a short delay after the first 8 connection
+   * requests fill the window, but requests received while the window is closed
+   * will still proceed after a short delay.  We can think of this as window
+   * spillage or overflow because even though the window is closed, more than
+   * the configured maximum connections will likely be attempted soon.
+   *
+   * If handling occasional spikes is not sufficient, and we really need to strictly
+   * limit the number of connections within the sliding window, then we would
+   * need to queue or reject overflow connections.  Queuing complicates matters
+   * because queue time might need to be bounded for some connection requests,
+   * making this facility more of a full-blown connection manager. Until the
+   * need arises, we'll stick with the current simple approach.
+   */
+  public static void throttleLaunch(String host)
+  {
+    // Return from here if there is room in the sliding window
+    if (callThrottles.record(host)) return;
+
+    // Calls to this host needs to be throttled.
+    // Calculate a randomized but short delay in milliseconds.
+    var skewMs = ThreadLocalRandom.current().nextInt(CONNECT_MAX_SKEW_MS);
+    skewMs += CONNECT_DELAY_MS;
+
+    // Log the delay.
+    log.debug(MsgUtils.getMsg("NTFLIB_DSP_BUCKET_DELAYED_WEBHOOK", host, skewMs));
+
+    // Delay for the randomized period.
+    try {Thread.sleep(skewMs);} catch (InterruptedException e) { /* empty */}
   }
 
   /* ********************************************************************** */
@@ -342,7 +391,8 @@ public final class DeliveryBucketManager implements Callable<String>
             {
               // Make a blocking call to get the return value of the future.
               Notification ret = f.get();
-              log.debug(LibUtils.getMsg("NTFLIB_DSP_BUCKET_DLVRY3", bucketNum, eventUuid, ret.getDeliveryTarget()));
+              String deliveryTargetStr = ret == null ? null : ret.getDeliveryTarget().toString();
+              log.debug(LibUtils.getMsg("NTFLIB_DSP_BUCKET_DLVRY3", bucketNum, eventUuid, deliveryTargetStr));
               deliveryTaskReturns.put(f, ret);
             }
             catch (InterruptedException e)
@@ -381,5 +431,13 @@ public final class DeliveryBucketManager implements Callable<String>
       return true;
     }
     return false;
+  }
+
+  /*
+   * Initialize the webhook callback throttle map
+   */
+  private static ThrottleMap initConnectThrottles()
+  {
+    return new ThrottleMap(THROTTLEMAP_NAME, THROTTLE_SECONDS, THROTTLE_LIMIT);
   }
 }

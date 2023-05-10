@@ -1,6 +1,7 @@
 package edu.utexas.tacc.tapis.notifications.service;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import javax.ws.rs.core.Response.Status;
@@ -170,6 +171,11 @@ public final class DeliveryTask implements Callable<Notification>
     RequestBody body = RequestBody.create(notifJsonStr, MediaType.parse("application/json"));
     Request.Builder requestBuilder = new Request.Builder().url(deliveryTarget.getDeliveryAddress()).post(body);
     Request request = requestBuilder.addHeader("User-Agent", "Tapis/%s".formatted(TapisConstants.API_VERSION)).build();
+
+    // Throttle by host as needed.
+    String host = deliveryTarget.getDomain();
+    DeliveryBucketManager.throttleLaunch(host);
+
     Call call = httpClient.newCall(request);
     // Use try-with-resources to auto-close the response.
     try (Response response = call.execute())

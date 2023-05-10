@@ -1066,8 +1066,8 @@ public class SubscriptionResource
   /**
    * Fill in defaults and check constraints on Subscription attributes
    * Check values. name and owner must be set.
-   * Collect and report as many errors as possible so they can all be fixed before next attempt
-   * NOTE: JsonSchema validation should handle some of these checks but we check here again just in case
+   * Collect and report as many errors as possible, so they can all be fixed before next attempt
+   * NOTE: JsonSchema validation should handle some of these checks, but we check here again just in case
    *
    * @return null if OK or error Response
    */
