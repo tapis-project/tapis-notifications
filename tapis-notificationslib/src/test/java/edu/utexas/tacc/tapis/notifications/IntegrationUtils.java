@@ -55,7 +55,7 @@ public final class IntegrationUtils
   public static final String subjectFilter0 = "subject_filter_0";
   public static final String subjectFilter1 = "subject_filter_1";
   public static final String subjectFilter2 = "subject_filter_2";
-  public static final String webhookUrlA1 = "https://my.fake.webhook.org/urlA1";
+  public static final String webhookUrlA1 = "https://my.fake.webhook.org/urlA1/";
   public static final String webhookUrlA2 = "https://my.fake.webhook.org/urlA2";
   public static final String emailAddressB1 = "my.fake.emailB1@my.example.com";
   public static final String emailAddressB2 = "my.fake.emailB2@my.example.com";
@@ -63,6 +63,19 @@ public final class IntegrationUtils
 
   public static final String  ownerNull = null;
   public static final String ownerEmpty = "";
+
+//  // Webhook URLs used in parsing test (DeliveryTargetTest)
+//  public static final String webhookUrlGood1 = "https://my.fake.webhook.org/url1";
+//  public static final String webhookUrlGood1 = "https://my.fake.webhook.org/url1";
+//  public static final List<String> webhookUrlGoodList =
+//          new ArrayList<>(List.of("https://my.fake.webhook.org/url1",
+//                                  "http://my.fake.webhook.org/url2",
+//                  "ftp://my.fake.webhook.org/url2",
+//                  "http://my.fake.webhook.org/url-example-3/three",
+//                  "https://my.fake.webhook.org",
+//                  "http://my.fake.webhook.org",
+//                  )
+//                  );
 
   // Delivery Methods
   public static final DeliveryTarget dtA1 = new DeliveryTarget(DeliveryMethod.WEBHOOK, webhookUrlA1);

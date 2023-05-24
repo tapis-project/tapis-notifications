@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.*;
+
+import org.jooq.tools.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,6 +56,8 @@ public final class DeliveryBucketManager implements Callable<String>
   private static final int    THROTTLE_LIMIT   = 10; // Max calls in window
   private static final int    CONNECT_DELAY_MS    = 4000; // Minimum delay
   private static final int    CONNECT_MAX_SKEW_MS = 4000; // Max skew for randomized re-try delay
+  // Key for delivery address should never be null or empty, but if it is we use a special throttle key.
+  private static final String NO_KEY_FOR_THROTTLE = "NO_THROTTLE_KEY";
 
   /* ********************************************************************** */
   /*                                 Fields                                 */
@@ -75,7 +79,7 @@ public final class DeliveryBucketManager implements Callable<String>
   private final ExecutorService recoveryExecService = Executors.newSingleThreadExecutor();
   private Future<String> recoveryTaskFuture;
 
-  // Map used to throttle the number of webhook call attempts issued to a host.
+  // Map used to throttle the number of webhook call attempts.
   private static final ThrottleMap callThrottles = initConnectThrottles();
 
   /* ********************************************************************** */
@@ -168,7 +172,7 @@ public final class DeliveryBucketManager implements Callable<String>
     return SHUTDOWN_MSG;
   }
 
-  /* Delay connections when too many have recently taken place for a host.
+  /* Delay connections when too many have recently taken place for a webhook.
    * NOTE: Code and comments copied on 5/8/2023 from repo: github.com/tapis-project/tapis-shared-java
    *       File tapis-shared-lib/src/main/java/edu/utexas/tacc/tapis/shared/ssh/apache/SSHConnection.java
    * This works best for occasional spikes in SSH connection requests, but is less
@@ -193,18 +197,26 @@ public final class DeliveryBucketManager implements Callable<String>
    * making this facility more of a full-blown connection manager. Until the
    * need arises, we'll stick with the current simple approach.
    */
-  public static void throttleLaunch(String host)
+  public static void throttleLaunch(String key)
   {
-    // Return from here if there is room in the sliding window
-    if (callThrottles.record(host)) return;
+    // Key should never be null or empty, but if it is, log a warning and use a special key
+    // Without a key, callThrottles.record() will throw a null pointer exception.
+    if (StringUtils.isBlank(key))
+    {
+      log.warn(MsgUtils.getMsg("NTFLIB_DSP_BUCKET_THROTTLE_NO_KEY", key));
+      key = NO_KEY_FOR_THROTTLE;
+    }
 
-    // Calls to this host needs to be throttled.
+    // Return from here if there is room in the sliding window
+    if (callThrottles.record(key)) return;
+
+    // Calls to this webhook need to be throttled.
     // Calculate a randomized but short delay in milliseconds.
     var skewMs = ThreadLocalRandom.current().nextInt(CONNECT_MAX_SKEW_MS);
     skewMs += CONNECT_DELAY_MS;
 
     // Log the delay.
-    log.debug(MsgUtils.getMsg("NTFLIB_DSP_BUCKET_DELAYED_WEBHOOK", host, skewMs));
+    log.debug(MsgUtils.getMsg("NTFLIB_DSP_BUCKET_THROTTLE_WEBHOOK", key, skewMs));
 
     // Delay for the randomized period.
     try {Thread.sleep(skewMs);} catch (InterruptedException e) { /* empty */}

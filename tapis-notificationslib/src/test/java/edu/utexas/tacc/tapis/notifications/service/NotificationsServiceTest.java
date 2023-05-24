@@ -480,53 +480,53 @@ public class NotificationsServiceTest
   public void testDeliveryTargetValidation() throws Exception
   {
     // Check positive
-    String domain;
-    domain = DeliveryTarget.validateTargetAndExtractDomain(DeliveryMethod.EMAIL, "abc@example1.com");
-    Assert.assertEquals(domain, "example1.com");
-    domain = DeliveryTarget.validateTargetAndExtractDomain(DeliveryMethod.WEBHOOK, "http://example2.com/test");
-    Assert.assertEquals(domain, "example2.com");
-    domain = DeliveryTarget.validateTargetAndExtractDomain(DeliveryMethod.WEBHOOK, "https://www.fakeorg.org/test");
-    Assert.assertEquals(domain, "www.fakeorg.org");
-    domain = DeliveryTarget.validateTargetAndExtractDomain(DeliveryMethod.WEBHOOK, "http://localhost");
-    Assert.assertEquals(domain, "localhost");
-    domain = DeliveryTarget.validateTargetAndExtractDomain(DeliveryMethod.WEBHOOK, "http://127.0.0.1/test_it");
-    Assert.assertEquals(domain, "127.0.0.1");
+    new DeliveryTarget(DeliveryMethod.EMAIL, "abc@example1.com");
+//    Assert.assertEquals(domain, "example1.com");
+    new DeliveryTarget(DeliveryMethod.WEBHOOK, "http://example2.com/test");
+//    Assert.assertEquals(domain, "example2.com");
+    new DeliveryTarget(DeliveryMethod.WEBHOOK, "https://www.fakeorg.org/test");
+//    Assert.assertEquals(domain, "www.fakeorg.org");
+    new DeliveryTarget(DeliveryMethod.WEBHOOK, "http://localhost");
+//    Assert.assertEquals(domain, "localhost");
+     new DeliveryTarget(DeliveryMethod.WEBHOOK, "http://127.0.0.1/test_it");
+//    Assert.assertEquals(domain, "127.0.0.1");
+    new DeliveryTarget(DeliveryMethod.WEBHOOK, "https://www.fakeorg.org/test/");
 
     // Check negative
     boolean pass = false;
-    try { DeliveryTarget.validateTargetAndExtractDomain(DeliveryMethod.EMAIL, null); }
+    try { new DeliveryTarget(DeliveryMethod.EMAIL, null); }
     catch (IllegalArgumentException e) { pass = true; }
     Assert.assertTrue(pass);
     pass = false;
-    try { DeliveryTarget.validateTargetAndExtractDomain(DeliveryMethod.EMAIL, ""); }
+    try { new DeliveryTarget(DeliveryMethod.EMAIL, ""); }
     catch (IllegalArgumentException e) { pass = true; }
     Assert.assertTrue(pass);
     pass = false;
-    try { DeliveryTarget.validateTargetAndExtractDomain(DeliveryMethod.EMAIL, "abc"); }
+    try { new DeliveryTarget(DeliveryMethod.EMAIL, "abc"); }
     catch (IllegalArgumentException e) { pass = true; }
     Assert.assertTrue(pass);
     pass = false;
-    try { DeliveryTarget.validateTargetAndExtractDomain(DeliveryMethod.EMAIL, "abc@"); }
+    try { new DeliveryTarget(DeliveryMethod.EMAIL, "abc@"); }
     catch (IllegalArgumentException e) { pass = true; }
     Assert.assertTrue(pass);
     pass = false;
-    try { DeliveryTarget.validateTargetAndExtractDomain(DeliveryMethod.EMAIL, "@example.com"); }
+    try { new DeliveryTarget(DeliveryMethod.EMAIL, "@example.com"); }
     catch (IllegalArgumentException e) { pass = true; }
     Assert.assertTrue(pass);
     pass = false;
-    try { DeliveryTarget.validateTargetAndExtractDomain(DeliveryMethod.EMAIL, "abc@example com"); }
+    try { new DeliveryTarget(DeliveryMethod.EMAIL, "abc@example com"); }
     catch (IllegalArgumentException e) { pass = true; }
     Assert.assertTrue(pass);
     pass = false;
-    try { DeliveryTarget.validateTargetAndExtractDomain(DeliveryMethod.WEBHOOK, "abc"); }
+    try { new DeliveryTarget(DeliveryMethod.WEBHOOK, "abc"); }
     catch (IllegalArgumentException e) { pass = true; }
     Assert.assertTrue(pass);
     pass = false;
-    try { DeliveryTarget.validateTargetAndExtractDomain(DeliveryMethod.WEBHOOK, "abc.com"); }
+    try { new DeliveryTarget(DeliveryMethod.WEBHOOK, "abc.com"); }
     catch (IllegalArgumentException e) { pass = true; }
     Assert.assertTrue(pass);
     pass = false;
-    try { DeliveryTarget.validateTargetAndExtractDomain(DeliveryMethod.WEBHOOK, "/abc"); }
+    try { new DeliveryTarget(DeliveryMethod.WEBHOOK, "/abc"); }
     catch (IllegalArgumentException e) { pass = true; }
     Assert.assertTrue(pass);
   }

@@ -297,6 +297,5 @@ public class NotificationsDaoTest
     UUID u = dao.getLastEventUUID(bucketNum1);
     Assert.assertNotNull(u, "Last event not found");
     Assert.assertEquals(u, event1.getUuid());
-
   }
 }

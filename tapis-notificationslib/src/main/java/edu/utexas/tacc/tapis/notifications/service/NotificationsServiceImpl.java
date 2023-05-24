@@ -916,7 +916,7 @@ public class NotificationsServiceImpl implements NotificationsService
 
     // Build the callback delivery method
     // Example https://dev.develop.tapis.io/v3/notifications/test/callback/<subscriptionName>
-    String callbackStr = String.format("%s/test/callback/%s", baseServiceUrl, name);
+    String callbackStr = String.format("%s/test/callback/%s/", baseServiceUrl, name);
     DeliveryTarget dm = new DeliveryTarget(DeliveryTarget.DeliveryMethod.WEBHOOK, callbackStr);
     var dmList = Collections.singletonList(dm);
 
@@ -1150,7 +1150,7 @@ public class NotificationsServiceImpl implements NotificationsService
       {
         try
         {
-          DeliveryTarget.validateTargetAndExtractDomain(target.getDeliveryMethod(), target.getDeliveryAddress());
+          new DeliveryTarget(target.getDeliveryMethod(), target.getDeliveryAddress());
         }
         catch (IllegalArgumentException e)
         {
