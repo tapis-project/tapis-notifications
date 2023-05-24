@@ -9,6 +9,17 @@ You may also reference live-docs based on the openapi specification here:
 https://tapis-project.github.io/live-docs
 
 ---------------------------------------------------------------------------
+## 1.3.4 - 2023-05-24
+
+Bug fix.
+
+### New features:
+- None
+
+### Bug fixes:
+- Fix issue with extracting host from webhook URL.
+
+---------------------------------------------------------------------------
 ## 1.3.3 - 2023-05-10
 
 Incremental improvements and new features.

@@ -3,9 +3,8 @@ package edu.utexas.tacc.tapis.notifications.model;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.regex.Pattern;
-import org.apache.commons.validator.routines.EmailValidator;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.UrlValidator;
-import org.jooq.tools.StringUtils;
 
 import edu.utexas.tacc.tapis.notifications.utils.LibUtils;
 
@@ -33,22 +32,19 @@ public final class DeliveryTarget
   private static final UrlValidator URL_VALIDATOR = new UrlValidator(URL_SCHEMES, URL_OPTIONS);
   private final DeliveryMethod deliveryMethod;
   private final String deliveryAddress;
-  private final String domain;
 
   public DeliveryTarget(DeliveryMethod deliveryMethod1, String deliveryAddress1) throws IllegalArgumentException
   {
     deliveryMethod = deliveryMethod1;
     deliveryAddress = deliveryAddress1;
-    // Do basic validation and extract domain
-    domain = validateTargetAndExtractDomain(deliveryMethod1, deliveryAddress1);
+    validateTarget(deliveryMethod, deliveryAddress);
   }
 
 
-  // Perform simple basic validation of deliveryAddress and extract the domain
-  public static String validateTargetAndExtractDomain(DeliveryMethod deliveryMethod, String deliveryAddress)
+  // Perform simple basic validation of deliveryAddress
+  public void validateTarget(DeliveryMethod deliveryMethod, String deliveryAddress)
           throws IllegalArgumentException
   {
-    String domainStr;
     String msg;
     if (StringUtils.isBlank(deliveryAddress))
     {
@@ -64,7 +60,6 @@ public final class DeliveryTarget
         msg = LibUtils.getMsg("NTFLIB_SUBSCR_DLVRY_ADDR_NOT_EMAIL", deliveryMethod, deliveryAddress);
         throw new IllegalArgumentException(msg);
       }
-      domainStr = deliveryAddress.substring(deliveryAddress.indexOf("@") + 1);
     }
     else if (DeliveryMethod.WEBHOOK.equals(deliveryMethod))
     {
@@ -73,7 +68,6 @@ public final class DeliveryTarget
       try
       {
         uri = new URI(deliveryAddress);
-        domainStr = uri.getHost();
       }
       catch (URISyntaxException e)
       {
@@ -92,12 +86,10 @@ public final class DeliveryTarget
       msg = LibUtils.getMsg("NTFLIB_SUBSCR_DLVRY_METH_INVALID", deliveryMethod, deliveryAddress);
       throw new IllegalArgumentException(msg);
     }
-    return domainStr;
   }
 
   public DeliveryMethod getDeliveryMethod() { return deliveryMethod; }
   public String getDeliveryAddress() { return deliveryAddress; }
-  public String getDomain() { return domain; }
 
   @Override
   public String toString()

@@ -1,10 +1,8 @@
 package edu.utexas.tacc.tapis.notifications.service;
 
 import java.io.IOException;
-import java.net.URI;
 import java.util.UUID;
 import java.util.concurrent.Callable;
-import javax.ws.rs.core.Response.Status;
 
 import edu.utexas.tacc.tapis.notifications.model.DeliveryTarget;
 import okhttp3.Call;
@@ -172,9 +170,11 @@ public final class DeliveryTask implements Callable<Notification>
     Request.Builder requestBuilder = new Request.Builder().url(deliveryTarget.getDeliveryAddress()).post(body);
     Request request = requestBuilder.addHeader("User-Agent", "Tapis/%s".formatted(TapisConstants.API_VERSION)).build();
 
-    // Throttle by host as needed.
-    String host = deliveryTarget.getDomain();
-    DeliveryBucketManager.throttleLaunch(host);
+    // Throttle by webhook as needed.
+    // NOTE: This probably should be by host (i.e. domain), but turns out sometimes the method used to extract domain
+    //       returns null when it appears that it should not. Until that is resolved, use the full delivery address.
+//    String host = deliveryTarget.getDomain();
+    DeliveryBucketManager.throttleLaunch(deliveryTarget.getDeliveryAddress());
 
     Call call = httpClient.newCall(request);
     // Use try-with-resources to auto-close the response.

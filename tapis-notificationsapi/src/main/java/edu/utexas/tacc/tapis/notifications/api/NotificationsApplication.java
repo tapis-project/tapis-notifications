@@ -163,13 +163,13 @@ public class NotificationsApplication extends ResourceConfig
     System.out.println("Initializing service");
     svcImpl.initService(siteAdminTenantId, RuntimeParameters.getInstance());
 
-    System.out.println("Registering shutdownHook");
     // Add a shutdown hook so we can gracefully stop
+    System.out.println("Registering shutdownHook");
     Thread shudownHook = new NotificationsApplication.ServiceShutdown(svcImpl);
     Runtime.getRuntime().addShutdownHook(shudownHook);
 
-    System.out.println("Starting http server");
     // Create and start the server
+    System.out.println("Starting http server");
     final HttpServer server = GrizzlyHttpServerFactory.createHttpServer(baseUri, config, false);
     server.start();
   }
