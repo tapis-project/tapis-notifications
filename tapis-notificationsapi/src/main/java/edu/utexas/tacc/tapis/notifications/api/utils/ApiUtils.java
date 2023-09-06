@@ -143,7 +143,6 @@ public class ApiUtils
   }
 
   /**
-   * TODO refactor this to shared code
    * Trace the incoming request, include info about requesting user, op name and request URL
    * @param rUser resource user
    * @param opName name of operation

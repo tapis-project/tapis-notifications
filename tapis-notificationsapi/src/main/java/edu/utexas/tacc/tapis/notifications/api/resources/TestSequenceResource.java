@@ -84,8 +84,8 @@ public class TestSequenceResource
 
   // Pattern for determining if base url is from a Tapis k8s environment
   // e.g. http://dev.develop.tapis.io/v3/notifications or http://dev.tapis.io/v3/notifications
-  // TODO/TBD What about non-Tapis sites and associate sites?
-  // Start with "http://" then 0 or more characters then ".tapis.io" then 0 or more characters
+  // TBD What about non-Tapis sites and associate sites? Will this need to change for them?
+  // Start with "http://", then 0 or more characters, then ".tapis.io", then 0 or more characters
   // ^http://.*\.tapis\.io.*
   private static final Pattern TAPIS_BASEURL_K8S_PATTERN = Pattern.compile("^http://.*\\.tapis\\.io.*");
 
