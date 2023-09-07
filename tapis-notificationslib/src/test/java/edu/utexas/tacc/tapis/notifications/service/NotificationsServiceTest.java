@@ -551,7 +551,7 @@ public class NotificationsServiceTest
   }
 
   // Test posting an event to the queue and reading it back
-  // TODO/TBD When using deliveryCallback with basicPublish found putting in sleeps and watching rabbitmq console can
+  // TBD When using deliveryCallback with basicPublish found putting in sleeps and watching rabbitmq console can
   //  see message is posted and then read off queue but not able to get the test to fail when it should.
   //  And not able to see output. Where does DeliveryCallback output go?
   @Test(enabled = false)
@@ -569,7 +569,7 @@ public class NotificationsServiceTest
 //      System.out.println("Received msg: " + msg);
 //      // Convert received msg into an Event
 //      Event tmpEvent = TapisGsonUtils.getGson().fromJson(msg, Event.class);
-//      // TODO test does not fail
+//      // TBD NOTE test does not fail, see note above
 //      Assert.fail("WE SHOULD FAIL. HOW?");
 //      Assert.assertNotNull(msg, "Reading event resulted in null.");
 //      Assert.assertEquals(tmpEvent.getTenantId(), event.getTenantId());
