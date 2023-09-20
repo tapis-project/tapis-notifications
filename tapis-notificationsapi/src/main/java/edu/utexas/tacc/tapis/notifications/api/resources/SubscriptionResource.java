@@ -209,7 +209,7 @@ public class SubscriptionResource
     // If req is null that is an unrecoverable error
     if (req == null)
     {
-      msg = ApiUtils.getMsgAuth(CREATE_ERR, rUser, "N/A", "ReqPostSubscription == null");
+      msg = ApiUtils.getMsgAuth(CREATE_ERR, rUser, "N/A", "N/A", "ReqPostSubscription == null");
       _log.error(msg);
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
@@ -251,7 +251,7 @@ public class SubscriptionResource
       else
       {
         // IllegalStateException indicates an Invalid Subscription was passed in
-        msg = ApiUtils.getMsgAuth(CREATE_ERR, rUser, name, e.getMessage());
+        msg = ApiUtils.getMsgAuth(CREATE_ERR, rUser, owner, name, e.getMessage());
         _log.error(msg);
         return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
       }
@@ -259,13 +259,13 @@ public class SubscriptionResource
     catch (IllegalArgumentException e)
     {
       // IllegalArgumentException indicates somehow a bad argument made it this far
-      msg = ApiUtils.getMsgAuth(CREATE_ERR, rUser, name, e.getMessage());
+      msg = ApiUtils.getMsgAuth(CREATE_ERR, rUser, owner, name, e.getMessage());
       _log.error(msg);
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
     catch (Exception e)
     {
-      msg = ApiUtils.getMsgAuth(CREATE_ERR, rUser, name, e.getMessage());
+      msg = ApiUtils.getMsgAuth(CREATE_ERR, rUser, owner, name, e.getMessage());
       _log.error(msg, e);
       return Response.status(Status.INTERNAL_SERVER_ERROR).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
