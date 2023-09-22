@@ -611,7 +611,7 @@ public final class RuntimeParameters implements EmailClientParameters
               throw new TapisRuntimeException(msg, e);
           }
 
-    // Get the email server host.
+    // Get the email user, for auth.
     parm = inputProperties.getProperty(EnvVar.TAPIS_SMTP_USER.getEnvName());
     if (!StringUtils.isBlank(parm)) setEmailUser(parm);
       else if (isEmailAuth()) {
@@ -622,7 +622,7 @@ public final class RuntimeParameters implements EmailClientParameters
           throw new TapisRuntimeException(msg);
       }
         
-    // Get the email server host.
+    // Get the email password, for auth.
     parm = inputProperties.getProperty(EnvVar.TAPIS_SMTP_PASSWORD.getEnvName());
     if (!StringUtils.isBlank(parm)) setEmailPassword(parm);
       else if (isEmailAuth()) {
@@ -633,12 +633,12 @@ public final class RuntimeParameters implements EmailClientParameters
         throw new TapisRuntimeException(msg);
       }
         
-    // Get the email server host.
+    // Get the email name for the From: field
     parm = inputProperties.getProperty(EnvVar.TAPIS_SMTP_FROM_NAME.getEnvName());
     if (!StringUtils.isBlank(parm)) setEmailFromName(parm);
       else setEmailFromName(DEFAULT_EMAIL_FROM_NAME);
         
-    // Get the email server host.
+    // Get the email address for the From: field
     parm = inputProperties.getProperty(EnvVar.TAPIS_SMTP_FROM_ADDRESS.getEnvName());
     if (!StringUtils.isBlank(parm)) setEmailFromAddress(parm);
       else setEmailFromAddress(DEFAULT_EMAIL_FROM_ADDRESS);

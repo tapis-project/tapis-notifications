@@ -325,7 +325,7 @@ public final class DeliveryBucketManager implements Callable<String>
     // Note that we ultimately want to de-duplicate (based on deliveryTarget) in order to prevent a notification from
     //   being sent to a deliveryTarget more than once.
     // We do not de-duplicate here because we want to track the subscription associated with each deliveryTarget.
-    // We want to track associated subscription so that when a notification is in recovery we stop re-trying after
+    // We want to track the associated subscription so that when a notification is in recovery, we stop re-trying after
     //   the associated subscription is deleted.
     // TBD For de-duplication we simply delete all persisted matching notifications once there has been a
     //   successful delivery. In this case matching means matching (event, deliveryTarget) independent of the
