@@ -2139,7 +2139,7 @@ public class NotificationsDaoImpl implements NotificationsDao
     SearchOperator op = SearchUtils.getSearchOperator(opStr);
     if (op == null)
     {
-      String msg = MsgUtils.getMsg("NTFLIB_DB_INVALID_SEARCH_OP", opStr, SUBSCRIPTIONS.getName(), DSL.name(column));
+      String msg = LibUtils.getMsg("NTFLIB_DB_INVALID_SEARCH_OP", opStr, SUBSCRIPTIONS.getName(), DSL.name(column));
       throw new TapisException(msg);
     }
 
