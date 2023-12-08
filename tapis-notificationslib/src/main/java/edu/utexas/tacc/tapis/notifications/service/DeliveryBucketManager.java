@@ -14,7 +14,6 @@ import org.jooq.tools.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import edu.utexas.tacc.tapis.shared.utils.ThrottleMap;
 import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
 import edu.utexas.tacc.tapis.notifications.model.DeliveryTarget;
@@ -203,7 +202,7 @@ public final class DeliveryBucketManager implements Callable<String>
     // Without a key, callThrottles.record() will throw a null pointer exception.
     if (StringUtils.isBlank(key))
     {
-      log.warn(MsgUtils.getMsg("NTFLIB_DSP_BUCKET_THROTTLE_NO_KEY", key));
+      log.warn(LibUtils.getMsg("NTFLIB_DSP_BUCKET_THROTTLE_NO_KEY", key));
       key = NO_KEY_FOR_THROTTLE;
     }
 
@@ -216,7 +215,7 @@ public final class DeliveryBucketManager implements Callable<String>
     skewMs += CONNECT_DELAY_MS;
 
     // Log the delay.
-    log.debug(MsgUtils.getMsg("NTFLIB_DSP_BUCKET_THROTTLE_WEBHOOK", key, skewMs));
+    log.debug(LibUtils.getMsg("NTFLIB_DSP_BUCKET_THROTTLE_WEBHOOK", key, skewMs));
 
     // Delay for the randomized period.
     try {Thread.sleep(skewMs);} catch (InterruptedException e) { /* empty */}

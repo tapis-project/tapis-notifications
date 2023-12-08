@@ -9,6 +9,17 @@ You may also reference live-docs based on the openapi specification here:
 https://tapis-project.github.io/live-docs
 
 ---------------------------------------------------------------------------
+## 1.5.11 - 2023-12-08
+
+Bug fix.
+
+### New features:
+- None
+
+### Bug fixes:
+- A few log message calls were looking in wrong resource bundle for the message.
+
+---------------------------------------------------------------------------
 ## 1.5.10 - 2023-11-20
 
 Incremental improvements and bug fix.
