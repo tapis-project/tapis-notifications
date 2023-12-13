@@ -48,7 +48,7 @@ public interface NotificationsService
           throws TapisException, TapisClientException, NotAuthorizedException, IllegalArgumentException;
 
   int deleteSubscriptionsBySubject(ResourceRequestUser rUser, String owner, String subject, boolean anyOwner)
-          throws TapisException, NotAuthorizedException, IllegalArgumentException;
+          throws TapisException, TapisClientException, NotAuthorizedException, IllegalArgumentException;
 
   int updateSubscriptionTTL(ResourceRequestUser rUser, String owner, String name, String newTTL)
           throws TapisException, TapisClientException, NotAuthorizedException, IllegalArgumentException, NotFoundException;
@@ -84,7 +84,7 @@ public interface NotificationsService
   // ------------------------- Test Sequence -------------------------------
   // -----------------------------------------------------------------------
   Subscription beginTestSequence(ResourceRequestUser rUser, String baseServiceUrl, String subscriptionTTL)
-          throws TapisException, IOException, URISyntaxException, IllegalStateException, IllegalArgumentException;
+          throws TapisException, TapisClientException, IOException, IllegalStateException, IllegalArgumentException;
 
   TestSequence getTestSequence(ResourceRequestUser rUser, String name)
           throws TapisException, TapisClientException;

@@ -290,7 +290,7 @@ public class NotificationsServiceImpl implements NotificationsService
    * Update existing subscription given a PatchSubscription and the text used to create the PatchSubscription.
    * Secrets in the text should be masked.
    * @param rUser - ResourceRequestUser containing tenant, user and request info
-   * @param owner subscription owner
+   * @param owner subscription owner. Normally oboUser, but can be set using ownedBy query parameter.
    * @param name subscription name
    * @param patchSubscription - Pre-populated PatchSubscription object
    * @param scrubbedText - Text used to create the PatchSubscription object - secrets should be scrubbed. Saved in update record.
@@ -379,7 +379,7 @@ public class NotificationsServiceImpl implements NotificationsService
   /**
    * Delete a subscription
    * @param rUser - ResourceRequestUser containing tenant, user and request info
-   * @param owner subscription owner
+   * @param owner subscription owner. Normally oboUser, but can be set using ownedBy query parameter.
    * @param name - name of subscription
    * @return Number of items updated
    *
@@ -436,7 +436,7 @@ public class NotificationsServiceImpl implements NotificationsService
 
     // ------------------------- Check authorization -------------------------
     // If user request then check that user is owner. For service request always allowed
-    if (!rUser.isServiceRequest()) checkAuth(rUser, subscr.getOwner(), subscr.getName(), op);
+    checkAuth(rUser, subscr.getOwner(), subscr.getName(), op);
 
     // Delete the subscription
     return dao.deleteSubscriptionByUuid(rUser.getOboTenantId(), uuid);
@@ -446,7 +446,7 @@ public class NotificationsServiceImpl implements NotificationsService
    * Delete subscriptions matching a specific subjectFilter
    * @param rUser - ResourceRequestUser containing tenant, user and request info
    * @param subject specific subjectFilter for matching
-   * @param owner owner for matching (ignored if anyOwner == true)
+   * @param owner subscription owner. Normally oboUser, but can be set using ownedBy query parameter.
    * @param anyOwner - If true match for any owner. owner will be ignored.
    * @return Number of items updated
    *
@@ -457,7 +457,7 @@ public class NotificationsServiceImpl implements NotificationsService
   @Override
   public int deleteSubscriptionsBySubject(ResourceRequestUser rUser, String owner, String subject,
                                           boolean anyOwner)
-          throws TapisException, IllegalArgumentException, NotAuthorizedException
+          throws TapisException, TapisClientException, IllegalArgumentException, NotAuthorizedException
   {
     SubscriptionOperation op = SubscriptionOperation.delete;
     // Check inputs
@@ -466,10 +466,11 @@ public class NotificationsServiceImpl implements NotificationsService
       throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_MISSING_ARG1", rUser, "subjectFilter", op));
 
     // Check auth. Only service may use anyOwner == true
-    if (!rUser.isServiceRequest() && anyOwner)
-    {
-      throw new NotAuthorizedException(LibUtils.getMsgAuth("NTFLIB_UNAUTH1", rUser, "deleteSubscriptionsBySubject"), NO_CHALLENGE);
-    }
+    checkAuthAnyOwner(rUser, anyOwner);
+
+    // Since ownedBy may have been used in a regular user request,
+    // unless anyOwner = true we need to check that owner is the oboUser or tenant admin
+    if (!anyOwner) checkAuth(rUser, owner, "<ALL>", op);
 
     // Delete the subscriptions
     return dao.deleteSubscriptionsBySubject(rUser.getOboTenantId(), owner, subject, anyOwner);
@@ -478,7 +479,7 @@ public class NotificationsServiceImpl implements NotificationsService
   /**
    * Update TTL for a subscription
    * @param rUser - ResourceRequestUser containing tenant, user and request info
-   * @param owner subscription owner
+   * @param owner subscription owner. Normally oboUser, but can be set using ownedBy query parameter.
    * @param name - name of subscription
    * @param newTTLStr - New value for TTL
    * @return Number of items updated
@@ -525,7 +526,7 @@ public class NotificationsServiceImpl implements NotificationsService
   /**
    * isEnabled
    * @param rUser - ResourceRequestUser containing tenant, user and request info
-   * @param owner subscription owner
+   * @param owner subscription owner. Normally oboUser, but can be set using ownedBy query parameter.
    * @param name - Name of the subscription
    * @return true if subscription is enabled, false otherwise
    * @throws TapisException - for Tapis related exceptions
@@ -558,7 +559,7 @@ public class NotificationsServiceImpl implements NotificationsService
    * getSubscription by name
    *
    * @param rUser - ResourceRequestUser containing tenant, user and request info
-   * @param owner subscription owner
+   * @param owner subscription owner. Normally oboUser, but can be set using ownedBy query parameter.
    * @param name - Name of the subscription
    * @return populated instance of an Subscription or null if not found or user not authorized.
    * @throws TapisException - for Tapis related exceptions
@@ -611,7 +612,7 @@ public class NotificationsServiceImpl implements NotificationsService
     if (subscr == null) return null;
     // ------------------------- Check authorization -------------------------
     // If user request then check that user is owner. For service request always allowed
-    if (!rUser.isServiceRequest()) checkAuth(rUser, subscr.getOwner(), subscr.getName(), op);
+    checkAuth(rUser, subscr.getOwner(), subscr.getName(), op);
     return subscr;
   }
 
@@ -669,7 +670,7 @@ public class NotificationsServiceImpl implements NotificationsService
   /**
    * Get all subscriptions
    * @param rUser - ResourceRequestUser containing tenant, user and request info
-   * @param owner owner to use for search (ignored if anyOwner == true).
+   * @param owner subscription owner. Normally oboUser, but can be set using ownedBy query parameter.
    * @param searchList - optional list of conditions used for searching
    * @param limit - indicates maximum number of results to be included, -1 for unlimited
    * @param orderByList - orderBy entries for sorting, e.g. orderBy=created(desc). Default is created(asc),name(asc).
@@ -689,21 +690,12 @@ public class NotificationsServiceImpl implements NotificationsService
     if (StringUtils.isBlank(owner))
       throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_MISSING_ARG1", rUser, "owner", SubscriptionOperation.read));
 
-    // Check auth. Let service always pass
-    // For user request:
-    //   User may not use anyOwner == true
-    //   User may only search for subscriptions they own unless they are an admin
-    if (!rUser.isServiceRequest())
-    {
-      if (anyOwner)
-      {
-        throw new NotAuthorizedException(LibUtils.getMsgAuth("NTFLIB_UNAUTH1", rUser, "getSubscriptions"), NO_CHALLENGE);
-      }
-      else if (!rUser.getJwtUserId().equals(owner) && !hasAdminRole(rUser))
-      {
-        throw new NotAuthorizedException(LibUtils.getMsgAuth("NTFLIB_UNAUTH2", rUser, owner, "getSubscriptions"), NO_CHALLENGE);
-      }
-    }
+    // Check auth. Only service may use anyOwner == true
+    checkAuthAnyOwner(rUser, anyOwner);
+
+    // Check auth. Let service always pass.
+    // For user request: User may only search for subscriptions they own unless they are an admin
+    checkAuthOwner(rUser, owner);
 
     // Build verified list of search conditions
     var verifiedSearchList = new ArrayList<String>();
@@ -739,7 +731,7 @@ public class NotificationsServiceImpl implements NotificationsService
    * Get all subscriptions
    * Use provided string containing a valid SQL where clause for the search.
    * @param rUser - ResourceRequestUser containing tenant, user and request info
-   * @param owner subscription owner
+   * @param owner subscription owner. Normally oboUser, but can be set using ownedBy query parameter.
    * @param sqlSearchStr - string containing a valid SQL where clause
    * @return List of Subscription objects
    * @throws TapisException - for Tapis related exceptions
@@ -749,11 +741,16 @@ public class NotificationsServiceImpl implements NotificationsService
                                                               int limit, List<OrderBy> orderByList, int skip, String startAfter)
           throws TapisException, TapisClientException
   {
+    // Use of anyOwner query parameter not supported for this call.
     boolean anyOwnerFalse = false;
     // Check inputs
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
     if (StringUtils.isBlank(owner))
       throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_MISSING_ARG1", rUser, "owner", SubscriptionOperation.read));
+
+    // Check auth. Let service always pass.
+    // For user request: User may only search for subscriptions they own unless they are an admin
+    checkAuthOwner(rUser, owner);
 
     // If search string is empty delegate to getSubscriptions()
     if (StringUtils.isBlank(sqlSearchStr)) return getSubscriptions(rUser, owner, null, limit, orderByList, skip,
@@ -890,7 +887,7 @@ public class NotificationsServiceImpl implements NotificationsService
    */
   @Override
   public Subscription beginTestSequence(ResourceRequestUser rUser, String baseServiceUrl, String ttl)
-          throws TapisException, IOException, URISyntaxException, IllegalStateException, IllegalArgumentException
+          throws TapisException, TapisClientException, IOException, IllegalStateException, IllegalArgumentException
   {
     // Check inputs
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
@@ -900,6 +897,7 @@ public class NotificationsServiceImpl implements NotificationsService
 
     // Use uuid as the subscription name
     String name = UUID.randomUUID().toString();
+    checkAuth(rUser, oboUser, name, SubscriptionOperation.create);
     log.trace(LibUtils.getMsgAuth("NTFLIB_CREATE_TRACE", rUser, name));
 
     // Determine the subscription TTL
@@ -1016,6 +1014,8 @@ public class NotificationsServiceImpl implements NotificationsService
     String oboTenant = rUser.getOboTenantId();
     String oboUser = rUser.getOboUserId();
 
+    checkAuth(rUser, oboUser, name, SubscriptionOperation.delete);
+
     // If subscription does not exist then 0 changes
     if (!dao.checkForSubscription(oboTenant, oboUser, name)) return 0;
 
@@ -1056,7 +1056,7 @@ public class NotificationsServiceImpl implements NotificationsService
   /**
    * Update enabled attribute for a subscription
    * @param rUser - ResourceRequestUser containing tenant, user and request info
-   * @param owner - owner of subscription
+   * @param owner subscription owner. Normally oboUser, but can be set using ownedBy query parameter.
    * @param name - name of subscription
    * @param op - operation, enable or disable
    * @return Number of items updated
@@ -1250,11 +1250,12 @@ public class NotificationsServiceImpl implements NotificationsService
 
   /**
    * Owner based authorization check.
-   *
+   * Services always allowed
+   * Create/delete/modify operations - must be a service.
    * All operations: oboUser must be owner or have admin role
    *
    * @param rUser - ResourceRequestUser containing tenant, user and request info
-   * @param owner - owner of the subscription
+   * @param owner subscription owner. Normally oboUser, but can be set using ownedBy query parameter.
    * @param name - id of the subscription
    * @param op - operation name
    * @throws NotAuthorizedException - user not authorized to perform operation
@@ -1262,6 +1263,9 @@ public class NotificationsServiceImpl implements NotificationsService
   private void checkAuth(ResourceRequestUser rUser, String owner, String name, SubscriptionOperation op)
           throws TapisException, TapisClientException, NotAuthorizedException
   {
+    // Services always allowed.
+    if (rUser.isServiceRequest()) return;
+
     String oboUser =  rUser.getOboUserId();
 
     // All arguments must be provided else log an error and deny.
@@ -1275,9 +1279,10 @@ public class NotificationsServiceImpl implements NotificationsService
       case enable:
       case disable:
       case delete:
-      case read:
       case modify:
       case updateTTL:
+        if (rUser.isServiceRequest()) return;
+      case read:
         if (owner.equals(oboUser) || hasAdminRole(rUser)) return;
         break;
     }
@@ -1293,4 +1298,37 @@ public class NotificationsServiceImpl implements NotificationsService
   {
     return getSKClient().isAdmin(rUser.getOboTenantId(), rUser.getOboUserId());
   }
+
+  /**
+   * Check auth for setting anyOwner query parameter. Only service may use anyOwner == true
+   *
+   * @param rUser - ResourceRequestUser containing tenant, user and request info
+   * @throws NotAuthorizedException - user not authorized to perform operation
+   */
+  private void checkAuthAnyOwner(ResourceRequestUser rUser, boolean anyOwner) throws NotAuthorizedException
+  {
+    if (!rUser.isServiceRequest() && anyOwner)
+    {
+      throw new NotAuthorizedException(LibUtils.getMsgAuth("NTFLIB_UNAUTH1", rUser, "deleteSubscriptionsBySubject"), NO_CHALLENGE);
+    }
+  }
+
+  /**
+   * Check auth for owner. If not owner must be service or tenant admin.
+   *
+   * @param rUser - ResourceRequestUser containing tenant, user and request info
+   * @param owner - owner
+   * @throws NotAuthorizedException - user not authorized to perform operation
+   */
+  private void checkAuthOwner(ResourceRequestUser rUser, String owner)
+          throws TapisException, TapisClientException, NotAuthorizedException
+  {
+    if (!rUser.isServiceRequest() && !rUser.getJwtUserId().equals(owner) && !hasAdminRole(rUser))
+    {
+      throw new NotAuthorizedException(LibUtils.getMsgAuth("NTFLIB_UNAUTH2", rUser, owner, "getSubscriptions"), NO_CHALLENGE);
+    }
+  }
 }
+/*
+
+ */
