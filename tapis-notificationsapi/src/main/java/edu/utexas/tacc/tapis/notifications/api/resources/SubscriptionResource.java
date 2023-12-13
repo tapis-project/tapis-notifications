@@ -1135,8 +1135,8 @@ public class SubscriptionResource
       subscriptions = notificationsService.getSubscriptions(rUser, subscrOwner, searchList, limit, orderByList, skip,
                                                             startAfter, anyOwner);
     else
-      subscriptions = notificationsService.getSubscriptionsUsingSqlSearchStr(rUser, subscrOwner, sqlSearchStr, limit, orderByList, skip,
-                                                  startAfter);
+      subscriptions = notificationsService.getSubscriptionsUsingSqlSearchStr(rUser, subscrOwner, sqlSearchStr,
+                                                                             limit, orderByList, skip, startAfter);
     if (subscriptions == null) subscriptions = Collections.emptyList();
     itemCountStr = String.format(NTF_CNT_STR, subscriptions.size());
     if (computeTotal && limit <= 0) totalCount = subscriptions.size();
