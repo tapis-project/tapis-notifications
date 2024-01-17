@@ -71,23 +71,19 @@
     <dependency>
       <groupId>com.squareup.okhttp3</groupId>
       <artifactId>okhttp</artifactId>
-      <version>${okhttp3.version}</version>
     </dependency>
     <dependency>
       <groupId>com.squareup.okhttp3</groupId>
       <artifactId>logging-interceptor</artifactId>
-      <version>${okhttp3.version}</version>
     </dependency>
     <dependency>
       <groupId>org.threeten</groupId>
       <artifactId>threetenbp</artifactId>
-      <version>${threetenbp.version}</version>
     </dependency>
     <!-- Gson -->
     <dependency>
       <groupId>io.gsonfire</groupId>
       <artifactId>gson-fire</artifactId>
-      <version>${gson-fire.version}</version>
     </dependency>
     <!-- jOOQ and flyway -->
     <dependency>
