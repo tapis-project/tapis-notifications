@@ -8,6 +8,17 @@ https://tapis.readthedocs.io/en/latest/technical/notifications.html
 You may also reference live-docs based on the openapi specification here:
 https://tapis-project.github.io/live-docs
 
+## 1.6.0 - 2024-01-23
+
+Increment release.
+
+### New features:
+- None
+
+### Bug fixes:
+- None
+
+---------------------------------------------------------------------------
 ## 1.5.12 - 2023-12-13
 
 Update handling of anyOwner and ownedBy query parameters.
