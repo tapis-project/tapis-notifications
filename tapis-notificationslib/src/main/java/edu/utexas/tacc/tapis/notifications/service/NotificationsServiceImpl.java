@@ -834,9 +834,9 @@ public class NotificationsServiceImpl implements NotificationsService
     }
 
     // Determine the next sequence id for the seriesId
-    int seriesSeqId = dao.getNextSeriesSeqId(seriesId);
+    int seriesSeqCount = dao.getNextSeriesSeqCount(rUser, seriesId);
     // Create an Event from the request
-    Event event = new Event(source, type, subject, data, seriesId, seriesSeqId, timestamp, deleteSubscriptionsMatchingSubject,
+    Event event = new Event(source, type, subject, data, seriesId, seriesSeqCount, timestamp, deleteSubscriptionsMatchingSubject,
             tenantId, rUser.getOboUserId(), UUID.randomUUID());
 
     // If first field of type is not the service name then reject
@@ -948,13 +948,13 @@ public class NotificationsServiceImpl implements NotificationsService
     String eventType = TEST_EVENT_TYPE;
     String eventSubject = name;
     String eventSeriesId = null;
-    int eventSeriesSeqId = Event.DEFAULT_SERIES_SEQ_ID;
+    int eventSeriesSeqCount = Event.DEFAULT_SERIES_SEQ_COUNT;
     String eventTimeStamp = OffsetDateTime.now().toString();
     String eventData = null;
     boolean eventDeleteSubscriptionsMatchingSubject = false;
 
     UUID eventUUID = UUID.randomUUID();
-    Event event = new Event(eventSource, eventType, eventSubject, eventData, eventSeriesId, eventSeriesSeqId,
+    Event event = new Event(eventSource, eventType, eventSubject, eventData, eventSeriesId, eventSeriesSeqCount,
                             eventTimeStamp, eventDeleteSubscriptionsMatchingSubject, oboTenant, oboUser, eventUUID);
     MessageBroker.getInstance().publishEvent(rUser, event);
 

@@ -133,12 +133,12 @@ public final class IntegrationUtils
   public static final String eventType1 = "jobs.job.complete";
   public static final String eventSubject1 = "640ad5a8-1a6e-4189-a334-c4c7226fb9ba-007";
   public static final String seriesId1 = "111a2228-1a6e-4189-a334-c4c722666666-007";
-  public static final int seriesSeqId1 = 1;
+  public static final int seriesSeqCount1 = 1;
   public static final String eventDataNull = null;
   public static final String eventTime = TapisUtils.getUTCTimeNow().toString();
   public static final boolean eventDeleteSubscriptionsMatchingSubjectFalse = false;
 
-  public static final Event event1 = new Event(eventSource1, eventType1, eventSubject1, eventDataNull, seriesId1, seriesSeqId1,
+  public static final Event event1 = new Event(eventSource1, eventType1, eventSubject1, eventDataNull, seriesId1, seriesSeqCount1,
                                                eventTime, eventDeleteSubscriptionsMatchingSubjectFalse, tenantName,
                                                testUser1, UUID.randomUUID());
 

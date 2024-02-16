@@ -111,14 +111,16 @@ public class NotificationsRecoveryRecord extends UpdatableRecordImpl<Notificatio
     }
 
     /**
-     * Setter for <code>tapis_ntf.notifications_recovery.delivery_address</code>.
+     * Setter for
+     * <code>tapis_ntf.notifications_recovery.delivery_address</code>.
      */
     public void setDeliveryAddress(String value) {
         set(6, value);
     }
 
     /**
-     * Getter for <code>tapis_ntf.notifications_recovery.delivery_address</code>.
+     * Getter for
+     * <code>tapis_ntf.notifications_recovery.delivery_address</code>.
      */
     public String getDeliveryAddress() {
         return (String) get(6);

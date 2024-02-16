@@ -11,7 +11,7 @@
     "subject": { "type": ["string", "null"] },
     "data": { "type":  ["string", "null"] },
     "seriesId": { "type": ["string", "null"] },
-    "seriesSeqId": { "type":  "integer" },
+    "seriesSeqCount": { "type":  "integer" },
     "timestamp": { "type":  "string" },
     "deleteSubscriptionsMatchingSubject": {"type":  "boolean" }
   }

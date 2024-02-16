@@ -1,11 +1,11 @@
 package edu.utexas.tacc.tapis.notifications.api.requests;
 
 import static edu.utexas.tacc.tapis.notifications.model.Event.DEFAULT_DELETE_SUBSCRIPTIONS_MATCHING_SUBJECT;
-import static edu.utexas.tacc.tapis.notifications.model.Event.DEFAULT_SERIES_SEQ_ID;
+import static edu.utexas.tacc.tapis.notifications.model.Event.DEFAULT_SERIES_SEQ_COUNT;
 
 /*
  * Class representing all attributes that can be set in an incoming POST event request json body
- * The seriesSeqId and uuid fields are only used when the event is contained in an incoming Notification
+ * The seriesSeqCount and uuid fields are only used when the event is contained in an incoming Notification
  */
 public final class ReqPostEvent
 {
@@ -14,7 +14,7 @@ public final class ReqPostEvent
   public String subject;
   public String data;
   public String seriesId;
-  public int seriesSeqId = DEFAULT_SERIES_SEQ_ID;;
+  public int seriesSeqCount = DEFAULT_SERIES_SEQ_COUNT;;
   public String timestamp;
   public boolean deleteSubscriptionsMatchingSubject = DEFAULT_DELETE_SUBSCRIPTIONS_MATCHING_SUBJECT;
   public String tenant;

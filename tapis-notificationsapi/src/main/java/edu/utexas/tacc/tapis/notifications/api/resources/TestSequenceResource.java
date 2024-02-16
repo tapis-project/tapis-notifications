@@ -401,7 +401,7 @@ public class TestSequenceResource
     String data = req.event.data;
     String type = req.event.type;
     String seriesId = req.event.seriesId;
-    int seriesSeqId = req.event.seriesSeqId;
+    int seriesSeqCount = req.event.seriesSeqCount;
     String timestamp = req.event.timestamp;
     boolean deleteSubscriptionsMatchingSubject = req.event.deleteSubscriptionsMatchingSubject;
     String eventUuidStr = req.event.uuid;
@@ -435,7 +435,7 @@ public class TestSequenceResource
     }
 
     // Create an Event from the request
-    Event event = new Event(source, type, subject, data, seriesId, seriesSeqId, timestamp,
+    Event event = new Event(source, type, subject, data, seriesId, seriesSeqCount, timestamp,
                             deleteSubscriptionsMatchingSubject, tenant, user, eventUuid);
     // Create a notification from the request
     Notification notification = new Notification(notifUuid, -1, tenant, name, -1, eventUuid, event,
@@ -455,7 +455,7 @@ public class TestSequenceResource
     }
     catch (Exception e)
     {
-      msg = ApiUtils.getMsg("NTFAPI_TEST_CB_ERR", tenant, user, sourceStr, type, subject, seriesId, seriesSeqId, timestamp,
+      msg = ApiUtils.getMsg("NTFAPI_TEST_CB_ERR", tenant, user, sourceStr, type, subject, seriesId, seriesSeqCount, timestamp,
                             name, e.getMessage());
       _log.error(msg);
       return Response.status(Status.INTERNAL_SERVER_ERROR).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();

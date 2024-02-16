@@ -542,7 +542,7 @@ public class NotificationsServiceTest
   @Test(enabled = false)
   public void testPostEventAndLeave() throws Exception
   {
-    Event event = new Event(eventSource1, eventType1, eventSubject1, eventDataNull, seriesId1, seriesSeqId1, eventTime,
+    Event event = new Event(eventSource1, eventType1, eventSubject1, eventDataNull, seriesId1, seriesSeqCount1, eventTime,
                             eventDeleteSubscriptionsMatchingSubjectFalse, tenantName, testUser1, UUID.randomUUID());
     System.out.println("Placing event on queue. Event: " + event);
     // Put an event on the queue as a message
@@ -557,7 +557,7 @@ public class NotificationsServiceTest
   @Test(enabled = false)
   public void testPostReadEvent() throws Exception
   {
-    Event event = new Event(eventSource1, eventType1, eventSubject1, eventDataNull, seriesId1, seriesSeqId1, eventTime,
+    Event event = new Event(eventSource1, eventType1, eventSubject1, eventDataNull, seriesId1, seriesSeqCount1, eventTime,
                             eventDeleteSubscriptionsMatchingSubjectFalse, tenantName, testUser1, UUID.randomUUID());
     System.out.println("Placing event on queue. Event: " + event);
     // Put an event on the queue as a message
@@ -592,7 +592,7 @@ public class NotificationsServiceTest
     Assert.assertEquals(event.getType(), tmpEvent.getType());
     Assert.assertEquals(event.getSubject(), tmpEvent.getSubject());
     Assert.assertEquals(event.getSeriesId(), tmpEvent.getSeriesId());
-    Assert.assertEquals(event.getSeriesSeqId(), tmpEvent.getSeriesSeqId());
+    Assert.assertEquals(event.getSeriesSeqCount(), tmpEvent.getSeriesSeqCount());
     Assert.assertEquals(event.getTimestamp(), tmpEvent.getTimestamp());
     Assert.assertEquals(event.getUuid(), tmpEvent.getUuid());
 //    System.out.println("Ack message");

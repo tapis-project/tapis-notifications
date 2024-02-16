@@ -199,7 +199,7 @@ public final class MessageBroker
     if (log.isTraceEnabled())
     {
       log.trace(LibUtils.getMsgAuth("NTFLIB_EVENT_PUB", rUser, event.getSource(), event.getType(),
-                                    event.getSubject(), event.getData(), event.getSeriesId(), event.getSeriesSeqId(),
+                                    event.getSubject(), event.getData(), event.getSeriesId(), event.getSeriesSeqCount(),
                                     event.getTimestamp(), event.getUuid()));
     }
   }
@@ -275,7 +275,7 @@ public final class MessageBroker
         if (log.isTraceEnabled())
         {
           log.trace(LibUtils.getMsg("NTFLIB_EVENT_RCV", event.getTenant(), event.getSource(), event.getType(),
-                                    event.getSubject(), event.getData(), event.getSeriesId(), event.getSeriesSeqId(),
+                                    event.getSubject(), event.getData(), event.getSeriesId(), event.getSeriesSeqCount(),
                                     event.getTimestamp(), event.getUuid()));
         }
 
@@ -294,7 +294,7 @@ public final class MessageBroker
         {
           String msg = LibUtils.getMsg("NTFLIB_EVENT_PUT_INTRPT", event.getTenant(), event.getSource(),
                                        event.getType(), event.getSubject(), event.getSeriesId(),
-                                       event.getSeriesSeqId(), event.getUuid());
+                                       event.getSeriesSeqCount(), event.getUuid());
           log.info(msg);
         }
       }

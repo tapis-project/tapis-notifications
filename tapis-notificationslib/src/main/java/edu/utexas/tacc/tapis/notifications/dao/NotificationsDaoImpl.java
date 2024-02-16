@@ -62,11 +62,7 @@ import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.Subscriptions
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.NotificationsLastEventRecord;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.NotificationsRecoveryRecord;
 
-import static edu.utexas.tacc.tapis.notifications.gen.jooq.Tables.NOTIFICATIONS_RECOVERY;
-import static edu.utexas.tacc.tapis.notifications.gen.jooq.Tables.SUBSCRIPTIONS;
-import static edu.utexas.tacc.tapis.notifications.gen.jooq.Tables.NOTIFICATIONS;
-import static edu.utexas.tacc.tapis.notifications.gen.jooq.Tables.NOTIFICATIONS_LAST_EVENT;
-import static edu.utexas.tacc.tapis.notifications.gen.jooq.Tables.NOTIFICATIONS_TESTS;
+import static edu.utexas.tacc.tapis.notifications.gen.jooq.Tables.*;
 import static edu.utexas.tacc.tapis.shared.threadlocal.OrderBy.DEFAULT_ORDERBY_DIRECTION;
 
 /*
@@ -151,15 +147,50 @@ public class NotificationsDaoImpl implements NotificationsDao
   }
 
   /*
-   * getNextSeriesSeqId
+   * getNextSeriesSeqCound
    * Determine next sequence id for the specified series.
    */
   @Override
-  public int getNextSeriesSeqId(String seriesId) throws TapisException
+  public int getNextSeriesSeqCount(ResourceRequestUser rUser, String seriesId) throws TapisException
   {
+    String opName = "getNextSeriesSeqCount";
     // if seriesId null or empty then return the constant default value.
-    if (StringUtils.isBlank(seriesId)) return Event.DEFAULT_SERIES_SEQ_ID;
-    // TODO Generate and return the next sequence id for the series.
+    if (StringUtils.isBlank(seriesId)) return Event.DEFAULT_SERIES_SEQ_COUNT;
+    // Generate and return the next sequence id for the series.
+    // Use postgresql support for ON CONFLICT to automatically insert new entries as needed:
+    //      INSERT INTO series_seq_count (id) VALUES (<seriesId>) ON CONFLICT DO UPDATE SET seq_id = seq_id + 1
+    int nextSeqId = -1;
+    // ------------------------- Call SQL ----------------------------
+    Connection conn = null;
+    try
+    {
+      // Get a database connection.
+      conn = getConnection();
+      DSLContext db = DSL.using(conn);
+
+      Record r = db.insertInto(SERIES_SEQ_COUNT).columns(SERIES_SEQ_COUNT.ID).values(seriesId).onConflict()
+              .doUpdate().set(SERIES_SEQ_COUNT.SEQ_COUNT, SERIES_SEQ_COUNT.SEQ_COUNT.plus(1))
+              .returningResult(SERIES_SEQ_COUNT.SEQ_COUNT).fetchOne();
+      // If result is null it is an error
+      if (r == null)
+      {
+        throw new TapisException(LibUtils.getMsgAuth("NTFLIB_DB_NULL_RESULT", rUser, seriesId, opName));
+      }
+      nextSeqId = r.getValue(SERIES_SEQ_COUNT.SEQ_COUNT);
+      // Close out and commit
+      LibUtils.closeAndCommitDB(conn, null, null);
+    }
+    catch (Exception e)
+    {
+      // Rollback transaction and throw an exception
+      LibUtils.rollbackDB(conn, e,"DB_INSERT_FAILURE", "subscriptions");
+    }
+    finally
+    {
+      // Always return the connection back to the connection pool.
+      LibUtils.finalCloseDB(conn);
+    }
+    return nextSeqId;
   }
 
   // -----------------------------------------------------------------------

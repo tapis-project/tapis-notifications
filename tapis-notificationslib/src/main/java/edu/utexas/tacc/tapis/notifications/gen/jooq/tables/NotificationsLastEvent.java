@@ -8,16 +8,18 @@ import edu.utexas.tacc.tapis.notifications.gen.jooq.Keys;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.TapisNtf;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.NotificationsLastEventRecord;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.UUID;
+import java.util.function.Function;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
+import org.jooq.Function2;
 import org.jooq.Name;
 import org.jooq.Record;
+import org.jooq.Records;
 import org.jooq.Row2;
 import org.jooq.Schema;
+import org.jooq.SelectField;
 import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.TableOptions;
@@ -67,14 +69,16 @@ public class NotificationsLastEvent extends TableImpl<NotificationsLastEventReco
     }
 
     /**
-     * Create an aliased <code>tapis_ntf.notifications_last_event</code> table reference
+     * Create an aliased <code>tapis_ntf.notifications_last_event</code> table
+     * reference
      */
     public NotificationsLastEvent(String alias) {
         this(DSL.name(alias), NOTIFICATIONS_LAST_EVENT);
     }
 
     /**
-     * Create an aliased <code>tapis_ntf.notifications_last_event</code> table reference
+     * Create an aliased <code>tapis_ntf.notifications_last_event</code> table
+     * reference
      */
     public NotificationsLastEvent(Name alias) {
         this(alias, NOTIFICATIONS_LAST_EVENT);
@@ -93,17 +97,12 @@ public class NotificationsLastEvent extends TableImpl<NotificationsLastEventReco
 
     @Override
     public Schema getSchema() {
-        return TapisNtf.TAPIS_NTF;
+        return aliased() ? null : TapisNtf.TAPIS_NTF;
     }
 
     @Override
     public UniqueKey<NotificationsLastEventRecord> getPrimaryKey() {
         return Keys.NOTIFICATIONS_LAST_EVENT_PKEY;
-    }
-
-    @Override
-    public List<UniqueKey<NotificationsLastEventRecord>> getKeys() {
-        return Arrays.<UniqueKey<NotificationsLastEventRecord>>asList(Keys.NOTIFICATIONS_LAST_EVENT_PKEY);
     }
 
     @Override
@@ -114,6 +113,11 @@ public class NotificationsLastEvent extends TableImpl<NotificationsLastEventReco
     @Override
     public NotificationsLastEvent as(Name alias) {
         return new NotificationsLastEvent(alias, this);
+    }
+
+    @Override
+    public NotificationsLastEvent as(Table<?> alias) {
+        return new NotificationsLastEvent(alias.getQualifiedName(), this);
     }
 
     /**
@@ -132,6 +136,14 @@ public class NotificationsLastEvent extends TableImpl<NotificationsLastEventReco
         return new NotificationsLastEvent(name, null);
     }
 
+    /**
+     * Rename this table
+     */
+    @Override
+    public NotificationsLastEvent rename(Table<?> name) {
+        return new NotificationsLastEvent(name.getQualifiedName(), null);
+    }
+
     // -------------------------------------------------------------------------
     // Row2 type methods
     // -------------------------------------------------------------------------
@@ -139,5 +151,20 @@ public class NotificationsLastEvent extends TableImpl<NotificationsLastEventReco
     @Override
     public Row2<Integer, UUID> fieldsRow() {
         return (Row2) super.fieldsRow();
+    }
+
+    /**
+     * Convenience mapping calling {@link SelectField#convertFrom(Function)}.
+     */
+    public <U> SelectField<U> mapping(Function2<? super Integer, ? super UUID, ? extends U> from) {
+        return convertFrom(Records.mapping(from));
+    }
+
+    /**
+     * Convenience mapping calling {@link SelectField#convertFrom(Class,
+     * Function)}.
+     */
+    public <U> SelectField<U> mapping(Class<U> toType, Function2<? super Integer, ? super UUID, ? extends U> from) {
+        return convertFrom(toType, Records.mapping(from));
     }
 }
