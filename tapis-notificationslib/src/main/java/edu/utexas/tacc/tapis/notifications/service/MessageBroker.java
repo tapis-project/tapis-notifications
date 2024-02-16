@@ -198,8 +198,9 @@ public final class MessageBroker
                            jsonMessage.getBytes(StandardCharsets.UTF_8));
     if (log.isTraceEnabled())
     {
-      log.trace(LibUtils.getMsgAuth("NTFLIB_EVENT_PUB", rUser, event.getSource(), event.getType(), event.getSubject(),
-                                    event.getData(), event.getSeriesId(), event.getTimestamp(), event.getUuid()));
+      log.trace(LibUtils.getMsgAuth("NTFLIB_EVENT_PUB", rUser, event.getSource(), event.getType(),
+                                    event.getSubject(), event.getData(), event.getSeriesId(), event.getSeriesSeqId(),
+                                    event.getTimestamp(), event.getUuid()));
     }
   }
 
@@ -274,7 +275,8 @@ public final class MessageBroker
         if (log.isTraceEnabled())
         {
           log.trace(LibUtils.getMsg("NTFLIB_EVENT_RCV", event.getTenant(), event.getSource(), event.getType(),
-                                    event.getSubject(), event.getData(), event.getSeriesId(), event.getTimestamp(), event.getUuid()));
+                                    event.getSubject(), event.getData(), event.getSeriesId(), event.getSeriesSeqId(),
+                                    event.getTimestamp(), event.getUuid()));
         }
 
         // Create the Delivery object to be passed to the bucket manager.
@@ -291,7 +293,8 @@ public final class MessageBroker
         catch (InterruptedException e)
         {
           String msg = LibUtils.getMsg("NTFLIB_EVENT_PUT_INTRPT", event.getTenant(), event.getSource(),
-                                       event.getType(), event.getSubject(), event.getSeriesId(), event.getUuid());
+                                       event.getType(), event.getSubject(), event.getSeriesId(),
+                                       event.getSeriesSeqId(), event.getUuid());
           log.info(msg);
         }
       }

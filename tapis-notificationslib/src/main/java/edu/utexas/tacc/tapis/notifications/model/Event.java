@@ -2,7 +2,6 @@ package edu.utexas.tacc.tapis.notifications.model;
 
 import org.apache.commons.lang3.StringUtils;
 
-import java.net.URI;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -33,10 +32,12 @@ public final class Event
 
   // Default values
   public static final boolean DEFAULT_DELETE_SUBSCRIPTIONS_MATCHING_SUBJECT = false;
+  public static final int DEFAULT_SERIES_SEQ_ID = -1;
 
   // Valid pattern for event type, must be 3 sections separated by a '.'
   // First section must contain a series of lower case letters and may not be empty
-  // Second and third sections must start alphabetic, contain only alphanumeric or 3 special characters: - _ ~ and may not be empty
+  // Second and third sections must start alphabetic, contain only alphanumeric
+  //   or 3 special characters: - _ ~ and may not be empty
   private static final Pattern EVENT_TYPE_PATTERN =
           Pattern.compile("^[a-z]+\\.[a-zA-Z]([a-zA-Z0-9]|[-_~])*\\.[a-zA-Z]([a-zA-Z0-9]|[-_~])*$");
 
@@ -50,6 +51,7 @@ public final class Event
   private final String subject; // Subject of event in context of event producer.
   private final String data; // Data associated with the event.
   private final String seriesId; // Optional Id for grouping events from same source.
+  private final int seriesSeqId; // Sequence Id associated with seriesId for ordering of events from same source.
   private final String timestamp; // Timestamp of when the occurrence happened. RFC 3339 (ISO 8601)
   private final boolean deleteSubscriptionsMatchingSubject;
   private final String tenant; // Tenant associated with the event
@@ -63,14 +65,16 @@ public final class Event
   /* ********************************************************************** */
   /*                           Constructors                                 */
   /* ********************************************************************** */
-  public Event(String source1, String type1, String subject1, String data1, String seriesId1, String timestamp1,
-               boolean deleteSubscriptionsMatchingSubject1, String tenant1, String user1, UUID uuid1)
+  public Event(String source1, String type1, String subject1, String data1, String seriesId1,
+               int seriesSeqId1, String timestamp1, boolean deleteSubscriptionsMatchingSubject1, String tenant1,
+               String user1, UUID uuid1)
   {
     source = source1;
     type = type1;
     subject = subject1;
     data = data1;
     seriesId = seriesId1;
+    seriesSeqId = seriesSeqId1;
     timestamp = timestamp1;
     deleteSubscriptionsMatchingSubject = deleteSubscriptionsMatchingSubject1;
     tenant = tenant1;
@@ -87,6 +91,7 @@ public final class Event
   public String getSubject() { return subject; }
   public String getData() { return data; }
   public String getSeriesId() { return seriesId; }
+  public int getSeriesSeqId() { return seriesSeqId; }
   public String getTimestamp() { return timestamp; }
   public boolean getDeleteSubscriptionsMatchingSubject() { return deleteSubscriptionsMatchingSubject; }
 

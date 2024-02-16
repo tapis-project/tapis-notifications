@@ -24,6 +24,8 @@ public interface NotificationsDao
 
   void migrateDB() throws TapisException;
 
+  int getNextSeriesSeqId(String seriesId) throws TapisException;
+
   // -----------------------------------------------------------------------
   // ------------------------- Subscriptions -------------------------------
   // -----------------------------------------------------------------------

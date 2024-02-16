@@ -27,8 +27,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.SecurityContext;
 import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -403,6 +401,7 @@ public class TestSequenceResource
     String data = req.event.data;
     String type = req.event.type;
     String seriesId = req.event.seriesId;
+    int seriesSeqId = req.event.seriesSeqId;
     String timestamp = req.event.timestamp;
     boolean deleteSubscriptionsMatchingSubject = req.event.deleteSubscriptionsMatchingSubject;
     String eventUuidStr = req.event.uuid;
@@ -436,7 +435,8 @@ public class TestSequenceResource
     }
 
     // Create an Event from the request
-    Event event = new Event(source, type, subject, data, seriesId, timestamp, deleteSubscriptionsMatchingSubject, tenant, user, eventUuid);
+    Event event = new Event(source, type, subject, data, seriesId, seriesSeqId, timestamp,
+                            deleteSubscriptionsMatchingSubject, tenant, user, eventUuid);
     // Create a notification from the request
     Notification notification = new Notification(notifUuid, -1, tenant, name, -1, eventUuid, event,
                                                  req.deliveryTarget, notifCreated);
@@ -455,7 +455,7 @@ public class TestSequenceResource
     }
     catch (Exception e)
     {
-      msg = ApiUtils.getMsg("NTFAPI_TEST_CB_ERR", tenant, user, sourceStr, type, subject, seriesId, timestamp,
+      msg = ApiUtils.getMsg("NTFAPI_TEST_CB_ERR", tenant, user, sourceStr, type, subject, seriesId, seriesSeqId, timestamp,
                             name, e.getMessage());
       _log.error(msg);
       return Response.status(Status.INTERNAL_SERVER_ERROR).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();

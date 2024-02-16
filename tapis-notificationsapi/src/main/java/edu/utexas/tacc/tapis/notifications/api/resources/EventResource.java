@@ -4,9 +4,7 @@ import com.google.gson.JsonSyntaxException;
 
 import edu.utexas.tacc.tapis.notifications.api.requests.ReqPostEvent;
 import edu.utexas.tacc.tapis.notifications.api.utils.ApiUtils;
-import edu.utexas.tacc.tapis.notifications.model.Event;
 import edu.utexas.tacc.tapis.notifications.service.NotificationsService;
-import edu.utexas.tacc.tapis.shared.TapisConstants;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisJSONException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import edu.utexas.tacc.tapis.shared.schema.JsonValidator;
@@ -36,7 +34,6 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.SecurityContext;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.UUID;
 
 /*
  * JAX-RS REST resource for a Tapis Event (edu.utexas.tacc.tapis.notifications.model.Event)
@@ -147,8 +144,8 @@ public class EventResource
     // ---------------------------- Make service call to post the event -------------------------------
     try
     {
-      notificationsService.publishEvent(rUser, req.source, req.type, req.subject, req.data, req.seriesId, req.timestamp,
-                                        req.deleteSubscriptionsMatchingSubject, tenant);
+      notificationsService.publishEvent(rUser, req.source, req.type, req.subject, req.data, req.seriesId,
+                                        req.timestamp, req.deleteSubscriptionsMatchingSubject, tenant);
     }
     catch (Exception e)
     {

@@ -150,6 +150,18 @@ public class NotificationsDaoImpl implements NotificationsDao
     flyway.migrate();
   }
 
+  /*
+   * getNextSeriesSeqId
+   * Determine next sequence id for the specified series.
+   */
+  @Override
+  public int getNextSeriesSeqId(String seriesId) throws TapisException
+  {
+    // if seriesId null or empty then return the constant default value.
+    if (StringUtils.isBlank(seriesId)) return Event.DEFAULT_SERIES_SEQ_ID;
+    // TODO Generate and return the next sequence id for the series.
+  }
+
   // -----------------------------------------------------------------------
   // ------------------------- Subscriptions -------------------------------
   // -----------------------------------------------------------------------

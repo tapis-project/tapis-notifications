@@ -1,7 +1,6 @@
 package edu.utexas.tacc.tapis.notifications.service;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -9,11 +8,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-
 import javax.inject.Inject;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
-
 import org.apache.commons.lang3.StringUtils;
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
@@ -25,7 +22,6 @@ import edu.utexas.tacc.tapis.notifications.model.DeliveryTarget;
 import edu.utexas.tacc.tapis.notifications.model.Notification;
 import edu.utexas.tacc.tapis.shared.threadlocal.TapisThreadContext;
 import edu.utexas.tacc.tapis.sharedapi.security.AuthenticatedUser;
-
 import edu.utexas.tacc.tapis.client.shared.exceptions.TapisClientException;
 import edu.utexas.tacc.tapis.search.parser.ASTParser;
 import edu.utexas.tacc.tapis.search.parser.ASTNode;
@@ -38,7 +34,6 @@ import edu.utexas.tacc.tapis.shared.security.ServiceContext;
 import edu.utexas.tacc.tapis.shared.TapisConstants;
 import edu.utexas.tacc.tapis.shared.threadlocal.OrderBy;
 import edu.utexas.tacc.tapis.sharedapi.security.ResourceRequestUser;
-
 import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
 import edu.utexas.tacc.tapis.notifications.dao.NotificationsDao;
 import edu.utexas.tacc.tapis.notifications.model.Event;
@@ -765,7 +760,7 @@ public class NotificationsServiceImpl implements NotificationsService
     //        looks like activemq parser will ensure the leaf nodes all represent <attr>.<op>.<value> and in principle
     //        we should be able to check each one and generate of list of errors for reporting.
     //  Looks like jOOQ can parse an SQL string into a jooq Condition. Do this in the Dao? But still seems like no way
-    //    to walk the AST and check each condition so we can report on errors.
+    //    to walk the AST and check each condition, so we can report on errors.
 //    BooleanExpression searchAST;
     ASTNode searchAST;
     try { searchAST = ASTParser.parse(sqlSearchStr); }
@@ -807,7 +802,7 @@ public class NotificationsServiceImpl implements NotificationsService
   @Override
   public void publishEvent(ResourceRequestUser rUser, String source, String type, String subject, String data,
                            String seriesId, String timestamp, boolean deleteSubscriptionsMatchingSubject, String tenant)
-          throws IOException, IllegalArgumentException, NotAuthorizedException
+          throws TapisException, IOException, IllegalArgumentException, NotAuthorizedException
   {
     // Check inputs
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
@@ -838,8 +833,10 @@ public class NotificationsServiceImpl implements NotificationsService
       throw new IllegalArgumentException(msg);
     }
 
+    // Determine the next sequence id for the seriesId
+    int seriesSeqId = dao.getNextSeriesSeqId(seriesId);
     // Create an Event from the request
-    Event event = new Event(source, type, subject, data, seriesId, timestamp, deleteSubscriptionsMatchingSubject,
+    Event event = new Event(source, type, subject, data, seriesId, seriesSeqId, timestamp, deleteSubscriptionsMatchingSubject,
             tenantId, rUser.getOboUserId(), UUID.randomUUID());
 
     // If first field of type is not the service name then reject
@@ -951,13 +948,14 @@ public class NotificationsServiceImpl implements NotificationsService
     String eventType = TEST_EVENT_TYPE;
     String eventSubject = name;
     String eventSeriesId = null;
+    int eventSeriesSeqId = Event.DEFAULT_SERIES_SEQ_ID;
     String eventTimeStamp = OffsetDateTime.now().toString();
     String eventData = null;
     boolean eventDeleteSubscriptionsMatchingSubject = false;
 
     UUID eventUUID = UUID.randomUUID();
-    Event event = new Event(eventSource, eventType, eventSubject, eventData, eventSeriesId, eventTimeStamp,
-                            eventDeleteSubscriptionsMatchingSubject, oboTenant, oboUser, eventUUID);
+    Event event = new Event(eventSource, eventType, eventSubject, eventData, eventSeriesId, eventSeriesSeqId,
+                            eventTimeStamp, eventDeleteSubscriptionsMatchingSubject, oboTenant, oboUser, eventUUID);
     MessageBroker.getInstance().publishEvent(rUser, event);
 
     return dao.getSubscriptionByName(oboTenant, oboUser, name);

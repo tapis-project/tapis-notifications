@@ -137,9 +137,10 @@ public final class DeliveryTask implements Callable<Notification>
     Event event = notification.getEvent();
     DeliveryTarget deliveryTarget =  notification.getDeliveryTarget();
 
-    log.debug(LibUtils.getMsg("NTFLIB_DSP_DLVRY", bucketNum, notification.getUuid(), deliveryTarget.getDeliveryMethod(),
-            deliveryTarget.getDeliveryAddress(), event.getSource(), event.getType(),
-            event.getSubject(), event.getData(), event.getSeriesId(), event.getTimestamp(), event.getUuid()));
+    log.debug(LibUtils.getMsg("NTFLIB_DSP_DLVRY", bucketNum, notification.getUuid(),
+              deliveryTarget.getDeliveryMethod(), deliveryTarget.getDeliveryAddress(), event.getSource(),
+              event.getType(), event.getSubject(), event.getData(), event.getSeriesId(), event.getSeriesSeqId(),
+              event.getTimestamp(), event.getUuid()));
     boolean deliveryStatus = false;
     switch (deliveryTarget.getDeliveryMethod())
     {
