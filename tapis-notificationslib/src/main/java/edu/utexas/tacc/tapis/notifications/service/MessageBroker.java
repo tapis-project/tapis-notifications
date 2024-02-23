@@ -283,6 +283,7 @@ public final class MessageBroker
         Delivery delivery = new Delivery(event, envelope.getDeliveryTag());
 
         // Compute the bucket number
+        // This is used to distribute the work among the workers.
         int bucketNum = computeBucketNumber(event);
         // Pass event to bucket manager thread through an in-memory queue
         // NOTE: bucket manager thread uses deliveryTag in order to ack the message
@@ -405,12 +406,22 @@ public final class MessageBroker
 
   /*
    * Compute a bucket number from 0 to NUM_BUCKETS-1
-   *   based on hash of event source, subject and seriesId
+   *   based on hash of event tenant, source, subject and seriesId
+   * This is used to distribute the work among the workers.
+   * Why we use tenant, source, subject and seriesId:
+   *   Each series is intended to sequentially track events of various types coming from
+   *   a given tenant, source and subject.
+   *   For example, the Jobs service (the source) sends out events with the jobUuid as the subject and
+   *   sets the seriesId to the jobUuid. That way a subscription can be created to follow (in order) all
+   *   events of various types related to the job.
+   *   Examples of event types defined in the Jobs service: JOB_NEW_STATUS, JOB_ERROR_MESSAGE, JOB_USER_EVENT
+   * So we use tenant, source, subject and seriesId in the hash so that the same bucketManager always gets
+   *   events in a given series. The bucketManager will ensure event notifications are sent out in order.
    * NOTE that we clear the top 4 bits of the hash so that we always have a positive integer
    */
   private static int computeBucketNumber(Event event)
   {
-    Object[] hashObjects = {event.getSource(), event.getSubject(), event.getSeriesId()};
+    Object[] hashObjects = {event.getTenant(), event.getSource(), event.getSubject(), event.getSeriesId()};
     int hash = (Arrays.hashCode(hashObjects) & 0xfffffff);
     return hash % NUM_BUCKETS;
   }

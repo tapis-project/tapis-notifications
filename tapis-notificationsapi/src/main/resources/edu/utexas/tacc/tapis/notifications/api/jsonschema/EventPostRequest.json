@@ -9,10 +9,13 @@
     "source": { "type": "string", "minLength": 1 },
     "type": { "type": "string", "minLength": 5, "maxLength": 128 },
     "subject": { "type": ["string", "null"] },
+    "timestamp": { "type":  "string" },
     "data": { "type":  ["string", "null"] },
     "seriesId": { "type": ["string", "null"] },
-    "seriesSeqCount": { "type":  "integer" },
-    "timestamp": { "type":  "string" },
-    "deleteSubscriptionsMatchingSubject": {"type":  "boolean" }
+    "deleteSubscriptionsMatchingSubject": {"type":  "boolean" },
+    "tenant":  { "type":  "string" },
+    "uuid": { "type":  "string" },
+    "user": { "type":  "string" },
+    "seriesSeqCount": { "type":  "integer" }
   }
 }

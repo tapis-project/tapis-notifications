@@ -13,7 +13,7 @@ https://tapis-project.github.io/live-docs
 Incremental improvements and new features.
 
 ### New features:
-- Add sequence id associated with seriesId attribute of an event. Allows reconstruction of event order for a series.
+- Add sequence counter associated with seriesId attribute of an event. Allows reconstruction of event order for a series.
 
 ### Bug fixes:
 - None

@@ -11,6 +11,14 @@ import java.util.regex.Pattern;
  * Receipt of an event can result in 0 or more notifications.
  * It is possible for an event be received and then effectively discarded because there are no subscriptions for it.
  *
+ * SeriesId:
+ *   Each series is intended to sequentially track events of various types coming from a
+ *   given tenant, source and subject. So for each tenant, source and subject the seriesId is considered unique.
+ *   For example, the Jobs service (the source) sends out events with the jobUuid as the subject and
+ *   sets the seriesId to the jobUuid. That way a subscription can be created to follow (in order) all
+ *   events of various types related to the job.
+ *   Examples of event types defined in the Jobs service: JOB_NEW_STATUS, JOB_ERROR_MESSAGE, JOB_USER_EVENT
+ *
  * Based on the CloudEvent specification.
  * Represents an event associated with an occurrence. An Occurrence may produce multiple events.
  * Based on version 1.0 of the CloudEvents specification
@@ -53,7 +61,8 @@ public final class Event
   private final String seriesId; // Optional Id for grouping events from same source.
   private final int seriesSeqCount; // Sequence counter associated with seriesId for ordering of events from same source.
   private final String timestamp; // Timestamp of when the occurrence happened. RFC 3339 (ISO 8601)
-  private final boolean deleteSubscriptionsMatchingSubject;
+  private final boolean deleteSubscriptionsMatchingSubject;  // Indicates all subscriptions associated with subject
+                                                             //   should be removed after deliveries are complete.
   private final String tenant; // Tenant associated with the event
   private final String user; // User associated with the event
   private final UUID uuid;

@@ -794,14 +794,14 @@ public class NotificationsServiceImpl implements NotificationsService
    * @param seriesId Event attribute
    * @param timestamp - Event attribute
    * @param deleteSubscriptionsMatchingSubject - Event attribute
-   * @param tenant - Set the tenant. Only for services. By default, oboTenant is used.
+   * @param tenant1 - Set the tenant. Only for services. Optional. By default, oboTenant is used.
    * @throws IOException - on error
    * @throws IllegalArgumentException - if missing required arg or invalid arg
    * @throws NotAuthorizedException - unauthorized
    */
   @Override
   public void publishEvent(ResourceRequestUser rUser, String source, String type, String subject, String data,
-                           String seriesId, String timestamp, boolean deleteSubscriptionsMatchingSubject, String tenant)
+                           String seriesId, String timestamp, boolean deleteSubscriptionsMatchingSubject, String tenant1)
           throws TapisException, IOException, IllegalArgumentException, NotAuthorizedException
   {
     // Check inputs
@@ -819,12 +819,12 @@ public class NotificationsServiceImpl implements NotificationsService
     }
 
     // Determine the tenant. Only services may set the tenant. By default, oboTenant is used.
-    if (!StringUtils.isBlank(tenant) && !rUser.isServiceRequest())
+    if (!StringUtils.isBlank(tenant1) && !rUser.isServiceRequest())
     {
       msg = LibUtils.getMsgAuth("NTFLIB_EVENT_UNAUTH", rUser);
       throw new NotAuthorizedException(msg, NO_CHALLENGE);
     }
-    String tenantId = StringUtils.isBlank(tenant) ? rUser.getOboTenantId() : tenant;
+    String tenant = StringUtils.isBlank(tenant1) ? rUser.getOboTenantId() : tenant1;
 
     // Validate the event type
     if (!Event.isValidType(type))
@@ -833,11 +833,12 @@ public class NotificationsServiceImpl implements NotificationsService
       throw new IllegalArgumentException(msg);
     }
 
-    // Determine the next sequence id for the seriesId
-    int seriesSeqCount = dao.getNextSeriesSeqCount(rUser, seriesId);
+    // Determine the next sequence count for the seriesId
+    // The series is unique in the context of tenant, source, subject
+    int seriesSeqCount = dao.getNextSeriesSeqCount(rUser, tenant, source, subject, seriesId);
     // Create an Event from the request
     Event event = new Event(source, type, subject, data, seriesId, seriesSeqCount, timestamp, deleteSubscriptionsMatchingSubject,
-            tenantId, rUser.getOboUserId(), UUID.randomUUID());
+            tenant, rUser.getOboUserId(), UUID.randomUUID());
 
     // If first field of type is not the service name then reject
     if (!event.getType1().equals(rUser.getJwtUserId()))

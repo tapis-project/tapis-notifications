@@ -147,13 +147,16 @@ public class NotificationsDaoImpl implements NotificationsDao
   }
 
   /*
-   * getNextSeriesSeqCound
+   * getNextSeriesSeqCount
    * Determine next sequence id for the specified series.
+   * The series is unique in the context of tenant, source, subject
    */
   @Override
-  public int getNextSeriesSeqCount(ResourceRequestUser rUser, String seriesId) throws TapisException
+  public int getNextSeriesSeqCount(ResourceRequestUser rUser, String tenant, String source, String subject, String seriesId)
+          throws TapisException
   {
     String opName = "getNextSeriesSeqCount";
+// TODO     ?
     // if seriesId null or empty then return the constant default value.
     if (StringUtils.isBlank(seriesId)) return Event.DEFAULT_SERIES_SEQ_COUNT;
     // Generate and return the next sequence id for the series.
