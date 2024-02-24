@@ -12,11 +12,11 @@ import java.util.function.Function;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
-import org.jooq.Function2;
+import org.jooq.Function5;
 import org.jooq.Name;
 import org.jooq.Record;
 import org.jooq.Records;
-import org.jooq.Row2;
+import org.jooq.Row5;
 import org.jooq.Schema;
 import org.jooq.SelectField;
 import org.jooq.Table;
@@ -50,9 +50,24 @@ public class SeriesSeqCount extends TableImpl<SeriesSeqCountRecord> {
     }
 
     /**
-     * The column <code>tapis_ntf.series_seq_count.id</code>.
+     * The column <code>tapis_ntf.series_seq_count.tenant</code>.
      */
-    public final TableField<SeriesSeqCountRecord, String> ID = createField(DSL.name("id"), SQLDataType.CLOB.nullable(false), this, "");
+    public final TableField<SeriesSeqCountRecord, String> TENANT = createField(DSL.name("tenant"), SQLDataType.CLOB.nullable(false), this, "");
+
+    /**
+     * The column <code>tapis_ntf.series_seq_count.source</code>.
+     */
+    public final TableField<SeriesSeqCountRecord, String> SOURCE = createField(DSL.name("source"), SQLDataType.CLOB.nullable(false), this, "");
+
+    /**
+     * The column <code>tapis_ntf.series_seq_count.subject</code>.
+     */
+    public final TableField<SeriesSeqCountRecord, String> SUBJECT = createField(DSL.name("subject"), SQLDataType.CLOB.nullable(false), this, "");
+
+    /**
+     * The column <code>tapis_ntf.series_seq_count.series_id</code>.
+     */
+    public final TableField<SeriesSeqCountRecord, String> SERIES_ID = createField(DSL.name("series_id"), SQLDataType.CLOB.nullable(false), this, "");
 
     /**
      * The column <code>tapis_ntf.series_seq_count.seq_count</code>.
@@ -142,18 +157,18 @@ public class SeriesSeqCount extends TableImpl<SeriesSeqCountRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row2 type methods
+    // Row5 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row2<String, Integer> fieldsRow() {
-        return (Row2) super.fieldsRow();
+    public Row5<String, String, String, String, Integer> fieldsRow() {
+        return (Row5) super.fieldsRow();
     }
 
     /**
      * Convenience mapping calling {@link SelectField#convertFrom(Function)}.
      */
-    public <U> SelectField<U> mapping(Function2<? super String, ? super Integer, ? extends U> from) {
+    public <U> SelectField<U> mapping(Function5<? super String, ? super String, ? super String, ? super String, ? super Integer, ? extends U> from) {
         return convertFrom(Records.mapping(from));
     }
 
@@ -161,7 +176,7 @@ public class SeriesSeqCount extends TableImpl<SeriesSeqCountRecord> {
      * Convenience mapping calling {@link SelectField#convertFrom(Class,
      * Function)}.
      */
-    public <U> SelectField<U> mapping(Class<U> toType, Function2<? super String, ? super Integer, ? extends U> from) {
+    public <U> SelectField<U> mapping(Class<U> toType, Function5<? super String, ? super String, ? super String, ? super String, ? super Integer, ? extends U> from) {
         return convertFrom(toType, Records.mapping(from));
     }
 }

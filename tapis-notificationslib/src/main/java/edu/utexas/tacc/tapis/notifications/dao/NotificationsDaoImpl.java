@@ -159,9 +159,6 @@ public class NotificationsDaoImpl implements NotificationsDao
 // TODO     ?
     // if seriesId null or empty then return the constant default value.
     if (StringUtils.isBlank(seriesId)) return Event.DEFAULT_SERIES_SEQ_COUNT;
-    // Generate and return the next sequence id for the series.
-    // Use postgresql support for ON CONFLICT to automatically insert new entries as needed:
-    //      INSERT INTO series_seq_count (id) VALUES (<seriesId>) ON CONFLICT DO UPDATE SET seq_id = seq_id + 1
     int nextSeqId = -1;
     // ------------------------- Call SQL ----------------------------
     Connection conn = null;
@@ -171,7 +168,12 @@ public class NotificationsDaoImpl implements NotificationsDao
       conn = getConnection();
       DSLContext db = DSL.using(conn);
 
-      Record r = db.insertInto(SERIES_SEQ_COUNT).columns(SERIES_SEQ_COUNT.ID).values(seriesId).onConflict()
+      // Use postgresql support for ON CONFLICT to automatically insert new entries as needed:
+      // INSERT INTO series_seq_count (tenant,source,subject,series_id)
+      //   VALUES (<tenant>,<source>,<subject>,<seriesId>) ON CONFLICT DO UPDATE SET seq_count = seq_count + 1
+      Record r = db.insertInto(SERIES_SEQ_COUNT)
+              .columns(SERIES_SEQ_COUNT.TENANT,SERIES_SEQ_COUNT.SOURCE, SERIES_SEQ_COUNT.SUBJECT, SERIES_SEQ_COUNT.SERIES_ID)
+              .values(tenant, source, subject, seriesId).onConflict()
               .doUpdate().set(SERIES_SEQ_COUNT.SEQ_COUNT, SERIES_SEQ_COUNT.SEQ_COUNT.plus(1))
               .returningResult(SERIES_SEQ_COUNT.SEQ_COUNT).fetchOne();
       // If result is null it is an error
