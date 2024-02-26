@@ -156,7 +156,6 @@ public class NotificationsDaoImpl implements NotificationsDao
           throws TapisException
   {
     String opName = "getNextSeriesSeqCount";
-// TODO     ?
     // if seriesId null or empty then return the constant default value.
     if (StringUtils.isBlank(seriesId)) return Event.DEFAULT_SERIES_SEQ_COUNT;
     int nextSeqId = -1;
@@ -169,19 +168,22 @@ public class NotificationsDaoImpl implements NotificationsDao
       DSLContext db = DSL.using(conn);
 
       // Use postgresql support for ON CONFLICT to automatically insert new entries as needed:
-      // INSERT INTO series_seq_count (tenant,source,subject,series_id)
-      //   VALUES (<tenant>,<source>,<subject>,<seriesId>) ON CONFLICT DO UPDATE SET seq_count = seq_count + 1
-      Record r = db.insertInto(SERIES_SEQ_COUNT)
-              .columns(SERIES_SEQ_COUNT.TENANT,SERIES_SEQ_COUNT.SOURCE, SERIES_SEQ_COUNT.SUBJECT, SERIES_SEQ_COUNT.SERIES_ID)
-              .values(tenant, source, subject, seriesId).onConflict()
-              .doUpdate().set(SERIES_SEQ_COUNT.SEQ_COUNT, SERIES_SEQ_COUNT.SEQ_COUNT.plus(1))
-              .returningResult(SERIES_SEQ_COUNT.SEQ_COUNT).fetchOne();
+      // INSERT INTO notifications_series (tenant,source,subject,series_id,seq_count)
+      //   VALUES (<tenant>,<source>,<subject>,<seriesId>,1)
+      //   ON CONFLICT(tenant,source,subject,series_id)
+      //   DO UPDATE SET seq_count = (notifications_series.seq_count + 1);
+      Record r = db.insertInto(NOTIFICATIONS_SERIES)
+              .columns(NOTIFICATIONS_SERIES.TENANT,NOTIFICATIONS_SERIES.SOURCE, NOTIFICATIONS_SERIES.SUBJECT, NOTIFICATIONS_SERIES.SERIES_ID, NOTIFICATIONS_SERIES.SEQ_COUNT)
+              .values(tenant, source, subject, seriesId, 1)
+              .onConflict(NOTIFICATIONS_SERIES.TENANT,NOTIFICATIONS_SERIES.SOURCE, NOTIFICATIONS_SERIES.SUBJECT, NOTIFICATIONS_SERIES.SERIES_ID)
+              .doUpdate().set(NOTIFICATIONS_SERIES.SEQ_COUNT, NOTIFICATIONS_SERIES.SEQ_COUNT.plus(1))
+              .returningResult(NOTIFICATIONS_SERIES.SEQ_COUNT).fetchOne();
       // If result is null it is an error
       if (r == null)
       {
         throw new TapisException(LibUtils.getMsgAuth("NTFLIB_DB_NULL_RESULT", rUser, seriesId, opName));
       }
-      nextSeqId = r.getValue(SERIES_SEQ_COUNT.SEQ_COUNT);
+      nextSeqId = r.getValue(NOTIFICATIONS_SERIES.SEQ_COUNT);
       // Close out and commit
       LibUtils.closeAndCommitDB(conn, null, null);
     }
