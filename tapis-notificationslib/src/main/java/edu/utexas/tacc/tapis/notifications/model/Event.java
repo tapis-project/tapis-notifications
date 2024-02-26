@@ -40,7 +40,7 @@ public final class Event
 
   // Default values
   public static final boolean DEFAULT_DELETE_SUBSCRIPTIONS_MATCHING_SUBJECT = false;
-  public static final int DEFAULT_SERIES_SEQ_COUNT = -1;
+  public static final long DEFAULT_SERIES_SEQ_COUNT = -1L;
 
   // Valid pattern for event type, must be 3 sections separated by a '.'
   // First section must contain a series of lower case letters and may not be empty
@@ -59,7 +59,7 @@ public final class Event
   private final String subject; // Subject of event in context of event producer.
   private final String data; // Data associated with the event.
   private final String seriesId; // Optional Id for grouping events from same source.
-  private final int seriesSeqCount; // Sequence counter associated with seriesId for ordering of events from same source.
+  private final long seriesSeqCount; // Sequence counter associated with seriesId for ordering of events from same source.
   private final String timestamp; // Timestamp of when the occurrence happened. RFC 3339 (ISO 8601)
   private final boolean deleteSubscriptionsMatchingSubject;  // Indicates all subscriptions associated with subject
                                                              //   should be removed after deliveries are complete.
@@ -75,7 +75,7 @@ public final class Event
   /*                           Constructors                                 */
   /* ********************************************************************** */
   public Event(String source1, String type1, String subject1, String data1, String seriesId1,
-               int seriesSeqCount1, String timestamp1, boolean deleteSubscriptionsMatchingSubject1, String tenant1,
+               long seriesSeqCount1, String timestamp1, boolean deleteSubscriptionsMatchingSubject1, String tenant1,
                String user1, UUID uuid1)
   {
     source = source1;
@@ -100,7 +100,7 @@ public final class Event
   public String getSubject() { return subject; }
   public String getData() { return data; }
   public String getSeriesId() { return seriesId; }
-  public int getSeriesSeqCount() { return seriesSeqCount; }
+  public long getSeriesSeqCount() { return seriesSeqCount; }
   public String getTimestamp() { return timestamp; }
   public boolean getDeleteSubscriptionsMatchingSubject() { return deleteSubscriptionsMatchingSubject; }
 

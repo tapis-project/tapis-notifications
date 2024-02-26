@@ -14,7 +14,7 @@ public final class ReqPostEvent
   public String subject;
   public String data;
   public String seriesId;
-  public int seriesSeqCount = DEFAULT_SERIES_SEQ_COUNT;;
+  public long seriesSeqCount = DEFAULT_SERIES_SEQ_COUNT;;
   public String timestamp;
   public boolean deleteSubscriptionsMatchingSubject = DEFAULT_DELETE_SUBSCRIPTIONS_MATCHING_SUBJECT;
   public String tenant;

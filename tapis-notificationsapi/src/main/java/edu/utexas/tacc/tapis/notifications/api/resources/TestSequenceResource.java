@@ -401,7 +401,7 @@ public class TestSequenceResource
     String data = req.event.data;
     String type = req.event.type;
     String seriesId = req.event.seriesId;
-    int seriesSeqCount = req.event.seriesSeqCount;
+    long seriesSeqCount = req.event.seriesSeqCount;
     String timestamp = req.event.timestamp;
     boolean deleteSubscriptionsMatchingSubject = req.event.deleteSubscriptionsMatchingSubject;
     String eventUuidStr = req.event.uuid;

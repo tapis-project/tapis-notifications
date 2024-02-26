@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS notifications_series
     source TEXT NOT NULL,
     subject TEXT NOT NULL,
     series_id TEXT NOT NULL,
-    seq_count INTEGER NOT NULL DEFAULT 0,
+    seq_count BIGINT NOT NULL DEFAULT 0,
     PRIMARY KEY (tenant, source, subject, series_id)
 );
 ALTER TABLE notifications_series OWNER TO tapis_ntf;

@@ -72,7 +72,7 @@ public class NotificationsSeries extends TableImpl<NotificationsSeriesRecord> {
     /**
      * The column <code>tapis_ntf.notifications_series.seq_count</code>.
      */
-    public final TableField<NotificationsSeriesRecord, Integer> SEQ_COUNT = createField(DSL.name("seq_count"), SQLDataType.INTEGER.nullable(false).defaultValue(DSL.field("0", SQLDataType.INTEGER)), this, "");
+    public final TableField<NotificationsSeriesRecord, Long> SEQ_COUNT = createField(DSL.name("seq_count"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field("0", SQLDataType.BIGINT)), this, "");
 
     private NotificationsSeries(Name alias, Table<NotificationsSeriesRecord> aliased) {
         this(alias, aliased, null);
@@ -163,14 +163,14 @@ public class NotificationsSeries extends TableImpl<NotificationsSeriesRecord> {
     // -------------------------------------------------------------------------
 
     @Override
-    public Row5<String, String, String, String, Integer> fieldsRow() {
+    public Row5<String, String, String, String, Long> fieldsRow() {
         return (Row5) super.fieldsRow();
     }
 
     /**
      * Convenience mapping calling {@link SelectField#convertFrom(Function)}.
      */
-    public <U> SelectField<U> mapping(Function5<? super String, ? super String, ? super String, ? super String, ? super Integer, ? extends U> from) {
+    public <U> SelectField<U> mapping(Function5<? super String, ? super String, ? super String, ? super String, ? super Long, ? extends U> from) {
         return convertFrom(Records.mapping(from));
     }
 
@@ -178,7 +178,7 @@ public class NotificationsSeries extends TableImpl<NotificationsSeriesRecord> {
      * Convenience mapping calling {@link SelectField#convertFrom(Class,
      * Function)}.
      */
-    public <U> SelectField<U> mapping(Class<U> toType, Function5<? super String, ? super String, ? super String, ? super String, ? super Integer, ? extends U> from) {
+    public <U> SelectField<U> mapping(Class<U> toType, Function5<? super String, ? super String, ? super String, ? super String, ? super Long, ? extends U> from) {
         return convertFrom(toType, Records.mapping(from));
     }
 }

@@ -835,7 +835,7 @@ public class NotificationsServiceImpl implements NotificationsService
 
     // Determine the next sequence count for the seriesId
     // The series is unique in the context of tenant, source, subject
-    int seriesSeqCount = dao.getNextSeriesSeqCount(rUser, tenant, source, subject, seriesId);
+    long seriesSeqCount = dao.getNextSeriesSeqCount(rUser, tenant, source, subject, seriesId);
     // Create an Event from the request
     Event event = new Event(source, type, subject, data, seriesId, seriesSeqCount, timestamp, deleteSubscriptionsMatchingSubject,
             tenant, rUser.getOboUserId(), UUID.randomUUID());
@@ -893,10 +893,10 @@ public class NotificationsServiceImpl implements NotificationsService
     String oboTenant = rUser.getOboTenantId();
     String oboUser = rUser.getOboUserId();
 
-    // Use uuid as the subscription name
-    String name = UUID.randomUUID().toString();
-    checkAuth(rUser, oboUser, name, SubscriptionOperation.create);
-    log.trace(LibUtils.getMsgAuth("NTFLIB_CREATE_TRACE", rUser, name));
+    // Use uuid as the subscription name, subjFilter and for the Event seriesId
+    String uuidName = UUID.randomUUID().toString();
+    checkAuth(rUser, oboUser, uuidName, SubscriptionOperation.create);
+    log.trace(LibUtils.getMsgAuth("NTFLIB_CREATE_TRACE", rUser, uuidName));
 
     // Determine the subscription TTL
     int subscrTTL = DEFAULT_TEST_TTL;
@@ -912,22 +912,22 @@ public class NotificationsServiceImpl implements NotificationsService
 
     // Build the callback delivery method
     // Example https://dev.develop.tapis.io/v3/notifications/test/callback/<subscriptionName>
-    String callbackStr = String.format("%s/test/callback/%s/", baseServiceUrl, name);
+    String callbackStr = String.format("%s/test/callback/%s/", baseServiceUrl, uuidName);
     DeliveryTarget dm = new DeliveryTarget(DeliveryTarget.DeliveryMethod.WEBHOOK, callbackStr);
     var dmList = Collections.singletonList(dm);
 
     // Set other test subscription properties
     String typeFilter = TEST_SUBSCR_TYPE_FILTER;
-    String subjFilter = name;
+    String subjFilter = uuidName;
 
     // Create the subscription
     // NOTE: Might be able to call the svc method createSubscription() but creating here avoids some overhead.
     //   For example, the auth check is not needed and could potentially cause problems.
-    Subscription sub1 = new Subscription(-1, oboTenant, oboUser, name, null, true, typeFilter, subjFilter, dmList,
+    Subscription sub1 = new Subscription(-1, oboTenant, oboUser, uuidName, null, true, typeFilter, subjFilter, dmList,
                                          subscrTTL, null, null, null, null);
     // If subscription already exists it is an error. Unlikely since it is a UUID
-    if (dao.checkForSubscription(oboTenant, oboUser, name))
-      throw new IllegalStateException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_EXISTS", rUser, oboUser, name));
+    if (dao.checkForSubscription(oboTenant, oboUser, uuidName))
+      throw new IllegalStateException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_EXISTS", rUser, oboUser, uuidName));
 
     // Resolve variables and check constraints.
     sub1.resolveVariables(oboUser);
@@ -942,14 +942,14 @@ public class NotificationsServiceImpl implements NotificationsService
     dao.createSubscription(rUser, sub1, expiry);
 
     // Persist the initial test sequence record
-    dao.createTestSequence(rUser, name);
+    dao.createTestSequence(rUser, uuidName);
 
     // Create and publish an event
     String eventSource = TapisConstants.SERVICE_NAME_NOTIFICATIONS;
     String eventType = TEST_EVENT_TYPE;
-    String eventSubject = name;
-    String eventSeriesId = null;
-    int eventSeriesSeqCount = Event.DEFAULT_SERIES_SEQ_COUNT;
+    String eventSubject = uuidName;
+    String eventSeriesId = uuidName;
+    long eventSeriesSeqCount = Event.DEFAULT_SERIES_SEQ_COUNT;
     String eventTimeStamp = OffsetDateTime.now().toString();
     String eventData = null;
     boolean eventDeleteSubscriptionsMatchingSubject = false;
@@ -959,7 +959,7 @@ public class NotificationsServiceImpl implements NotificationsService
                             eventTimeStamp, eventDeleteSubscriptionsMatchingSubject, oboTenant, oboUser, eventUUID);
     MessageBroker.getInstance().publishEvent(rUser, event);
 
-    return dao.getSubscriptionByName(oboTenant, oboUser, name);
+    return dao.getSubscriptionByName(oboTenant, oboUser, uuidName);
   }
 
   /**
@@ -1220,7 +1220,7 @@ public class NotificationsServiceImpl implements NotificationsService
    */
   private void waitForTestSequenceStart(String tenant, String owner, String name) throws TapisException
   {
-    // Try 4 times with a 5 second poll interval
+    // Try 4 times with a 5-second poll interval
     int NUM_TEST_START_ATTEMPTS = 4;
     int DSP_CHECK_START_POLL_MS = 5000;
     try

@@ -152,13 +152,13 @@ public class NotificationsDaoImpl implements NotificationsDao
    * The series is unique in the context of tenant, source, subject
    */
   @Override
-  public int getNextSeriesSeqCount(ResourceRequestUser rUser, String tenant, String source, String subject, String seriesId)
+  public long getNextSeriesSeqCount(ResourceRequestUser rUser, String tenant, String source, String subject, String seriesId)
           throws TapisException
   {
     String opName = "getNextSeriesSeqCount";
     // if seriesId null or empty then return the constant default value.
     if (StringUtils.isBlank(seriesId)) return Event.DEFAULT_SERIES_SEQ_COUNT;
-    int nextSeqId = -1;
+    long nextSeqId = -1;
     // ------------------------- Call SQL ----------------------------
     Connection conn = null;
     try
@@ -174,7 +174,7 @@ public class NotificationsDaoImpl implements NotificationsDao
       //   DO UPDATE SET seq_count = (notifications_series.seq_count + 1);
       Record r = db.insertInto(NOTIFICATIONS_SERIES)
               .columns(NOTIFICATIONS_SERIES.TENANT,NOTIFICATIONS_SERIES.SOURCE, NOTIFICATIONS_SERIES.SUBJECT, NOTIFICATIONS_SERIES.SERIES_ID, NOTIFICATIONS_SERIES.SEQ_COUNT)
-              .values(tenant, source, subject, seriesId, 1)
+              .values(tenant, source, subject, seriesId, 1L)
               .onConflict(NOTIFICATIONS_SERIES.TENANT,NOTIFICATIONS_SERIES.SOURCE, NOTIFICATIONS_SERIES.SUBJECT, NOTIFICATIONS_SERIES.SERIES_ID)
               .doUpdate().set(NOTIFICATIONS_SERIES.SEQ_COUNT, NOTIFICATIONS_SERIES.SEQ_COUNT.plus(1))
               .returningResult(NOTIFICATIONS_SERIES.SEQ_COUNT).fetchOne();

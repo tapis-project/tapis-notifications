@@ -127,8 +127,8 @@ public class NotificationsServiceTest
   {
     System.out.println("Executing AfterSuite teardown for " + NotificationsServiceTest.class.getSimpleName());
     // Remove all objects created by tests
-    // Since subscriptions are scoped by owner+name and we have various owners set after subscriptions[] is
-    //   is created we cannot use just owner+name from subscriptions[]
+    // Since subscriptions are scoped by owner+name, and we have various owners set after subscriptions[] is
+    //   created we cannot use just owner+name from subscriptions[]
     // Instead get all subscriptions matching a pattern and remove those.
     // Since tests are run against a local DB this should be OK.
     String owner = subscriptions[0].getOwner();
@@ -159,10 +159,8 @@ public class NotificationsServiceTest
   }
 
   @BeforeTest
-  public void initTest()
-  {
+  public void initTest() { }
 
-  }
   // -----------------------------------------------------------------------
   // ------------------------- Subscriptions -------------------------------
   // -----------------------------------------------------------------------
@@ -330,7 +328,7 @@ public class NotificationsServiceTest
     svcImpl.createSubscription(rJobsSvc1, sub0, scrubbedJson);
     Subscription tmpSub = svcImpl.getSubscriptionByName(rJobsSvc1, owner, subName);
     // Get and check the initial expiry.
-    // TTL is in minutes so it should be ttl*60 seconds after the time of creation.
+    // TTL is in minutes, so it should be ttl*60 seconds after the time of creation.
     // Check to the nearest second, i.e., assume it took much less than one second to create the subscription
     Instant expiry = tmpSub.getExpiry();
     long expirySeconds = expiry.truncatedTo(ChronoUnit.SECONDS).getEpochSecond() - now.truncatedTo(ChronoUnit.SECONDS).getEpochSecond();
@@ -604,7 +602,7 @@ public class NotificationsServiceTest
   // ************************************************************************
 
   /**
-   * Check common attributes after creating and retrieving aresource
+   * Check common attributes after creating and retrieving a resource
    * @param origSub - Original test resource
    * @param fetchedSub - Retrieved resource
    */
