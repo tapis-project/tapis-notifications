@@ -13,6 +13,7 @@
     "data": { "type":  ["string", "null"] },
     "seriesId": { "type": ["string", "null"] },
     "deleteSubscriptionsMatchingSubject": {"type":  "boolean" },
+    "endSeries": {"type":  "boolean" },
     "tenant":  { "type":  "string" },
     "uuid": { "type":  "string" },
     "user": { "type":  "string" },

@@ -541,11 +541,11 @@ public class NotificationsServiceTest
   public void testPostEventAndLeave() throws Exception
   {
     Event event = new Event(eventSource1, eventType1, eventSubject1, eventDataNull, seriesId1, seriesSeqCount1, eventTime,
-                            eventDeleteSubscriptionsMatchingSubjectFalse, tenantName, testUser1, UUID.randomUUID());
+                            eventDeleteSubscriptionsMatchingSubjectFalse, eventEndSeriesFalse, tenantName, testUser1, UUID.randomUUID());
     System.out.println("Placing event on queue. Event: " + event);
     // Put an event on the queue as a message
     svcImpl.publishEvent(rJobsSvc1, eventSource1, eventType1, eventSubject1, eventDataNull, seriesId1, eventTime,
-                         eventDeleteSubscriptionsMatchingSubjectFalse, tenantName);
+                         eventDeleteSubscriptionsMatchingSubjectFalse, eventEndSeriesFalse, tenantName);
   }
 
   // Test posting an event to the queue and reading it back
@@ -556,11 +556,11 @@ public class NotificationsServiceTest
   public void testPostReadEvent() throws Exception
   {
     Event event = new Event(eventSource1, eventType1, eventSubject1, eventDataNull, seriesId1, seriesSeqCount1, eventTime,
-                            eventDeleteSubscriptionsMatchingSubjectFalse, tenantName, testUser1, UUID.randomUUID());
+                            eventDeleteSubscriptionsMatchingSubjectFalse, eventEndSeriesFalse, tenantName, testUser1, UUID.randomUUID());
     System.out.println("Placing event on queue. Event: " + event);
     // Put an event on the queue as a message
     svcImpl.publishEvent(rJobsSvc1, eventSource1, eventType1, eventSubject1, eventDataNull, seriesId1, eventTime,
-                         eventDeleteSubscriptionsMatchingSubjectFalse, tenantName);
+                         eventDeleteSubscriptionsMatchingSubjectFalse, eventEndSeriesFalse, tenantName);
 //    // Create a consumer to handle messages read from the queue
 //    DeliverCallback deliverCallback = (consumerTab, delivery) -> {
 //      String msg = new String(delivery.getBody(), StandardCharsets.UTF_8);

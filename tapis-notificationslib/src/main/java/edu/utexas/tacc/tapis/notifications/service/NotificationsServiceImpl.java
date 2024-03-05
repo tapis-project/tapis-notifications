@@ -65,6 +65,9 @@ public class NotificationsServiceImpl implements NotificationsService
   // Default test subscription TTL is 60 minutes
   public static final int DEFAULT_TEST_TTL = 60;
 
+  // Number of events to publish for the test series.
+  public static final int DEFAULT_TEST_NUM_EVENTS = 1;
+
   public static final String TEST_SUBSCR_TYPE_FILTER = "notifications.test.*";
   public static final String TEST_EVENT_TYPE = "notifications.test.begin";
 
@@ -801,7 +804,8 @@ public class NotificationsServiceImpl implements NotificationsService
    */
   @Override
   public void publishEvent(ResourceRequestUser rUser, String source, String type, String subject, String data,
-                           String seriesId, String timestamp, boolean deleteSubscriptionsMatchingSubject, String tenant1)
+                           String seriesId, String timestamp, boolean deleteSubscriptionsMatchingSubject,
+                           boolean endSeries, String tenant1)
           throws TapisException, IOException, IllegalArgumentException, NotAuthorizedException
   {
     // Check inputs
@@ -837,8 +841,8 @@ public class NotificationsServiceImpl implements NotificationsService
     // The series is unique in the context of tenant, source, subject
     long seriesSeqCount = dao.getNextSeriesSeqCount(rUser, tenant, source, subject, seriesId);
     // Create an Event from the request
-    Event event = new Event(source, type, subject, data, seriesId, seriesSeqCount, timestamp, deleteSubscriptionsMatchingSubject,
-            tenant, rUser.getOboUserId(), UUID.randomUUID());
+    Event event = new Event(source, type, subject, data, seriesId, seriesSeqCount, timestamp,
+            deleteSubscriptionsMatchingSubject, endSeries, tenant, rUser.getOboUserId(), UUID.randomUUID());
 
     // If first field of type is not the service name then reject
     if (!event.getType1().equals(rUser.getJwtUserId()))
@@ -878,13 +882,14 @@ public class NotificationsServiceImpl implements NotificationsService
    * @param rUser - ResourceRequestUser containing tenant, user and request info
    * @param baseServiceUrl - Base URL for service. Used for callback and event source.
    * @param ttl - optional TTL for the auto-generated subscription
+   * @param numberOfEvents - optional number of events to publish for the series. Default is 1.
    * @return subscription name
    * @throws TapisException - for Tapis related exceptions
    * @throws IllegalStateException - subscription exists OR subscription in invalid state
    * @throws IllegalArgumentException - invalid parameter passed in
    */
   @Override
-  public Subscription beginTestSequence(ResourceRequestUser rUser, String baseServiceUrl, String ttl)
+  public Subscription beginTestSequence(ResourceRequestUser rUser, String baseServiceUrl, String ttl, Integer numberOfEvents)
           throws TapisException, TapisClientException, IOException, IllegalStateException, IllegalArgumentException
   {
     // Check inputs
@@ -900,7 +905,7 @@ public class NotificationsServiceImpl implements NotificationsService
 
     // Determine the subscription TTL
     int subscrTTL = DEFAULT_TEST_TTL;
-    if (StringUtils.isBlank(ttl))
+    if (!StringUtils.isBlank(ttl))
     {
       // If TTL provided is not an integer then it is an error
       try { subscrTTL = Integer.parseInt(ttl); }
@@ -908,6 +913,15 @@ public class NotificationsServiceImpl implements NotificationsService
       {
         throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_TEST_TTL_NOTINT", rUser, ttl));
       }
+    }
+
+    // Determine number of events to publish in the series
+    int numEvents = DEFAULT_TEST_NUM_EVENTS;
+    if (numberOfEvents != null) numEvents = numberOfEvents;
+    // Must be a positive integer
+    if (numEvents <= 0)
+    {
+      throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_TEST_NUM_EVENTS_NOT_POSITIVE", rUser, numEvents));
     }
 
     // Build the callback delivery method
@@ -944,7 +958,10 @@ public class NotificationsServiceImpl implements NotificationsService
     // Persist the initial test sequence record
     dao.createTestSequence(rUser, uuidName);
 
-    // Create and publish an event
+    // Get the subscription. Will be returned for the response.
+    Subscription subscription = dao.getSubscriptionByName(oboTenant, oboUser, uuidName);
+
+    // Create and publish 1 or more events
     String eventSource = TapisConstants.SERVICE_NAME_NOTIFICATIONS;
     String eventType = TEST_EVENT_TYPE;
     String eventSubject = uuidName;
@@ -953,13 +970,30 @@ public class NotificationsServiceImpl implements NotificationsService
     String eventTimeStamp = OffsetDateTime.now().toString();
     String eventData = null;
     boolean eventDeleteSubscriptionsMatchingSubject = false;
+    boolean eventEndSeries = false;
 
     UUID eventUUID = UUID.randomUUID();
     Event event = new Event(eventSource, eventType, eventSubject, eventData, eventSeriesId, eventSeriesSeqCount,
-                            eventTimeStamp, eventDeleteSubscriptionsMatchingSubject, oboTenant, oboUser, eventUUID);
+                            eventTimeStamp, eventDeleteSubscriptionsMatchingSubject, eventEndSeries, oboTenant, oboUser, eventUUID);
     MessageBroker.getInstance().publishEvent(rUser, event);
 
-    return dao.getSubscriptionByName(oboTenant, oboUser, uuidName);
+    // If just one event then we are done
+    if (numEvents <= 1) return subscription;
+
+    // TODO More than 1 event, publish other events at the rate of 1 every 3 seconds.
+    for (int i = 2; i <= numEvents; i++)
+    {
+      // Pause for 5 seconds.
+      try {Thread.sleep(3000);} catch (InterruptedException e) {/* Ignore interruptions */}
+      eventTimeStamp = OffsetDateTime.now().toString();
+      eventUUID = UUID.randomUUID();
+      event = new Event(eventSource, eventType, eventSubject, eventData, eventSeriesId, eventSeriesSeqCount,
+                        eventTimeStamp, eventDeleteSubscriptionsMatchingSubject, eventEndSeries, oboTenant, oboUser, eventUUID);
+      MessageBroker.getInstance().publishEvent(rUser, event);
+//TODO      ???
+    }
+
+    return subscription;
   }
 
   /**

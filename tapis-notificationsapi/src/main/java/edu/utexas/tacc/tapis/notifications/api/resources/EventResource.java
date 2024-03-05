@@ -76,20 +76,21 @@ public class EventResource
   // ************************************************************************
 
   /**
-   * Post an event to the queue
+   * Publish an event
    * @param tenant Set the tenant associated with the event. Only for services. By default, oboTenant is used.
    * @param payloadStream - request body
    * @param securityContext - user identity
    * @return response containing reference to created object
    */
   @POST
+  @Path("publish")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  public Response postEvent(InputStream payloadStream,
-                            @QueryParam("tenant") String tenant,
-                            @Context SecurityContext securityContext)
+  public Response publishEvent(InputStream payloadStream,
+                               @QueryParam("tenant") String tenant,
+                               @Context SecurityContext securityContext)
   {
-    String opName = "postEvent";
+    String opName = "publishEvent";
     String msg;
     // ------------------------- Retrieve and validate thread context -------------------------
     TapisThreadContext threadContext = TapisThreadLocal.tapisThreadContext.get();
@@ -145,21 +146,40 @@ public class EventResource
     try
     {
       notificationsService.publishEvent(rUser, req.source, req.type, req.subject, req.data, req.seriesId,
-                                        req.timestamp, req.deleteSubscriptionsMatchingSubject, tenant);
+              req.timestamp, req.deleteSubscriptionsMatchingSubject, req.endSeries, tenant);
     }
     catch (Exception e)
     {
       msg = ApiUtils.getMsgAuth("NTFAPI_EVENT_POST_ERR", rUser, req.source, req.type, req.subject, req.seriesId,
-                                req.timestamp, e.getMessage());
+              req.timestamp, e.getMessage());
       _log.error(msg);
       return Response.status(Status.INTERNAL_SERVER_ERROR).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
 
-    // ---------------------------- Success ------------------------------- 
+    // ---------------------------- Success -------------------------------
     // Success means the object was created.
     RespBasic resp1 = new RespBasic();
     msg = ApiUtils.getMsgAuth("NTFAPI_EVENT_POSTED", rUser);
     return Response.status(Status.OK).entity(TapisRestUtils.createSuccessResponse(msg, PRETTY, resp1)).build();
+  }
+
+  /**
+   * @deprecated
+   * (DEPRECATED)
+   * Post an event to the queue
+   * @param tenant Set the tenant associated with the event. Only for services. By default, oboTenant is used.
+   * @param payloadStream - request body
+   * @param securityContext - user identity
+   * @return response containing reference to created object
+   */
+  @POST
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response postEvent(InputStream payloadStream,
+                            @QueryParam("tenant") String tenant,
+                            @Context SecurityContext securityContext)
+  {
+    return publishEvent(payloadStream, tenant, securityContext);
   }
 
   /* **************************************************************************** */

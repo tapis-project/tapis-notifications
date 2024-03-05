@@ -137,10 +137,11 @@ public final class IntegrationUtils
   public static final String eventDataNull = null;
   public static final String eventTime = TapisUtils.getUTCTimeNow().toString();
   public static final boolean eventDeleteSubscriptionsMatchingSubjectFalse = false;
+  public static final boolean eventEndSeriesFalse = false;
 
   public static final Event event1 = new Event(eventSource1, eventType1, eventSubject1, eventDataNull, seriesId1, seriesSeqCount1,
-                                               eventTime, eventDeleteSubscriptionsMatchingSubjectFalse, tenantName,
-                                               testUser1, UUID.randomUUID());
+                                               eventTime, eventDeleteSubscriptionsMatchingSubjectFalse, eventEndSeriesFalse,
+                                               tenantName, testUser1, UUID.randomUUID());
 
   /**
    * Create an array of Subscription objects in memory

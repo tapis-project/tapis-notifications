@@ -74,13 +74,14 @@ public interface NotificationsService
   // ------------------------- Events --------------------------------------
   // -----------------------------------------------------------------------
   void publishEvent(ResourceRequestUser rUser, String source, String type, String subject, String data,
-                    String seriesId, String timestamp, boolean deleteSubscriptionMatchingSubject, String tenant)
+                    String seriesId, String timestamp, boolean deleteSubscriptionMatchingSubject,
+                    boolean endSeries, String tenant)
           throws TapisException, IOException, IllegalArgumentException, NotAuthorizedException;
 
   // -----------------------------------------------------------------------
   // ------------------------- Test Sequence -------------------------------
   // -----------------------------------------------------------------------
-  Subscription beginTestSequence(ResourceRequestUser rUser, String baseServiceUrl, String subscriptionTTL)
+  Subscription beginTestSequence(ResourceRequestUser rUser, String baseServiceUrl, String subscriptionTTL, Integer numberOfEvents)
           throws TapisException, TapisClientException, IOException, IllegalStateException, IllegalArgumentException;
 
   TestSequence getTestSequence(ResourceRequestUser rUser, String name)

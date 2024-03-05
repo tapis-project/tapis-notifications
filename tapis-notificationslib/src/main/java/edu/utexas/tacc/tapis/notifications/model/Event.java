@@ -40,6 +40,7 @@ public final class Event
 
   // Default values
   public static final boolean DEFAULT_DELETE_SUBSCRIPTIONS_MATCHING_SUBJECT = false;
+  public static final boolean DEFAULT_END_SERIES = false;
   public static final long DEFAULT_SERIES_SEQ_COUNT = -1L;
 
   // Valid pattern for event type, must be 3 sections separated by a '.'
@@ -63,6 +64,8 @@ public final class Event
   private final String timestamp; // Timestamp of when the occurrence happened. RFC 3339 (ISO 8601)
   private final boolean deleteSubscriptionsMatchingSubject;  // Indicates all subscriptions associated with subject
                                                              //   should be removed after deliveries are complete.
+  private final boolean endSeries;  // Indicates that this is the last event in a series.
+  //   should be removed after deliveries are complete.
   private final String tenant; // Tenant associated with the event
   private final String user; // User associated with the event
   private final UUID uuid;
@@ -75,8 +78,8 @@ public final class Event
   /*                           Constructors                                 */
   /* ********************************************************************** */
   public Event(String source1, String type1, String subject1, String data1, String seriesId1,
-               long seriesSeqCount1, String timestamp1, boolean deleteSubscriptionsMatchingSubject1, String tenant1,
-               String user1, UUID uuid1)
+               long seriesSeqCount1, String timestamp1, boolean deleteSubscriptionsMatchingSubject1,
+               boolean endSeries1, String tenant1, String user1, UUID uuid1)
   {
     source = source1;
     type = type1;
@@ -86,6 +89,7 @@ public final class Event
     seriesSeqCount = seriesSeqCount1;
     timestamp = timestamp1;
     deleteSubscriptionsMatchingSubject = deleteSubscriptionsMatchingSubject1;
+    endSeries = endSeries1;
     tenant = tenant1;
     user = user1;
     uuid = uuid1;
@@ -103,6 +107,7 @@ public final class Event
   public long getSeriesSeqCount() { return seriesSeqCount; }
   public String getTimestamp() { return timestamp; }
   public boolean getDeleteSubscriptionsMatchingSubject() { return deleteSubscriptionsMatchingSubject; }
+  public boolean getEndSeries() { return endSeries; }
 
   public String getTenant() { return tenant; }
   public String getUser() { return user; }
@@ -124,8 +129,13 @@ public final class Event
   @Override
   public String toString()
   {
-    String msg = "Source: %s Type: %s Subject: %s Data: %s SeriesId: %s Timestamp: %s UUID: %s";
-    return msg.formatted(source, type, subject, data, seriesId, timestamp, uuid);
+    String msg =
+"""
+ Tenant: %s Source: %s Type: %s Subject: %s Data: %s SeriesId: %s SeriesSeqCount: %d Timestamp: %s
+ deleteSubscriptionsMatchingSubject: %b endSeries: %b user: %s UUID: %s";
+""";
+    return msg.formatted(tenant, source, type, subject, data, seriesId, seriesSeqCount, timestamp,
+                         deleteSubscriptionsMatchingSubject, endSeries, user, uuid);
   }
 
   /*
