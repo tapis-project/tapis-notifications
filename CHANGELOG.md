@@ -8,9 +8,20 @@ https://tapis.readthedocs.io/en/latest/technical/notifications.html
 You may also reference live-docs based on the openapi specification here:
 https://tapis-project.github.io/live-docs
 
-## 1.6.0 - 2024-01-23
+## 1.6.1 - 2024-03-06
 
-Increment release.
+Incremental improvements.
+
+### New features:
+- None
+
+### Bug fixes:
+- None
+
+---------------------------------------------------------------------------
+## 1.6.0 - 2024-01-26
+
+New release
 
 ### New features:
 - None
