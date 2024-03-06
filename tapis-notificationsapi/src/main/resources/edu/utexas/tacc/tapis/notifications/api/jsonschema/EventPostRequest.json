@@ -16,6 +16,7 @@
     "endSeries": {"type":  "boolean" },
     "tenant":  { "type":  "string" },
     "uuid": { "type":  "string" },
+    "received": { "type":  "string" },
     "user": { "type":  "string" },
     "seriesSeqCount": { "type":  "integer" }
   }

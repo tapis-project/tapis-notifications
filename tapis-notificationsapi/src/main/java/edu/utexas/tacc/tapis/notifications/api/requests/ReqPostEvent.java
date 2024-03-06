@@ -21,4 +21,5 @@ public final class ReqPostEvent
   public String tenant;
   public String user;
   public String uuid;
+  public String received;
 }

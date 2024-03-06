@@ -65,10 +65,11 @@ public final class Event
   private final boolean deleteSubscriptionsMatchingSubject;  // Indicates all subscriptions associated with subject
                                                              //   should be removed after deliveries are complete.
   private final boolean endSeries;  // Indicates that this is the last event in a series.
-  //   should be removed after deliveries are complete.
+                                    // Tracking data will be removed after deliveries are complete.
   private final String tenant; // Tenant associated with the event
   private final String user; // User associated with the event
   private final UUID uuid;
+  private final String received; // Timestamp of when the event was received by the Notifications service.
   // Mark as transient so Gson will not include it.
   private transient String type1; // Field 1 of type (service name)
   private transient String type2; // Field 2 of type (resource type)
