@@ -18,12 +18,12 @@ import java.util.function.Function;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
-import org.jooq.Function9;
+import org.jooq.Function10;
 import org.jooq.Identity;
 import org.jooq.Name;
 import org.jooq.Record;
 import org.jooq.Records;
-import org.jooq.Row9;
+import org.jooq.Row10;
 import org.jooq.Schema;
 import org.jooq.SelectField;
 import org.jooq.Table;
@@ -100,6 +100,11 @@ public class NotificationsTests extends TableImpl<NotificationsTestsRecord> {
      * The column <code>tapis_ntf.notifications_tests.updated</code>.
      */
     public final TableField<NotificationsTestsRecord, LocalDateTime> UPDATED = createField(DSL.name("updated"), SQLDataType.LOCALDATETIME(6).nullable(false).defaultValue(DSL.field("timezone('utc'::text, now())", SQLDataType.LOCALDATETIME)), this, "");
+
+    /**
+     * The column <code>tapis_ntf.notifications_tests.start_count</code>.
+     */
+    public final TableField<NotificationsTestsRecord, Integer> START_COUNT = createField(DSL.name("start_count"), SQLDataType.INTEGER.nullable(false).defaultValue(DSL.field("0", SQLDataType.INTEGER)), this, "");
 
     private NotificationsTests(Name alias, Table<NotificationsTestsRecord> aliased) {
         this(alias, aliased, null);
@@ -214,18 +219,18 @@ public class NotificationsTests extends TableImpl<NotificationsTestsRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row9 type methods
+    // Row10 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row9<Integer, Integer, String, String, String, Integer, JsonElement, LocalDateTime, LocalDateTime> fieldsRow() {
-        return (Row9) super.fieldsRow();
+    public Row10<Integer, Integer, String, String, String, Integer, JsonElement, LocalDateTime, LocalDateTime, Integer> fieldsRow() {
+        return (Row10) super.fieldsRow();
     }
 
     /**
      * Convenience mapping calling {@link SelectField#convertFrom(Function)}.
      */
-    public <U> SelectField<U> mapping(Function9<? super Integer, ? super Integer, ? super String, ? super String, ? super String, ? super Integer, ? super JsonElement, ? super LocalDateTime, ? super LocalDateTime, ? extends U> from) {
+    public <U> SelectField<U> mapping(Function10<? super Integer, ? super Integer, ? super String, ? super String, ? super String, ? super Integer, ? super JsonElement, ? super LocalDateTime, ? super LocalDateTime, ? super Integer, ? extends U> from) {
         return convertFrom(Records.mapping(from));
     }
 
@@ -233,7 +238,7 @@ public class NotificationsTests extends TableImpl<NotificationsTestsRecord> {
      * Convenience mapping calling {@link SelectField#convertFrom(Class,
      * Function)}.
      */
-    public <U> SelectField<U> mapping(Class<U> toType, Function9<? super Integer, ? super Integer, ? super String, ? super String, ? super String, ? super Integer, ? super JsonElement, ? super LocalDateTime, ? super LocalDateTime, ? extends U> from) {
+    public <U> SelectField<U> mapping(Class<U> toType, Function10<? super Integer, ? super Integer, ? super String, ? super String, ? super String, ? super Integer, ? super JsonElement, ? super LocalDateTime, ? super LocalDateTime, ? super Integer, ? extends U> from) {
         return convertFrom(toType, Records.mapping(from));
     }
 }

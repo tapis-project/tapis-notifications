@@ -1747,12 +1747,13 @@ public class NotificationsDaoImpl implements NotificationsDao
    *
    * @param rUser - ResourceRequestUser containing tenant, user and request info
    * @param name - name of the subscription
+   * @param startCount - number events sent as part of beginTestSequence
    * @return true if created, false if subscription does not exist
    * @throws IllegalStateException - if resource already exists
    * @throws TapisException - on error
    */
   @Override
-  public boolean createTestSequence(ResourceRequestUser rUser, String name)
+  public boolean createTestSequence(ResourceRequestUser rUser, String name, int startCount)
           throws TapisException, IllegalStateException
   {
     String opName = "createTestSequence";
@@ -1785,6 +1786,7 @@ public class NotificationsDaoImpl implements NotificationsDao
               .set(NOTIFICATIONS_TESTS.TENANT, oboTenant)
               .set(NOTIFICATIONS_TESTS.OWNER, oboUser)
               .set(NOTIFICATIONS_TESTS.SUBSCR_NAME, name)
+              .set(NOTIFICATIONS_TESTS.START_COUNT, startCount)
               .set(NOTIFICATIONS_TESTS.NOTIFICATION_COUNT, 0)
               .set(NOTIFICATIONS_TESTS.NOTIFICATIONS, eventsJson)
               .returningResult(NOTIFICATIONS_TESTS.SEQ_ID)
@@ -2419,7 +2421,7 @@ public class NotificationsDaoImpl implements NotificationsDao
     List<Notification> notifications = Arrays.asList(TapisGsonUtils.getGson().fromJson(notificationsJson, Notification[].class));
     testSequence = new TestSequence(seqId, r.get(NOTIFICATIONS_TESTS.TENANT), r.get(NOTIFICATIONS_TESTS.OWNER),
                                     r.get(NOTIFICATIONS_TESTS.SUBSCR_NAME), r.get(NOTIFICATIONS_TESTS.NOTIFICATION_COUNT),
-                                    notifications, created, updated);
+                                    r.get(NOTIFICATIONS_TESTS.START_COUNT), notifications, created, updated);
     return testSequence;
   }
 

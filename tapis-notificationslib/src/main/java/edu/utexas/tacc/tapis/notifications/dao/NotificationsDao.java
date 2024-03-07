@@ -105,7 +105,7 @@ public interface NotificationsDao
   // -----------------------------------------------------------------------
   // --------------------- Test Sequences ----------------------------------
   // -----------------------------------------------------------------------
-  boolean createTestSequence(ResourceRequestUser rUser, String name)
+  boolean createTestSequence(ResourceRequestUser rUser, String name, int startCount)
           throws TapisException, IllegalStateException;
 
   TestSequence getTestSequence(String tenant, String owner, String name) throws TapisException;

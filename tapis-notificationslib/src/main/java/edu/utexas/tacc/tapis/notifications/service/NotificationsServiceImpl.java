@@ -178,10 +178,11 @@ public class NotificationsServiceImpl implements NotificationsService
       {
         ntfClient.setBasePath("http://localhost:8080");
       }
-      TapisSubscription subscription = ntfClient.beginTestSequence(DEFAULT_TEST_TTL);
+      TapisSubscription subscription = ntfClient.beginTestSequence(DEFAULT_TEST_TTL, DEFAULT_TEST_NUM_EVENTS);
       owner = subscription.getOwner();
       name = subscription.getName();
       log.debug(LibUtils.getMsg("NTFLIB_DSP_CHECK_BEGIN", owner, name));
+      // NOTE: This only waits for first event. If we ever call beginTestSequence with numberOfEvents > 1 it might need updating.
       waitForTestSequenceStart(tenantName, owner, name);
       dao.deleteSubscriptionByName(tenantName, owner, name);
       log.debug(LibUtils.getMsg("NTFLIB_DSP_CHECK_END", owner, name));
@@ -944,8 +945,8 @@ public class NotificationsServiceImpl implements NotificationsService
     // Create the subscription
     // NOTE: Might be able to call the svc method createSubscription() but creating here avoids some overhead.
     //   For example, the auth check is not needed and could potentially cause problems.
-    Subscription sub1 = new Subscription(-1, oboTenant, oboUser, uuidName, null, true, typeFilter, subjFilter, dmList,
-                                         subscrTTL, null, null, null, null);
+    Subscription sub1 = new Subscription(-1, oboTenant, oboUser, uuidName, null, true, typeFilter, subjFilter,
+                                         dmList, subscrTTL, null, null, null, null);
     // If subscription already exists it is an error. Unlikely since it is a UUID
     if (dao.checkForSubscription(oboTenant, oboUser, uuidName))
       throw new IllegalStateException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_EXISTS", rUser, oboUser, uuidName));
@@ -963,7 +964,7 @@ public class NotificationsServiceImpl implements NotificationsService
     dao.createSubscription(rUser, sub1, expiry);
 
     // Persist the initial test sequence record
-    dao.createTestSequence(rUser, uuidName);
+    dao.createTestSequence(rUser, uuidName, numEvents);
 
     // Get the subscription. Will be returned for the response.
     Subscription subscription = dao.getSubscriptionByName(oboTenant, oboUser, uuidName);
@@ -973,35 +974,27 @@ public class NotificationsServiceImpl implements NotificationsService
     String eventType = TEST_EVENT_TYPE;
     String eventSubject = uuidName;
     String eventSeriesId = uuidName;
-    long eventSeriesSeqCount = Event.DEFAULT_SERIES_SEQ_COUNT;
     String eventTimeStamp = OffsetDateTime.now().toString();
     String eventData = null;
     boolean eventDeleteSubscriptionsMatchingSubject = false;
     boolean eventEndSeries = false;
-    Instant received = TapisUtils.getUTCTimeNow().toInstant(ZoneOffset.UTC);
 
-    UUID eventUUID = UUID.randomUUID();
-    Event event = new Event(eventSource, eventType, eventSubject, eventData, eventSeriesId, eventSeriesSeqCount,
-                            eventTimeStamp, eventDeleteSubscriptionsMatchingSubject, eventEndSeries,
-                            oboTenant, oboUser, received, eventUUID);
-    MessageBroker.getInstance().publishEvent(rUser, event);
+    // Create and publish first event
+    publishEvent(rUser, eventSource, eventType, eventSubject, eventData, eventSeriesId, eventTimeStamp,
+                 eventDeleteSubscriptionsMatchingSubject, eventEndSeries, oboTenant);
 
     // If just one event then we are done
     if (numEvents <= 1) return subscription;
 
-    // TODO More than 1 event, publish other events at the rate of 1 every 3 seconds.
+    // More than 1 event, publish other events at the rate of 1 every 3 seconds.
     for (int i = 2; i <= numEvents; i++)
     {
-      // Pause for 5 seconds.
+      // Pause for 3 seconds.
       try {Thread.sleep(3000);} catch (InterruptedException e) {/* Ignore interruptions */}
       eventTimeStamp = OffsetDateTime.now().toString();
-      eventUUID = UUID.randomUUID();
-      received = TapisUtils.getUTCTimeNow().toInstant(ZoneOffset.UTC);
-      event = new Event(eventSource, eventType, eventSubject, eventData, eventSeriesId, eventSeriesSeqCount,
-                        eventTimeStamp, eventDeleteSubscriptionsMatchingSubject, eventEndSeries,
-                        oboTenant, oboUser, received, eventUUID);
-      MessageBroker.getInstance().publishEvent(rUser, event);
-//TODO      ???
+
+      publishEvent(rUser, eventSource, eventType, eventSubject, eventData, eventSeriesId, eventTimeStamp,
+                   eventDeleteSubscriptionsMatchingSubject, eventEndSeries, oboTenant);
     }
 
     return subscription;

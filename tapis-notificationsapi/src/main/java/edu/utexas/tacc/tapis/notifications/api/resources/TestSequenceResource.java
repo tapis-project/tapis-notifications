@@ -408,8 +408,7 @@ public class TestSequenceResource
     boolean deleteSubscriptionsMatchingSubject = req.event.deleteSubscriptionsMatchingSubject;
     boolean endSeries = req.event.endSeries;
     String eventUuidStr = req.event.uuid;
-    Instant received = TapisUtils.getUTCTimeNow().toInstant(ZoneOffset.UTC);
-
+    Instant received = TapisUtils.getUTCTimeFromString(req.event.received).toInstant(ZoneOffset.UTC);
     // Tenant and user should both have values
     if (StringUtils.isBlank(tenant) || StringUtils.isBlank(user))
     {
