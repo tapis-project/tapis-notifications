@@ -20,6 +20,6 @@ public final class ReqPostEvent
   public boolean endSeries = DEFAULT_END_SERIES;
   public String tenant;
   public String user;
-  public String uuid;
   public String received;
+  public String uuid;
 }

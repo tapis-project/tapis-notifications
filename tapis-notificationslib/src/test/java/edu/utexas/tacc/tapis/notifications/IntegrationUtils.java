@@ -13,6 +13,7 @@ import edu.utexas.tacc.tapis.shared.utils.TapisGsonUtils;
 import edu.utexas.tacc.tapis.shared.utils.TapisUtils;
 
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -141,7 +142,8 @@ public final class IntegrationUtils
 
   public static final Event event1 = new Event(eventSource1, eventType1, eventSubject1, eventDataNull, seriesId1, seriesSeqCount1,
                                                eventTime, eventDeleteSubscriptionsMatchingSubjectFalse, eventEndSeriesFalse,
-                                               tenantName, testUser1, UUID.randomUUID());
+                                               tenantName, testUser1,
+                                               TapisUtils.getUTCTimeNow().toInstant(ZoneOffset.UTC), UUID.randomUUID());
 
   /**
    * Create an array of Subscription objects in memory

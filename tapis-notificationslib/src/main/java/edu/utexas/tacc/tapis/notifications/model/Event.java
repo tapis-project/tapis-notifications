@@ -1,7 +1,10 @@
 package edu.utexas.tacc.tapis.notifications.model;
 
+import edu.utexas.tacc.tapis.shared.utils.TapisUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -68,8 +71,8 @@ public final class Event
                                     // Tracking data will be removed after deliveries are complete.
   private final String tenant; // Tenant associated with the event
   private final String user; // User associated with the event
+  private final Instant received; // Timestamp of when the event was received by the Notifications service.
   private final UUID uuid;
-  private final String received; // Timestamp of when the event was received by the Notifications service.
   // Mark as transient so Gson will not include it.
   private transient String type1; // Field 1 of type (service name)
   private transient String type2; // Field 2 of type (resource type)
@@ -80,7 +83,7 @@ public final class Event
   /* ********************************************************************** */
   public Event(String source1, String type1, String subject1, String data1, String seriesId1,
                long seriesSeqCount1, String timestamp1, boolean deleteSubscriptionsMatchingSubject1,
-               boolean endSeries1, String tenant1, String user1, UUID uuid1)
+               boolean endSeries1, String tenant1, String user1, Instant received1, UUID uuid1)
   {
     source = source1;
     type = type1;
@@ -93,6 +96,7 @@ public final class Event
     endSeries = endSeries1;
     tenant = tenant1;
     user = user1;
+    received = (received1 != null) ? received1 : TapisUtils.getUTCTimeNow().toInstant(ZoneOffset.UTC);
     uuid = uuid1;
     setTypeFields();
   }
@@ -112,6 +116,7 @@ public final class Event
 
   public String getTenant() { return tenant; }
   public String getUser() { return user; }
+  public Instant getReceived() { return received; }
   public UUID getUuid() { return uuid; }
   public String getType1() { return type1; }
   public String getType2() { return type2; }
@@ -133,10 +138,10 @@ public final class Event
     String msg =
 """
  Tenant: %s Source: %s Type: %s Subject: %s Data: %s SeriesId: %s SeriesSeqCount: %d Timestamp: %s
- deleteSubscriptionsMatchingSubject: %b endSeries: %b user: %s UUID: %s";
+ deleteSubscriptionsMatchingSubject: %b endSeries: %b user: %s received: %s UUID: %s";
 """;
     return msg.formatted(tenant, source, type, subject, data, seriesId, seriesSeqCount, timestamp,
-                         deleteSubscriptionsMatchingSubject, endSeries, user, uuid);
+                         deleteSubscriptionsMatchingSubject, endSeries, user, received, uuid);
   }
 
   /*

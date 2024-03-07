@@ -3,6 +3,7 @@ package edu.utexas.tacc.tapis.notifications.service;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -11,6 +12,8 @@ import java.util.UUID;
 import javax.inject.Inject;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
+
+import edu.utexas.tacc.tapis.shared.utils.TapisUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
@@ -837,12 +840,16 @@ public class NotificationsServiceImpl implements NotificationsService
       throw new IllegalArgumentException(msg);
     }
 
+    // Create timestamp indicating when event was received by Tapis
+    Instant received = TapisUtils.getUTCTimeNow().toInstant(ZoneOffset.UTC);
+
     // Determine the next sequence count for the seriesId
     // The series is unique in the context of tenant, source, subject
     long seriesSeqCount = dao.getNextSeriesSeqCount(rUser, tenant, source, subject, seriesId);
+
     // Create an Event from the request
     Event event = new Event(source, type, subject, data, seriesId, seriesSeqCount, timestamp,
-            deleteSubscriptionsMatchingSubject, endSeries, tenant, rUser.getOboUserId(), UUID.randomUUID());
+            deleteSubscriptionsMatchingSubject, endSeries, tenant, rUser.getOboUserId(), received, UUID.randomUUID());
 
     // If first field of type is not the service name then reject
     if (!event.getType1().equals(rUser.getJwtUserId()))
@@ -971,10 +978,12 @@ public class NotificationsServiceImpl implements NotificationsService
     String eventData = null;
     boolean eventDeleteSubscriptionsMatchingSubject = false;
     boolean eventEndSeries = false;
+    Instant received = TapisUtils.getUTCTimeNow().toInstant(ZoneOffset.UTC);
 
     UUID eventUUID = UUID.randomUUID();
     Event event = new Event(eventSource, eventType, eventSubject, eventData, eventSeriesId, eventSeriesSeqCount,
-                            eventTimeStamp, eventDeleteSubscriptionsMatchingSubject, eventEndSeries, oboTenant, oboUser, eventUUID);
+                            eventTimeStamp, eventDeleteSubscriptionsMatchingSubject, eventEndSeries,
+                            oboTenant, oboUser, received, eventUUID);
     MessageBroker.getInstance().publishEvent(rUser, event);
 
     // If just one event then we are done
@@ -987,8 +996,10 @@ public class NotificationsServiceImpl implements NotificationsService
       try {Thread.sleep(3000);} catch (InterruptedException e) {/* Ignore interruptions */}
       eventTimeStamp = OffsetDateTime.now().toString();
       eventUUID = UUID.randomUUID();
+      received = TapisUtils.getUTCTimeNow().toInstant(ZoneOffset.UTC);
       event = new Event(eventSource, eventType, eventSubject, eventData, eventSeriesId, eventSeriesSeqCount,
-                        eventTimeStamp, eventDeleteSubscriptionsMatchingSubject, eventEndSeries, oboTenant, oboUser, eventUUID);
+                        eventTimeStamp, eventDeleteSubscriptionsMatchingSubject, eventEndSeries,
+                        oboTenant, oboUser, received, eventUUID);
       MessageBroker.getInstance().publishEvent(rUser, event);
 //TODO      ???
     }

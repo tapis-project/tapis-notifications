@@ -540,8 +540,10 @@ public class NotificationsServiceTest
   @Test(enabled = false)
   public void testPostEventAndLeave() throws Exception
   {
+    Instant received = TapisUtils.getUTCTimeNow().toInstant(ZoneOffset.UTC);
     Event event = new Event(eventSource1, eventType1, eventSubject1, eventDataNull, seriesId1, seriesSeqCount1, eventTime,
-                            eventDeleteSubscriptionsMatchingSubjectFalse, eventEndSeriesFalse, tenantName, testUser1, UUID.randomUUID());
+                            eventDeleteSubscriptionsMatchingSubjectFalse, eventEndSeriesFalse,
+                            tenantName, testUser1, received, UUID.randomUUID());
     System.out.println("Placing event on queue. Event: " + event);
     // Put an event on the queue as a message
     svcImpl.publishEvent(rJobsSvc1, eventSource1, eventType1, eventSubject1, eventDataNull, seriesId1, eventTime,
@@ -555,8 +557,10 @@ public class NotificationsServiceTest
   @Test(enabled = false)
   public void testPostReadEvent() throws Exception
   {
+    Instant received = TapisUtils.getUTCTimeNow().toInstant(ZoneOffset.UTC);
     Event event = new Event(eventSource1, eventType1, eventSubject1, eventDataNull, seriesId1, seriesSeqCount1, eventTime,
-                            eventDeleteSubscriptionsMatchingSubjectFalse, eventEndSeriesFalse, tenantName, testUser1, UUID.randomUUID());
+                            eventDeleteSubscriptionsMatchingSubjectFalse, eventEndSeriesFalse,
+                            tenantName, testUser1, received, UUID.randomUUID());
     System.out.println("Placing event on queue. Event: " + event);
     // Put an event on the queue as a message
     svcImpl.publishEvent(rJobsSvc1, eventSource1, eventType1, eventSubject1, eventDataNull, seriesId1, eventTime,
