@@ -4,18 +4,18 @@
 package edu.utexas.tacc.tapis.notifications.gen.jooq;
 
 
+import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.EventSeries;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.FlywaySchemaHistory;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.Notifications;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.NotificationsLastEvent;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.NotificationsRecovery;
-import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.NotificationsSeries;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.NotificationsTests;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.Subscriptions;
+import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.EventSeriesRecord;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.FlywaySchemaHistoryRecord;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.NotificationsLastEventRecord;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.NotificationsRecord;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.NotificationsRecoveryRecord;
-import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.NotificationsSeriesRecord;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.NotificationsTestsRecord;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.SubscriptionsRecord;
 
@@ -37,11 +37,11 @@ public class Keys {
     // UNIQUE and PRIMARY KEY definitions
     // -------------------------------------------------------------------------
 
+    public static final UniqueKey<EventSeriesRecord> EVENT_SERIES_PKEY = Internal.createUniqueKey(EventSeries.EVENT_SERIES, DSL.name("event_series_pkey"), new TableField[] { EventSeries.EVENT_SERIES.TENANT, EventSeries.EVENT_SERIES.SOURCE, EventSeries.EVENT_SERIES.SUBJECT, EventSeries.EVENT_SERIES.SERIES_ID }, true);
     public static final UniqueKey<FlywaySchemaHistoryRecord> FLYWAY_SCHEMA_HISTORY_PK = Internal.createUniqueKey(FlywaySchemaHistory.FLYWAY_SCHEMA_HISTORY, DSL.name("flyway_schema_history_pk"), new TableField[] { FlywaySchemaHistory.FLYWAY_SCHEMA_HISTORY.INSTALLED_RANK }, true);
     public static final UniqueKey<NotificationsRecord> NOTIFICATIONS_PKEY = Internal.createUniqueKey(Notifications.NOTIFICATIONS, DSL.name("notifications_pkey"), new TableField[] { Notifications.NOTIFICATIONS.SEQ_ID }, true);
     public static final UniqueKey<NotificationsLastEventRecord> NOTIFICATIONS_LAST_EVENT_PKEY = Internal.createUniqueKey(NotificationsLastEvent.NOTIFICATIONS_LAST_EVENT, DSL.name("notifications_last_event_pkey"), new TableField[] { NotificationsLastEvent.NOTIFICATIONS_LAST_EVENT.BUCKET_NUMBER }, true);
     public static final UniqueKey<NotificationsRecoveryRecord> NOTIFICATIONS_RECOVERY_PKEY = Internal.createUniqueKey(NotificationsRecovery.NOTIFICATIONS_RECOVERY, DSL.name("notifications_recovery_pkey"), new TableField[] { NotificationsRecovery.NOTIFICATIONS_RECOVERY.SEQ_ID }, true);
-    public static final UniqueKey<NotificationsSeriesRecord> NOTIFICATIONS_SERIES_PKEY = Internal.createUniqueKey(NotificationsSeries.NOTIFICATIONS_SERIES, DSL.name("notifications_series_pkey"), new TableField[] { NotificationsSeries.NOTIFICATIONS_SERIES.TENANT, NotificationsSeries.NOTIFICATIONS_SERIES.SOURCE, NotificationsSeries.NOTIFICATIONS_SERIES.SUBJECT, NotificationsSeries.NOTIFICATIONS_SERIES.SERIES_ID }, true);
     public static final UniqueKey<NotificationsTestsRecord> NOTIFICATIONS_TESTS_PKEY = Internal.createUniqueKey(NotificationsTests.NOTIFICATIONS_TESTS, DSL.name("notifications_tests_pkey"), new TableField[] { NotificationsTests.NOTIFICATIONS_TESTS.SEQ_ID }, true);
     public static final UniqueKey<NotificationsTestsRecord> NOTIFICATIONS_TESTS_TENANT_OWNER_SUBSCR_NAME_KEY = Internal.createUniqueKey(NotificationsTests.NOTIFICATIONS_TESTS, DSL.name("notifications_tests_tenant_owner_subscr_name_key"), new TableField[] { NotificationsTests.NOTIFICATIONS_TESTS.TENANT, NotificationsTests.NOTIFICATIONS_TESTS.OWNER, NotificationsTests.NOTIFICATIONS_TESTS.SUBSCR_NAME }, true);
     public static final UniqueKey<SubscriptionsRecord> SUBSCRIPTIONS_PKEY = Internal.createUniqueKey(Subscriptions.SUBSCRIPTIONS, DSL.name("subscriptions_pkey"), new TableField[] { Subscriptions.SUBSCRIPTIONS.SEQ_ID }, true);

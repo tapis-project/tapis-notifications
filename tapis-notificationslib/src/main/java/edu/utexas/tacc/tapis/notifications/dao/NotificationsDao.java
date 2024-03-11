@@ -103,6 +103,12 @@ public interface NotificationsDao
   void setNotificationRecoveryAttemptCount(Notification notification, int attemptCount) throws TapisException;
 
   // -----------------------------------------------------------------------
+  // -------------------- Events -------------------------------------------
+  // -----------------------------------------------------------------------
+
+  int deleteEventSeries(String source, String subject, String seriesId, String tenant) throws TapisException;
+
+  // -----------------------------------------------------------------------
   // --------------------- Test Sequences ----------------------------------
   // -----------------------------------------------------------------------
   boolean createTestSequence(ResourceRequestUser rUser, String name, int startCount)

@@ -146,6 +146,48 @@ public class NotificationsDaoImpl implements NotificationsDao
     flyway.migrate();
   }
 
+  // -----------------------------------------------------------------------
+  // ------------------------- Events --------------------------------------
+  // -----------------------------------------------------------------------
+
+  /**
+   * Delete an event series
+   */
+  @Override
+  public int deleteEventSeries(String source, String subject, String seriesId, String tenant) throws TapisException
+  {
+    String opName = "deleteEventSeries";
+
+    // If no seriesId or subject then nothing to do
+    if (StringUtils.isBlank(subject) || StringUtils.isBlank(seriesId)) return 0;
+
+    // ------------------------- Check Input -------------------------
+    if (StringUtils.isBlank(source)) LibUtils.logAndThrowNullParmException(opName, "source");
+    if (StringUtils.isBlank(tenant)) LibUtils.logAndThrowNullParmException(opName, "tenant");
+
+    // ------------------------- Call SQL ----------------------------
+    Connection conn = null;
+    try
+    {
+      conn = getConnection();
+      DSLContext db = DSL.using(conn);
+      db.deleteFrom(EVENT_SERIES)
+              .where(EVENT_SERIES.TENANT.eq(tenant),EVENT_SERIES.SOURCE.eq(source),
+                    EVENT_SERIES.SUBJECT.eq(subject), EVENT_SERIES.SERIES_ID.eq(seriesId))
+              .execute();
+      LibUtils.closeAndCommitDB(conn, null, null);
+    }
+    catch (Exception e)
+    {
+      LibUtils.rollbackDB(conn, e,"DB_DELETE_FAILURE", "event_series");
+    }
+    finally
+    {
+      LibUtils.finalCloseDB(conn);
+    }
+    return 1;
+  }
+
   /*
    * getNextSeriesSeqCount
    * Determine next sequence id for the specified series.
@@ -168,22 +210,22 @@ public class NotificationsDaoImpl implements NotificationsDao
       DSLContext db = DSL.using(conn);
 
       // Use postgresql support for ON CONFLICT to automatically insert new entries as needed:
-      // INSERT INTO notifications_series (tenant,source,subject,series_id,seq_count)
+      // INSERT INTO event_series (tenant,source,subject,series_id,seq_count)
       //   VALUES (<tenant>,<source>,<subject>,<seriesId>,1)
       //   ON CONFLICT(tenant,source,subject,series_id)
-      //   DO UPDATE SET seq_count = (notifications_series.seq_count + 1);
-      Record r = db.insertInto(NOTIFICATIONS_SERIES)
-              .columns(NOTIFICATIONS_SERIES.TENANT,NOTIFICATIONS_SERIES.SOURCE, NOTIFICATIONS_SERIES.SUBJECT, NOTIFICATIONS_SERIES.SERIES_ID, NOTIFICATIONS_SERIES.SEQ_COUNT)
+      //   DO UPDATE SET seq_count = (event_series.seq_count + 1);
+      Record r = db.insertInto(EVENT_SERIES)
+              .columns(EVENT_SERIES.TENANT,EVENT_SERIES.SOURCE, EVENT_SERIES.SUBJECT, EVENT_SERIES.SERIES_ID, EVENT_SERIES.SEQ_COUNT)
               .values(tenant, source, subject, seriesId, 1L)
-              .onConflict(NOTIFICATIONS_SERIES.TENANT,NOTIFICATIONS_SERIES.SOURCE, NOTIFICATIONS_SERIES.SUBJECT, NOTIFICATIONS_SERIES.SERIES_ID)
-              .doUpdate().set(NOTIFICATIONS_SERIES.SEQ_COUNT, NOTIFICATIONS_SERIES.SEQ_COUNT.plus(1))
-              .returningResult(NOTIFICATIONS_SERIES.SEQ_COUNT).fetchOne();
+              .onConflict(EVENT_SERIES.TENANT,EVENT_SERIES.SOURCE, EVENT_SERIES.SUBJECT, EVENT_SERIES.SERIES_ID)
+              .doUpdate().set(EVENT_SERIES.SEQ_COUNT, EVENT_SERIES.SEQ_COUNT.plus(1))
+              .returningResult(EVENT_SERIES.SEQ_COUNT).fetchOne();
       // If result is null it is an error
       if (r == null)
       {
         throw new TapisException(LibUtils.getMsgAuth("NTFLIB_DB_NULL_RESULT", rUser, seriesId, opName));
       }
-      nextSeqId = r.getValue(NOTIFICATIONS_SERIES.SEQ_COUNT);
+      nextSeqId = r.getValue(EVENT_SERIES.SEQ_COUNT);
       // Close out and commit
       LibUtils.closeAndCommitDB(conn, null, null);
     }

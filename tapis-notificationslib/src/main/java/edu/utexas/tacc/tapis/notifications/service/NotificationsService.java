@@ -78,6 +78,9 @@ public interface NotificationsService
                     boolean endSeries, String tenant)
           throws TapisException, IOException, IllegalArgumentException, NotAuthorizedException;
 
+  int endEventSeries(ResourceRequestUser rUser, String source, String subject, String seriesId, String tenant)
+          throws TapisException, IOException, IllegalArgumentException, NotAuthorizedException;
+
   // -----------------------------------------------------------------------
   // ------------------------- Test Sequence -------------------------------
   // -----------------------------------------------------------------------

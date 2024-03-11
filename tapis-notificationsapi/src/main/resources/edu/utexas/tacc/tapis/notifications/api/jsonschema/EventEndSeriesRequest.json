@@ -1,0 +1,15 @@
+{
+  "$id": "https://tapis.tacc.utexas.edu/EventPostRequest",
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "description": "Schema for a request to end an event series",
+
+  "type": "object",
+  "required": [ "source", "subject", "seriesId" ],
+  "properties": {
+    "source": { "type": "string", "minLength": 1 },
+    "subject": { "type": ["string", "null"] },
+    "seriesId": { "type": ["string", "null"] },
+    "tenant":  { "type":  "string" },
+    "seriesSeqCount": { "type":  "integer" }
+  }
+}

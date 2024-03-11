@@ -4,11 +4,11 @@
 package edu.utexas.tacc.tapis.notifications.gen.jooq;
 
 
+import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.EventSeries;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.FlywaySchemaHistory;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.Notifications;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.NotificationsLastEvent;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.NotificationsRecovery;
-import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.NotificationsSeries;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.NotificationsTests;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.Subscriptions;
 
@@ -34,6 +34,11 @@ public class TapisNtf extends SchemaImpl {
     public static final TapisNtf TAPIS_NTF = new TapisNtf();
 
     /**
+     * The table <code>tapis_ntf.event_series</code>.
+     */
+    public final EventSeries EVENT_SERIES = EventSeries.EVENT_SERIES;
+
+    /**
      * The table <code>tapis_ntf.flyway_schema_history</code>.
      */
     public final FlywaySchemaHistory FLYWAY_SCHEMA_HISTORY = FlywaySchemaHistory.FLYWAY_SCHEMA_HISTORY;
@@ -52,11 +57,6 @@ public class TapisNtf extends SchemaImpl {
      * The table <code>tapis_ntf.notifications_recovery</code>.
      */
     public final NotificationsRecovery NOTIFICATIONS_RECOVERY = NotificationsRecovery.NOTIFICATIONS_RECOVERY;
-
-    /**
-     * The table <code>tapis_ntf.notifications_series</code>.
-     */
-    public final NotificationsSeries NOTIFICATIONS_SERIES = NotificationsSeries.NOTIFICATIONS_SERIES;
 
     /**
      * The table <code>tapis_ntf.notifications_tests</code>.
@@ -84,11 +84,11 @@ public class TapisNtf extends SchemaImpl {
     @Override
     public final List<Table<?>> getTables() {
         return Arrays.asList(
+            EventSeries.EVENT_SERIES,
             FlywaySchemaHistory.FLYWAY_SCHEMA_HISTORY,
             Notifications.NOTIFICATIONS,
             NotificationsLastEvent.NOTIFICATIONS_LAST_EVENT,
             NotificationsRecovery.NOTIFICATIONS_RECOVERY,
-            NotificationsSeries.NOTIFICATIONS_SERIES,
             NotificationsTests.NOTIFICATIONS_TESTS,
             Subscriptions.SUBSCRIPTIONS
         );

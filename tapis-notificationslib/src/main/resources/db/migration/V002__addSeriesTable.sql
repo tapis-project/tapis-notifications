@@ -1,5 +1,5 @@
--- Table for tracking sequence IDs associated with a series
-CREATE TABLE IF NOT EXISTS notifications_series
+-- Table for tracking sequence IDs associated with an event series
+CREATE TABLE IF NOT EXISTS event_series
 (
     tenant TEXT NOT NULL,
     source TEXT NOT NULL,
@@ -8,4 +8,4 @@ CREATE TABLE IF NOT EXISTS notifications_series
     seq_count BIGINT NOT NULL DEFAULT 0,
     PRIMARY KEY (tenant, source, subject, series_id)
 );
-ALTER TABLE notifications_series OWNER TO tapis_ntf;
+ALTER TABLE event_series OWNER TO tapis_ntf;

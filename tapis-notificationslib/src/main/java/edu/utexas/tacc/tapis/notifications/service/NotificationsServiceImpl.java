@@ -812,24 +812,25 @@ public class NotificationsServiceImpl implements NotificationsService
                            boolean endSeries, String tenant1)
           throws TapisException, IOException, IllegalArgumentException, NotAuthorizedException
   {
+    String opName = "publishEvent";
     // Check inputs
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
-    if (StringUtils.isBlank(source)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_NULL_INPUT_EVENT_ATTR", rUser, "source"));
-    if (StringUtils.isBlank(type)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_NULL_INPUT_EVENT_ATTR", rUser, "type"));
-    if (StringUtils.isBlank(timestamp)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_NULL_INPUT_EVENT_ATTR", rUser, "timestamp"));
+    if (StringUtils.isBlank(source)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_NULL_INPUT_EVENT_ATTR", rUser, "source", opName));
+    if (StringUtils.isBlank(type)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_NULL_INPUT_EVENT_ATTR", rUser, "type", opName));
+    if (StringUtils.isBlank(timestamp)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_NULL_INPUT_EVENT_ATTR", rUser, "timestamp", opName));
 
     String msg;
     // Only services may publish. Reject if not a service.
     if (!rUser.isServiceRequest())
     {
-      msg = LibUtils.getMsgAuth("NTFLIB_EVENT_UNAUTH", rUser);
+      msg = LibUtils.getMsgAuth("NTFLIB_EVENT_UNAUTH", rUser, opName);
       throw new NotAuthorizedException(msg, NO_CHALLENGE);
     }
 
     // Determine the tenant. Only services may set the tenant. By default, oboTenant is used.
     if (!StringUtils.isBlank(tenant1) && !rUser.isServiceRequest())
     {
-      msg = LibUtils.getMsgAuth("NTFLIB_EVENT_UNAUTH", rUser);
+      msg = LibUtils.getMsgAuth("NTFLIB_EVENT_UNAUTH", rUser, opName);
       throw new NotAuthorizedException(msg, NO_CHALLENGE);
     }
     String tenant = StringUtils.isBlank(tenant1) ? rUser.getOboTenantId() : tenant1;
@@ -864,7 +865,54 @@ public class NotificationsServiceImpl implements NotificationsService
   }
 
   /**
-   * Read an Event from the queue.
+   * End an event series. Series tracking data will be deleted.
+   * A subsequent new event published with the same tenant, source, subject and seriesId will recreate the series
+   * tracking data with the initial seriesSeqCount set to 1.
+   * @param rUser - ResourceRequestUser containing tenant, user and request info
+   * @param source - Event attribute
+   * @param subject - Event attribute
+   * @param seriesId Event attribute
+   * @param tenant1 - Set the tenant. Only for services. Optional. By default, oboTenant is used.
+   * @return Number of items updated
+   * @throws IOException - on error
+   * @throws IllegalArgumentException - if missing required arg or invalid arg
+   * @throws NotAuthorizedException - unauthorized
+   */
+  @Override
+  public int endEventSeries(ResourceRequestUser rUser, String source, String subject, String seriesId, String tenant1)
+          throws TapisException, IOException, IllegalArgumentException, NotAuthorizedException
+  {
+    String opName = "endEventSeries";
+    // Check inputs
+    if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
+    if (StringUtils.isBlank(source)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_NULL_INPUT_EVENT_ATTR", rUser, "source", opName));
+    if (StringUtils.isBlank(subject)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_NULL_INPUT_EVENT_ATTR", rUser, "subject", opName));
+    if (StringUtils.isBlank(seriesId)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_NULL_INPUT_EVENT_ATTR", rUser, "seriesId", opName));
+
+    String msg;
+    // Only services may publish. Reject if not a service.
+    if (!rUser.isServiceRequest())
+    {
+      msg = LibUtils.getMsgAuth("NTFLIB_EVENT_UNAUTH", rUser, opName);
+      throw new NotAuthorizedException(msg, NO_CHALLENGE);
+    }
+
+    // Determine the tenant. Only services may set the tenant. By default, oboTenant is used.
+    if (!StringUtils.isBlank(tenant1) && !rUser.isServiceRequest())
+    {
+      msg = LibUtils.getMsgAuth("NTFLIB_EVENT_UNAUTH", rUser, opName);
+      throw new NotAuthorizedException(msg, NO_CHALLENGE);
+    }
+    String tenant = StringUtils.isBlank(tenant1) ? rUser.getOboTenantId() : tenant1;
+
+
+    // Delete tracking data for the series
+    return dao.deleteEventSeries(source, subject, seriesId, tenant);
+  }
+
+  /**
+   * Read an Event from the queue.select * from tapis_ntf.event_series;
+
    * Event is removed from the queue.
    *   NOTE: currently only used for testing. Not part of public interface of service.
    * @throws TapisException - on error
