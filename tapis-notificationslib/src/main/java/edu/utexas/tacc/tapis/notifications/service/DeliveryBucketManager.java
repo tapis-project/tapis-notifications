@@ -440,12 +440,14 @@ public final class DeliveryBucketManager implements Callable<String>
     // If requested, end the series. If event has no subject or seriesId, then the dao call will be a no-op
     if (event.getEndSeries())
     {
+      log.debug(LibUtils.getMsg("NTFLIB_DSP_BUCKET_ENDSERIES", bucketNum, eventUuid, tenant, source, subject, seriesId));
       dao.deleteEventSeries(source, subject, seriesId, tenant);
     }
 
     // If requested, delete all subscriptions matching the subject (anyOwner = true).
     if (event.getDeleteSubscriptionsMatchingSubject())
     {
+      log.debug(LibUtils.getMsg("NTFLIB_DSP_BUCKET_DELSUBJ", bucketNum, eventUuid, tenant, source, subject, seriesId));
       dao.deleteSubscriptionsBySubject(tenant, event.getUser(), subject, true);
     }
   }

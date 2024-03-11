@@ -72,7 +72,8 @@ public class NotificationsServiceImpl implements NotificationsService
   public static final int DEFAULT_TEST_NUM_EVENTS = 1;
 
   public static final String TEST_SUBSCR_TYPE_FILTER = "notifications.test.*";
-  public static final String TEST_EVENT_TYPE = "notifications.test.begin";
+  public static final String TEST_EVENT_TYPE_BEGIN = "notifications.test.begin";
+  public static final String TEST_EVENT_TYPE_SEQ_PREFIX = "notifications.test.number";
 
   private static final String SERVICE_NAME = TapisConstants.SERVICE_NAME_NOTIFICATIONS;
   // Message keys
@@ -1019,7 +1020,7 @@ public class NotificationsServiceImpl implements NotificationsService
 
     // Create and publish 1 or more events
     String eventSource = TapisConstants.SERVICE_NAME_NOTIFICATIONS;
-    String eventType = TEST_EVENT_TYPE;
+    String eventType = TEST_EVENT_TYPE_BEGIN;
     String eventSubject = uuidName;
     String eventSeriesId = uuidName;
     String eventTimeStamp = OffsetDateTime.now().toString();
@@ -1040,6 +1041,7 @@ public class NotificationsServiceImpl implements NotificationsService
       // Pause for 3 seconds.
       try {Thread.sleep(3000);} catch (InterruptedException e) {/* Ignore interruptions */}
       eventTimeStamp = OffsetDateTime.now().toString();
+      eventType = String.format("%s%03d", TEST_EVENT_TYPE_SEQ_PREFIX, i); // notifications.test.number001, etc
 
       publishEvent(rUser, eventSource, eventType, eventSubject, eventData, eventSeriesId, eventTimeStamp,
                    eventDeleteSubscriptionsMatchingSubject, eventEndSeries, oboTenant);
