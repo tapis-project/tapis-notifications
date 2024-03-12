@@ -68,6 +68,9 @@ public class NotificationsServiceImpl implements NotificationsService
   // Default test subscription TTL is 60 minutes
   public static final int DEFAULT_TEST_TTL = 60;
 
+  // Default test subscription endSeries query parameter
+  public static final boolean DEFAULT_TEST_ENDSERIES = true;
+
   // Number of events to publish for the test series.
   public static final int DEFAULT_TEST_NUM_EVENTS = 1;
 
@@ -940,13 +943,15 @@ public class NotificationsServiceImpl implements NotificationsService
    * @param baseServiceUrl - Base URL for service. Used for callback and event source.
    * @param ttl - optional TTL for the auto-generated subscription
    * @param numberOfEvents - optional number of events to publish for the series. Default is 1.
+   * @param endSeriesBool - indicates if tracking data for series should be removed after final event. Default is true.
    * @return subscription name
    * @throws TapisException - for Tapis related exceptions
    * @throws IllegalStateException - subscription exists OR subscription in invalid state
    * @throws IllegalArgumentException - invalid parameter passed in
    */
   @Override
-  public Subscription beginTestSequence(ResourceRequestUser rUser, String baseServiceUrl, String ttl, Integer numberOfEvents)
+  public Subscription beginTestSequence(ResourceRequestUser rUser, String baseServiceUrl, String ttl,
+                                        Integer numberOfEvents, Boolean endSeriesBool)
           throws TapisException, TapisClientException, IOException, IllegalStateException, IllegalArgumentException
   {
     // Check inputs
@@ -980,6 +985,9 @@ public class NotificationsServiceImpl implements NotificationsService
     {
       throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_TEST_NUM_EVENTS_NOT_POSITIVE", rUser, numEvents));
     }
+
+    // Determine endSeries flag
+    boolean endSeries = (endSeriesBool == null) ? DEFAULT_TEST_ENDSERIES : endSeriesBool;
 
     // Build the callback delivery method
     // Example https://dev.develop.tapis.io/v3/notifications/test/callback/<subscriptionName>
@@ -1028,7 +1036,8 @@ public class NotificationsServiceImpl implements NotificationsService
     boolean eventDeleteSubscriptionsMatchingSubject = false;
     boolean eventEndSeries = false;
 
-    // Create and publish first event
+    // Create and publish first event. Check for special case where we have only one event, and we want to endSeries
+    if (numEvents == 1 && endSeries) eventEndSeries = true;
     publishEvent(rUser, eventSource, eventType, eventSubject, eventData, eventSeriesId, eventTimeStamp,
                  eventDeleteSubscriptionsMatchingSubject, eventEndSeries, oboTenant);
 
@@ -1042,6 +1051,9 @@ public class NotificationsServiceImpl implements NotificationsService
       try {Thread.sleep(3000);} catch (InterruptedException e) {/* Ignore interruptions */}
       eventTimeStamp = OffsetDateTime.now().toString();
       eventType = String.format("%s%03d", TEST_EVENT_TYPE_SEQ_PREFIX, i); // notifications.test.number001, etc
+
+      // If this is last event, and we've been asked to end the series, set the endSeries flag for the event.
+      if (i == numEvents && endSeries) eventEndSeries = true;
 
       publishEvent(rUser, eventSource, eventType, eventSubject, eventData, eventSeriesId, eventTimeStamp,
                    eventDeleteSubscriptionsMatchingSubject, eventEndSeries, oboTenant);

@@ -121,6 +121,7 @@ public class TestSequenceResource
   @Produces(MediaType.APPLICATION_JSON)
   public Response beginTestSequence(@QueryParam("subscriptionTTL") @DefaultValue("60") String subscriptionTTL,
                                     @QueryParam("numberOfEvents") @DefaultValue("1") Integer numberOfEvents,
+                                    @QueryParam("endSeries") @DefaultValue("true") Boolean endSeries,
                                     @Context SecurityContext securityContext)
   {
     String opName = "beginTestSequence";
@@ -136,7 +137,7 @@ public class TestSequenceResource
 
     // Trace this request.
     if (_log.isTraceEnabled()) ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(),
-                                                   "subscriptionTTL="+subscriptionTTL, "numberOfEvents="+numberOfEvents);
+                                                   "subscriptionTTL="+subscriptionTTL, "endSeries="+endSeries);
 
     // Determine the base service url for the request. This is needed for the callback and the event source.
     // URI should be /v3/notifications/begin and URL should have the form http://localhost:8080/v3/notifications/begin
@@ -158,7 +159,7 @@ public class TestSequenceResource
     Subscription subscription;
     try
     {
-      subscription = notificationsService.beginTestSequence(rUser, baseServiceUrl, subscriptionTTL, numberOfEvents);
+      subscription = notificationsService.beginTestSequence(rUser, baseServiceUrl, subscriptionTTL, numberOfEvents, endSeries);
     }
     catch (Exception e)
     {
