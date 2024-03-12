@@ -15,6 +15,7 @@ Incremental improvements and new features.
 ### New features:
 - Add sequence counter associated with seriesId attribute of an event. Allows reconstruction of event order for a series.
 - Add attribute *received* to Event model. This attribute is the Tapis generated timestamp for when the event was received by Tapis.
+- Run service in docker container as non-root user.
 
 ### Bug fixes:
 - None
