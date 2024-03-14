@@ -14,14 +14,18 @@ import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.Subscriptions
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
+import org.jooq.Function17;
 import org.jooq.Identity;
 import org.jooq.Name;
 import org.jooq.Record;
+import org.jooq.Records;
 import org.jooq.Row17;
 import org.jooq.Schema;
+import org.jooq.SelectField;
 import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.TableOptions;
@@ -53,12 +57,14 @@ public class Subscriptions extends TableImpl<SubscriptionsRecord> {
     }
 
     /**
-     * The column <code>tapis_ntf.subscriptions.seq_id</code>. Subscription sequence id
+     * The column <code>tapis_ntf.subscriptions.seq_id</code>. Subscription
+     * sequence id
      */
     public final TableField<SubscriptionsRecord, Integer> SEQ_ID = createField(DSL.name("seq_id"), SQLDataType.INTEGER.nullable(false).identity(true), this, "Subscription sequence id");
 
     /**
-     * The column <code>tapis_ntf.subscriptions.tenant</code>. Tenant name associated with the subscription
+     * The column <code>tapis_ntf.subscriptions.tenant</code>. Tenant name
+     * associated with the subscription
      */
     public final TableField<SubscriptionsRecord, String> TENANT = createField(DSL.name("tenant"), SQLDataType.CLOB.nullable(false), this, "Tenant name associated with the subscription");
 
@@ -68,7 +74,8 @@ public class Subscriptions extends TableImpl<SubscriptionsRecord> {
     public final TableField<SubscriptionsRecord, String> OWNER = createField(DSL.name("owner"), SQLDataType.CLOB.nullable(false), this, "User name of owner");
 
     /**
-     * The column <code>tapis_ntf.subscriptions.name</code>. Name for the subscription. tenant+owner+name must be unique
+     * The column <code>tapis_ntf.subscriptions.name</code>. Name for the
+     * subscription. tenant+owner+name must be unique
      */
     public final TableField<SubscriptionsRecord, String> NAME = createField(DSL.name("name"), SQLDataType.CLOB.nullable(false), this, "Name for the subscription. tenant+owner+name must be unique");
 
@@ -78,7 +85,8 @@ public class Subscriptions extends TableImpl<SubscriptionsRecord> {
     public final TableField<SubscriptionsRecord, String> DESCRIPTION = createField(DSL.name("description"), SQLDataType.CLOB, this, "");
 
     /**
-     * The column <code>tapis_ntf.subscriptions.enabled</code>. Indicates if subscription is currently active and available for use
+     * The column <code>tapis_ntf.subscriptions.enabled</code>. Indicates if
+     * subscription is currently active and available for use
      */
     public final TableField<SubscriptionsRecord, Boolean> ENABLED = createField(DSL.name("enabled"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.field("true", SQLDataType.BOOLEAN)), this, "Indicates if subscription is currently active and available for use");
 
@@ -128,12 +136,14 @@ public class Subscriptions extends TableImpl<SubscriptionsRecord> {
     public final TableField<SubscriptionsRecord, LocalDateTime> EXPIRY = createField(DSL.name("expiry"), SQLDataType.LOCALDATETIME(6), this, "");
 
     /**
-     * The column <code>tapis_ntf.subscriptions.created</code>. UTC time for when record was created
+     * The column <code>tapis_ntf.subscriptions.created</code>. UTC time for
+     * when record was created
      */
     public final TableField<SubscriptionsRecord, LocalDateTime> CREATED = createField(DSL.name("created"), SQLDataType.LOCALDATETIME(6).nullable(false).defaultValue(DSL.field("timezone('utc'::text, now())", SQLDataType.LOCALDATETIME)), this, "UTC time for when record was created");
 
     /**
-     * The column <code>tapis_ntf.subscriptions.updated</code>. UTC time for when record was last updated
+     * The column <code>tapis_ntf.subscriptions.updated</code>. UTC time for
+     * when record was last updated
      */
     public final TableField<SubscriptionsRecord, LocalDateTime> UPDATED = createField(DSL.name("updated"), SQLDataType.LOCALDATETIME(6).nullable(false).defaultValue(DSL.field("timezone('utc'::text, now())", SQLDataType.LOCALDATETIME)), this, "UTC time for when record was last updated");
 
@@ -172,7 +182,7 @@ public class Subscriptions extends TableImpl<SubscriptionsRecord> {
 
     @Override
     public Schema getSchema() {
-        return TapisNtf.TAPIS_NTF;
+        return aliased() ? null : TapisNtf.TAPIS_NTF;
     }
 
     @Override
@@ -186,8 +196,8 @@ public class Subscriptions extends TableImpl<SubscriptionsRecord> {
     }
 
     @Override
-    public List<UniqueKey<SubscriptionsRecord>> getKeys() {
-        return Arrays.<UniqueKey<SubscriptionsRecord>>asList(Keys.SUBSCRIPTIONS_PKEY, Keys.SUBSCRIPTIONS_TENANT_OWNER_NAME_KEY);
+    public List<UniqueKey<SubscriptionsRecord>> getUniqueKeys() {
+        return Arrays.asList(Keys.SUBSCRIPTIONS_TENANT_OWNER_NAME_KEY);
     }
 
     @Override
@@ -198,6 +208,11 @@ public class Subscriptions extends TableImpl<SubscriptionsRecord> {
     @Override
     public Subscriptions as(Name alias) {
         return new Subscriptions(alias, this);
+    }
+
+    @Override
+    public Subscriptions as(Table<?> alias) {
+        return new Subscriptions(alias.getQualifiedName(), this);
     }
 
     /**
@@ -216,6 +231,14 @@ public class Subscriptions extends TableImpl<SubscriptionsRecord> {
         return new Subscriptions(name, null);
     }
 
+    /**
+     * Rename this table
+     */
+    @Override
+    public Subscriptions rename(Table<?> name) {
+        return new Subscriptions(name.getQualifiedName(), null);
+    }
+
     // -------------------------------------------------------------------------
     // Row17 type methods
     // -------------------------------------------------------------------------
@@ -223,5 +246,20 @@ public class Subscriptions extends TableImpl<SubscriptionsRecord> {
     @Override
     public Row17<Integer, String, String, String, String, Boolean, String, String, String, String, String, JsonElement, Integer, java.util.UUID, LocalDateTime, LocalDateTime, LocalDateTime> fieldsRow() {
         return (Row17) super.fieldsRow();
+    }
+
+    /**
+     * Convenience mapping calling {@link SelectField#convertFrom(Function)}.
+     */
+    public <U> SelectField<U> mapping(Function17<? super Integer, ? super String, ? super String, ? super String, ? super String, ? super Boolean, ? super String, ? super String, ? super String, ? super String, ? super String, ? super JsonElement, ? super Integer, ? super java.util.UUID, ? super LocalDateTime, ? super LocalDateTime, ? super LocalDateTime, ? extends U> from) {
+        return convertFrom(Records.mapping(from));
+    }
+
+    /**
+     * Convenience mapping calling {@link SelectField#convertFrom(Class,
+     * Function)}.
+     */
+    public <U> SelectField<U> mapping(Class<U> toType, Function17<? super Integer, ? super String, ? super String, ? super String, ? super String, ? super Boolean, ? super String, ? super String, ? super String, ? super String, ? super String, ? super JsonElement, ? super Integer, ? super java.util.UUID, ? super LocalDateTime, ? super LocalDateTime, ? super LocalDateTime, ? extends U> from) {
+        return convertFrom(toType, Records.mapping(from));
     }
 }

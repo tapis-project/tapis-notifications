@@ -62,11 +62,7 @@ import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.Subscriptions
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.NotificationsLastEventRecord;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.NotificationsRecoveryRecord;
 
-import static edu.utexas.tacc.tapis.notifications.gen.jooq.Tables.NOTIFICATIONS_RECOVERY;
-import static edu.utexas.tacc.tapis.notifications.gen.jooq.Tables.SUBSCRIPTIONS;
-import static edu.utexas.tacc.tapis.notifications.gen.jooq.Tables.NOTIFICATIONS;
-import static edu.utexas.tacc.tapis.notifications.gen.jooq.Tables.NOTIFICATIONS_LAST_EVENT;
-import static edu.utexas.tacc.tapis.notifications.gen.jooq.Tables.NOTIFICATIONS_TESTS;
+import static edu.utexas.tacc.tapis.notifications.gen.jooq.Tables.*;
 import static edu.utexas.tacc.tapis.shared.threadlocal.OrderBy.DEFAULT_ORDERBY_DIRECTION;
 
 /*
@@ -148,6 +144,102 @@ public class NotificationsDaoImpl implements NotificationsDao
     // a true migration.
 //    flyway.repair();
     flyway.migrate();
+  }
+
+  // -----------------------------------------------------------------------
+  // ------------------------- Events --------------------------------------
+  // -----------------------------------------------------------------------
+
+  /**
+   * Delete an event series
+   */
+  @Override
+  public int deleteEventSeries(String source, String subject, String seriesId, String tenant) throws TapisException
+  {
+    String opName = "deleteEventSeries";
+
+    // If no seriesId or subject then nothing to do
+    if (StringUtils.isBlank(subject) || StringUtils.isBlank(seriesId)) return 0;
+
+    // ------------------------- Check Input -------------------------
+    if (StringUtils.isBlank(source)) LibUtils.logAndThrowNullParmException(opName, "source");
+    if (StringUtils.isBlank(tenant)) LibUtils.logAndThrowNullParmException(opName, "tenant");
+
+    // ------------------------- Call SQL ----------------------------
+    Connection conn = null;
+    try
+    {
+      conn = getConnection();
+      DSLContext db = DSL.using(conn);
+      db.deleteFrom(EVENT_SERIES)
+              .where(EVENT_SERIES.TENANT.eq(tenant),EVENT_SERIES.SOURCE.eq(source),
+                    EVENT_SERIES.SUBJECT.eq(subject), EVENT_SERIES.SERIES_ID.eq(seriesId))
+              .execute();
+      LibUtils.closeAndCommitDB(conn, null, null);
+    }
+    catch (Exception e)
+    {
+      LibUtils.rollbackDB(conn, e,"DB_DELETE_FAILURE", "event_series");
+    }
+    finally
+    {
+      LibUtils.finalCloseDB(conn);
+    }
+    return 1;
+  }
+
+  /*
+   * getNextSeriesSeqCount
+   * Determine next sequence id for the specified series.
+   * The series is unique in the context of tenant, source, subject
+   */
+  @Override
+  public long getNextSeriesSeqCount(ResourceRequestUser rUser, String tenant, String source, String subject, String seriesId)
+          throws TapisException
+  {
+    String opName = "getNextSeriesSeqCount";
+    // if seriesId null or empty then return the constant default value.
+    if (StringUtils.isBlank(seriesId)) return Event.DEFAULT_SERIES_SEQ_COUNT;
+    long nextSeqId = -1;
+    // ------------------------- Call SQL ----------------------------
+    Connection conn = null;
+    try
+    {
+      // Get a database connection.
+      conn = getConnection();
+      DSLContext db = DSL.using(conn);
+
+      // Use postgresql support for ON CONFLICT to automatically insert new entries as needed:
+      // INSERT INTO event_series (tenant,source,subject,series_id,seq_count)
+      //   VALUES (<tenant>,<source>,<subject>,<seriesId>,1)
+      //   ON CONFLICT(tenant,source,subject,series_id)
+      //   DO UPDATE SET seq_count = (event_series.seq_count + 1);
+      Record r = db.insertInto(EVENT_SERIES)
+              .columns(EVENT_SERIES.TENANT,EVENT_SERIES.SOURCE, EVENT_SERIES.SUBJECT, EVENT_SERIES.SERIES_ID, EVENT_SERIES.SEQ_COUNT)
+              .values(tenant, source, subject, seriesId, 1L)
+              .onConflict(EVENT_SERIES.TENANT,EVENT_SERIES.SOURCE, EVENT_SERIES.SUBJECT, EVENT_SERIES.SERIES_ID)
+              .doUpdate().set(EVENT_SERIES.SEQ_COUNT, EVENT_SERIES.SEQ_COUNT.plus(1))
+              .returningResult(EVENT_SERIES.SEQ_COUNT).fetchOne();
+      // If result is null it is an error
+      if (r == null)
+      {
+        throw new TapisException(LibUtils.getMsgAuth("NTFLIB_DB_NULL_RESULT", rUser, seriesId, opName));
+      }
+      nextSeqId = r.getValue(EVENT_SERIES.SEQ_COUNT);
+      // Close out and commit
+      LibUtils.closeAndCommitDB(conn, null, null);
+    }
+    catch (Exception e)
+    {
+      // Rollback transaction and throw an exception
+      LibUtils.rollbackDB(conn, e,"DB_INSERT_FAILURE", "subscriptions");
+    }
+    finally
+    {
+      // Always return the connection back to the connection pool.
+      LibUtils.finalCloseDB(conn);
+    }
+    return nextSeqId;
   }
 
   // -----------------------------------------------------------------------
@@ -1697,12 +1789,13 @@ public class NotificationsDaoImpl implements NotificationsDao
    *
    * @param rUser - ResourceRequestUser containing tenant, user and request info
    * @param name - name of the subscription
+   * @param startCount - number events sent as part of beginTestSequence
    * @return true if created, false if subscription does not exist
    * @throws IllegalStateException - if resource already exists
    * @throws TapisException - on error
    */
   @Override
-  public boolean createTestSequence(ResourceRequestUser rUser, String name)
+  public boolean createTestSequence(ResourceRequestUser rUser, String name, int startCount)
           throws TapisException, IllegalStateException
   {
     String opName = "createTestSequence";
@@ -1735,6 +1828,7 @@ public class NotificationsDaoImpl implements NotificationsDao
               .set(NOTIFICATIONS_TESTS.TENANT, oboTenant)
               .set(NOTIFICATIONS_TESTS.OWNER, oboUser)
               .set(NOTIFICATIONS_TESTS.SUBSCR_NAME, name)
+              .set(NOTIFICATIONS_TESTS.START_COUNT, startCount)
               .set(NOTIFICATIONS_TESTS.NOTIFICATION_COUNT, 0)
               .set(NOTIFICATIONS_TESTS.NOTIFICATIONS, eventsJson)
               .returningResult(NOTIFICATIONS_TESTS.SEQ_ID)
@@ -2369,7 +2463,7 @@ public class NotificationsDaoImpl implements NotificationsDao
     List<Notification> notifications = Arrays.asList(TapisGsonUtils.getGson().fromJson(notificationsJson, Notification[].class));
     testSequence = new TestSequence(seqId, r.get(NOTIFICATIONS_TESTS.TENANT), r.get(NOTIFICATIONS_TESTS.OWNER),
                                     r.get(NOTIFICATIONS_TESTS.SUBSCR_NAME), r.get(NOTIFICATIONS_TESTS.NOTIFICATION_COUNT),
-                                    notifications, created, updated);
+                                    r.get(NOTIFICATIONS_TESTS.START_COUNT), notifications, created, updated);
     return testSequence;
   }
 

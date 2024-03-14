@@ -14,14 +14,18 @@ import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.Notifications
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
+import org.jooq.Function14;
 import org.jooq.Identity;
 import org.jooq.Name;
 import org.jooq.Record;
+import org.jooq.Records;
 import org.jooq.Row14;
 import org.jooq.Schema;
+import org.jooq.SelectField;
 import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.TableOptions;
@@ -83,7 +87,8 @@ public class NotificationsRecovery extends TableImpl<NotificationsRecoveryRecord
     public final TableField<NotificationsRecoveryRecord, String> DELIVERY_METHOD = createField(DSL.name("delivery_method"), SQLDataType.CLOB.nullable(false), this, "");
 
     /**
-     * The column <code>tapis_ntf.notifications_recovery.delivery_address</code>.
+     * The column
+     * <code>tapis_ntf.notifications_recovery.delivery_address</code>.
      */
     public final TableField<NotificationsRecoveryRecord, String> DELIVERY_ADDRESS = createField(DSL.name("delivery_address"), SQLDataType.CLOB.nullable(false), this, "");
 
@@ -131,14 +136,16 @@ public class NotificationsRecovery extends TableImpl<NotificationsRecoveryRecord
     }
 
     /**
-     * Create an aliased <code>tapis_ntf.notifications_recovery</code> table reference
+     * Create an aliased <code>tapis_ntf.notifications_recovery</code> table
+     * reference
      */
     public NotificationsRecovery(String alias) {
         this(DSL.name(alias), NOTIFICATIONS_RECOVERY);
     }
 
     /**
-     * Create an aliased <code>tapis_ntf.notifications_recovery</code> table reference
+     * Create an aliased <code>tapis_ntf.notifications_recovery</code> table
+     * reference
      */
     public NotificationsRecovery(Name alias) {
         this(alias, NOTIFICATIONS_RECOVERY);
@@ -157,7 +164,7 @@ public class NotificationsRecovery extends TableImpl<NotificationsRecoveryRecord
 
     @Override
     public Schema getSchema() {
-        return TapisNtf.TAPIS_NTF;
+        return aliased() ? null : TapisNtf.TAPIS_NTF;
     }
 
     @Override
@@ -171,17 +178,16 @@ public class NotificationsRecovery extends TableImpl<NotificationsRecoveryRecord
     }
 
     @Override
-    public List<UniqueKey<NotificationsRecoveryRecord>> getKeys() {
-        return Arrays.<UniqueKey<NotificationsRecoveryRecord>>asList(Keys.NOTIFICATIONS_RECOVERY_PKEY);
-    }
-
-    @Override
     public List<ForeignKey<NotificationsRecoveryRecord, ?>> getReferences() {
-        return Arrays.<ForeignKey<NotificationsRecoveryRecord, ?>>asList(Keys.NOTIFICATIONS_RECOVERY__NOTIFICATIONS_RECOVERY_SUBSCR_SEQ_ID_FKEY);
+        return Arrays.asList(Keys.NOTIFICATIONS_RECOVERY__NOTIFICATIONS_RECOVERY_SUBSCR_SEQ_ID_FKEY);
     }
 
     private transient Subscriptions _subscriptions;
 
+    /**
+     * Get the implicit join path to the <code>tapis_ntf.subscriptions</code>
+     * table.
+     */
     public Subscriptions subscriptions() {
         if (_subscriptions == null)
             _subscriptions = new Subscriptions(this, Keys.NOTIFICATIONS_RECOVERY__NOTIFICATIONS_RECOVERY_SUBSCR_SEQ_ID_FKEY);
@@ -197,6 +203,11 @@ public class NotificationsRecovery extends TableImpl<NotificationsRecoveryRecord
     @Override
     public NotificationsRecovery as(Name alias) {
         return new NotificationsRecovery(alias, this);
+    }
+
+    @Override
+    public NotificationsRecovery as(Table<?> alias) {
+        return new NotificationsRecovery(alias.getQualifiedName(), this);
     }
 
     /**
@@ -215,6 +226,14 @@ public class NotificationsRecovery extends TableImpl<NotificationsRecoveryRecord
         return new NotificationsRecovery(name, null);
     }
 
+    /**
+     * Rename this table
+     */
+    @Override
+    public NotificationsRecovery rename(Table<?> name) {
+        return new NotificationsRecovery(name.getQualifiedName(), null);
+    }
+
     // -------------------------------------------------------------------------
     // Row14 type methods
     // -------------------------------------------------------------------------
@@ -222,5 +241,20 @@ public class NotificationsRecovery extends TableImpl<NotificationsRecoveryRecord
     @Override
     public Row14<Integer, Integer, java.util.UUID, String, String, String, String, java.util.UUID, JsonElement, Integer, Integer, LocalDateTime, LocalDateTime, LocalDateTime> fieldsRow() {
         return (Row14) super.fieldsRow();
+    }
+
+    /**
+     * Convenience mapping calling {@link SelectField#convertFrom(Function)}.
+     */
+    public <U> SelectField<U> mapping(Function14<? super Integer, ? super Integer, ? super java.util.UUID, ? super String, ? super String, ? super String, ? super String, ? super java.util.UUID, ? super JsonElement, ? super Integer, ? super Integer, ? super LocalDateTime, ? super LocalDateTime, ? super LocalDateTime, ? extends U> from) {
+        return convertFrom(Records.mapping(from));
+    }
+
+    /**
+     * Convenience mapping calling {@link SelectField#convertFrom(Class,
+     * Function)}.
+     */
+    public <U> SelectField<U> mapping(Class<U> toType, Function14<? super Integer, ? super Integer, ? super java.util.UUID, ? super String, ? super String, ? super String, ? super String, ? super java.util.UUID, ? super JsonElement, ? super Integer, ? super Integer, ? super LocalDateTime, ? super LocalDateTime, ? super LocalDateTime, ? extends U> from) {
+        return convertFrom(toType, Records.mapping(from));
     }
 }

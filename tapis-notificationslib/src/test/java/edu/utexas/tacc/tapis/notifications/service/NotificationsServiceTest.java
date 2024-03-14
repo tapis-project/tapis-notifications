@@ -127,8 +127,8 @@ public class NotificationsServiceTest
   {
     System.out.println("Executing AfterSuite teardown for " + NotificationsServiceTest.class.getSimpleName());
     // Remove all objects created by tests
-    // Since subscriptions are scoped by owner+name and we have various owners set after subscriptions[] is
-    //   is created we cannot use just owner+name from subscriptions[]
+    // Since subscriptions are scoped by owner+name, and we have various owners set after subscriptions[] is
+    //   created we cannot use just owner+name from subscriptions[]
     // Instead get all subscriptions matching a pattern and remove those.
     // Since tests are run against a local DB this should be OK.
     String owner = subscriptions[0].getOwner();
@@ -159,10 +159,8 @@ public class NotificationsServiceTest
   }
 
   @BeforeTest
-  public void initTest()
-  {
+  public void initTest() { }
 
-  }
   // -----------------------------------------------------------------------
   // ------------------------- Subscriptions -------------------------------
   // -----------------------------------------------------------------------
@@ -330,7 +328,7 @@ public class NotificationsServiceTest
     svcImpl.createSubscription(rJobsSvc1, sub0, scrubbedJson);
     Subscription tmpSub = svcImpl.getSubscriptionByName(rJobsSvc1, owner, subName);
     // Get and check the initial expiry.
-    // TTL is in minutes so it should be ttl*60 seconds after the time of creation.
+    // TTL is in minutes, so it should be ttl*60 seconds after the time of creation.
     // Check to the nearest second, i.e., assume it took much less than one second to create the subscription
     Instant expiry = tmpSub.getExpiry();
     long expirySeconds = expiry.truncatedTo(ChronoUnit.SECONDS).getEpochSecond() - now.truncatedTo(ChronoUnit.SECONDS).getEpochSecond();
@@ -542,12 +540,14 @@ public class NotificationsServiceTest
   @Test(enabled = false)
   public void testPostEventAndLeave() throws Exception
   {
-    Event event = new Event(eventSource1, eventType1, eventSubject1, eventDataNull, seriesId1, eventTime,
-                            eventDeleteSubscriptionsMatchingSubjectFalse, tenantName, testUser1, UUID.randomUUID());
+    Instant received = TapisUtils.getUTCTimeNow().toInstant(ZoneOffset.UTC);
+    Event event = new Event(eventSource1, eventType1, eventSubject1, eventDataNull, seriesId1, seriesSeqCount1, eventTime,
+                            eventDeleteSubscriptionsMatchingSubjectFalse, eventEndSeriesFalse,
+                            tenantName, testUser1, received, UUID.randomUUID());
     System.out.println("Placing event on queue. Event: " + event);
     // Put an event on the queue as a message
     svcImpl.publishEvent(rJobsSvc1, eventSource1, eventType1, eventSubject1, eventDataNull, seriesId1, eventTime,
-                         eventDeleteSubscriptionsMatchingSubjectFalse, tenantName);
+                         eventDeleteSubscriptionsMatchingSubjectFalse, eventEndSeriesFalse, tenantName);
   }
 
   // Test posting an event to the queue and reading it back
@@ -557,12 +557,14 @@ public class NotificationsServiceTest
   @Test(enabled = false)
   public void testPostReadEvent() throws Exception
   {
-    Event event = new Event(eventSource1, eventType1, eventSubject1, eventDataNull, seriesId1, eventTime,
-                            eventDeleteSubscriptionsMatchingSubjectFalse, tenantName, testUser1, UUID.randomUUID());
+    Instant received = TapisUtils.getUTCTimeNow().toInstant(ZoneOffset.UTC);
+    Event event = new Event(eventSource1, eventType1, eventSubject1, eventDataNull, seriesId1, seriesSeqCount1, eventTime,
+                            eventDeleteSubscriptionsMatchingSubjectFalse, eventEndSeriesFalse,
+                            tenantName, testUser1, received, UUID.randomUUID());
     System.out.println("Placing event on queue. Event: " + event);
     // Put an event on the queue as a message
     svcImpl.publishEvent(rJobsSvc1, eventSource1, eventType1, eventSubject1, eventDataNull, seriesId1, eventTime,
-                         eventDeleteSubscriptionsMatchingSubjectFalse, tenantName);
+                         eventDeleteSubscriptionsMatchingSubjectFalse, eventEndSeriesFalse, tenantName);
 //    // Create a consumer to handle messages read from the queue
 //    DeliverCallback deliverCallback = (consumerTab, delivery) -> {
 //      String msg = new String(delivery.getBody(), StandardCharsets.UTF_8);
@@ -592,6 +594,7 @@ public class NotificationsServiceTest
     Assert.assertEquals(event.getType(), tmpEvent.getType());
     Assert.assertEquals(event.getSubject(), tmpEvent.getSubject());
     Assert.assertEquals(event.getSeriesId(), tmpEvent.getSeriesId());
+    Assert.assertEquals(event.getSeriesSeqCount(), tmpEvent.getSeriesSeqCount());
     Assert.assertEquals(event.getTimestamp(), tmpEvent.getTimestamp());
     Assert.assertEquals(event.getUuid(), tmpEvent.getUuid());
 //    System.out.println("Ack message");
@@ -603,7 +606,7 @@ public class NotificationsServiceTest
   // ************************************************************************
 
   /**
-   * Check common attributes after creating and retrieving aresource
+   * Check common attributes after creating and retrieving a resource
    * @param origSub - Original test resource
    * @param fetchedSub - Retrieved resource
    */

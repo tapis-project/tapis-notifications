@@ -14,14 +14,18 @@ import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.Notifications
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
+import org.jooq.Function11;
 import org.jooq.Identity;
 import org.jooq.Name;
 import org.jooq.Record;
+import org.jooq.Records;
 import org.jooq.Row11;
 import org.jooq.Schema;
+import org.jooq.SelectField;
 import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.TableOptions;
@@ -142,7 +146,7 @@ public class Notifications extends TableImpl<NotificationsRecord> {
 
     @Override
     public Schema getSchema() {
-        return TapisNtf.TAPIS_NTF;
+        return aliased() ? null : TapisNtf.TAPIS_NTF;
     }
 
     @Override
@@ -156,17 +160,16 @@ public class Notifications extends TableImpl<NotificationsRecord> {
     }
 
     @Override
-    public List<UniqueKey<NotificationsRecord>> getKeys() {
-        return Arrays.<UniqueKey<NotificationsRecord>>asList(Keys.NOTIFICATIONS_PKEY);
-    }
-
-    @Override
     public List<ForeignKey<NotificationsRecord, ?>> getReferences() {
-        return Arrays.<ForeignKey<NotificationsRecord, ?>>asList(Keys.NOTIFICATIONS__NOTIFICATIONS_SUBSCR_SEQ_ID_FKEY);
+        return Arrays.asList(Keys.NOTIFICATIONS__NOTIFICATIONS_SUBSCR_SEQ_ID_FKEY);
     }
 
     private transient Subscriptions _subscriptions;
 
+    /**
+     * Get the implicit join path to the <code>tapis_ntf.subscriptions</code>
+     * table.
+     */
     public Subscriptions subscriptions() {
         if (_subscriptions == null)
             _subscriptions = new Subscriptions(this, Keys.NOTIFICATIONS__NOTIFICATIONS_SUBSCR_SEQ_ID_FKEY);
@@ -182,6 +185,11 @@ public class Notifications extends TableImpl<NotificationsRecord> {
     @Override
     public Notifications as(Name alias) {
         return new Notifications(alias, this);
+    }
+
+    @Override
+    public Notifications as(Table<?> alias) {
+        return new Notifications(alias.getQualifiedName(), this);
     }
 
     /**
@@ -200,6 +208,14 @@ public class Notifications extends TableImpl<NotificationsRecord> {
         return new Notifications(name, null);
     }
 
+    /**
+     * Rename this table
+     */
+    @Override
+    public Notifications rename(Table<?> name) {
+        return new Notifications(name.getQualifiedName(), null);
+    }
+
     // -------------------------------------------------------------------------
     // Row11 type methods
     // -------------------------------------------------------------------------
@@ -207,5 +223,20 @@ public class Notifications extends TableImpl<NotificationsRecord> {
     @Override
     public Row11<Integer, Integer, java.util.UUID, String, String, String, String, java.util.UUID, JsonElement, Integer, LocalDateTime> fieldsRow() {
         return (Row11) super.fieldsRow();
+    }
+
+    /**
+     * Convenience mapping calling {@link SelectField#convertFrom(Function)}.
+     */
+    public <U> SelectField<U> mapping(Function11<? super Integer, ? super Integer, ? super java.util.UUID, ? super String, ? super String, ? super String, ? super String, ? super java.util.UUID, ? super JsonElement, ? super Integer, ? super LocalDateTime, ? extends U> from) {
+        return convertFrom(Records.mapping(from));
+    }
+
+    /**
+     * Convenience mapping calling {@link SelectField#convertFrom(Class,
+     * Function)}.
+     */
+    public <U> SelectField<U> mapping(Class<U> toType, Function11<? super Integer, ? super Integer, ? super java.util.UUID, ? super String, ? super String, ? super String, ? super String, ? super java.util.UUID, ? super JsonElement, ? super Integer, ? super LocalDateTime, ? extends U> from) {
+        return convertFrom(toType, Records.mapping(from));
     }
 }

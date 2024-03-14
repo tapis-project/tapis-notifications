@@ -4,6 +4,7 @@
 package edu.utexas.tacc.tapis.notifications.gen.jooq;
 
 
+import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.EventSeries;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.FlywaySchemaHistory;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.Notifications;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.NotificationsLastEvent;
@@ -15,7 +16,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.jooq.Catalog;
-import org.jooq.Sequence;
 import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
 
@@ -32,6 +32,11 @@ public class TapisNtf extends SchemaImpl {
      * The reference instance of <code>tapis_ntf</code>
      */
     public static final TapisNtf TAPIS_NTF = new TapisNtf();
+
+    /**
+     * The table <code>tapis_ntf.event_series</code>.
+     */
+    public final EventSeries EVENT_SERIES = EventSeries.EVENT_SERIES;
 
     /**
      * The table <code>tapis_ntf.flyway_schema_history</code>.
@@ -77,22 +82,15 @@ public class TapisNtf extends SchemaImpl {
     }
 
     @Override
-    public final List<Sequence<?>> getSequences() {
-        return Arrays.<Sequence<?>>asList(
-            Sequences.NOTIFICATIONS_RECOVERY_SEQ_ID_SEQ,
-            Sequences.NOTIFICATIONS_SEQ_ID_SEQ,
-            Sequences.NOTIFICATIONS_TESTS_SEQ_ID_SEQ,
-            Sequences.SUBSCRIPTIONS_SEQ_ID_SEQ);
-    }
-
-    @Override
     public final List<Table<?>> getTables() {
-        return Arrays.<Table<?>>asList(
+        return Arrays.asList(
+            EventSeries.EVENT_SERIES,
             FlywaySchemaHistory.FLYWAY_SCHEMA_HISTORY,
             Notifications.NOTIFICATIONS,
             NotificationsLastEvent.NOTIFICATIONS_LAST_EVENT,
             NotificationsRecovery.NOTIFICATIONS_RECOVERY,
             NotificationsTests.NOTIFICATIONS_TESTS,
-            Subscriptions.SUBSCRIPTIONS);
+            Subscriptions.SUBSCRIPTIONS
+        );
     }
 }

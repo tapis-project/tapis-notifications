@@ -1,19 +1,19 @@
 package edu.utexas.tacc.tapis.notifications.service;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-
 import javax.inject.Inject;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 
+import edu.utexas.tacc.tapis.shared.utils.TapisUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
@@ -25,7 +25,6 @@ import edu.utexas.tacc.tapis.notifications.model.DeliveryTarget;
 import edu.utexas.tacc.tapis.notifications.model.Notification;
 import edu.utexas.tacc.tapis.shared.threadlocal.TapisThreadContext;
 import edu.utexas.tacc.tapis.sharedapi.security.AuthenticatedUser;
-
 import edu.utexas.tacc.tapis.client.shared.exceptions.TapisClientException;
 import edu.utexas.tacc.tapis.search.parser.ASTParser;
 import edu.utexas.tacc.tapis.search.parser.ASTNode;
@@ -38,7 +37,6 @@ import edu.utexas.tacc.tapis.shared.security.ServiceContext;
 import edu.utexas.tacc.tapis.shared.TapisConstants;
 import edu.utexas.tacc.tapis.shared.threadlocal.OrderBy;
 import edu.utexas.tacc.tapis.sharedapi.security.ResourceRequestUser;
-
 import edu.utexas.tacc.tapis.notifications.config.RuntimeParameters;
 import edu.utexas.tacc.tapis.notifications.dao.NotificationsDao;
 import edu.utexas.tacc.tapis.notifications.model.Event;
@@ -70,8 +68,15 @@ public class NotificationsServiceImpl implements NotificationsService
   // Default test subscription TTL is 60 minutes
   public static final int DEFAULT_TEST_TTL = 60;
 
+  // Default test subscription endSeries query parameter
+  public static final boolean DEFAULT_TEST_ENDSERIES = true;
+
+  // Number of events to publish for the test series.
+  public static final int DEFAULT_TEST_NUM_EVENTS = 1;
+
   public static final String TEST_SUBSCR_TYPE_FILTER = "notifications.test.*";
-  public static final String TEST_EVENT_TYPE = "notifications.test.begin";
+  public static final String TEST_EVENT_TYPE_BEGIN = "notifications.test.begin";
+  public static final String TEST_EVENT_TYPE_SEQ_PREFIX = "notifications.test.number";
 
   private static final String SERVICE_NAME = TapisConstants.SERVICE_NAME_NOTIFICATIONS;
   // Message keys
@@ -177,10 +182,11 @@ public class NotificationsServiceImpl implements NotificationsService
       {
         ntfClient.setBasePath("http://localhost:8080");
       }
-      TapisSubscription subscription = ntfClient.beginTestSequence(DEFAULT_TEST_TTL);
+      TapisSubscription subscription = ntfClient.beginTestSequence(DEFAULT_TEST_TTL, DEFAULT_TEST_NUM_EVENTS);
       owner = subscription.getOwner();
       name = subscription.getName();
       log.debug(LibUtils.getMsg("NTFLIB_DSP_CHECK_BEGIN", owner, name));
+      // NOTE: This only waits for first event. If we ever call beginTestSequence with numberOfEvents > 1 it might need updating.
       waitForTestSequenceStart(tenantName, owner, name);
       dao.deleteSubscriptionByName(tenantName, owner, name);
       log.debug(LibUtils.getMsg("NTFLIB_DSP_CHECK_END", owner, name));
@@ -765,7 +771,7 @@ public class NotificationsServiceImpl implements NotificationsService
     //        looks like activemq parser will ensure the leaf nodes all represent <attr>.<op>.<value> and in principle
     //        we should be able to check each one and generate of list of errors for reporting.
     //  Looks like jOOQ can parse an SQL string into a jooq Condition. Do this in the Dao? But still seems like no way
-    //    to walk the AST and check each condition so we can report on errors.
+    //    to walk the AST and check each condition, so we can report on errors.
 //    BooleanExpression searchAST;
     ASTNode searchAST;
     try { searchAST = ASTParser.parse(sqlSearchStr); }
@@ -799,37 +805,39 @@ public class NotificationsServiceImpl implements NotificationsService
    * @param seriesId Event attribute
    * @param timestamp - Event attribute
    * @param deleteSubscriptionsMatchingSubject - Event attribute
-   * @param tenant - Set the tenant. Only for services. By default, oboTenant is used.
+   * @param tenant1 - Set the tenant. Only for services. Optional. By default, oboTenant is used.
    * @throws IOException - on error
    * @throws IllegalArgumentException - if missing required arg or invalid arg
    * @throws NotAuthorizedException - unauthorized
    */
   @Override
   public void publishEvent(ResourceRequestUser rUser, String source, String type, String subject, String data,
-                           String seriesId, String timestamp, boolean deleteSubscriptionsMatchingSubject, String tenant)
-          throws IOException, IllegalArgumentException, NotAuthorizedException
+                           String seriesId, String timestamp, boolean deleteSubscriptionsMatchingSubject,
+                           boolean endSeries, String tenant1)
+          throws TapisException, IOException, IllegalArgumentException, NotAuthorizedException
   {
+    String opName = "publishEvent";
     // Check inputs
     if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
-    if (StringUtils.isBlank(source)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_NULL_INPUT_EVENT_ATTR", rUser, "source"));
-    if (StringUtils.isBlank(type)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_NULL_INPUT_EVENT_ATTR", rUser, "type"));
-    if (StringUtils.isBlank(timestamp)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_NULL_INPUT_EVENT_ATTR", rUser, "timestamp"));
+    if (StringUtils.isBlank(source)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_NULL_INPUT_EVENT_ATTR", rUser, "source", opName));
+    if (StringUtils.isBlank(type)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_NULL_INPUT_EVENT_ATTR", rUser, "type", opName));
+    if (StringUtils.isBlank(timestamp)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_NULL_INPUT_EVENT_ATTR", rUser, "timestamp", opName));
 
     String msg;
     // Only services may publish. Reject if not a service.
     if (!rUser.isServiceRequest())
     {
-      msg = LibUtils.getMsgAuth("NTFLIB_EVENT_UNAUTH", rUser);
+      msg = LibUtils.getMsgAuth("NTFLIB_EVENT_UNAUTH", rUser, opName);
       throw new NotAuthorizedException(msg, NO_CHALLENGE);
     }
 
     // Determine the tenant. Only services may set the tenant. By default, oboTenant is used.
-    if (!StringUtils.isBlank(tenant) && !rUser.isServiceRequest())
+    if (!StringUtils.isBlank(tenant1) && !rUser.isServiceRequest())
     {
-      msg = LibUtils.getMsgAuth("NTFLIB_EVENT_UNAUTH", rUser);
+      msg = LibUtils.getMsgAuth("NTFLIB_EVENT_UNAUTH", rUser, opName);
       throw new NotAuthorizedException(msg, NO_CHALLENGE);
     }
-    String tenantId = StringUtils.isBlank(tenant) ? rUser.getOboTenantId() : tenant;
+    String tenant = StringUtils.isBlank(tenant1) ? rUser.getOboTenantId() : tenant1;
 
     // Validate the event type
     if (!Event.isValidType(type))
@@ -838,9 +846,16 @@ public class NotificationsServiceImpl implements NotificationsService
       throw new IllegalArgumentException(msg);
     }
 
+    // Create timestamp indicating when event was received by Tapis
+    Instant received = TapisUtils.getUTCTimeNow().toInstant(ZoneOffset.UTC);
+
+    // Determine the next sequence count for the seriesId
+    // The series is unique in the context of tenant, source, subject
+    long seriesSeqCount = dao.getNextSeriesSeqCount(rUser, tenant, source, subject, seriesId);
+
     // Create an Event from the request
-    Event event = new Event(source, type, subject, data, seriesId, timestamp, deleteSubscriptionsMatchingSubject,
-            tenantId, rUser.getOboUserId(), UUID.randomUUID());
+    Event event = new Event(source, type, subject, data, seriesId, seriesSeqCount, timestamp,
+            deleteSubscriptionsMatchingSubject, endSeries, tenant, rUser.getOboUserId(), received, UUID.randomUUID());
 
     // If first field of type is not the service name then reject
     if (!event.getType1().equals(rUser.getJwtUserId()))
@@ -854,7 +869,54 @@ public class NotificationsServiceImpl implements NotificationsService
   }
 
   /**
-   * Read an Event from the queue.
+   * End an event series. Series tracking data will be deleted.
+   * A subsequent new event published with the same tenant, source, subject and seriesId will recreate the series
+   * tracking data with the initial seriesSeqCount set to 1.
+   * @param rUser - ResourceRequestUser containing tenant, user and request info
+   * @param source - Event attribute
+   * @param subject - Event attribute
+   * @param seriesId Event attribute
+   * @param tenant1 - Set the tenant. Only for services. Optional. By default, oboTenant is used.
+   * @return Number of items updated
+   * @throws IOException - on error
+   * @throws IllegalArgumentException - if missing required arg or invalid arg
+   * @throws NotAuthorizedException - unauthorized
+   */
+  @Override
+  public int endEventSeries(ResourceRequestUser rUser, String source, String subject, String seriesId, String tenant1)
+          throws TapisException, IOException, IllegalArgumentException, NotAuthorizedException
+  {
+    String opName = "endEventSeries";
+    // Check inputs
+    if (rUser == null) throw new IllegalArgumentException(LibUtils.getMsg("NTFLIB_NULL_INPUT_AUTHUSR"));
+    if (StringUtils.isBlank(source)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_NULL_INPUT_EVENT_ATTR", rUser, "source", opName));
+    if (StringUtils.isBlank(subject)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_NULL_INPUT_EVENT_ATTR", rUser, "subject", opName));
+    if (StringUtils.isBlank(seriesId)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_NULL_INPUT_EVENT_ATTR", rUser, "seriesId", opName));
+
+    String msg;
+    // Only services may publish. Reject if not a service.
+    if (!rUser.isServiceRequest())
+    {
+      msg = LibUtils.getMsgAuth("NTFLIB_EVENT_UNAUTH", rUser, opName);
+      throw new NotAuthorizedException(msg, NO_CHALLENGE);
+    }
+
+    // Determine the tenant. Only services may set the tenant. By default, oboTenant is used.
+    if (!StringUtils.isBlank(tenant1) && !rUser.isServiceRequest())
+    {
+      msg = LibUtils.getMsgAuth("NTFLIB_EVENT_UNAUTH", rUser, opName);
+      throw new NotAuthorizedException(msg, NO_CHALLENGE);
+    }
+    String tenant = StringUtils.isBlank(tenant1) ? rUser.getOboTenantId() : tenant1;
+
+
+    // Delete tracking data for the series
+    return dao.deleteEventSeries(source, subject, seriesId, tenant);
+  }
+
+  /**
+   * Read an Event from the queue.select * from tapis_ntf.event_series;
+
    * Event is removed from the queue.
    *   NOTE: currently only used for testing. Not part of public interface of service.
    * @throws TapisException - on error
@@ -880,13 +942,16 @@ public class NotificationsServiceImpl implements NotificationsService
    * @param rUser - ResourceRequestUser containing tenant, user and request info
    * @param baseServiceUrl - Base URL for service. Used for callback and event source.
    * @param ttl - optional TTL for the auto-generated subscription
+   * @param numberOfEvents - optional number of events to publish for the series. Default is 1.
+   * @param endSeriesBool - indicates if tracking data for series should be removed after final event. Default is true.
    * @return subscription name
    * @throws TapisException - for Tapis related exceptions
    * @throws IllegalStateException - subscription exists OR subscription in invalid state
    * @throws IllegalArgumentException - invalid parameter passed in
    */
   @Override
-  public Subscription beginTestSequence(ResourceRequestUser rUser, String baseServiceUrl, String ttl)
+  public Subscription beginTestSequence(ResourceRequestUser rUser, String baseServiceUrl, String ttl,
+                                        Integer numberOfEvents, Boolean endSeriesBool)
           throws TapisException, TapisClientException, IOException, IllegalStateException, IllegalArgumentException
   {
     // Check inputs
@@ -895,14 +960,14 @@ public class NotificationsServiceImpl implements NotificationsService
     String oboTenant = rUser.getOboTenantId();
     String oboUser = rUser.getOboUserId();
 
-    // Use uuid as the subscription name
-    String name = UUID.randomUUID().toString();
-    checkAuth(rUser, oboUser, name, SubscriptionOperation.create);
-    log.trace(LibUtils.getMsgAuth("NTFLIB_CREATE_TRACE", rUser, name));
+    // Use uuid as the subscription name, subjFilter and for the Event seriesId
+    String uuidName = UUID.randomUUID().toString();
+    checkAuth(rUser, oboUser, uuidName, SubscriptionOperation.create);
+    log.trace(LibUtils.getMsgAuth("NTFLIB_CREATE_TRACE", rUser, uuidName));
 
     // Determine the subscription TTL
     int subscrTTL = DEFAULT_TEST_TTL;
-    if (StringUtils.isBlank(ttl))
+    if (!StringUtils.isBlank(ttl))
     {
       // If TTL provided is not an integer then it is an error
       try { subscrTTL = Integer.parseInt(ttl); }
@@ -912,24 +977,36 @@ public class NotificationsServiceImpl implements NotificationsService
       }
     }
 
+    // Determine number of events to publish in the series
+    int numEvents = DEFAULT_TEST_NUM_EVENTS;
+    if (numberOfEvents != null) numEvents = numberOfEvents;
+    // Must be a positive integer
+    if (numEvents <= 0)
+    {
+      throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_TEST_NUM_EVENTS_NOT_POSITIVE", rUser, numEvents));
+    }
+
+    // Determine endSeries flag
+    boolean endSeries = (endSeriesBool == null) ? DEFAULT_TEST_ENDSERIES : endSeriesBool;
+
     // Build the callback delivery method
     // Example https://dev.develop.tapis.io/v3/notifications/test/callback/<subscriptionName>
-    String callbackStr = String.format("%s/test/callback/%s/", baseServiceUrl, name);
+    String callbackStr = String.format("%s/test/callback/%s/", baseServiceUrl, uuidName);
     DeliveryTarget dm = new DeliveryTarget(DeliveryTarget.DeliveryMethod.WEBHOOK, callbackStr);
     var dmList = Collections.singletonList(dm);
 
     // Set other test subscription properties
     String typeFilter = TEST_SUBSCR_TYPE_FILTER;
-    String subjFilter = name;
+    String subjFilter = uuidName;
 
     // Create the subscription
     // NOTE: Might be able to call the svc method createSubscription() but creating here avoids some overhead.
     //   For example, the auth check is not needed and could potentially cause problems.
-    Subscription sub1 = new Subscription(-1, oboTenant, oboUser, name, null, true, typeFilter, subjFilter, dmList,
-                                         subscrTTL, null, null, null, null);
+    Subscription sub1 = new Subscription(-1, oboTenant, oboUser, uuidName, null, true, typeFilter, subjFilter,
+                                         dmList, subscrTTL, null, null, null, null);
     // If subscription already exists it is an error. Unlikely since it is a UUID
-    if (dao.checkForSubscription(oboTenant, oboUser, name))
-      throw new IllegalStateException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_EXISTS", rUser, oboUser, name));
+    if (dao.checkForSubscription(oboTenant, oboUser, uuidName))
+      throw new IllegalStateException(LibUtils.getMsgAuth("NTFLIB_SUBSCR_EXISTS", rUser, oboUser, uuidName));
 
     // Resolve variables and check constraints.
     sub1.resolveVariables(oboUser);
@@ -944,23 +1021,45 @@ public class NotificationsServiceImpl implements NotificationsService
     dao.createSubscription(rUser, sub1, expiry);
 
     // Persist the initial test sequence record
-    dao.createTestSequence(rUser, name);
+    dao.createTestSequence(rUser, uuidName, numEvents);
 
-    // Create and publish an event
+    // Get the subscription. Will be returned for the response.
+    Subscription subscription = dao.getSubscriptionByName(oboTenant, oboUser, uuidName);
+
+    // Create and publish 1 or more events
     String eventSource = TapisConstants.SERVICE_NAME_NOTIFICATIONS;
-    String eventType = TEST_EVENT_TYPE;
-    String eventSubject = name;
-    String eventSeriesId = null;
+    String eventType = TEST_EVENT_TYPE_BEGIN;
+    String eventSubject = uuidName;
+    String eventSeriesId = uuidName;
     String eventTimeStamp = OffsetDateTime.now().toString();
     String eventData = null;
     boolean eventDeleteSubscriptionsMatchingSubject = false;
+    boolean eventEndSeries = false;
 
-    UUID eventUUID = UUID.randomUUID();
-    Event event = new Event(eventSource, eventType, eventSubject, eventData, eventSeriesId, eventTimeStamp,
-                            eventDeleteSubscriptionsMatchingSubject, oboTenant, oboUser, eventUUID);
-    MessageBroker.getInstance().publishEvent(rUser, event);
+    // Create and publish first event. Check for special case where we have only one event, and we want to endSeries
+    if (numEvents == 1 && endSeries) eventEndSeries = true;
+    publishEvent(rUser, eventSource, eventType, eventSubject, eventData, eventSeriesId, eventTimeStamp,
+                 eventDeleteSubscriptionsMatchingSubject, eventEndSeries, oboTenant);
 
-    return dao.getSubscriptionByName(oboTenant, oboUser, name);
+    // If just one event then we are done
+    if (numEvents <= 1) return subscription;
+
+    // More than 1 event, publish other events at the rate of 1 every 3 seconds.
+    for (int i = 2; i <= numEvents; i++)
+    {
+      // Pause for 3 seconds.
+      try {Thread.sleep(3000);} catch (InterruptedException e) {/* Ignore interruptions */}
+      eventTimeStamp = OffsetDateTime.now().toString();
+      eventType = String.format("%s%03d", TEST_EVENT_TYPE_SEQ_PREFIX, i); // notifications.test.number001, etc
+
+      // If this is last event, and we've been asked to end the series, set the endSeries flag for the event.
+      if (i == numEvents && endSeries) eventEndSeries = true;
+
+      publishEvent(rUser, eventSource, eventType, eventSubject, eventData, eventSeriesId, eventTimeStamp,
+                   eventDeleteSubscriptionsMatchingSubject, eventEndSeries, oboTenant);
+    }
+
+    return subscription;
   }
 
   /**
@@ -1221,7 +1320,7 @@ public class NotificationsServiceImpl implements NotificationsService
    */
   private void waitForTestSequenceStart(String tenant, String owner, String name) throws TapisException
   {
-    // Try 4 times with a 5 second poll interval
+    // Try 4 times with a 5-second poll interval
     int NUM_TEST_START_ATTEMPTS = 4;
     int DSP_CHECK_START_POLL_MS = 5000;
     try

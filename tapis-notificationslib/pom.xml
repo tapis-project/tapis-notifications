@@ -6,7 +6,7 @@
   <parent>
     <groupId>edu.utexas.tacc.tapis</groupId>
     <artifactId>tapis-notifications</artifactId>
-    <version>1.6.1</version>
+    <version>1.6.2</version>
   </parent>
   
   <artifactId>tapis-notificationslib</artifactId>
@@ -154,6 +154,10 @@
   <!--   Then unless flyway will be making the updates make sure the DB at   -->
   <!--     db.url has the correct schema. May need to drop the current       -->
   <!--     the schema if flyway is still on V001__init.sql                   -->
+  <!--   To drop the schema:                                                 -->
+  <!--     DROP SCHEMA IF EXISTS tapis_ntf CASCADE;                          -->
+  <!--     CREATE SCHEMA IF NOT EXISTS tapis_ntf AUTHORIZATION tapis_ntf;    -->
+  <!--     ALTER ROLE tapis_ntf SET search_path = 'tapis_ntf';               -->
   <!-- Finally run:                                                          -->
   <!--   cd lib                                                              -->
   <!--   mvn clean install -Pdb-update                                       -->
@@ -175,6 +179,7 @@
         <url>${db.url}</url>
         <user>${db.username}</user>
         <password>${db.password}</password>
+        <cleanDisabled>false</cleanDisabled>
         <schemas>
           <schema>${db.schema}</schema>
         </schemas>

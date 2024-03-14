@@ -4,19 +4,16 @@ package edu.utexas.tacc.tapis.notifications.service;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.List;
-
-import edu.utexas.tacc.tapis.notifications.model.Notification;
 import org.jvnet.hk2.annotations.Contract;
 
 import edu.utexas.tacc.tapis.client.shared.exceptions.TapisClientException;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.shared.threadlocal.OrderBy;
 import edu.utexas.tacc.tapis.sharedapi.security.ResourceRequestUser;
+import edu.utexas.tacc.tapis.notifications.model.Notification;
 import edu.utexas.tacc.tapis.notifications.model.PatchSubscription;
 import edu.utexas.tacc.tapis.notifications.model.Subscription;
-import edu.utexas.tacc.tapis.notifications.model.Event;
 import edu.utexas.tacc.tapis.notifications.model.TestSequence;
 
 /*
@@ -77,13 +74,18 @@ public interface NotificationsService
   // ------------------------- Events --------------------------------------
   // -----------------------------------------------------------------------
   void publishEvent(ResourceRequestUser rUser, String source, String type, String subject, String data,
-                    String seriesId, String timestamp, boolean deleteSubscriptionMatchingSubject, String tenant)
-          throws IOException, IllegalArgumentException, NotAuthorizedException;
+                    String seriesId, String timestamp, boolean deleteSubscriptionMatchingSubject,
+                    boolean endSeries, String tenant)
+          throws TapisException, IOException, IllegalArgumentException, NotAuthorizedException;
+
+  int endEventSeries(ResourceRequestUser rUser, String source, String subject, String seriesId, String tenant)
+          throws TapisException, IOException, IllegalArgumentException, NotAuthorizedException;
 
   // -----------------------------------------------------------------------
   // ------------------------- Test Sequence -------------------------------
   // -----------------------------------------------------------------------
-  Subscription beginTestSequence(ResourceRequestUser rUser, String baseServiceUrl, String subscriptionTTL)
+  Subscription beginTestSequence(ResourceRequestUser rUser, String baseServiceUrl, String subscriptionTTL,
+                                 Integer numberOfEvents, Boolean endSeries)
           throws TapisException, TapisClientException, IOException, IllegalStateException, IllegalArgumentException;
 
   TestSequence getTestSequence(ResourceRequestUser rUser, String name)
