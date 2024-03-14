@@ -438,7 +438,7 @@ public final class DeliveryBucketManager implements Callable<String>
     // Handle flags indicating we should end a series or delete subscriptions matching a subject.
 
     // If requested, end the series. If event has no subject or seriesId, then the dao call will be a no-op
-    if (event.getEndSeries())
+    if (event.getEndSeries() || event.getDeleteSubscriptionsMatchingSubject())
     {
       log.debug(LibUtils.getMsg("NTFLIB_DSP_BUCKET_ENDSERIES", bucketNum, eventUuid, tenant, source, subject, seriesId));
       dao.deleteEventSeries(source, subject, seriesId, tenant);
