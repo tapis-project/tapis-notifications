@@ -894,7 +894,7 @@ public class NotificationsServiceImpl implements NotificationsService
     if (StringUtils.isBlank(seriesId)) throw new IllegalArgumentException(LibUtils.getMsgAuth("NTFLIB_NULL_INPUT_EVENT_ATTR", rUser, "seriesId", opName));
 
     String msg;
-    // Only services may publish. Reject if not a service.
+    // Only services allowed. Reject if not a service.
     if (!rUser.isServiceRequest())
     {
       msg = LibUtils.getMsgAuth("NTFLIB_EVENT_UNAUTH", rUser, opName);

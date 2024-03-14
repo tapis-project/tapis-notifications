@@ -6,10 +6,8 @@
   "type": "object",
   "required": [ "source", "subject", "seriesId" ],
   "properties": {
-    "source": { "type": "string", "minLength": 1 },
-    "subject": { "type": ["string", "null"] },
-    "seriesId": { "type": ["string", "null"] },
-    "tenant":  { "type":  "string" },
-    "seriesSeqCount": { "type":  "integer" }
+    "source":   { "type": "string", "minLength": 1 },
+    "subject":  { "type": "string",  "minLength": 1 },
+    "seriesId": { "type": "string",  "minLength": 1 }
   }
 }

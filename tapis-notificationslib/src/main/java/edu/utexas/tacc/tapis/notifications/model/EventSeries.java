@@ -1,5 +1,7 @@
 package edu.utexas.tacc.tapis.notifications.model;
 
+import java.time.Instant;
+
 /*
  * Class representing an Event series.
  *
@@ -34,17 +36,22 @@ public final class EventSeries
   private final String seriesId; // Optional Id for grouping events from same source.
   private final long seriesSeqCount; // Sequence counter associated with seriesId for ordering of events from same source.
   private final String tenant; // Tenant associated with the event
+  private final Instant created; // UTC time for when record was created
+  private final Instant updated; // UTC time for when record was last updated
 
   /* ********************************************************************** */
   /*                           Constructors                                 */
   /* ********************************************************************** */
-  public EventSeries(String source1, String subject1, String seriesId1, long seriesSeqCount1, String tenant1)
+  public EventSeries(String source1, String subject1, String seriesId1, long seriesSeqCount1, String tenant1,
+                     Instant created1, Instant updated1)
   {
     source = source1;
     subject = subject1;
     seriesId = seriesId1;
     seriesSeqCount = seriesSeqCount1;
     tenant = tenant1;
+    created = created1;
+    updated = updated1;
   }
 
   /* ********************************************************************** */
@@ -55,6 +62,8 @@ public final class EventSeries
   public String getSeriesId() { return seriesId; }
   public long getSeriesSeqCount() { return seriesSeqCount; }
   public String getTenant() { return tenant; }
+  public Instant getCreated() { return created; }
+  public Instant getUpdated() { return created; }
 
   @Override
   public String toString()

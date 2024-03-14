@@ -8,15 +8,16 @@ import edu.utexas.tacc.tapis.notifications.gen.jooq.Keys;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.TapisNtf;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.records.EventSeriesRecord;
 
+import java.time.LocalDateTime;
 import java.util.function.Function;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
-import org.jooq.Function5;
+import org.jooq.Function7;
 import org.jooq.Name;
 import org.jooq.Record;
 import org.jooq.Records;
-import org.jooq.Row5;
+import org.jooq.Row7;
 import org.jooq.Schema;
 import org.jooq.SelectField;
 import org.jooq.Table;
@@ -73,6 +74,16 @@ public class EventSeries extends TableImpl<EventSeriesRecord> {
      * The column <code>tapis_ntf.event_series.seq_count</code>.
      */
     public final TableField<EventSeriesRecord, Long> SEQ_COUNT = createField(DSL.name("seq_count"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field("0", SQLDataType.BIGINT)), this, "");
+
+    /**
+     * The column <code>tapis_ntf.event_series.created</code>.
+     */
+    public final TableField<EventSeriesRecord, LocalDateTime> CREATED = createField(DSL.name("created"), SQLDataType.LOCALDATETIME(6).nullable(false).defaultValue(DSL.field("timezone('utc'::text, now())", SQLDataType.LOCALDATETIME)), this, "");
+
+    /**
+     * The column <code>tapis_ntf.event_series.updated</code>.
+     */
+    public final TableField<EventSeriesRecord, LocalDateTime> UPDATED = createField(DSL.name("updated"), SQLDataType.LOCALDATETIME(6).nullable(false).defaultValue(DSL.field("timezone('utc'::text, now())", SQLDataType.LOCALDATETIME)), this, "");
 
     private EventSeries(Name alias, Table<EventSeriesRecord> aliased) {
         this(alias, aliased, null);
@@ -157,18 +168,18 @@ public class EventSeries extends TableImpl<EventSeriesRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row5 type methods
+    // Row7 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row5<String, String, String, String, Long> fieldsRow() {
-        return (Row5) super.fieldsRow();
+    public Row7<String, String, String, String, Long, LocalDateTime, LocalDateTime> fieldsRow() {
+        return (Row7) super.fieldsRow();
     }
 
     /**
      * Convenience mapping calling {@link SelectField#convertFrom(Function)}.
      */
-    public <U> SelectField<U> mapping(Function5<? super String, ? super String, ? super String, ? super String, ? super Long, ? extends U> from) {
+    public <U> SelectField<U> mapping(Function7<? super String, ? super String, ? super String, ? super String, ? super Long, ? super LocalDateTime, ? super LocalDateTime, ? extends U> from) {
         return convertFrom(Records.mapping(from));
     }
 
@@ -176,7 +187,7 @@ public class EventSeries extends TableImpl<EventSeriesRecord> {
      * Convenience mapping calling {@link SelectField#convertFrom(Class,
      * Function)}.
      */
-    public <U> SelectField<U> mapping(Class<U> toType, Function5<? super String, ? super String, ? super String, ? super String, ? super Long, ? extends U> from) {
+    public <U> SelectField<U> mapping(Class<U> toType, Function7<? super String, ? super String, ? super String, ? super String, ? super Long, ? super LocalDateTime, ? super LocalDateTime, ? extends U> from) {
         return convertFrom(toType, Records.mapping(from));
     }
 }
