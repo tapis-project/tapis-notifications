@@ -4,6 +4,7 @@
 package edu.utexas.tacc.tapis.notifications.gen.jooq;
 
 
+import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.EventSeries;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.FlywaySchemaHistory;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.Notifications;
 import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.NotificationsLastEvent;
@@ -17,6 +18,11 @@ import edu.utexas.tacc.tapis.notifications.gen.jooq.tables.Subscriptions;
  */
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Tables {
+
+    /**
+     * The table <code>tapis_ntf.event_series</code>.
+     */
+    public static final EventSeries EVENT_SERIES = EventSeries.EVENT_SERIES;
 
     /**
      * The table <code>tapis_ntf.flyway_schema_history</code>.

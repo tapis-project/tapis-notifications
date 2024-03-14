@@ -24,6 +24,9 @@ public interface NotificationsDao
 
   void migrateDB() throws TapisException;
 
+  long getNextSeriesSeqCount(ResourceRequestUser rUser, String tenant, String source, String subject, String seriesId)
+          throws TapisException;
+
   // -----------------------------------------------------------------------
   // ------------------------- Subscriptions -------------------------------
   // -----------------------------------------------------------------------
@@ -100,9 +103,15 @@ public interface NotificationsDao
   void setNotificationRecoveryAttemptCount(Notification notification, int attemptCount) throws TapisException;
 
   // -----------------------------------------------------------------------
+  // -------------------- Events -------------------------------------------
+  // -----------------------------------------------------------------------
+
+  int deleteEventSeries(String source, String subject, String seriesId, String tenant) throws TapisException;
+
+  // -----------------------------------------------------------------------
   // --------------------- Test Sequences ----------------------------------
   // -----------------------------------------------------------------------
-  boolean createTestSequence(ResourceRequestUser rUser, String name)
+  boolean createTestSequence(ResourceRequestUser rUser, String name, int startCount)
           throws TapisException, IllegalStateException;
 
   TestSequence getTestSequence(String tenant, String owner, String name) throws TapisException;

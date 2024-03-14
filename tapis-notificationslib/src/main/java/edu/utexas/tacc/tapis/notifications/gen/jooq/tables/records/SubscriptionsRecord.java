@@ -27,28 +27,32 @@ public class SubscriptionsRecord extends UpdatableRecordImpl<SubscriptionsRecord
     private static final long serialVersionUID = 1L;
 
     /**
-     * Setter for <code>tapis_ntf.subscriptions.seq_id</code>. Subscription sequence id
+     * Setter for <code>tapis_ntf.subscriptions.seq_id</code>. Subscription
+     * sequence id
      */
     public void setSeqId(Integer value) {
         set(0, value);
     }
 
     /**
-     * Getter for <code>tapis_ntf.subscriptions.seq_id</code>. Subscription sequence id
+     * Getter for <code>tapis_ntf.subscriptions.seq_id</code>. Subscription
+     * sequence id
      */
     public Integer getSeqId() {
         return (Integer) get(0);
     }
 
     /**
-     * Setter for <code>tapis_ntf.subscriptions.tenant</code>. Tenant name associated with the subscription
+     * Setter for <code>tapis_ntf.subscriptions.tenant</code>. Tenant name
+     * associated with the subscription
      */
     public void setTenant(String value) {
         set(1, value);
     }
 
     /**
-     * Getter for <code>tapis_ntf.subscriptions.tenant</code>. Tenant name associated with the subscription
+     * Getter for <code>tapis_ntf.subscriptions.tenant</code>. Tenant name
+     * associated with the subscription
      */
     public String getTenant() {
         return (String) get(1);
@@ -69,14 +73,16 @@ public class SubscriptionsRecord extends UpdatableRecordImpl<SubscriptionsRecord
     }
 
     /**
-     * Setter for <code>tapis_ntf.subscriptions.name</code>. Name for the subscription. tenant+owner+name must be unique
+     * Setter for <code>tapis_ntf.subscriptions.name</code>. Name for the
+     * subscription. tenant+owner+name must be unique
      */
     public void setName(String value) {
         set(3, value);
     }
 
     /**
-     * Getter for <code>tapis_ntf.subscriptions.name</code>. Name for the subscription. tenant+owner+name must be unique
+     * Getter for <code>tapis_ntf.subscriptions.name</code>. Name for the
+     * subscription. tenant+owner+name must be unique
      */
     public String getName() {
         return (String) get(3);
@@ -97,14 +103,16 @@ public class SubscriptionsRecord extends UpdatableRecordImpl<SubscriptionsRecord
     }
 
     /**
-     * Setter for <code>tapis_ntf.subscriptions.enabled</code>. Indicates if subscription is currently active and available for use
+     * Setter for <code>tapis_ntf.subscriptions.enabled</code>. Indicates if
+     * subscription is currently active and available for use
      */
     public void setEnabled(Boolean value) {
         set(5, value);
     }
 
     /**
-     * Getter for <code>tapis_ntf.subscriptions.enabled</code>. Indicates if subscription is currently active and available for use
+     * Getter for <code>tapis_ntf.subscriptions.enabled</code>. Indicates if
+     * subscription is currently active and available for use
      */
     public Boolean getEnabled() {
         return (Boolean) get(5);
@@ -237,28 +245,32 @@ public class SubscriptionsRecord extends UpdatableRecordImpl<SubscriptionsRecord
     }
 
     /**
-     * Setter for <code>tapis_ntf.subscriptions.created</code>. UTC time for when record was created
+     * Setter for <code>tapis_ntf.subscriptions.created</code>. UTC time for
+     * when record was created
      */
     public void setCreated(LocalDateTime value) {
         set(15, value);
     }
 
     /**
-     * Getter for <code>tapis_ntf.subscriptions.created</code>. UTC time for when record was created
+     * Getter for <code>tapis_ntf.subscriptions.created</code>. UTC time for
+     * when record was created
      */
     public LocalDateTime getCreated() {
         return (LocalDateTime) get(15);
     }
 
     /**
-     * Setter for <code>tapis_ntf.subscriptions.updated</code>. UTC time for when record was last updated
+     * Setter for <code>tapis_ntf.subscriptions.updated</code>. UTC time for
+     * when record was last updated
      */
     public void setUpdated(LocalDateTime value) {
         set(16, value);
     }
 
     /**
-     * Getter for <code>tapis_ntf.subscriptions.updated</code>. UTC time for when record was last updated
+     * Getter for <code>tapis_ntf.subscriptions.updated</code>. UTC time for
+     * when record was last updated
      */
     public LocalDateTime getUpdated() {
         return (LocalDateTime) get(16);

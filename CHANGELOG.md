@@ -8,6 +8,19 @@ https://tapis.readthedocs.io/en/latest/technical/notifications.html
 You may also reference live-docs based on the openapi specification here:
 https://tapis-project.github.io/live-docs
 
+## 1.6.2 - 2024-03-14
+
+Incremental improvements and new features.
+
+### New features:
+- Add sequence counter associated with seriesId attribute of an event. Allows reconstruction of event order for a series.
+- Add attribute *received* to Event model. This attribute is the Tapis generated timestamp for when the event was received by Tapis.
+- Run service in docker container as non-root user.
+
+### Bug fixes:
+- None
+
+---------------------------------------------------------------------------
 ## 1.6.1 - 2024-03-06
 
 Incremental improvements.

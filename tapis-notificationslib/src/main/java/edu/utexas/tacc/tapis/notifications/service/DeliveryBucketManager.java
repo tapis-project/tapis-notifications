@@ -345,17 +345,26 @@ public final class DeliveryBucketManager implements Callable<String>
     return notifList;
   }
 
-  /*
+  /**
    * Deliver notifications using an ExecutorService.
    * Wait for all delivery tasks to complete.
+   * @param notifications Notifications to be delivered
    */
-  private void deliverNotifications(List<Notification> notifications)
-  {
+  private void deliverNotifications(List<Notification> notifications) throws TapisException {
     // If nothing to do then return
     if (notifications == null || notifications.isEmpty()) return;
 
-    // Get eventUuid for logging. Each notification has the same event
-    UUID eventUuid = notifications.get(0).getEventUuid();
+    // All notifications are associated with the same event, even when working on an interrupted delivery
+    //   This is because a bucket worker works on one event at a time.
+    Event event = notifications.get(0).getEvent();
+
+    // Extract various attributes from event for convenience and clarity
+    // Each notification has the same event
+    String tenant = event.getTenant();
+    String source = event.getSource();
+    String subject = event.getSubject();
+    String seriesId = event.getSeriesId();
+    UUID eventUuid = event.getUuid();
 
     // Clear out futures list and map. They get re-used.
     deliveryTaskFutures.clear();
@@ -424,6 +433,23 @@ public final class DeliveryBucketManager implements Callable<String>
     // At this point all tasks are done. The map of values has been filled in as much as possible.
     //   If any tasks threw an exception then the value in the map deliveryTaskReturns will be null.
 
+    // All deliveries have completed or failed, and we will not re-try.
+
+    // Handle flags indicating we should end a series or delete subscriptions matching a subject.
+
+    // If requested, end the series. If event has no subject or seriesId, then the dao call will be a no-op
+    if (event.getEndSeries() || event.getDeleteSubscriptionsMatchingSubject())
+    {
+      log.debug(LibUtils.getMsg("NTFLIB_DSP_BUCKET_ENDSERIES", bucketNum, eventUuid, tenant, source, subject, seriesId));
+      dao.deleteEventSeries(source, subject, seriesId, tenant);
+    }
+
+    // If requested, delete all subscriptions matching the subject (anyOwner = true).
+    if (event.getDeleteSubscriptionsMatchingSubject())
+    {
+      log.debug(LibUtils.getMsg("NTFLIB_DSP_BUCKET_DELSUBJ", bucketNum, eventUuid, tenant, source, subject, seriesId));
+      dao.deleteSubscriptionsBySubject(tenant, event.getUser(), subject, true);
+    }
   }
 
   /**
