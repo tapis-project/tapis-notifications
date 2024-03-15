@@ -1,7 +1,25 @@
 package edu.utexas.tacc.tapis.notifications.api.resources;
 
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import javax.inject.Inject;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.SecurityContext;
 import com.google.gson.JsonSyntaxException;
+import org.apache.commons.io.IOUtils;
+import org.glassfish.grizzly.http.server.Request;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import edu.utexas.tacc.tapis.notifications.api.requests.ReqEndEventSeries;
 import edu.utexas.tacc.tapis.notifications.api.requests.ReqPostEvent;
 import edu.utexas.tacc.tapis.notifications.api.utils.ApiUtils;
 import edu.utexas.tacc.tapis.notifications.service.NotificationsService;
@@ -18,24 +36,6 @@ import edu.utexas.tacc.tapis.sharedapi.responses.results.ResultChangeCount;
 import edu.utexas.tacc.tapis.sharedapi.security.AuthenticatedUser;
 import edu.utexas.tacc.tapis.sharedapi.security.ResourceRequestUser;
 import edu.utexas.tacc.tapis.sharedapi.utils.TapisRestUtils;
-import org.apache.commons.io.IOUtils;
-import org.glassfish.grizzly.http.server.Request;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
-import javax.ws.rs.core.SecurityContext;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 
 /*
  * JAX-RS REST resource for a Tapis Event (edu.utexas.tacc.tapis.notifications.model.Event)
@@ -217,7 +217,8 @@ public class EventResource
     ResourceRequestUser rUser = new ResourceRequestUser((AuthenticatedUser) securityContext.getUserPrincipal());
 
     // Trace this request.
-    if (_log.isTraceEnabled()) ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString());
+    if (_log.isTraceEnabled()) ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(),
+                                          "tenant="+tenant);
 
     // ------------------------- Extract and validate payload -------------------------
     // Read the payload into a string.
@@ -239,9 +240,9 @@ public class EventResource
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
 
-    ReqPostEvent req;
+    ReqEndEventSeries req;
     // ------------------------- Create an Event from the json and validate constraints -------------------------
-    try { req = TapisGsonUtils.getGson().fromJson(rawJson, ReqPostEvent.class); }
+    try { req = TapisGsonUtils.getGson().fromJson(rawJson, ReqEndEventSeries.class); }
     catch (JsonSyntaxException e)
     {
       msg = MsgUtils.getMsg(INVALID_JSON_INPUT, opName, e.getMessage());
@@ -255,6 +256,9 @@ public class EventResource
       _log.error(msg);
       return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
     }
+
+    // Log the rawJson for incoming request
+    if (_log.isTraceEnabled()) _log.trace(ApiUtils.getMsgAuth("NTFAPI_EVENT_ENDSERIES_TRACE", rUser, rawJson));
 
     // ---------------------------- Make service call to post the event -------------------------------
     int changeCount;

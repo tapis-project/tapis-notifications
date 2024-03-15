@@ -214,12 +214,15 @@ public class NotificationsDaoImpl implements NotificationsDao
       //   VALUES (<tenant>,<source>,<subject>,<seriesId>,1)
       //   ON CONFLICT(tenant,source,subject,series_id)
       //   DO UPDATE SET seq_count = (event_series.seq_count + 1);
-      Record r = db.insertInto(EVENT_SERIES)
-              .columns(EVENT_SERIES.TENANT,EVENT_SERIES.SOURCE, EVENT_SERIES.SUBJECT, EVENT_SERIES.SERIES_ID, EVENT_SERIES.SEQ_COUNT)
-              .values(tenant, source, subject, seriesId, 1L)
-              .onConflict(EVENT_SERIES.TENANT,EVENT_SERIES.SOURCE, EVENT_SERIES.SUBJECT, EVENT_SERIES.SERIES_ID)
-              .doUpdate().set(EVENT_SERIES.SEQ_COUNT, EVENT_SERIES.SEQ_COUNT.plus(1))
-              .returningResult(EVENT_SERIES.SEQ_COUNT).fetchOne();
+      Record r =
+           db.insertInto(EVENT_SERIES)
+             .columns(EVENT_SERIES.TENANT,EVENT_SERIES.SOURCE, EVENT_SERIES.SUBJECT, EVENT_SERIES.SERIES_ID, EVENT_SERIES.SEQ_COUNT)
+             .values(tenant, source, subject, seriesId, 1L)
+             .onConflict(EVENT_SERIES.TENANT,EVENT_SERIES.SOURCE, EVENT_SERIES.SUBJECT, EVENT_SERIES.SERIES_ID)
+             .doUpdate()
+               .set(EVENT_SERIES.SEQ_COUNT, EVENT_SERIES.SEQ_COUNT.plus(1))
+               .set(EVENT_SERIES.UPDATED, TapisUtils.getUTCTimeNow())
+             .returningResult(EVENT_SERIES.SEQ_COUNT).fetchOne();
       // If result is null it is an error
       if (r == null)
       {
