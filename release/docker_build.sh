@@ -1,6 +1,6 @@
 #!/bin/sh
 # Build and optionally push docker images for Notifications service
-# This is the job run in Jenkins as part of job TapisJava->3_ManualBuildDeploy->notifications
+# This is the script run in Jenkins as part of job TapisJava->3_ManualBuildDeploy->notifications
 # Environment name must be passed in as first argument
 # Existing docker login is used for push
 # Main service docker image is created with a unique tag: tapis/<SVC_NAME>-<ENV>-<VER>-<COMMIT>-<YYYYmmddHHMM>
@@ -53,6 +53,8 @@ fi
 
 # Copy Dockerfiles to build dir
 cp Dockerfile_api Dockerfile_dispatcher $BUILD_DIR
+# Copy logback configuration file to build dir
+cp logback.xml $BUILD_DIR
 
 # Move to the build directory
 cd $BUILD_DIR || exit

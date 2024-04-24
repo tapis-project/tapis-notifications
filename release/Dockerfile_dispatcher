@@ -15,9 +15,9 @@ USER tapis
 WORKDIR /home/tapis/app
 
 # Copy jar file into place
-COPY "notifications.jar" .
-COPY /dependencies dependencies
-
+COPY --chown=tapis:tapis "notifications.jar" .
+COPY --chown=tapis:tapis "logback.xml" .
+COPY --chown=tapis:tapis /dependencies dependencies
 
 # Environment variables for testing without JWT
 # ENV TAPIS_ENVONLY_ALLOW_TEST_HEADER_PARMS true
