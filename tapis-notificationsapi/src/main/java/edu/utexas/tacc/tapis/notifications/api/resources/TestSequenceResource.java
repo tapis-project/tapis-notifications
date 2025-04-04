@@ -58,7 +58,6 @@ import edu.utexas.tacc.tapis.notifications.model.TestSequence;
 import edu.utexas.tacc.tapis.notifications.service.NotificationsService;
 import static edu.utexas.tacc.tapis.notifications.api.resources.EventResource.INVALID_JSON_INPUT;
 import static edu.utexas.tacc.tapis.notifications.api.resources.EventResource.JSON_VALIDATION_ERR;
-import static edu.utexas.tacc.tapis.notifications.api.resources.EventResource.PRETTY;
 
 /*
  * JAX-RS REST resource for managing a sequence of test notifications
@@ -129,7 +128,7 @@ public class TestSequenceResource
     TapisThreadContext threadContext = TapisThreadLocal.tapisThreadContext.get();
     // Check that we have all we need from the context, the jwtTenantId and jwtUserId
     // Utility method returns null if all OK and appropriate error response if there was a problem.
-    Response resp = ApiUtils.checkContext(threadContext, PRETTY);
+    Response resp = ApiUtils.checkContext(threadContext);
     if (resp != null) return resp;
 
     // Create a user that collects together tenant, user and request information needed by the service call
@@ -165,7 +164,7 @@ public class TestSequenceResource
     {
       msg = ApiUtils.getMsgAuth("NTFAPI_TEST_ERR1", rUser, opName, "null", e.getMessage());
       _log.error(msg);
-      return Response.status(Status.INTERNAL_SERVER_ERROR).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.INTERNAL_SERVER_ERROR).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
 
     // Resource was not found.
@@ -173,7 +172,7 @@ public class TestSequenceResource
     {
       msg = ApiUtils.getMsgAuth("NTFAPI_TEST_ERR2", rUser, opName);
       _log.warn(msg);
-      return Response.status(Status.NOT_FOUND).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.NOT_FOUND).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
 
     // ---------------------------- Success -------------------------------
@@ -201,7 +200,7 @@ public class TestSequenceResource
     // Check that we have all we need from the context, the jwtTenantId and jwtUserId
     // Utility method returns null if all OK and appropriate error response if there was a problem.
     TapisThreadContext threadContext = TapisThreadLocal.tapisThreadContext.get(); // Local thread context
-    Response resp = ApiUtils.checkContext(threadContext, PRETTY);
+    Response resp = ApiUtils.checkContext(threadContext);
     if (resp != null) return resp;
 
     // Create a user that collects together tenant, user and request information needed by the service call
@@ -220,7 +219,7 @@ public class TestSequenceResource
     {
       String msg = ApiUtils.getMsgAuth("NTFAPI_TEST_GET_ERR", rUser, name, e.getMessage());
       _log.error(msg, e);
-      return Response.status(TapisRestUtils.getStatus(e)).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(TapisRestUtils.getStatus(e)).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
 
     // Resource was not found.
@@ -228,7 +227,7 @@ public class TestSequenceResource
     {
       String msg = ApiUtils.getMsgAuth("NTFAPI_NOT_FOUND", rUser, rUser.getOboUserId(), name);
       _log.warn(msg);
-      return Response.status(Status.NOT_FOUND).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.NOT_FOUND).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
 
     // ---------------------------- Success -------------------------------
@@ -256,7 +255,7 @@ public class TestSequenceResource
     // Check that we have all we need from the context, the jwtTenantId and jwtUserId
     // Utility method returns null if all OK and appropriate error response if there was a problem.
     TapisThreadContext threadContext = TapisThreadLocal.tapisThreadContext.get();
-    Response resp = ApiUtils.checkContext(threadContext, PRETTY);
+    Response resp = ApiUtils.checkContext(threadContext);
     if (resp != null) return resp;
 
     // Create a user that collects together tenant, user and request information needed by the service call
@@ -277,13 +276,13 @@ public class TestSequenceResource
     {
       msg = ApiUtils.getMsgAuth("NTFAPI_SUBSCR_UNAUTH", rUser, rUser.getOboUserId(), name, opName);
       _log.warn(msg);
-      return Response.status(Status.UNAUTHORIZED).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.UNAUTHORIZED).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
     catch (Exception e)
     {
       msg = ApiUtils.getMsgAuth("NTFAPI_TEST_ERR1", rUser, opName, name, e.getMessage());
       _log.error(msg, e);
-      return Response.status(Status.INTERNAL_SERVER_ERROR).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.INTERNAL_SERVER_ERROR).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
 
     // ---------------------------- Success -------------------------------
@@ -327,7 +326,7 @@ public class TestSequenceResource
     {
       msg = MsgUtils.getMsg(INVALID_JSON_INPUT, opName , e.getMessage());
       _log.error(msg, e);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
 
     if (_log.isTraceEnabled()) _log.trace("{} - rawJson: {}", opName, rawJson);
@@ -339,7 +338,7 @@ public class TestSequenceResource
     {
       msg = MsgUtils.getMsg(JSON_VALIDATION_ERR, e.getMessage());
       _log.error(msg, e);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
 
     ReqPostNotification req;
@@ -349,28 +348,28 @@ public class TestSequenceResource
     {
       msg = MsgUtils.getMsg(INVALID_JSON_INPUT, opName, e.getMessage());
       _log.error(msg, e);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
     // If req is null that is an unrecoverable error
     if (req == null)
     {
       msg = ApiUtils.getMsg("NTFAPI_TEST_CB_REQ_NULL", name);
       _log.error(msg);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
     // If req.event is null that is an unrecoverable error
     if (req.event == null)
     {
       msg = ApiUtils.getMsg("NTFAPI_TEST_EVENT_NULL", name);
       _log.error(msg);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
     // If deliveryTarget is null that is an unrecoverable error
     if (req.deliveryTarget == null)
     {
       msg = ApiUtils.getMsg("NTFAPI_TEST_DM_NULL", name);
       _log.error(msg);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
 
     String notifUuidStr = req.uuid;
@@ -383,7 +382,7 @@ public class TestSequenceResource
     {
       msg = ApiUtils.getMsg("NTFAPI_TEST_NOTIF_UUID_ERR", name, notifUuidStr, e.getMessage());
       _log.error(msg);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
 
     // Make sure the notification created timestamp is valid
@@ -393,7 +392,7 @@ public class TestSequenceResource
     {
       msg = ApiUtils.getMsg("NTFAPI_TEST_NOTIF_UUID_ERR", name, notifUuidStr, e.getMessage());
       _log.error(msg);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
 
     // Now that we have a valid request we can set the tenant and user associated with the event
@@ -415,14 +414,14 @@ public class TestSequenceResource
     {
       msg = ApiUtils.getMsg("NTFAPI_TEST_USR_ERR", tenant, user, sourceStr, type, subject, timestamp, name);
       _log.error(msg);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
     // Validate the event type
     if (!Event.isValidType(type))
     {
       msg = ApiUtils.getMsg("NTFAPI_TEST_EVENT_TYPE_ERR", tenant, user, sourceStr, type, subject, timestamp, name);
       _log.error(msg);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
 
     // Extract the event source from the request making sure it is a URI
@@ -435,7 +434,7 @@ public class TestSequenceResource
     {
       msg = ApiUtils.getMsg("NTFAPI_TEST_EVENT_UUID_ERR", name, eventUuidStr, e.getMessage());
       _log.error(msg);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
 
     // Create an Event from the request
@@ -455,21 +454,21 @@ public class TestSequenceResource
       // IllegalStateException means test sequence not found
       msg = ApiUtils.getMsg("NTFAPI_TEST_RECORD_NO_TEST", tenant, user, name, event.getType());
       _log.warn(msg);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
     catch (Exception e)
     {
       msg = ApiUtils.getMsg("NTFAPI_TEST_CB_ERR", tenant, user, sourceStr, type, subject, seriesId, seriesSeqCount, timestamp,
                             name, e.getMessage());
       _log.error(msg);
-      return Response.status(Status.INTERNAL_SERVER_ERROR).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.INTERNAL_SERVER_ERROR).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
 
     // ---------------------------- Success -------------------------------
     // Success means the object was created.
     RespBasic resp1 = new RespBasic();
     msg = ApiUtils.getMsg("NTFAPI_TEST_RECORD", tenant, user, name, event.getType());
-    return Response.status(Status.OK).entity(TapisRestUtils.createSuccessResponse(msg, PRETTY, resp1)).build();
+    return Response.status(Status.OK).entity(TapisRestUtils.createSuccessResponse(msg, resp1)).build();
   }
 
   /* **************************************************************************** */
@@ -484,6 +483,6 @@ public class TestSequenceResource
    */
   private static Response createSuccessResponse(Status status, String msg, RespAbstract resp)
   {
-    return Response.status(status).entity(TapisRestUtils.createSuccessResponse(msg, PRETTY, resp)).build();
+    return Response.status(status).entity(TapisRestUtils.createSuccessResponse(msg, resp)).build();
   }
 }
