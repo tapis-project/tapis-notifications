@@ -59,9 +59,6 @@ public class EventResource
   public static final String INVALID_JSON_INPUT = "NET_INVALID_JSON_INPUT";
   public static final String JSON_VALIDATION_ERR = "TAPIS_JSON_VALIDATION_ERROR";
 
-  // Always return a nicely formatted response
-  public static final boolean PRETTY = true;
-
   // ************************************************************************
   // *********************** Fields *****************************************
   // ************************************************************************
@@ -99,7 +96,7 @@ public class EventResource
     TapisThreadContext threadContext = TapisThreadLocal.tapisThreadContext.get();
     // Check that we have all we need from the context, the jwtTenantId and jwtUserId
     // Utility method returns null if all OK and appropriate error response if there was a problem.
-    Response resp = ApiUtils.checkContext(threadContext, PRETTY);
+    Response resp = ApiUtils.checkContext(threadContext);
     if (resp != null) return resp;
 
     // Create a user that collects together tenant, user and request information needed by the service call
@@ -116,7 +113,7 @@ public class EventResource
     {
       msg = MsgUtils.getMsg(INVALID_JSON_INPUT, opName , e.getMessage());
       _log.error(msg, e);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
     // Create validator specification and validate the json against the schema
     JsonValidatorSpec spec = new JsonValidatorSpec(rawJson, FILE_EVENT_POST_REQUEST);
@@ -125,7 +122,7 @@ public class EventResource
     {
       msg = MsgUtils.getMsg(JSON_VALIDATION_ERR, e.getMessage());
       _log.error(msg, e);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
 
     ReqPostEvent req;
@@ -135,14 +132,14 @@ public class EventResource
     {
       msg = MsgUtils.getMsg(INVALID_JSON_INPUT, opName, e.getMessage());
       _log.error(msg, e);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
     // If req is null that is an unrecoverable error
     if (req == null)
     {
       msg = ApiUtils.getMsgAuth("NTFAPI_EVENT_POST_REQ_NULL", rUser);
       _log.error(msg);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
 
     // ---------------------------- Make service call to post the event -------------------------------
@@ -156,14 +153,14 @@ public class EventResource
       msg = ApiUtils.getMsgAuth("NTFAPI_EVENT_POST_ERR", rUser, req.source, req.type, req.subject, req.seriesId,
               req.timestamp, e.getMessage());
       _log.error(msg);
-      return Response.status(Status.INTERNAL_SERVER_ERROR).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.INTERNAL_SERVER_ERROR).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
 
     // ---------------------------- Success -------------------------------
     // Success means the object was created.
     RespBasic resp1 = new RespBasic();
     msg = ApiUtils.getMsgAuth("NTFAPI_EVENT_POSTED", rUser);
-    return Response.status(Status.OK).entity(TapisRestUtils.createSuccessResponse(msg, PRETTY, resp1)).build();
+    return Response.status(Status.OK).entity(TapisRestUtils.createSuccessResponse(msg, resp1)).build();
   }
 
   /**
@@ -210,7 +207,7 @@ public class EventResource
     TapisThreadContext threadContext = TapisThreadLocal.tapisThreadContext.get();
     // Check that we have all we need from the context, the jwtTenantId and jwtUserId
     // Utility method returns null if all OK and appropriate error response if there was a problem.
-    Response resp = ApiUtils.checkContext(threadContext, PRETTY);
+    Response resp = ApiUtils.checkContext(threadContext);
     if (resp != null) return resp;
 
     // Create a user that collects together tenant, user and request information needed by the service call
@@ -228,7 +225,7 @@ public class EventResource
     {
       msg = MsgUtils.getMsg(INVALID_JSON_INPUT, opName , e.getMessage());
       _log.error(msg, e);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
     // Create validator specification and validate the json against the schema
     JsonValidatorSpec spec = new JsonValidatorSpec(rawJson, FILE_EVENT_ENDSERIES_REQUEST);
@@ -237,7 +234,7 @@ public class EventResource
     {
       msg = MsgUtils.getMsg(JSON_VALIDATION_ERR, e.getMessage());
       _log.error(msg, e);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
 
     ReqEndEventSeries req;
@@ -247,14 +244,14 @@ public class EventResource
     {
       msg = MsgUtils.getMsg(INVALID_JSON_INPUT, opName, e.getMessage());
       _log.error(msg, e);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
     // If req is null that is an unrecoverable error
     if (req == null)
     {
       msg = ApiUtils.getMsgAuth("NTFAPI_EVENT_ENDSERIES_REQ_NULL", rUser);
       _log.error(msg);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
 
     // Log the rawJson for incoming request
@@ -270,7 +267,7 @@ public class EventResource
     {
       msg = ApiUtils.getMsgAuth("NTFAPI_EVENT_ENDSERIES_ERR", rUser, req.source, req.subject, req.seriesId, tenant);
       _log.error(msg);
-      return Response.status(Status.INTERNAL_SERVER_ERROR).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.INTERNAL_SERVER_ERROR).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
 
     // ---------------------------- Success -------------------------------
@@ -280,7 +277,7 @@ public class EventResource
     count.changes = changeCount;
     RespChangeCount resp1 = new RespChangeCount(count);
     msg = ApiUtils.getMsgAuth("NTFAPI_EVENT_ENDSERIES", rUser, req.source, req.subject, req.seriesId, tenant);
-    return Response.status(Status.OK).entity(TapisRestUtils.createSuccessResponse(msg, PRETTY, resp1)).build();
+    return Response.status(Status.OK).entity(TapisRestUtils.createSuccessResponse(msg, resp1)).build();
   }
 
   /* **************************************************************************** */

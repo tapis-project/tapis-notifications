@@ -113,9 +113,6 @@ public class SubscriptionResource
   private static final String OP_DELETE_BY_NAME = "deleteSubscriptionByName";
   private static final String OP_DELETE_BY_UUID = "deleteSubscriptionByUuid";
 
-  // Always return a nicely formatted response
-  private static final boolean PRETTY = true;
-
   // Top level summary attributes to be included by default in some cases.
   public static final List<String> SUMMARY_ATTRS =
           new ArrayList<>(List.of(OWNER_FIELD, NAME_FIELD, TYPE_FILTER_FIELD, SUBJECT_FILTER_FIELD));
@@ -167,7 +164,7 @@ public class SubscriptionResource
     TapisThreadContext threadContext = TapisThreadLocal.tapisThreadContext.get();
     // Check that we have all we need from the context, the jwtTenantId and jwtUserId
     // Utility method returns null if all OK and appropriate error response if there was a problem.
-    Response resp = ApiUtils.checkContext(threadContext, PRETTY);
+    Response resp = ApiUtils.checkContext(threadContext);
     if (resp != null) return resp;
 
     // Create a user that collects together tenant, user and request information needed by the service call
@@ -185,7 +182,7 @@ public class SubscriptionResource
     {
       msg = MsgUtils.getMsg(INVALID_JSON_INPUT, opName , e.getMessage());
       _log.error(msg, e);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
     // Create validator specification and validate the json against the schema
     JsonValidatorSpec spec = new JsonValidatorSpec(rawJson, FILE_SUBSCR_POST_REQUEST);
@@ -194,7 +191,7 @@ public class SubscriptionResource
     {
       msg = MsgUtils.getMsg(JSON_VALIDATION_ERR, e.getMessage());
       _log.error(msg, e);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
 
     ReqPostSubscription req;
@@ -204,14 +201,14 @@ public class SubscriptionResource
     {
       msg = MsgUtils.getMsg(INVALID_JSON_INPUT, opName, e.getMessage());
       _log.error(msg, e);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
     // If req is null that is an unrecoverable error
     if (req == null)
     {
       msg = ApiUtils.getMsgAuth(CREATE_ERR, rUser, "N/A", "N/A", "ReqPostSubscription == null");
       _log.error(msg);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
 
     // Create a subscription from the request
@@ -239,21 +236,21 @@ public class SubscriptionResource
         // IllegalStateException with msg containing SUBSCR_EXISTS indicates object exists - return 409 - Conflict
         msg = ApiUtils.getMsgAuth("NTFAPI_SUBSCR_EXISTS", rUser, owner, name);
         _log.warn(msg);
-        return Response.status(Status.CONFLICT).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+        return Response.status(Status.CONFLICT).entity(TapisRestUtils.createErrorResponse(msg)).build();
       }
       else if (e.getMessage().contains(LIB_UNAUTH))
       {
         // IllegalStateException with msg containing NTF_UNAUTH indicates operation not authorized for apiUser - return 401
         msg = ApiUtils.getMsgAuth(API_UNAUTH, rUser, owner, name, opName);
         _log.warn(msg);
-        return Response.status(Status.UNAUTHORIZED).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+        return Response.status(Status.UNAUTHORIZED).entity(TapisRestUtils.createErrorResponse(msg)).build();
       }
       else
       {
         // IllegalStateException indicates an Invalid Subscription was passed in
         msg = ApiUtils.getMsgAuth(CREATE_ERR, rUser, owner, name, e.getMessage());
         _log.error(msg);
-        return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+        return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg)).build();
       }
     }
     catch (IllegalArgumentException e)
@@ -261,13 +258,13 @@ public class SubscriptionResource
       // IllegalArgumentException indicates somehow a bad argument made it this far
       msg = ApiUtils.getMsgAuth(CREATE_ERR, rUser, owner, name, e.getMessage());
       _log.error(msg);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
     catch (Exception e)
     {
       msg = ApiUtils.getMsgAuth(CREATE_ERR, rUser, owner, name, e.getMessage());
       _log.error(msg, e);
-      return Response.status(Status.INTERNAL_SERVER_ERROR).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.INTERNAL_SERVER_ERROR).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
 
     // ---------------------------- Success -------------------------------
@@ -300,7 +297,7 @@ public class SubscriptionResource
     TapisThreadContext threadContext = TapisThreadLocal.tapisThreadContext.get();
     // Check that we have all we need from the context, the jwtTenantId and jwtUserId
     // Utility method returns null if all OK and appropriate error response if there was a problem.
-    Response resp = ApiUtils.checkContext(threadContext, PRETTY);
+    Response resp = ApiUtils.checkContext(threadContext);
     if (resp != null) return resp;
 
     // Create a user that collects together tenant, user and request information needed by the service call
@@ -319,7 +316,7 @@ public class SubscriptionResource
     {
       msg = MsgUtils.getMsg(INVALID_JSON_INPUT, opName , e.getMessage());
       _log.error(msg, e);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
     // Create validator specification and validate the json against the schema
     JsonValidatorSpec spec = new JsonValidatorSpec(rawJson, FILE_SUBSCR_PATCH_REQUEST);
@@ -328,7 +325,7 @@ public class SubscriptionResource
     {
       msg = MsgUtils.getMsg(JSON_VALIDATION_ERR, e.getMessage());
       _log.error(msg, e);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
 
     // ------------------------- Create a PatchSubscription from the json -------------------------
@@ -341,7 +338,7 @@ public class SubscriptionResource
     {
       msg = MsgUtils.getMsg(INVALID_JSON_INPUT, opName, e.getMessage());
       _log.error(msg, e);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
 
     if (_log.isTraceEnabled()) _log.trace(ApiUtils.getMsgAuth("NTFAPI_PATCH_TRACE", rUser, rawJson));
@@ -351,7 +348,7 @@ public class SubscriptionResource
     {
       msg = ApiUtils.getMsgAuth("NTFAPI_SUBSCR_TYPE_ERR", rUser, name, patchSubscription.getTypeFilter());
       _log.error(msg);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
 
     // No attributes are required. Constraints validated and defaults filled in on server side.
@@ -369,7 +366,7 @@ public class SubscriptionResource
     {
       msg = ApiUtils.getMsgAuth(NOT_FOUND, rUser, subscrOwner, name);
       _log.warn(msg);
-      return Response.status(Status.NOT_FOUND).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.NOT_FOUND).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
     catch (IllegalStateException e)
     {
@@ -378,14 +375,14 @@ public class SubscriptionResource
         // IllegalStateException with msg containing NTF_UNAUTH indicates operation not authorized for apiUser - return 401
         msg = ApiUtils.getMsgAuth(API_UNAUTH, rUser, subscrOwner, name, opName);
         _log.warn(msg);
-        return Response.status(Status.UNAUTHORIZED).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+        return Response.status(Status.UNAUTHORIZED).entity(TapisRestUtils.createErrorResponse(msg)).build();
       }
       else
       {
         // IllegalStateException indicates an Invalid PatchSubscription was passed in
         msg = ApiUtils.getMsgAuth(UPDATE_ERR, rUser, subscrOwner, name, opName, e.getMessage());
         _log.error(msg);
-        return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+        return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg)).build();
       }
     }
     catch (IllegalArgumentException e)
@@ -393,13 +390,13 @@ public class SubscriptionResource
       // IllegalArgumentException indicates somehow a bad argument made it this far
       msg = ApiUtils.getMsgAuth(UPDATE_ERR, rUser, subscrOwner, name, opName, e.getMessage());
       _log.error(msg);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
     catch (Exception e)
     {
       msg = ApiUtils.getMsgAuth(UPDATE_ERR, rUser, subscrOwner, name, opName, e.getMessage());
       _log.error(msg, e);
-      return Response.status(Status.INTERNAL_SERVER_ERROR).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.INTERNAL_SERVER_ERROR).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
 
     // ---------------------------- Success -------------------------------
@@ -520,7 +517,7 @@ public class SubscriptionResource
     // Check that we have all we need from the context, the jwtTenantId and jwtUserId
     // Utility method returns null if all OK and appropriate error response if there was a problem.
     TapisThreadContext threadContext = TapisThreadLocal.tapisThreadContext.get();
-    Response resp = ApiUtils.checkContext(threadContext, PRETTY);
+    Response resp = ApiUtils.checkContext(threadContext);
     if (resp != null) return resp;
 
     // Create a user that collects together tenant, user and request information needed by the service call
@@ -545,13 +542,13 @@ public class SubscriptionResource
       // IllegalArgumentException indicates somehow a bad argument made it this far
       msg = ApiUtils.getMsgAuth("NTFAPI_SUBSCR_DEL_BY_SUBJ_ERROR", rUser, subscrOwner, subject, opName, e.getMessage());
       _log.error(msg);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
     catch (Exception e)
     {
       msg = ApiUtils.getMsgAuth("NTFAPI_SUBSCR_DEL_BY_SUBJ_ERROR", rUser, subscrOwner, subject, opName, e.getMessage());
       _log.error(msg, e);
-      return Response.status(Status.INTERNAL_SERVER_ERROR).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.INTERNAL_SERVER_ERROR).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
 
     // ---------------------------- Success -------------------------------
@@ -584,7 +581,7 @@ public class SubscriptionResource
     // Check that we have all we need from the context, the jwtTenantId and jwtUserId
     // Utility method returns null if all OK and appropriate error response if there was a problem.
     TapisThreadContext threadContext = TapisThreadLocal.tapisThreadContext.get(); // Local thread context
-    Response resp = ApiUtils.checkContext(threadContext, PRETTY);
+    Response resp = ApiUtils.checkContext(threadContext);
     if (resp != null) return resp;
 
     // Create a user that collects together tenant, user and request information needed by the service call
@@ -608,7 +605,7 @@ public class SubscriptionResource
     {
       String msg = ApiUtils.getMsgAuth("NTFAPI_GET_NAME_ERROR", rUser, subscrOwner, name, e.getMessage());
       _log.error(msg, e);
-      return Response.status(TapisRestUtils.getStatus(e)).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(TapisRestUtils.getStatus(e)).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
 
     // Resource was not found.
@@ -616,7 +613,7 @@ public class SubscriptionResource
     {
       String msg = ApiUtils.getMsgAuth(NOT_FOUND, rUser, subscrOwner, name);
       _log.warn(msg);
-      return Response.status(Status.NOT_FOUND).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.NOT_FOUND).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
 
     // ---------------------------- Success -------------------------------
@@ -643,7 +640,7 @@ public class SubscriptionResource
     // Check that we have all we need from the context, the jwtTenantId and jwtUserId
     // Utility method returns null if all OK and appropriate error response if there was a problem.
     TapisThreadContext threadContext = TapisThreadLocal.tapisThreadContext.get(); // Local thread context
-    Response resp = ApiUtils.checkContext(threadContext, PRETTY);
+    Response resp = ApiUtils.checkContext(threadContext);
     if (resp != null) return resp;
 
     // Create a user that collects together tenant, user and request information needed by the service call
@@ -664,7 +661,7 @@ public class SubscriptionResource
     {
       String msg = ApiUtils.getMsgAuth("NTFAPI_GET_BY_UUID_ERROR", rUser, uuid, e.getMessage());
       _log.error(msg, e);
-      return Response.status(TapisRestUtils.getStatus(e)).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(TapisRestUtils.getStatus(e)).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
 
     // Resource was not found.
@@ -672,7 +669,7 @@ public class SubscriptionResource
     {
       String msg = ApiUtils.getMsgAuth("NTFAPI_NOT_FOUND_BY_UUID", rUser, uuid);
       _log.warn(msg);
-      return Response.status(Status.NOT_FOUND).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.NOT_FOUND).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
 
     // ---------------------------- Success -------------------------------
@@ -702,7 +699,7 @@ public class SubscriptionResource
     // Check that we have all we need from the context, the jwtTenantId and jwtUserId
     // Utility method returns null if all OK and appropriate error response if there was a problem.
     TapisThreadContext threadContext = TapisThreadLocal.tapisThreadContext.get();
-    Response resp = ApiUtils.checkContext(threadContext, PRETTY);
+    Response resp = ApiUtils.checkContext(threadContext);
     if (resp != null) return resp;
 
     // Create a user that collects together tenant, user and request information needed by the service call
@@ -725,7 +722,7 @@ public class SubscriptionResource
     {
       String msg = ApiUtils.getMsgAuth(SELECT_ERR, rUser, e.getMessage());
       _log.error(msg, e);
-      return Response.status(TapisRestUtils.getStatus(e)).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(TapisRestUtils.getStatus(e)).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
     return successResponse;
   }
@@ -748,7 +745,7 @@ public class SubscriptionResource
     // Check that we have all we need from the context, the jwtTenantId and jwtUserId
     // Utility method returns null if all OK and appropriate error response if there was a problem.
     TapisThreadContext threadContext = TapisThreadLocal.tapisThreadContext.get();
-    Response resp = ApiUtils.checkContext(threadContext, PRETTY);
+    Response resp = ApiUtils.checkContext(threadContext);
     if (resp != null) return resp;
 
     // Create a user that collects together tenant, user and request information needed by the service call
@@ -770,7 +767,7 @@ public class SubscriptionResource
     {
       String msg = ApiUtils.getMsgAuth("NTFAPI_SEARCH_ERROR", rUser, e.getMessage());
       _log.error(msg, e);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
 
     // ThreadContext designed to never return null for SearchParameters
@@ -788,7 +785,7 @@ public class SubscriptionResource
     {
       String msg = ApiUtils.getMsgAuth(SELECT_ERR, rUser, e.getMessage());
       _log.error(msg, e);
-      return Response.status(TapisRestUtils.getStatus(e)).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(TapisRestUtils.getStatus(e)).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
 
     // ---------------------------- Success -------------------------------
@@ -816,7 +813,7 @@ public class SubscriptionResource
     // Check that we have all we need from the context, the jwtTenantId and jwtUserId
     // Utility method returns null if all OK and appropriate error response if there was a problem.
     TapisThreadContext threadContext = TapisThreadLocal.tapisThreadContext.get();
-    Response resp = ApiUtils.checkContext(threadContext, PRETTY);
+    Response resp = ApiUtils.checkContext(threadContext);
     if (resp != null) return resp;
 
     // Create a user that collects together tenant, user and request information needed by the service call
@@ -835,7 +832,7 @@ public class SubscriptionResource
     {
       msg = MsgUtils.getMsg(INVALID_JSON_INPUT, opName , e.getMessage());
       _log.error(msg, e);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
     // Create validator specification and validate the json against the schema
     JsonValidatorSpec spec = new JsonValidatorSpec(rawJson, FILE_SUBSCR_SEARCH_REQUEST);
@@ -844,7 +841,7 @@ public class SubscriptionResource
     {
       msg = MsgUtils.getMsg(JSON_VALIDATION_ERR, e.getMessage());
       _log.error(msg, e);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
 
     // Construct final SQL-like search string using the json
@@ -859,7 +856,7 @@ public class SubscriptionResource
     {
       msg = MsgUtils.getMsg(INVALID_JSON_INPUT, opName, e.getMessage());
       _log.error(msg, e);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
 
     // ThreadContext designed to never return null for SearchParameters
@@ -876,7 +873,7 @@ public class SubscriptionResource
     {
       msg = ApiUtils.getMsgAuth(SELECT_ERR, rUser, e.getMessage());
       _log.error(msg, e);
-      return Response.status(TapisRestUtils.getStatus(e)).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(TapisRestUtils.getStatus(e)).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
 
     // ---------------------------- Success -------------------------------
@@ -903,7 +900,7 @@ public class SubscriptionResource
     // Check that we have all we need from the context, the jwtTenantId and jwtUserId
     // Utility method returns null if all OK and appropriate error response if there was a problem.
     TapisThreadContext threadContext = TapisThreadLocal.tapisThreadContext.get();
-    Response resp = ApiUtils.checkContext(threadContext, PRETTY);
+    Response resp = ApiUtils.checkContext(threadContext);
     if (resp != null) return resp;
 
     // Create a user that collects together tenant, user and request information needed by the service call
@@ -925,13 +922,13 @@ public class SubscriptionResource
     {
       String msg = ApiUtils.getMsgAuth(NOT_FOUND, rUser, name);
       _log.warn(msg);
-      return Response.status(Status.NOT_FOUND).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.NOT_FOUND).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
     catch (Exception e)
     {
       String msg = ApiUtils.getMsgAuth("NTFAPI_GET_NAME_ERROR", rUser, name, e.getMessage());
       _log.error(msg, e);
-      return Response.status(TapisRestUtils.getStatus(e)).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(TapisRestUtils.getStatus(e)).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
 
     // ---------------------------- Success -------------------------------
@@ -961,7 +958,7 @@ public class SubscriptionResource
     TapisThreadContext threadContext = TapisThreadLocal.tapisThreadContext.get();
     // Check that we have all we need from the context, the jwtTenantId and jwtUserId
     // Utility method returns null if all OK and appropriate error response if there was a problem.
-    Response resp = ApiUtils.checkContext(threadContext, PRETTY);
+    Response resp = ApiUtils.checkContext(threadContext);
     if (resp != null) return resp;
 
     // Create a user that collects together tenant, user and request information needed by the service call
@@ -998,14 +995,14 @@ public class SubscriptionResource
       {
         msg = ApiUtils.getMsgAuth("NTFAPI_OP_UNKNOWN", rUser, subscrOwner, name, opName);
         _log.warn(msg);
-        return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+        return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg)).build();
       }
     }
     catch (NotFoundException e)
     {
       msg = ApiUtils.getMsgAuth(NOT_FOUND, rUser, subscrOwner, name);
       _log.warn(msg);
-      return Response.status(Status.NOT_FOUND).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.NOT_FOUND).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
     catch (IllegalStateException e)
     {
@@ -1014,14 +1011,14 @@ public class SubscriptionResource
         // IllegalStateException with msg containing NTF_UNAUTH indicates operation not authorized for apiUser - return 401
         msg = ApiUtils.getMsgAuth(API_UNAUTH, rUser, subscrOwner, name, opName);
         _log.warn(msg);
-        return Response.status(Status.UNAUTHORIZED).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+        return Response.status(Status.UNAUTHORIZED).entity(TapisRestUtils.createErrorResponse(msg)).build();
       }
       else
       {
         // IllegalStateException indicates resulting subscription would be invalid
         msg = ApiUtils.getMsgAuth(UPDATE_ERR, rUser, subscrOwner, name, opName, e.getMessage());
         _log.error(msg);
-        return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+        return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg)).build();
       }
     }
     catch (IllegalArgumentException e)
@@ -1029,13 +1026,13 @@ public class SubscriptionResource
       // IllegalArgumentException indicates somehow a bad argument made it this far
       msg = ApiUtils.getMsgAuth(UPDATE_ERR, rUser, subscrOwner, name, opName, e.getMessage());
       _log.error(msg);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
     catch (Exception e)
     {
       msg = ApiUtils.getMsgAuth(UPDATE_ERR, rUser, subscrOwner, name, opName, e.getMessage());
       _log.error(msg, e);
-      return Response.status(Status.INTERNAL_SERVER_ERROR).entity(TapisRestUtils.createErrorResponse(msg, PRETTY)).build();
+      return Response.status(Status.INTERNAL_SERVER_ERROR).entity(TapisRestUtils.createErrorResponse(msg)).build();
     }
 
     // ---------------------------- Success -------------------------------
@@ -1085,7 +1082,7 @@ public class SubscriptionResource
       // Construct message reporting all errors
       String allErrors = getListOfErrors(errMessages, rUser, RESOURCE_TYPE, subscription1.getOwner(), subscription1.getName());
       _log.error(allErrors);
-      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(allErrors, PRETTY)).build();
+      return Response.status(Status.BAD_REQUEST).entity(TapisRestUtils.createErrorResponse(allErrors)).build();
     }
     return null;
   }
@@ -1161,6 +1158,6 @@ public class SubscriptionResource
    */
   private static Response createSuccessResponse(Status status, String msg, RespAbstract resp)
   {
-    return Response.status(status).entity(TapisRestUtils.createSuccessResponse(msg, PRETTY, resp)).build();
+    return Response.status(status).entity(TapisRestUtils.createSuccessResponse(msg, resp)).build();
   }
 }
