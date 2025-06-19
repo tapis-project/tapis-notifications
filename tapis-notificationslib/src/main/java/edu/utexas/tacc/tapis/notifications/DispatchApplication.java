@@ -33,14 +33,13 @@ public class DispatchApplication
 
   public static void main(String[] args) throws Exception
   {
-    // Log our existence.
+    // Get runtime parameters
+    RuntimeParameters runParms = RuntimeParameters.getInstance();
+
     // Output version information on startup
     System.out.printf("**** Starting Notifications Dispatch Service. Version: %s ****%n", TapisUtils.getTapisFullVersion());
     // Log our config
-    System.out.println(RuntimeParameters.getInstance().getRuntimeParameters());
-
-    // Get runtime parameters
-    RuntimeParameters runParms = RuntimeParameters.getInstance();
+    System.out.println(runParms.getRuntimeParameters());
 
     // Set site on which we are running. This is a required runtime parameter.
     siteId = runParms.getSiteId();
