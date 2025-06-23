@@ -9,6 +9,17 @@ You may also reference live-docs based on the openapi specification here:
 https://tapis-project.github.io/live-docs
 
 ---------------------------------------------------------------------------
+## 1.9.0 - 2025-06-23
+
+Incremental improvements.
+
+### New features:
+- None
+
+### Bug fixes:
+- None
+
+---------------------------------------------------------------------------
 ## 1.8.2 - 2025-04-29
 
 Incremental improvements. Remove unused pretty-print option from resource classes.
