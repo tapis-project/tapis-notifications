@@ -59,7 +59,9 @@ public class NotificationsApplication extends ResourceConfig
 {
   // List of Tapis services allowed to call this service with a service JWT.
   // Notifications calls itself as part of the readyCheck
-  public static final Set<String> SVCLIST_TRUSTED = new HashSet<>(Set.of(TapisConstants.SERVICE_NAME_NOTIFICATIONS));
+  // Jobs calls notifications for subscription support.
+  public static final Set<String> SVCLIST_TRUSTED =
+        new HashSet<>(Set.of(TapisConstants.SERVICE_NAME_NOTIFICATIONS, TapisConstants.SERVICE_NAME_JOBS));
   // We must be running on a specific site and this will never change
   private static String siteId;
   public static String getSiteId() {return siteId;}
