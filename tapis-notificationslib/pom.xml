@@ -6,7 +6,7 @@
   <parent>
     <groupId>edu.utexas.tacc.tapis</groupId>
     <artifactId>tapis-notifications</artifactId>
-    <version>1.9.0</version>
+    <version>1.9.1</version>
   </parent>
   
   <artifactId>tapis-notificationslib</artifactId>
@@ -102,7 +102,10 @@
       <groupId>org.flywaydb</groupId>
       <artifactId>flyway-core</artifactId>
     </dependency>
-      <!-- RabbitMQ -->
+    <dependency>
+      <groupId>org.flywaydb</groupId>
+      <artifactId>flyway-database-postgresql</artifactId>
+    </dependency>      <!-- RabbitMQ -->
     <dependency>
       <groupId>com.rabbitmq</groupId>
       <artifactId>amqp-client</artifactId>

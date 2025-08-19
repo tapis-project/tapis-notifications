@@ -1,6 +1,8 @@
 package edu.utexas.tacc.tapis.notifications.api;
 
 import java.net.URI;
+import java.util.HashSet;
+import java.util.Set;
 import javax.ws.rs.ApplicationPath;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.hk2.api.ServiceLocator;
@@ -55,6 +57,9 @@ import edu.utexas.tacc.tapis.sharedapi.providers.ValidationExceptionMapper;
 @ApplicationPath("/")
 public class NotificationsApplication extends ResourceConfig
 {
+  // List of Tapis services allowed to call this service with a service JWT.
+  // Notifications calls itself as part of the readyCheck
+  public static final Set<String> SVCLIST_TRUSTED = new HashSet<>(Set.of(TapisConstants.SERVICE_NAME_NOTIFICATIONS));
   // We must be running on a specific site and this will never change
   private static String siteId;
   public static String getSiteId() {return siteId;}

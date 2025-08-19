@@ -105,6 +105,8 @@ public class EventResource
     // Trace this request.
     if (_log.isTraceEnabled()) ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString());
 
+    ApiUtils.checkRestrictedSvcs(rUser);
+
     // ------------------------- Extract and validate payload -------------------------
     // Read the payload into a string.
     String rawJson;
@@ -216,6 +218,8 @@ public class EventResource
     // Trace this request.
     if (_log.isTraceEnabled()) ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(),
                                           "tenant="+tenant);
+
+    ApiUtils.checkRestrictedSvcs(rUser);
 
     // ------------------------- Extract and validate payload -------------------------
     // Read the payload into a string.

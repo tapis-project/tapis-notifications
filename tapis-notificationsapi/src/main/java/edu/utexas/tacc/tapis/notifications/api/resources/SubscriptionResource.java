@@ -174,6 +174,8 @@ public class SubscriptionResource
     if (_log.isTraceEnabled())
       ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString());
 
+    ApiUtils.checkRestrictedSvcs(rUser);
+
     // ------------------------- Extract and validate payload -------------------------
     // Read the payload into a string.
     String rawJson;
@@ -306,6 +308,8 @@ public class SubscriptionResource
     // Trace this request.
     if (_log.isTraceEnabled())
       ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "name="+name, "ownedBy="+ownedBy);
+
+    ApiUtils.checkRestrictedSvcs(rUser);
 
     // ------------------------- Extract and validate payload -------------------------
     // Read the payload into a string.
@@ -527,6 +531,8 @@ public class SubscriptionResource
     if (_log.isTraceEnabled())
       ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "subject="+subject, "ownedBy="+ownedBy, "anyOwner="+anyOwner);
 
+    ApiUtils.checkRestrictedSvcs(rUser);
+
     // For owner use oboUser or string specified in optional query parameter
     String subscrOwner =  StringUtils.isBlank(ownedBy) ? rUser.getOboUserId() : ownedBy;
 
@@ -591,6 +597,8 @@ public class SubscriptionResource
     if (_log.isTraceEnabled())
       ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "name="+name, "ownedBy="+ownedBy);
 
+    ApiUtils.checkRestrictedSvcs(rUser);
+
     List<String> selectList = threadContext.getSearchParameters().getSelectList();
 
     // For owner use oboUser or string specified in optional query parameter
@@ -649,6 +657,8 @@ public class SubscriptionResource
     // Trace this request.
     if (_log.isTraceEnabled())
       ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "uuid="+uuid);
+
+    ApiUtils.checkRestrictedSvcs(rUser);
 
     List<String> selectList = threadContext.getSearchParameters().getSelectList();
 
@@ -709,6 +719,8 @@ public class SubscriptionResource
     if (_log.isTraceEnabled())
       ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "ownedBy="+ownedBy, "anyOwner="+anyOwner);
 
+    ApiUtils.checkRestrictedSvcs(rUser);
+
     // ThreadContext designed to never return null for SearchParameters
     SearchParameters srchParms = threadContext.getSearchParameters();
 
@@ -754,6 +766,8 @@ public class SubscriptionResource
     // Trace this request.
     if (_log.isTraceEnabled())
       ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "ownedBy="+ownedBy);
+
+    ApiUtils.checkRestrictedSvcs(rUser);
 
     // Create search list based on query parameters
     // Note that some validation is done for each condition but the back end will handle translating LIKE wildcard
@@ -822,6 +836,8 @@ public class SubscriptionResource
     // Trace this request.
     if (_log.isTraceEnabled())
       ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "ownedBy="+ownedBy);
+
+    ApiUtils.checkRestrictedSvcs(rUser);
 
     // ------------------------- Extract and validate payload -------------------------
     // Read the payload into a string.
@@ -910,6 +926,8 @@ public class SubscriptionResource
     if (_log.isTraceEnabled())
       ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "name="+name, "ownedBy="+ownedBy);
 
+    ApiUtils.checkRestrictedSvcs(rUser);
+
     // For owner use oboUser or string specified in optional query parameter
     String subscrOwner =  StringUtils.isBlank(ownedBy) ? rUser.getOboUserId() : ownedBy;
 
@@ -972,6 +990,8 @@ public class SubscriptionResource
       else
         ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "name="+name, "ownedBy="+ownedBy);
     }
+
+    ApiUtils.checkRestrictedSvcs(rUser);
 
     // For owner use oboUser or string specified in optional query parameter
     String subscrOwner =  StringUtils.isBlank(ownedBy) ? rUser.getOboUserId() : ownedBy;

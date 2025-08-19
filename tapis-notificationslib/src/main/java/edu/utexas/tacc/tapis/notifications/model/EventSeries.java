@@ -24,8 +24,8 @@ public final class EventSeries
   /* ********************************************************************** */
 
   // Default values
-// TODO  public static final boolean DEFAULT_DELETE_SUBSCRIPTIONS_MATCHING_SUBJECT = false;
-//  public static final long DEFAULT_SERIES_SEQ_COUNT = -1L;
+  public static final boolean DEFAULT_DELETE_SUBSCRIPTIONS_MATCHING_SUBJECT = false;
+  public static final long DEFAULT_SERIES_SEQ_COUNT = -1L;
 
   /* ********************************************************************** */
   /*                                 Fields                                 */

@@ -6,6 +6,8 @@ import java.util.Locale;
 import java.util.ResourceBundle;
 
 import com.google.gson.JsonElement;
+import edu.utexas.tacc.tapis.notifications.api.NotificationsApplication;
+import edu.utexas.tacc.tapis.shared.TapisConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -153,5 +155,12 @@ public class ApiUtils
     if (strParms != null && strParms.length > 0) argListStr = String.join(",", strParms);
     String msg = ApiUtils.getMsgAuth("NTFAPI_TRACE_REQUEST", rUser, className, opName, reqUrl, argListStr);
     _log.trace(msg);
+  }
+
+  // Simple wrapper for checking restricted svc permissions
+  public static void checkRestrictedSvcs(ResourceRequestUser rUser)
+  {
+    TapisRestUtils.checkServiceRestrictions(TapisConstants.SERVICE_NAME_NOTIFICATIONS,
+                                            NotificationsApplication.SVCLIST_TRUSTED, rUser);
   }
 }
