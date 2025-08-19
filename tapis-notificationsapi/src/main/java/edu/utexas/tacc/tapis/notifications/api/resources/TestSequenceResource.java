@@ -138,6 +138,8 @@ public class TestSequenceResource
     if (_log.isTraceEnabled()) ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(),
                                                    "subscriptionTTL="+subscriptionTTL, "endSeries="+endSeries);
 
+    ApiUtils.checkRestrictedSvcs(rUser);
+
     // Determine the base service url for the request. This is needed for the callback and the event source.
     // URI should be /v3/notifications/begin and URL should have the form http://localhost:8080/v3/notifications/begin
     // Note that when running in standard Tapis k8s environment the URL might look like this:
@@ -210,6 +212,8 @@ public class TestSequenceResource
     if (_log.isTraceEnabled())
       ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "name="+name);
 
+    ApiUtils.checkRestrictedSvcs(rUser);
+
     TestSequence testSequence;
     try
     {
@@ -264,6 +268,8 @@ public class TestSequenceResource
     // Trace this request.
     if (_log.isTraceEnabled())
       ApiUtils.logRequest(rUser, className, opName, _request.getRequestURL().toString(), "name="+name);
+
+    ApiUtils.checkRestrictedSvcs(rUser);
 
     // ---------------------------- Make service call to delete the profile -------------------------------
     int changeCount;
