@@ -1,37 +1,40 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
+    <modelVersion>4.0.0</modelVersion>
 
-  <!-- Main BOM file defines organization, licenses, developers, repositories, shared properties,
-       dependency management, plugin management  -->
-  <parent>
-    <groupId>edu.utexas.tacc.tapis</groupId>
-    <artifactId>tapis-bom</artifactId>
-    <version>[2.0,3.0)</version>
-    <!-- Set empty relative path to avoid maven warning and ensure parent is found in local repository if that -->
-    <!-- is the only place it exists.-->
-    <relativePath/>
-  </parent>
-  <artifactId>tapis-notifications</artifactId>
-  <version>25Q4.0</version>
-  <packaging>pom</packaging>
+    <!-- Main BOM file defines organization, licenses, developers, repositories,
+         shared properties, dependency management, plugin management  -->
+    <parent>
+      <groupId>edu.utexas.tacc.tapis</groupId>
+      <artifactId>tapis-bom</artifactId>
+      <version>[2.0.51,3.0)</version>
+      <!-- Set empty relative path to avoid maven warning and-->
+      <!--   ensure parent is found in local repository if that-->
+      <!--   is the only place it exists.-->
+      <relativePath/>
+    </parent>
 
-  <name>TACC Tapis Notifications Parent POM</name>
-  <description>Parent POM file for TAPIS Notifications service</description>
+    <artifactId>tapis-notifications</artifactId>
+    <version>${revision}</version>
+    <packaging>pom</packaging>
 
-  <scm>
-    <connection>scm:git:https://github.com/tapis-project/tapis-notifications.git</connection>
-    <url>https://github.com/tapis-project/tapis-notifications</url>
-  </scm>
+    <name>TACC Tapis Notifications Parent POM</name>
+    <description>Parent POM file for TAPIS Notifications service</description>
 
-  <properties>
-    <!-- Most properties set in parent tapis-bom   -->
-    <!-- Properties can be overridden here         -->
-    <!-- Individual projects may want to override. -->
-    <!-- Skip integration tests by default -->
-    <!-- Use mvn verify -DskipIntegrationTests=false to run integration tests -->
-    <skipIntegrationTests>true</skipIntegrationTests>
-  </properties>
+    <scm>
+        <connection>scm:git:https://github.com/tapis-project/tapis-notifications.git</connection>
+        <url>https://github.com/tapis-project/tapis-notifications</url>
+    </scm>
+
+    <properties>
+      <revision>25Q4.1</revision>
+      <!-- Most properties set in parent tapis-bom   -->
+      <!-- Properties can be overridden here         -->
+      <!-- Individual projects may want to override. -->
+      <!-- Skip integration tests by default -->
+      <!-- Use mvn verify -DskipIntegrationTests=false to run integration tests -->
+      <skipIntegrationTests>true</skipIntegrationTests>
+    </properties>
 
   <build>
     <plugins>
@@ -119,7 +122,7 @@
     </profile>
   </profiles>
 
-  <modules>
+    <modules>
     <module>tapis-notificationsapi</module>
     <module>tapis-notificationslib</module>
   </modules>
