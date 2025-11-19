@@ -91,7 +91,7 @@ public final class MessageBroker
    */
   private MessageBroker() throws TapisRuntimeException
   {
-    // Initialize vhost
+    // Initialize vhost. This method may make several attempts in case rabbitmq is slow to start.
     initRabbitVHost();
 
     // Initialize connections, channels, exchanges and queues
@@ -117,7 +117,7 @@ public final class MessageBroker
    * This method must be called before getInstance()
    * This called by main Application and Dispatcher
    */
-  public synchronized static void init(RuntimeParameters parms) throws TapisRuntimeException
+  public synchronized static void init(RuntimeParameters parms)
   {
     // Create the singleton instance
     if (instance != null) return;
@@ -363,14 +363,30 @@ public final class MessageBroker
     // Create the vhost object and execute the initialization routine.
     var parms = new VHostParms(host, adminPort, adminUser, adminPassword);
     var mgr   = new VHostManager(parms);
-    try
+    // This may fail if rabbitmq is still coming up, so retry a few of times.
+    // Log warning on each failure, sleep 3 seconds between each try.
+    int attempt_num = 0;
+    String msg;
+    while (true)
     {
-      mgr.initVHost(vhost, user, pass);
-    }
-    catch (Exception e)
-    {
-      String msg = MsgUtils.getMsg("QMGR_UNINITIALIZED_ERROR");
-      throw new TapisRuntimeException(msg, e);
+      try
+      {
+        mgr.initVHost(vhost, user, pass);
+        return;
+      }
+      catch (Exception e)
+      {
+        // This attempt failed, log a warning and sleep
+        attempt_num++;
+        msg = LibUtils.getMsg("NTFLIB_MSGBRKR_INITV_FAIL", attempt_num, e);
+        log.warn(msg);
+        try {Thread.sleep(3000);} catch (InterruptedException ie) {/* ignore */}
+        if (attempt_num > 5)
+        {
+          msg = LibUtils.getMsg("NTFLIB_MSGBRKR_INITV_ERROR", e);
+          throw new TapisRuntimeException(msg, e);
+        }
+      }
     }
   }
 
