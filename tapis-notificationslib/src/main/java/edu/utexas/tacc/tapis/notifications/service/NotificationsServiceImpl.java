@@ -703,6 +703,9 @@ public class NotificationsServiceImpl implements NotificationsService
     // For user request: User may only search for subscriptions they own unless they are an admin
     checkAuthOwner(rUser, owner);
 
+    // If limit == 0 no need to proceed
+    if (limit == 0) return new ArrayList<>();
+
     // Build verified list of search conditions
     var verifiedSearchList = new ArrayList<String>();
     if (searchList != null && !searchList.isEmpty())
@@ -757,6 +760,9 @@ public class NotificationsServiceImpl implements NotificationsService
     // Check auth. Let service always pass.
     // For user request: User may only search for subscriptions they own unless they are an admin
     checkAuthOwner(rUser, owner);
+
+    // If limit == 0 no need to proceed
+    if (limit == 0) return new ArrayList<>();
 
     // If search string is empty delegate to getSubscriptions()
     if (StringUtils.isBlank(sqlSearchStr)) return getSubscriptions(rUser, owner, null, limit, orderByList, skip,

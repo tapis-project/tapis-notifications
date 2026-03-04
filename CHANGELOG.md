@@ -9,7 +9,7 @@ You may also reference live-docs based on the openapi specification here:
 https://tapis-project.github.io/live-docs
 
 ---------------------------------------------------------------------------
-## 26Q1.0 - 2026-03-03
+## 26Q1.0 - 2026-03-04
 
 Incremental improvements. Improve handling of potentially slow startup of rabbitmq message broker.
 
@@ -17,7 +17,7 @@ Incremental improvements. Improve handling of potentially slow startup of rabbit
 - None
 
 ### Bug fixes:
-- None
+- Fix bug in computeTotal when limit = 0 for getSubscriptions endpoint.
 
 ---------------------------------------------------------------------------
 ## 25Q4.0 - 2025-10-20
