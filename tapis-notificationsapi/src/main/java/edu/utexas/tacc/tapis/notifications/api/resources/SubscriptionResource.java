@@ -1159,7 +1159,7 @@ public class SubscriptionResource
     if (computeTotal && limit <= 0) totalCount = subscriptions.size();
 
     // If we need the count and there was a limit then we need to make a call
-    if (computeTotal && limit > 0)
+    if (computeTotal && limit > -1)
     {
       totalCount = notificationsService.getSubscriptionsTotalCount(rUser, subscrOwner, searchList, orderByList, startAfter);
     }
