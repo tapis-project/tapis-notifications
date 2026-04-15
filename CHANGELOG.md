@@ -9,6 +9,18 @@ You may also reference live-docs based on the openapi specification here:
 https://tapis-project.github.io/live-docs
 
 ---------------------------------------------------------------------------
+## 26Q1.1 - 2026-04-15
+
+Allow subscription names to contain the character "@". Tapis Jobs services uses the Tapis username as part
+of the subscription name and recent support was added to allow Tapis usernames to contain this character.
+
+### New features:
+- Allow subscription names to contain the symbol "@".
+
+### Bug fixes:
+- None
+
+---------------------------------------------------------------------------
 ## 26Q1.0 - 2026-03-04
 
 Incremental improvements. Improve handling of potentially slow startup of rabbitmq message broker.

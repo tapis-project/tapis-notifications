@@ -133,7 +133,7 @@ public class NotificationsServiceTest
     // Since tests are run against a local DB this should be OK.
     String owner = subscriptions[0].getOwner();
     var searchList = new ArrayList<String>();
-    searchList.add(String.format("name.like.%s_%s*", subscrIdPrefix, testKey));
+    searchList.add(String.format("name.like.%s*", subscrIdPrefix));
     List<Subscription> testSubscriptions = svcImpl.getSubscriptions(rJobsSvc1, owner, searchList, -1, null, -1,
                                                                     null, anyOwnerTrue);
     int count;
