@@ -64,9 +64,10 @@ public final class Subscription
   public static final String UPDATED_FIELD = "updated";
 
   // Validation patterns
-  //NAME Must start alphanumeric and contain only alphanumeric and 4 special characters: - . _ ~
-  //Note that we allow starting with a number, so we can use a UUID.
-  public static final String NAME_PATTERN = "^[a-zA-Z0-9]([a-zA-Z0-9]|[-\\._~])*";
+  //NAME Must start alphanumeric and contain only alphanumeric and 5 special characters: - . _ ~ @
+  //Note that we allow starting with a number, so we can use a UUID
+  //  and we allow "@" because Tapis Jobs uses a name based on the Tapis username which may have "@"
+  public static final String NAME_PATTERN = "^[a-zA-Z0-9]([a-zA-Z0-9]|[-\\._~@])*";
 
   // typeFilter must be 3 sections separated by a '.'
   // First section must contain a series of lower case letters and may not be empty
@@ -79,7 +80,6 @@ public final class Subscription
 
   // Message keys
   private static final String CREATE_MISSING_ATTR = "NTFLIB_CREATE_MISSING_ATTR";
-  private static final String INVALID_STR_ATTR = "NTFLIB_INVALID_STR_ATTR";
   private static final String TOO_LONG_ATTR = "NTFLIB_TOO_LONG_ATTR";
 
   // Validation constants
@@ -346,7 +346,7 @@ public final class Subscription
   private void checkAttrValidity(List<String> errMessages)
   {
     // Check that id is not empty and contains a valid pattern
-    if (!StringUtils.isBlank(name) && !isValidName(name)) errMessages.add(LibUtils.getMsg(INVALID_STR_ATTR, NAME_FIELD, name));
+    if (!StringUtils.isBlank(name) && !isValidName(name)) errMessages.add(LibUtils.getMsg("NTFLIB_INVALID_STR_ATTR", NAME_FIELD, name));
     // Validate the subscription type filter
     if (!Subscription.isValidTypeFilter(typeFilter)) errMessages.add(LibUtils.getMsg("NTFLIB_SUBSCR_TYPE_ERR", name, typeFilter));
   }

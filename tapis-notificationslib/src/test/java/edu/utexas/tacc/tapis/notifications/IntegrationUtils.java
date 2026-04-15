@@ -183,7 +183,7 @@ public final class IntegrationUtils
   public static String getSubscrName(String key, int idx)
   {
     String suffix = key + "_" + String.format("%03d", idx);
-    return subscrIdPrefix + "_" + suffix;
+    return subscrIdPrefix + "_.-@~" + suffix;
   }
 
   /**
