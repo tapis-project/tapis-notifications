@@ -24,6 +24,7 @@ public final class DeliveryTarget
   public enum DeliveryMethod {WEBHOOK, EMAIL}
 
   // Relatively simple pattern to validate that an email address has the form something@something_no_white_space
+  // TODO move emailPattern to public in Subscription class so we can use it for validating smtpFromAddress
   private static final Pattern emailPattern = Pattern.compile("^(.+)@(\\S+)$");
 
   // URL validator

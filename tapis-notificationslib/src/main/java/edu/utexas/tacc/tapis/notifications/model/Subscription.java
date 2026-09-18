@@ -14,7 +14,8 @@ import edu.utexas.tacc.tapis.shared.utils.TapisGsonUtils;
 import edu.utexas.tacc.tapis.sharedapi.security.ResourceRequestUser;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.apache.commons.lang3.StringUtils;
-
+// TODO Should we add smtpFromAddress? Maybe not, Joe Stubbs has some concerns.
+//      Maybe check with NSO to see what might be an acceptable site wide fromAddr?
 /*
  * Tapis Subscription
  * Each subscription is associated with a specific tenant.
@@ -56,6 +57,7 @@ public final class Subscription
   public static final String ENABLED_FIELD = "enabled";
   public static final String TYPE_FILTER_FIELD = "typeFilter";
   public static final String SUBJECT_FILTER_FIELD = "subjectFilter";
+  public static final String SMTP_FROM_FIELD = "smptFromAddress";
   public static final String DELIVERY_TARGETS_FIELD = "deliveryTargets";
   public static final String TTL_FIELD = "ttlMinutes";
   public static final String UUID_FIELD = "uuid";
@@ -110,6 +112,7 @@ public final class Subscription
   private String typeFilter2;
   private String typeFilter3;
   private String subjectFilter;
+  private String smtpFromAddress;
   private List<DeliveryTarget> deliveryTargets;
   private final int ttlMinutes;
   private final UUID uuid;
@@ -137,6 +140,7 @@ public final class Subscription
     enabled = s.isEnabled();
     setTypeFilter(s.getTypeFilter());
     subjectFilter = s.getSubjectFilter();
+    smtpFromAddress = s.getSmtpFromAddress();
     deliveryTargets = s.getDeliveryTargets();
     ttlMinutes = s.getTtlMinutes();
     uuid = s.getUuid();
@@ -150,8 +154,8 @@ public final class Subscription
    * Also useful for testing
    */
   public Subscription(int seqId1, String tenant1, String owner1, String name1, String description1, boolean enabled1,
-                      String tf, String subjectFilter1, List<DeliveryTarget> dmList1, int ttl1, UUID uuid1,
-                      Instant expiry1, Instant created1, Instant updated1)
+                      String tf, String subjectFilter1, String smtpFromAddress1, List<DeliveryTarget> dmList1,
+                      int ttl1, UUID uuid1, Instant expiry1, Instant created1, Instant updated1)
   {
     seqId = seqId1;
     tenant = tenant1;
